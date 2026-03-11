@@ -18,14 +18,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 const navigationItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Droplets, label: 'Manejo Diário', path: '/management' },
-  { icon: MapPin, label: 'Fazendas', path: '/farms' },
-  { icon: CircleDot, label: 'Pivôs', path: '/pivots' },
-  { icon: Sprout, label: 'Safras', path: '/harvests' },
-  { icon: Wheat, label: 'Culturas', path: '/crops' },
-  { icon: FileBarChart, label: 'Relatórios', path: '/reports' },
-  { icon: Settings, label: 'Configurações', path: '/settings' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Droplets, label: 'Manejo Diário', path: '/manejo' },
+  { icon: MapPin, label: 'Fazendas', path: '/fazendas' },
+  { icon: CircleDot, label: 'Pivôs', path: '/pivos' },
+  { icon: Sprout, label: 'Safras', path: '/safras' },
+  { icon: Wheat, label: 'Culturas', path: '/culturas' },
+  { icon: FileBarChart, label: 'Relatórios', path: '/relatorios' },
+  { icon: Settings, label: 'Configurações', path: '/configuracoes' },
 ];
 
 export function Sidebar() {
