@@ -1,0 +1,299 @@
+{
+  "name": "IrrigaAgro — Conta de Energia via WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolution-energy-bill",
+        "options": {}
+      },
+      "id": "node_webhook",
+      "name": "Webhook Evolution API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "evolution-energy-bill"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond_is_media",
+              "leftValue": "={{ $json.body.data.message.imageMessage !== undefined || $json.body.data.message.documentMessage !== undefined }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node_if_media",
+      "name": "É mídia (imagem/PDF)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Webhook Evolution API').item.json.body.data.instance ? 'http://localhost:8080/message/downloadMediaMessage/' + $('Webhook Evolution API').item.json.body.data.instance : '' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $('Webhook Evolution API').item.json.body.data.message }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "node_download_media",
+      "name": "Baixar mídia WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 220],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred_evolution_api",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Mapeia número de telefone → pivot_id\n// Configure PHONE_TO_PIVOT_MAP nas variáveis de ambiente do N8N\n// Formato: '{\"5518999998888\": \"uuid-pivot-1\", \"5518777776666\": \"uuid-pivot-2\"}'\n\nconst phoneMap = JSON.parse($env.PHONE_TO_PIVOT_MAP || '{}');\nconst from = $('Webhook Evolution API').item.json.body.data.key.remoteJid;\nconst phone = from.replace('@s.whatsapp.net', '').replace('@g.us', '');\nconst pivotId = phoneMap[phone];\n\nif (!pivotId) {\n  throw new Error(`Número ${phone} não mapeado para nenhum pivô. Configure PHONE_TO_PIVOT_MAP.`);\n}\n\nreturn [{ json: { pivot_id: pivotId, phone } }];"
+      },
+      "id": "node_map_phone",
+      "name": "Mapear Telefone → Pivô",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 220]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.IRRIGAAGRO_APP_URL }}/api/extract-energy-bill",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $('Baixar mídia WhatsApp').item.binary.data }}",
+              "parameterType": "formBinaryData"
+            },
+            {
+              "name": "pivot_id",
+              "value": "={{ $('Mapear Telefone → Pivô').item.json.pivot_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node_extract_bill",
+      "name": "Extrair Conta com IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 220]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond_success",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node_if_success",
+      "name": "Extração bem-sucedida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1340, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Formatar mensagem de sucesso com KPIs\nconst bill = $json.bill;\nconst kpis = $json.kpis;\n\nfunction fmt(v, decimals = 1) {\n  if (v === null || v === undefined) return '—';\n  return Number(v).toFixed(decimals);\n}\n\nfunction emoji(status) {\n  return status === 'green' ? '✅' : status === 'yellow' ? '⚠️' : '❌';\n}\n\nfunction costEmoji(v) {\n  if (v === null) return '';\n  return v <= 1.5 ? '✅' : v <= 2.0 ? '⚠️' : '❌';\n}\n\nconst month = bill.reference_month || '—';\nconst kwh = fmt(bill.kwh_total, 0);\nconst cost = fmt(bill.cost_total_brl, 2);\nconst reactive = fmt(kpis.reactivePct);\nconst reserved = fmt(kpis.reservedPct);\nconst peakCost = fmt(kpis.peakCost, 2);\nconst costMmHa = fmt(kpis.costPerMmHa, 2);\nconst demand = fmt(bill.demand_exceeded_brl, 2);\n\nconst msg = [\n  `✅ *Conta de ${month} salva!*`,\n  '',\n  `⚡ kWh total: *${kwh} kWh*`,\n  `💰 Custo total: *R$ ${cost}*`,\n  '',\n  `🔋 Energia reativa: *${reactive}%* ${emoji(kpis.reactiveStatus)}  _(meta: <2%)_`,\n  `🌙 Horário Reservado: *${reserved}%* ${emoji(kpis.reservedStatus)}  _(meta: >50%)_`,\n  `⏰ Custo Ponta: *R$ ${peakCost}*`,\n  `📊 Ultrapassagem demanda: *R$ ${demand}*`,\n  '',\n  `💧 Custo/mm/ha: *R$ ${costMmHa}* ${costEmoji(kpis.costPerMmHa)}  _(ótimo: ≤1,50)_`,\n].join('\\n');\n\nreturn [{ json: { message: msg } }];"
+      },
+      "id": "node_format_success",
+      "name": "Formatar Mensagem Sucesso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 140]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Formatar mensagem de erro\nconst err = $('Extrair Conta com IA').item.json;\nconst msg = [\n  '❌ *Não consegui extrair os dados da conta.*',\n  '',\n  'Por favor, tente novamente com uma foto mais nítida ou envie o PDF diretamente.',\n  '',\n  `_(Erro técnico: ${err.error || 'desconhecido'})_`,\n].join('\\n');\n\nreturn [{ json: { message: msg } }];"
+      },
+      "id": "node_format_error",
+      "name": "Formatar Mensagem Erro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Webhook Evolution API').item.json.body.data.instance }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $('Webhook Evolution API').item.json.body.data.key.remoteJid, text: $('Formatar Mensagem Sucesso').item.json.message }) }}",
+        "options": {}
+      },
+      "id": "node_reply_success",
+      "name": "Responder Sucesso WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 140],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred_evolution_api",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $('Webhook Evolution API').item.json.body.data.instance }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $('Webhook Evolution API').item.json.body.data.key.remoteJid, text: $('Formatar Mensagem Erro').item.json.message }) }}",
+        "options": {}
+      },
+      "id": "node_reply_error",
+      "name": "Responder Erro WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 320],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cred_evolution_api",
+          "name": "Evolution API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {}
+      },
+      "id": "node_respond_webhook",
+      "name": "Responder Webhook (204)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 460]
+    }
+  ],
+  "connections": {
+    "Webhook Evolution API": {
+      "main": [
+        [
+          { "node": "É mídia (imagem/PDF)?", "type": "main", "index": 0 },
+          { "node": "Responder Webhook (204)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "É mídia (imagem/PDF)?": {
+      "main": [
+        [{ "node": "Baixar mídia WhatsApp", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Baixar mídia WhatsApp": {
+      "main": [
+        [{ "node": "Mapear Telefone → Pivô", "type": "main", "index": 0 }]
+      ]
+    },
+    "Mapear Telefone → Pivô": {
+      "main": [
+        [{ "node": "Extrair Conta com IA", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extrair Conta com IA": {
+      "main": [
+        [{ "node": "Extração bem-sucedida?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extração bem-sucedida?": {
+      "main": [
+        [{ "node": "Formatar Mensagem Sucesso", "type": "main", "index": 0 }],
+        [{ "node": "Formatar Mensagem Erro", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formatar Mensagem Sucesso": {
+      "main": [
+        [{ "node": "Responder Sucesso WhatsApp", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formatar Mensagem Erro": {
+      "main": [
+        [{ "node": "Responder Erro WhatsApp", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["irrigaagro", "energia", "whatsapp"],
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "irrigaagro-energy-bill-v1"
+  },
+  "_comment": {
+    "variaveis_ambiente_n8n": {
+      "IRRIGAAGRO_APP_URL": "https://seu-app.vercel.app (ou http://localhost:3000 para dev)",
+      "EVOLUTION_API_URL": "http://localhost:8080 (URL base da Evolution API sem barra final)",
+      "PHONE_TO_PIVOT_MAP": "{\"5518999998888\": \"uuid-do-pivot-1\", \"5518777776666\": \"uuid-do-pivot-2\"}",
+      "Evolution API Key credential": "Criar em N8N: Credentials → HTTP Header Auth → Name: apikey, Value: sua-api-key-evolution"
+    },
+    "como_configurar": [
+      "1. Importe este JSON no N8N via menu Workflows → Import",
+      "2. Configure as variáveis de ambiente no N8N (Settings → Variables)",
+      "3. Crie a credential 'Evolution API Key' com apikey no header",
+      "4. Configure webhook da Evolution API para apontar para o URL do Webhook node",
+      "5. Teste enviando uma foto de conta de energia pelo WhatsApp"
+    ]
+  }
+}
