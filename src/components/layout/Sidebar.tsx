@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Droplets,
@@ -28,14 +29,16 @@ const navigationItems = [
   { icon: Settings, label: 'Configurações', path: '/configuracoes' },
 ];
 
-export function Sidebar() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
+  const pathname = usePathname();
+  const router = useRouter();
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/login');
+    router.push('/login');
   };
 
   const handleNavClick = () => {
@@ -93,29 +96,23 @@ export function Sidebar() {
               const Icon = item.icon;
               return (
                 <li key={item.path}>
-                  <NavLink
-                    to={item.path}
+                  <Link
+                    href={item.path}
                     onClick={handleNavClick}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors relative',
-                        'text-sm font-medium',
-                        isActive
-                          ? 'bg-primary-50 text-primary-600 border-l-2 border-l-primary-500'
-                          : 'text-text-secondary hover:bg-surface-secondary hover:text-text'
-                      )
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <Icon size={20} />
-                        <span className="flex-1">{item.label}</span>
-                        {isActive && (
-                          <ChevronRight size={16} className="text-primary-500" />
-                        )}
-                      </>
+                    className={cn(
+                      'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors relative',
+                      'text-sm font-medium',
+                      pathname === item.path
+                        ? 'bg-primary-50 text-primary-600 border-l-2 border-l-primary-500'
+                        : 'text-text-secondary hover:bg-surface-secondary hover:text-text'
                     )}
-                  </NavLink>
+                  >
+                    <Icon size={20} />
+                    <span className="flex-1">{item.label}</span>
+                    {pathname === item.path && (
+                      <ChevronRight size={16} className="text-primary-500" />
+                    )}
+                  </Link>
                 </li>
               );
             })}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { Droplets, Sprout, Sun } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 type AuthMode = 'login' | 'register'
 
 export function Login() {
-  const navigate = useNavigate()
+  const router = useRouter()
   const { signIn, signUp, loading, error: authError } = useAuth()
 
   const [mode, setMode] = useState<AuthMode>('login')
@@ -40,7 +40,7 @@ export function Login() {
     try {
       setIsSubmitting(true)
       await signIn(loginEmail, loginPassword)
-      navigate('/dashboard')
+      router.push('/dashboard')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Falha ao fazer login'
       setFormError(message)
@@ -71,7 +71,7 @@ export function Login() {
     try {
       setIsSubmitting(true)
       await signUp(registerEmail, registerPassword, registerFullName)
-      navigate('/dashboard')
+      router.push('/dashboard')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Falha ao criar conta'
       setFormError(message)

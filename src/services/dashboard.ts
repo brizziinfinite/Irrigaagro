@@ -19,6 +19,7 @@ export interface DashboardData {
   activeSeasons: Season[]
   hasPivots: boolean
   lastManagementBySeason: Record<string, DailyManagement>
+  historyBySeason: Record<string, DailyManagement[]>
   projectionBySeason: Record<string, ProjectionDay[]>
   diagnosticsByPivot: Record<string, PivotDiagnostic>
   summary: {
@@ -53,6 +54,7 @@ export async function getDashboardDataForUser(
     .map((context) => context.season)
 
   const lastManagementBySeason: Record<string, DailyManagement> = {}
+  const historyBySeason: Record<string, DailyManagement[]> = {}
   const projectionBySeason: Record<string, ProjectionDay[]> = {}
 
   for (const context of contexts.filter((item) => item.season.is_active)) {
@@ -62,6 +64,7 @@ export async function getDashboardDataForUser(
     if (lastManagement) {
       lastManagementBySeason[season.id] = lastManagement
     }
+    historyBySeason[season.id] = history.slice(0, 7).reverse()
 
     if (!crop || !season.planting_date) continue
 
@@ -120,6 +123,7 @@ export async function getDashboardDataForUser(
     activeSeasons,
     hasPivots: pivots.length > 0,
     lastManagementBySeason,
+    historyBySeason,
     projectionBySeason,
     diagnosticsByPivot,
     summary,

@@ -4,6 +4,12 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import type { PivotDiagnostic } from '@/services/pivot-diagnostics'
 import type { Pivot, Season, DailyManagement } from '@/types/database'
+import { KpiCards } from './KpiCards'
+import { WeatherBlock } from './WeatherBlock'
+import { SoilGauges } from './SoilGauges'
+import { SmartAlerts } from './SmartAlerts'
+import { HistoryChart } from './HistoryChart'
+import { PivotTable } from './PivotTable'
 import type { ProjectionDay } from '@/lib/water-balance'
 import {
   CircleDot, Building2, Plus, ArrowRight,
@@ -403,6 +409,7 @@ interface Props {
   activeSeasons: Season[]
   hasPivots: boolean
   lastManagementBySeason: Record<string, DailyManagement>
+  historyBySeason: Record<string, DailyManagement[]>
   projectionBySeason: Record<string, ProjectionDay[]>
   diagnosticsByPivot: Record<string, PivotDiagnostic>
   summary: {
@@ -422,13 +429,14 @@ export function DashboardClient({
   activeSeasons,
   hasPivots,
   lastManagementBySeason,
+  historyBySeason,
   projectionBySeason,
   diagnosticsByPivot,
   summary,
 }: Props) {
   if (!hasPivots) return <Onboarding />
 
-  const activePivotIds = new Set(activeSeasons.map(s => s.pivot_id).filter(Boolean))
+  const activePivotIds = new Set(activeSeasons.map(s => s.pivot_id).filter((id): id is string => id !== null))
 
   const lastManagementByPivot: Record<string, DailyManagement> = {}
   const projectionByPivot: Record<string, ProjectionDay[]> = {}
@@ -494,6 +502,9 @@ export function DashboardClient({
         </Link>
       </div>
 
+      {/* KPI Cards */}
+      <KpiCards summary={summary} lastManagementBySeason={lastManagementBySeason} />
+
       {/* Mapa */}
       <PivotMap pivots={pivots.map(p => ({
         id:             p.id,
@@ -504,6 +515,37 @@ export function DashboardClient({
         status:         resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id), p.alert_threshold_percent ?? 70),
         lastManagement: lastManagementByPivot[p.id] ?? null,
       }))} />
+
+      {/* Clima + Gauges + Alertas */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <WeatherBlock lastManagementBySeason={lastManagementBySeason} />
+        <SoilGauges
+          pivots={pivots}
+          lastManagementByPivot={lastManagementByPivot}
+          activePivotIds={activePivotIds}
+        />
+        <SmartAlerts
+          pivots={pivots}
+          lastManagementByPivot={lastManagementByPivot}
+          diagnosticsByPivot={diagnosticsByPivot}
+          activePivotIds={activePivotIds}
+        />
+      </div>
+
+      {/* Histórico + Tabela */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-3">
+        <div className="xl:col-span-3">
+          <HistoryChart historyBySeason={historyBySeason} activeSeasons={activeSeasons} />
+        </div>
+        <div className="xl:col-span-2">
+          <PivotTable
+            pivots={pivots}
+            lastManagementByPivot={lastManagementByPivot}
+            activePivotIds={activePivotIds}
+            projectionByPivot={projectionByPivot}
+          />
+        </div>
+      </div>
 
       {/* Cards por fazenda */}
       {Object.entries(grouped).map(([farmName, farmPivots]) => (

@@ -2,7 +2,9 @@
 
 import type { ReactNode } from 'react'
 import { createContext, useCallback, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
+
+const supabase = createClient()
 import type { Company } from '@/types/database'
 
 export interface AuthContextType {

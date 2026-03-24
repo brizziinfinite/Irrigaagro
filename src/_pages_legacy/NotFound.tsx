@@ -1,11 +1,11 @@
 'use client'
 
-import { useNavigate } from 'react-router-dom'
+import { useRouter } from 'next/navigation'
 import { AlertCircle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 export function NotFound() {
-  const navigate = useNavigate()
+  const router = useRouter()
 
   return (
     <div className="min-h-screen bg-surface-secondary flex items-center justify-center p-6">
@@ -31,7 +31,7 @@ export function NotFound() {
         {/* Action buttons */}
         <div className="space-y-3">
           <Button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => router.push('/dashboard')}
             variant="primary"
             size="lg"
             className="w-full flex items-center justify-center gap-2"
@@ -41,7 +41,7 @@ export function NotFound() {
           </Button>
 
           <Button
-            onClick={() => navigate('/')}
+            onClick={() => router.push('/')}
             variant="outline"
             size="lg"
             className="w-full"
