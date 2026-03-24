@@ -1,26 +1,177 @@
 @import "tailwindcss";
 
+@theme {
+  /* === FONTES === */
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+  /* === VERDE AGTECH (ref: Dribbble Agritech Analytics) === */
+  --color-green-950: #021a06;
+  --color-green-900: #040703;
+  --color-green-800: #0b1a0e;
+  --color-green-700: #123427;
+  --color-green-600: #166502;
+  --color-green-500: #1a7d03;
+  --color-green-400: #4a9e1a;
+  --color-green-300: #7ca136;
+  --color-green-200: #a8c97a;
+  --color-green-100: #becec0;
+  --color-green-50:  #ecefec;
+
+  /* === SUPERFÍCIES (dark theme) === */
+  --color-surface-bg:       #040703;
+  --color-surface-sidebar:  #0b1a0e;
+  --color-surface-card:     #111f14;
+  --color-surface-card2:    #162219;
+  --color-surface-elevated: #1c2e20;
+  --color-surface-border:   #2a3d2d;
+  --color-surface-border2:  #1f3022;
+
+  /* === TEXTOS === */
+  --color-text:           #ecefec;
+  --color-text-secondary: #becec0;
+  --color-text-muted:     #a9b4a2;
+  --color-text-faint:     #535c3e;
+
+  /* === STATUS (semáforo de irrigação) === */
+  --color-status-blue:   #06b6d4;
+  --color-status-green:  #22c55e;
+  --color-status-yellow: #f59e0b;
+  --color-status-red:    #ef4444;
+
+  /* === SOMBRAS === */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-float: 0 20px 48px -8px rgb(0 0 0 / 0.6);
+}
+
+/* ====== VARIÁVEIS CSS (disponíveis via var() em todos os componentes) ====== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-surface-bg:       #040703;
+  --color-surface-sidebar:  #0b1a0e;
+  --color-surface-card:     #111f14;
+  --color-surface-card2:    #162219;
+  --color-surface-elevated: #1c2e20;
+  --color-surface-border:   #2a3d2d;
+  --color-surface-border2:  #1f3022;
+
+  --color-text:           #ecefec;
+  --color-text-secondary: #becec0;
+  --color-text-muted:     #a9b4a2;
+  --color-text-faint:     #535c3e;
+
+  --color-green-400: #4a9e1a;
+  --color-green-600: #166502;
+
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04);
+
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ====== RESET ====== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  background-color: var(--color-surface-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
 }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* ====== SCROLLBAR ====== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-faint); }
+
+/* ====== FOCUS ====== */
+*:focus-visible {
+  outline: 2px solid var(--color-green-400);
+  outline-offset: 2px;
+}
+
+/* ====== ANIMAÇÕES ====== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgb(26 125 3 / 0.5); }
+  70%  { box-shadow: 0 0 0 8px rgb(26 125 3 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(26 125 3 / 0); }
+}
+
+/* ====== SURFACE CLASSES ====== */
+@layer utilities {
+  .card {
+    background-color: #111f14;
+    border: 1px solid #1f3022;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04);
+    border-radius: 16px;
+  }
+
+  .card-elevated {
+    background-color: #1c2e20;
+    border: 1px solid #2a3d2d;
+    border-radius: 16px;
+  }
+
+  .status-blue   { color: #06b6d4; background: rgb(6 182 212 / 0.12);   border: 1px solid rgb(6 182 212 / 0.25); }
+  .status-green  { color: #22c55e; background: rgb(34 197 94 / 0.12);   border: 1px solid rgb(34 197 94 / 0.25); }
+  .status-yellow { color: #f59e0b; background: rgb(245 158 11 / 0.12);  border: 1px solid rgb(245 158 11 / 0.25); }
+  .status-red    { color: #ef4444; background: rgb(239 68 68 / 0.12);   border: 1px solid rgb(239 68 68 / 0.25); }
+
+  .animate-fade-in      { animation: fadeInUp 0.3s ease-out both; }
+  .animate-fade-in-fast { animation: fadeIn 0.2s ease-out both; }
+}
+
+/* ====== GLASSMORPHISM ====== */
+.glass {
+  background: rgb(17 31 20 / 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+/* ====== MOISTURE BAR ====== */
+.moisture-bar-dot {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--color-surface-bg);
+  transform: translateX(-50%) translateY(-50%);
+  animation: pulse-ring 2.5s ease-out infinite;
+}
+
+/* ====== STAGGER GRID ====== */
+.stagger-grid > *:nth-child(1) { animation: fadeInUp 0.3s ease-out 0ms   both; }
+.stagger-grid > *:nth-child(2) { animation: fadeInUp 0.3s ease-out 60ms  both; }
+.stagger-grid > *:nth-child(3) { animation: fadeInUp 0.3s ease-out 120ms both; }
+.stagger-grid > *:nth-child(4) { animation: fadeInUp 0.3s ease-out 180ms both; }
