@@ -474,7 +474,7 @@ export default function SafrasPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 max-w-4xl mx-auto">
+      <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Safras</h1>

@@ -194,7 +194,7 @@ export default function FazendasPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 max-w-4xl mx-auto">
+      <div className="flex flex-col gap-5">
         {/* Cabeçalho */}
         <div className="flex items-center justify-between">
           <div>

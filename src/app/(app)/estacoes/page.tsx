@@ -509,7 +509,7 @@ export default function EstacoesPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Estações meteorológicas</h1>
