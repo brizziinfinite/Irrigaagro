@@ -1,0 +1,558 @@
+'use client'
+
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import type { Farm, Pivot, Crop, Season } from '@/types/database'
+import { useAuth } from '@/hooks/useAuth'
+import { listCropsByCompany } from '@/services/crops'
+import { listFarmsByCompany } from '@/services/farms'
+import { listPivotsByFarmIds } from '@/services/pivots'
+import {
+  createSeason,
+  deleteSeason,
+  listSeasonsByFarmIds,
+  updateSeason,
+} from '@/services/seasons'
+import {
+  Sprout, Plus, Pencil, Trash2, X, Loader2, ChevronDown,
+  CalendarDays, Droplets, FlaskConical, Info,
+} from 'lucide-react'
+
+// ─── Helpers ─────────────────────────────────────────────────
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date); d.setDate(d.getDate() + days); return d
+}
+function fmtDate(d: Date) {
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+function calcCTA(cc: number, pm: number, ds: number, rootCm: number): number {
+  return ((cc - pm) / 10) * ds * rootCm
+}
+
+// ─── Linha do tempo das fases ─────────────────────────────────
+function PhaseTimeline({ plantingDate, crop }: { plantingDate: string; crop: Crop }) {
+  const stages = [
+    { label: 'Ini', days: crop.stage1_days, color: '#22c55e' },
+    { label: 'Dev', days: crop.stage2_days, color: '#4a9e1a' },
+    { label: 'Mid', days: crop.stage3_days, color: '#f59e0b' },
+    { label: 'Fin', days: crop.stage4_days, color: '#ef4444' },
+  ]
+  const totalDays = stages.reduce((s, f) => s + (f.days ?? 0), 0)
+  if (totalDays === 0) return null
+  const start = new Date(plantingDate + 'T12:00:00')
+  let cursor = 0
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ display: 'flex', height: 5, borderRadius: 99, overflow: 'hidden', gap: 1 }}>
+        {stages.map((s, i) => (
+          <div key={i} style={{ width: `${((s.days ?? 0) / totalDays) * 100}%`, background: s.color }} />
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+        {stages.map((s, i) => {
+          const stageStart = addDays(start, cursor)
+          cursor += (s.days ?? 0)
+          return (
+            <div key={i}>
+              <div style={{ fontSize: 9, color: s.color, fontWeight: 700 }}>{s.label} {s.days}d</div>
+              <div style={{ fontSize: 9, color: '#535c3e' }}>{fmtDate(stageStart)}</div>
+            </div>
+          )
+        })}
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 9, color: '#7a9e82', fontWeight: 700 }}>Colheita</div>
+          <div style={{ fontSize: 9, color: '#535c3e' }}>{fmtDate(addDays(start, totalDays))}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Componentes auxiliares ───────────────────────────────────
+function StyledSelect({ label, value, onChange, children, required }: {
+  label: string; value: string; onChange: (v: string) => void; children: React.ReactNode; required?: boolean
+}) {
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>
+        {label}{required && ' *'}
+      </label>
+      <div style={{ position: 'relative' }}>
+        <select value={value} onChange={e => onChange(e.target.value)} required={required}
+          style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: value ? '#ecefec' : '#535c3e', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+          onFocus={e => e.target.style.borderColor = '#4a9e1a'}
+          onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+        >
+          {children}
+        </select>
+        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#535c3e', pointerEvents: 'none' }} />
+      </div>
+    </div>
+  )
+}
+
+function NumField({ label, value, onChange, placeholder, unit, hint }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; unit?: string; hint?: string
+}) {
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>{label}</label>
+      <div style={{ position: 'relative' }}>
+        <input type="number" step="any" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+          style={{ width: '100%', padding: unit ? '10px 44px 10px 14px' : '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none' }}
+          onFocus={e => e.target.style.borderColor = '#4a9e1a'}
+          onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+        />
+        {unit && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#535c3e', pointerEvents: 'none' }}>{unit}</span>}
+      </div>
+      {hint && <p style={{ fontSize: 11, color: '#3a5240', marginTop: 3 }}>{hint}</p>}
+    </div>
+  )
+}
+
+function SectionLabel({ text }: { text: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>{text}</span>
+      <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+    </div>
+  )
+}
+
+// ─── Modal ───────────────────────────────────────────────────
+interface SeasonFull extends Season {
+  pivots: { name: string } | null
+  crops: Crop | null
+  farms: { name: string }
+}
+
+interface SeasonModalProps {
+  season: SeasonFull | null
+  farms: Farm[]; pivots: Pivot[]; crops: Crop[]
+  onClose: () => void; onSaved: () => void
+}
+
+function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonModalProps) {
+  const isEdit = !!season
+  const [name, setName]               = useState(season?.name ?? '')
+  const [farmId, setFarmId]           = useState(season?.farm_id ?? farms[0]?.id ?? '')
+  const [pivotId, setPivotId]         = useState(season?.pivot_id ?? '')
+  const [cropId, setCropId]           = useState(season?.crop_id ?? '')
+  const [plantingDate, setPlantingDate] = useState(season?.planting_date ?? '')
+  const [cc, setCc]                   = useState(season?.field_capacity?.toString() ?? '')
+  const [pm, setPm]                   = useState(season?.wilting_point?.toString() ?? '')
+  const [ds, setDs]                   = useState(season?.bulk_density?.toString() ?? '')
+  const [fFactor, setFFactor]         = useState(season?.f_factor?.toString() ?? '')
+  const [initialAdc, setInitialAdc]   = useState(season?.initial_adc_percent?.toString() ?? '100')
+  const [notes, setNotes]             = useState(season?.notes ?? '')
+  const [isActive, setIsActive]       = useState(season?.is_active ?? true)
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState('')
+
+  const farmPivots      = pivots.filter(p => p.farm_id === farmId)
+  const selectedCrop    = crops.find(c => c.id === cropId) ?? null
+  const peakRoot        = selectedCrop?.root_depth_stage3_cm ?? selectedCrop?.root_depth_stage1_cm ?? null
+
+  const ctaPreview = useMemo(() => {
+    const ccN = parseFloat(cc), pmN = parseFloat(pm), dsN = parseFloat(ds)
+    if (ccN > 0 && pmN > 0 && dsN > 0 && peakRoot) return calcCTA(ccN, pmN, dsN, peakRoot)
+    return null
+  }, [cc, pm, ds, peakRoot])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim() || !farmId) return
+    setError(''); setLoading(true)
+    const payload = {
+      name: name.trim(), farm_id: farmId,
+      pivot_id: pivotId || null, crop_id: cropId || null,
+      planting_date: plantingDate || null,
+      field_capacity: cc ? Number(cc) : null,
+      wilting_point:  pm ? Number(pm) : null,
+      bulk_density:   ds ? Number(ds) : null,
+      f_factor: fFactor ? Number(fFactor) : null,
+      initial_adc_percent: initialAdc ? Number(initialAdc) : null,
+      notes: notes.trim() || null,
+      is_active: isActive,
+    }
+    try {
+      if (isEdit) {
+        await updateSeason(season.id, payload)
+      } else {
+        await createSeason(payload)
+      }
+      onSaved()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao salvar safra')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
+      <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 20, padding: 28, width: '100%', maxWidth: 540, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)', maxHeight: '92vh', overflowY: 'auto' }}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>{isEdit ? 'Editar Safra' : 'Nova Safra'}</h2>
+          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#3a5240', cursor: 'pointer' }}><X size={16} /></button>
+        </div>
+
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.25)', color: '#ef4444' }}>{error}</div>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <SectionLabel text="Identificação" />
+
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Nome da Safra *</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} required
+              placeholder="Ex: Safra 2025/26 Soja — Pivô Central"
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none' }}
+              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
+              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <StyledSelect label="Fazenda" value={farmId} onChange={v => { setFarmId(v); setPivotId('') }} required>
+              {farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+            </StyledSelect>
+            <StyledSelect label="Pivô" value={pivotId} onChange={setPivotId}>
+              <option value="">Sem pivô específico</option>
+              {farmPivots.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </StyledSelect>
+          </div>
+
+          {/* Aviso: múltiplas safras no mesmo pivô */}
+          <div style={{ display: 'flex', gap: 8, padding: '10px 12px', borderRadius: 10, background: 'rgb(6 182 212 / 0.06)', border: '1px solid rgb(6 182 212 / 0.15)' }}>
+            <Info size={13} style={{ color: '#06b6d4', flexShrink: 0, marginTop: 1 }} />
+            <p style={{ fontSize: 11, color: '#535c3e', lineHeight: 1.5 }}>
+              Um pivô pode ter <strong style={{ color: '#7a9e82' }}>múltiplas safras ativas</strong> ao mesmo tempo — ex: 50% soja + 50% milho. Cada safra tem seu próprio balanço hídrico.
+            </p>
+          </div>
+
+          <SectionLabel text="Cultura e Plantio" />
+
+          <StyledSelect label="Cultura" value={cropId} onChange={setCropId}>
+            <option value="">Selecionar cultura...</option>
+            {crops.map(c => <option key={c.id} value={c.id}>{c.name}{c.total_cycle_days ? ` — ${c.total_cycle_days} dias` : ''}</option>)}
+          </StyledSelect>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Data de Plantio</label>
+            <input type="date" value={plantingDate} onChange={e => setPlantingDate(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: plantingDate ? '#ecefec' : '#535c3e', outline: 'none', colorScheme: 'dark' }}
+              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
+              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+            />
+          </div>
+
+          {/* Timeline ao vivo */}
+          {selectedCrop && plantingDate && (
+            <div style={{ background: '#162219', border: '1px solid #1f3022', borderRadius: 12, padding: '14px 16px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#4a9e1a', marginBottom: 2 }}>📅 Cronograma — {selectedCrop.name}</p>
+              <PhaseTimeline plantingDate={plantingDate} crop={selectedCrop} />
+            </div>
+          )}
+
+          <SectionLabel text="Parâmetros de Solo" />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <NumField label="Cap. Campo (CC)" value={cc} onChange={setCc} placeholder="32" unit="%" hint="% volumétrico" />
+            <NumField label="Pto. Murcha (PM)" value={pm} onChange={setPm} placeholder="14" unit="%" hint="% volumétrico" />
+            <NumField label="Dens. Solo (Ds)" value={ds} onChange={setDs} placeholder="1.4" unit="g/cm³" />
+          </div>
+
+          {/* CTA ao vivo */}
+          {ctaPreview !== null && (
+            <div style={{ background: '#162219', border: '1px solid rgb(74 158 26 / 0.2)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div>
+                <p style={{ fontSize: 10, color: '#3a5240', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CTA estimada</p>
+                <p style={{ fontSize: 22, fontWeight: 800, color: '#4a9e1a', fontFamily: 'var(--font-mono)', lineHeight: 1.2 }}>
+                  {ctaPreview.toFixed(1)} <span style={{ fontSize: 12, fontWeight: 400, color: '#535c3e' }}>mm</span>
+                </p>
+                <p style={{ fontSize: 10, color: '#3a5240' }}>raiz fase {selectedCrop?.root_depth_stage3_cm ? '3' : '1'}: {peakRoot} cm</p>
+              </div>
+              <div style={{ flex: 1, fontSize: 11, color: '#3a5240', lineHeight: 1.9 }}>
+                <p>CTA = ((CC − PM) ÷ 10) × Ds × Raiz</p>
+                <p>= (({cc} − {pm}) ÷ 10) × {ds} × {peakRoot} cm</p>
+                <p style={{ color: '#535c3e' }}>CAD = CTA × f  →  calculado por fase no manejo</p>
+              </div>
+            </div>
+          )}
+
+          <NumField label="ADc Inicial no Plantio" value={initialAdc} onChange={setInitialAdc}
+            placeholder="100" unit="%" hint="% da CTA disponível no momento do plantio (normalmente 100%)" />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+            <NumField label="Fator f base" value={fFactor} onChange={setFFactor}
+              placeholder="0.50" hint="Fallback quando a cultura não define fator f por fase" />
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Observações</label>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={3}
+                placeholder="Anotações operacionais da safra"
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none', resize: 'vertical' }}
+              />
+            </div>
+          </div>
+
+          <SectionLabel text="Status" />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button type="button" onClick={() => setIsActive(v => !v)}
+              style={{ width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', background: isActive ? 'linear-gradient(135deg, #166502, #4a9e1a)' : '#162219', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 3, left: isActive ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgb(0 0 0 / 0.4)' }} />
+            </button>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#ecefec' }}>{isActive ? 'Safra Ativa' : 'Safra Inativa'}</p>
+              <p style={{ fontSize: 11, color: '#535c3e' }}>{isActive ? 'Aparece no Dashboard e Manejo Diário' : 'Arquivada'}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-2">
+            <button type="button" onClick={onClose}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid #2a3d2d', color: '#7a9e82', cursor: 'pointer' }}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={loading}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              {loading && <Loader2 size={14} className="animate-spin" />}
+              {isEdit ? 'Salvar' : 'Criar Safra'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ─── Card da safra ────────────────────────────────────────────
+function SeasonCard({ season, onEdit, onDelete, deleting }: {
+  season: SeasonFull; onEdit: () => void; onDelete: () => void; deleting: boolean
+}) {
+  const totalDays = season.crops
+    ? (season.crops.stage1_days ?? 0) + (season.crops.stage2_days ?? 0) + (season.crops.stage3_days ?? 0) + (season.crops.stage4_days ?? 0)
+    : 0
+  const harvestDate = season.planting_date && totalDays > 0
+    ? fmtDate(addDays(new Date(season.planting_date + 'T12:00:00'), totalDays))
+    : null
+  const peakRoot = season.crops?.root_depth_stage3_cm ?? season.crops?.root_depth_stage1_cm ?? null
+  const cta = (season.field_capacity && season.wilting_point && season.bulk_density && peakRoot)
+    ? calcCTA(season.field_capacity, season.wilting_point, season.bulk_density, peakRoot)
+    : null
+
+  return (
+    <div style={{ background: '#111f14', border: `1px solid ${season.is_active ? 'rgb(74 158 26 / 0.25)' : '#1f3022'}`, borderRadius: 16, padding: '18px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        <div style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0, background: season.is_active ? 'rgb(74 158 26 / 0.15)' : '#162219', border: `1px solid ${season.is_active ? 'rgb(74 158 26 / 0.3)' : '#1f3022'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Sprout size={18} style={{ color: season.is_active ? '#4a9e1a' : '#3a5240' }} />
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#ecefec' }}>{season.name}</p>
+            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgb(34 197 94 / 0.12)' : '#162219', color: season.is_active ? '#22c55e' : '#535c3e', border: `1px solid ${season.is_active ? 'rgb(34 197 94 / 0.25)' : '#1f3022'}` }}>
+              {season.is_active ? '● Ativa' : 'Inativa'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
+            <span style={{ fontSize: 12, color: '#535c3e' }}>
+              {season.farms.name}{season.pivots ? ` · ${season.pivots.name}` : ''}
+            </span>
+            {season.crops && <span style={{ fontSize: 12, color: '#7a9e82', fontWeight: 500 }}>🌱 {season.crops.name}</span>}
+            {season.planting_date && (
+              <span style={{ fontSize: 12, color: '#535c3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CalendarDays size={11} />
+                {new Date(season.planting_date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                {harvestDate && ` → ${harvestDate}`}
+              </span>
+            )}
+          </div>
+
+          {/* Chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {season.field_capacity && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#162219', color: '#7a9e82', display: 'flex', alignItems: 'center', gap: 3 }}><Droplets size={10} />CC {season.field_capacity}%</span>}
+            {season.wilting_point && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#162219', color: '#7a9e82' }}>PM {season.wilting_point}%</span>}
+            {season.bulk_density && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#162219', color: '#7a9e82' }}>Ds {season.bulk_density}</span>}
+            {cta && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgb(74 158 26 / 0.1)', color: '#4a9e1a', border: '1px solid rgb(74 158 26 / 0.2)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}><FlaskConical size={10} />CTA {cta.toFixed(1)} mm</span>}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          <button onClick={onEdit} title="Editar"
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1c2e20'; (e.currentTarget as HTMLElement).style.color = '#becec0' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+            <Pencil size={14} />
+          </button>
+          <button onClick={onDelete} disabled={deleting} title="Excluir"
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Página ──────────────────────────────────────────────────
+export default function SafrasPage() {
+  const { company, loading: authLoading } = useAuth()
+  const [seasons, setSeasons]     = useState<SeasonFull[]>([])
+  const [farms, setFarms]         = useState<Farm[]>([])
+  const [pivots, setPivots]       = useState<Pivot[]>([])
+  const [crops, setCrops]         = useState<Crop[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingSeason, setEditingSeason] = useState<SeasonFull | null>(null)
+  const [deletingId, setDeletingId]       = useState<string | null>(null)
+
+  const loadData = useCallback(async () => {
+    if (!company?.id) {
+      setSeasons([])
+      setFarms([])
+      setPivots([])
+      setCrops([])
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const farmsData = await listFarmsByCompany(company.id)
+      const farmIds = farmsData.map((farm) => farm.id)
+      const [seasonsData, pivotsData, cropsData] = await Promise.all([
+        listSeasonsByFarmIds(farmIds),
+        listPivotsByFarmIds(farmIds),
+        listCropsByCompany(company.id),
+      ])
+
+      setFarms(farmsData)
+      setSeasons(seasonsData as SeasonFull[])
+      setPivots(pivotsData)
+      setCrops(cropsData)
+    } finally {
+      setLoading(false)
+    }
+  }, [company?.id])
+
+  useEffect(() => {
+    if (authLoading) return
+    loadData()
+  }, [authLoading, loadData])
+
+  async function handleDelete(id: string) {
+    if (!confirm('Excluir esta safra? O histórico de manejo será removido.')) return
+    setDeletingId(id)
+    try {
+      await deleteSeason(id)
+      await loadData()
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const activeSeasons   = seasons.filter(s => s.is_active)
+  const inactiveSeasons = seasons.filter(s => !s.is_active)
+
+  function GroupHeader({ label, count }: { label: string; count: number }) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#3a5240' }}>{label}</span>
+        <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#162219', color: '#3a5240' }}>{count}</span>
+        <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="flex flex-col gap-5 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: '#ecefec' }}>Safras</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#7a9e82' }}>
+              {activeSeasons.length} ativa{activeSeasons.length !== 1 ? 's' : ''} · {inactiveSeasons.length} arquivada{inactiveSeasons.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <button
+            onClick={() => { setEditingSeason(null); setModalOpen(true) }}
+            disabled={farms.length === 0}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? '#162219' : 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: farms.length === 0 ? '#3a5240' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(74 158 26 / 0.3)' }}
+          >
+            <Plus size={16} /> Nova Safra
+          </button>
+        </div>
+
+        {authLoading || loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={24} className="animate-spin" style={{ color: '#4a9e1a' }} />
+          </div>
+        ) : farms.length === 0 ? (
+          <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+            <Sprout size={28} style={{ color: '#4a9e1a', margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#ecefec', marginBottom: 8 }}>Cadastre uma fazenda primeiro</h3>
+            <p style={{ fontSize: 14, color: '#535c3e' }}>Acesse <strong style={{ color: '#7a9e82' }}>Configuração → Fazendas</strong> para começar.</p>
+          </div>
+        ) : seasons.length === 0 ? (
+          <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+            <Sprout size={28} style={{ color: '#4a9e1a', margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#ecefec', marginBottom: 8 }}>Nenhuma safra cadastrada</h3>
+            <p style={{ fontSize: 14, color: '#535c3e', marginBottom: 24 }}>Configure a primeira safra para iniciar o manejo hídrico.</p>
+            <button onClick={() => { setEditingSeason(null); setModalOpen(true) }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer' }}>
+              <Plus size={16} /> Criar Safra
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {activeSeasons.length > 0 && (
+              <div>
+                <GroupHeader label="Safras Ativas" count={activeSeasons.length} />
+                <div className="flex flex-col gap-3">
+                  {activeSeasons.map(s => (
+                    <SeasonCard key={s.id} season={s}
+                      onEdit={() => { setEditingSeason(s); setModalOpen(true) }}
+                      onDelete={() => handleDelete(s.id)}
+                      deleting={deletingId === s.id}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            {inactiveSeasons.length > 0 && (
+              <div>
+                <GroupHeader label="Arquivadas" count={inactiveSeasons.length} />
+                <div className="flex flex-col gap-3">
+                  {inactiveSeasons.map(s => (
+                    <SeasonCard key={s.id} season={s}
+                      onEdit={() => { setEditingSeason(s); setModalOpen(true) }}
+                      onDelete={() => handleDelete(s.id)}
+                      deleting={deletingId === s.id}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {modalOpen && (
+        <SeasonModal
+          season={editingSeason}
+          farms={farms} pivots={pivots} crops={crops}
+          onClose={() => setModalOpen(false)}
+          onSaved={loadData}
+        />
+      )}
+    </>
+  )
+}

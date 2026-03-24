@@ -1,0 +1,311 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+import 'leaflet/dist/leaflet.css'
+import type { DailyManagement } from '@/types/database'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type IrrigationStatus = 'azul' | 'verde' | 'amarelo' | 'vermelho' | 'sem_safra'
+
+interface MapPivot {
+  id: string
+  name: string
+  farm_name: string
+  latitude: number | null
+  longitude: number | null
+  status: IrrigationStatus
+  lastManagement: DailyManagement | null
+}
+
+interface PivotMapProps {
+  pivots: MapPivot[]
+}
+
+// ─── Status colors ────────────────────────────────────────────────────────────
+
+const STATUS_COLORS: Record<IrrigationStatus, { fill: string; stroke: string; label: string }> = {
+  azul:      { fill: '#06b6d4', stroke: '#0891b2', label: 'Irrigando' },
+  verde:     { fill: '#22c55e', stroke: '#16a34a', label: 'OK' },
+  amarelo:   { fill: '#f59e0b', stroke: '#d97706', label: 'Atenção' },
+  vermelho:  { fill: '#ef4444', stroke: '#dc2626', label: 'Irrigar Agora' },
+  sem_safra: { fill: '#3a5240', stroke: '#1f3022', label: 'Sem safra' },
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function PivotMap({ pivots }: PivotMapProps) {
+  const mapRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapInstanceRef = useRef<any>(null)
+
+  const pivotsWithCoords = pivots.filter(p => p.latitude !== null && p.longitude !== null)
+
+  useEffect(() => {
+    if (!mapRef.current || pivotsWithCoords.length === 0) return
+
+    // Destroy previous instance before async import
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove()
+      mapInstanceRef.current = null
+    }
+
+    let cancelled = false
+
+    // Dynamic import to avoid SSR
+    import('leaflet').then(L => {
+      if (cancelled || !mapRef.current) return
+
+      // Fix default icon paths for Next.js
+      // @ts-expect-error leaflet icon workaround
+      delete L.Icon.Default.prototype._getIconUrl
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      })
+
+      const lats = pivotsWithCoords.map(p => p.latitude as number)
+      const lngs = pivotsWithCoords.map(p => p.longitude as number)
+      const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
+      const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2
+
+      const map = L.map(mapRef.current!, {
+        center: [centerLat, centerLng],
+        zoom: 12,
+        zoomControl: true,
+        attributionControl: false,
+      })
+
+      mapInstanceRef.current = map
+
+      // Dark satellite-style tile
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri',
+        maxZoom: 19,
+      }).addTo(map)
+
+      // Overlay: labels
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        opacity: 0.6,
+      }).addTo(map)
+
+      // Markers per pivot
+      for (const pivot of pivotsWithCoords) {
+        const col = STATUS_COLORS[pivot.status]
+        const m = pivot.lastManagement
+
+        const pct = m?.field_capacity_percent ?? null
+
+        // Build popup HTML
+        const barWidth = pct !== null ? Math.min(100, Math.max(0, pct)) : 0
+        const barColor = col.fill
+
+        const popupHtml = `
+          <div style="
+            font-family: system-ui, sans-serif;
+            background: #111f14;
+            border: 1px solid #1f3022;
+            border-radius: 12px;
+            padding: 14px 16px;
+            min-width: 200px;
+            color: #ecefec;
+          ">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <div style="
+                width:8px;height:8px;border-radius:50%;
+                background:${col.fill};
+                box-shadow:0 0 6px ${col.fill};
+              "></div>
+              <strong style="font-size:14px;">${pivot.name}</strong>
+            </div>
+            <p style="font-size:11px;color:#535c3e;margin:0 0 10px;">${pivot.farm_name}</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
+              <div style="background:#162219;border-radius:8px;padding:8px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#ecefec;">${m?.eto_mm != null ? m.eto_mm.toFixed(1) : '—'}</div>
+                <div style="font-size:10px;color:#535c3e;">ETo (mm)</div>
+              </div>
+              <div style="background:#162219;border-radius:8px;padding:8px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#ecefec;">${m?.etc_mm != null ? m.etc_mm.toFixed(1) : '—'}</div>
+                <div style="font-size:10px;color:#535c3e;">ETc (mm)</div>
+              </div>
+              <div style="background:#162219;border-radius:8px;padding:8px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#ecefec;">${m?.rainfall_mm != null ? m.rainfall_mm.toFixed(1) : '—'}</div>
+                <div style="font-size:10px;color:#535c3e;">Chuva</div>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-size:10px;color:#535c3e;">Cap. Campo</span>
+                <span style="font-size:10px;font-weight:600;color:${barColor};">${pct !== null ? pct.toFixed(0) + '%' : '—'}</span>
+              </div>
+              <div style="height:5px;background:#162219;border-radius:99px;overflow:hidden;">
+                <div style="width:${barWidth}%;height:100%;background:${barColor};border-radius:99px;"></div>
+              </div>
+            </div>
+
+            <div style="
+              margin-top:10px;padding:4px 10px;border-radius:20px;
+              background:${col.fill}20;border:1px solid ${col.fill}40;
+              display:inline-flex;align-items:center;gap:5px;
+            ">
+              <span style="width:6px;height:6px;border-radius:50%;background:${col.fill};display:inline-block;"></span>
+              <span style="font-size:11px;font-weight:600;color:${col.fill};">${col.label}</span>
+            </div>
+          </div>
+        `
+
+        // Custom circle marker
+        const circleMarker = L.circleMarker([pivot.latitude as number, pivot.longitude as number], {
+          radius: 14,
+          fillColor: col.fill,
+          fillOpacity: 0.85,
+          color: col.stroke,
+          weight: 2,
+        })
+
+        // Pulse ring effect via SVG overlay
+        const pulseIcon = L.divIcon({
+          className: '',
+          html: `
+            <div style="position:relative;width:40px;height:40px;transform:translate(-50%,-50%);">
+              <div style="
+                position:absolute;inset:0;
+                border-radius:50%;
+                background:${col.fill};
+                opacity:0.2;
+                animation:irrigaPulse 2s ease-out infinite;
+              "></div>
+              <div style="
+                position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                width:22px;height:22px;border-radius:50%;
+                background:${col.fill};
+                border:2.5px solid ${col.stroke};
+                box-shadow:0 2px 8px ${col.fill}80;
+                display:flex;align-items:center;justify-content:center;
+              ">
+                <span style="font-size:9px;font-weight:800;color:#fff;">
+                  ${pct !== null ? Math.round(pct) : '?'}
+                </span>
+              </div>
+            </div>
+          `,
+          iconAnchor: [0, 0],
+        })
+
+        const marker = L.marker([pivot.latitude as number, pivot.longitude as number], {
+          icon: pulseIcon,
+          zIndexOffset: pivot.status === 'vermelho' ? 100 : 0,
+        })
+
+        marker.bindPopup(popupHtml, {
+          maxWidth: 260,
+          className: 'irrigaagro-popup',
+        })
+
+        marker.addTo(map)
+        circleMarker.addTo(map)
+      }
+
+      // Fit bounds
+      if (pivotsWithCoords.length > 1) {
+        const bounds = L.latLngBounds(
+          pivotsWithCoords.map(p => [p.latitude as number, p.longitude as number])
+        )
+        map.fitBounds(bounds, { padding: [40, 40] })
+      }
+    })
+
+    return () => {
+      cancelled = true
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
+      // Clear Leaflet's internal ID so the container can be reused
+      if (mapRef.current) {
+        delete (mapRef.current as HTMLDivElement & { _leaflet_id?: number })._leaflet_id
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pivotsWithCoords.length])
+
+  if (pivotsWithCoords.length === 0) {
+    return (
+      <div style={{
+        background: '#111f14', border: '1px solid #1f3022', borderRadius: 16,
+        padding: '20px 24px', color: '#3a5240', fontSize: 13, textAlign: 'center',
+      }}>
+        Nenhum pivô com coordenadas cadastradas.{' '}
+        <a href="/pivos" style={{ color: '#4a9e1a', textDecoration: 'none' }}>
+          Adicione latitude/longitude nos pivôs
+        </a>{' '}
+        para ver o mapa.
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1px solid #1f3022' }}>
+      {/* CSS: pulse animation + popup style */}
+      <style>{`
+        @keyframes irrigaPulse {
+          0%   { transform: scale(0.8); opacity: 0.4; }
+          70%  { transform: scale(2.2); opacity: 0; }
+          100% { transform: scale(0.8); opacity: 0; }
+        }
+        .irrigaagro-popup .leaflet-popup-content-wrapper {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+        .irrigaagro-popup .leaflet-popup-content {
+          margin: 0 !important;
+        }
+        .irrigaagro-popup .leaflet-popup-tip-container {
+          display: none !important;
+        }
+        .leaflet-container {
+          background: #0b1a0e !important;
+          font-family: system-ui, sans-serif !important;
+        }
+        .leaflet-control-zoom a {
+          background: #111f14 !important;
+          border-color: #1f3022 !important;
+          color: #7a9e82 !important;
+        }
+        .leaflet-control-zoom a:hover {
+          background: #162219 !important;
+          color: #ecefec !important;
+        }
+      `}</style>
+
+      <div ref={mapRef} style={{ height: 340, width: '100%' }} />
+
+      {/* Legend overlay */}
+      <div style={{
+        position: 'absolute', top: 12, right: 12, zIndex: 1000,
+        background: 'rgb(11 26 14 / 0.92)',
+        border: '1px solid #1f3022',
+        borderRadius: 10, padding: '8px 12px',
+        display: 'flex', flexDirection: 'column', gap: 5,
+        backdropFilter: 'blur(4px)',
+      }}>
+        {(Object.entries(STATUS_COLORS) as [IrrigationStatus, typeof STATUS_COLORS[IrrigationStatus]][]).map(([key, val]) => (
+          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: val.fill,
+              boxShadow: `0 0 4px ${val.fill}`,
+            }} />
+            <span style={{ fontSize: 11, color: '#7a9e82' }}>{val.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,479 @@
+'use client'
+
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import type { Crop } from '@/types/database'
+import { useAuth } from '@/hooks/useAuth'
+import { createCrop, deleteCrop, listCropsByCompany, updateCrop } from '@/services/crops'
+import { Wheat, Plus, Pencil, Trash2, X, Loader2, Lock, ChevronRight, Copy } from 'lucide-react'
+
+// ─── Fases FAO-56 ────────────────────────────────────────────
+const STAGES = [
+  { key: '1', label: 'Fase 1 — Inicial',       kcKey: 'kc_ini',   kcLabel: 'Kc ini',   hint: 'Kc constante (plano)' },
+  { key: '2', label: 'Fase 2 — Desenvolvimento', kcKey: null,       kcLabel: null,       hint: 'Kc interpolado ini→mid' },
+  { key: '3', label: 'Fase 3 — Médio',          kcKey: 'kc_mid',   kcLabel: 'Kc mid',   hint: 'Kc constante (plano)' },
+  { key: '4', label: 'Fase 4 — Final',          kcKey: 'kc_final', kcLabel: 'Kc final', hint: 'Kc interpolado mid→final' },
+] as const
+
+// ─── Input numérico helper ────────────────────────────────────
+function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
+  label: string; value: string; onChange: (v: string) => void
+  placeholder?: string; unit?: string; hint?: string; small?: boolean
+}) {
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#becec0', marginBottom: 5 }}>{label}</label>
+      <div style={{ position: 'relative' }}>
+        <input
+          type="number" step="any" value={value} onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          style={{
+            width: '100%', padding: unit ? `${small ? 8 : 10}px ${unit.length > 2 ? 48 : 36}px ${small ? 8 : 10}px 10px` : `${small ? 8 : 10}px 10px`,
+            borderRadius: 8, fontSize: small ? 13 : 14,
+            background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none',
+          }}
+          onFocus={e => e.target.style.borderColor = '#4a9e1a'}
+          onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+        />
+        {unit && (
+          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#535c3e', pointerEvents: 'none' }}>
+            {unit}
+          </span>
+        )}
+      </div>
+      {hint && <p style={{ fontSize: 10, color: '#3a5240', marginTop: 3 }}>{hint}</p>}
+    </div>
+  )
+}
+
+// ─── Modal ───────────────────────────────────────────────────
+interface CropModalProps { crop: Crop | null; companyId: string; onClose: () => void; onSaved: () => void }
+
+function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
+  const isEdit = !!crop
+  const [name, setName] = useState(crop?.name ?? '')
+  const [kcIni, setKcIni]     = useState(crop?.kc_ini?.toString() ?? '')
+  const [kcMid, setKcMid]     = useState(crop?.kc_mid?.toString() ?? '')
+  const [kcFinal, setKcFinal] = useState(crop?.kc_final?.toString() ?? '')
+  const [s1days, setS1days] = useState(crop?.stage1_days?.toString() ?? '')
+  const [s2days, setS2days] = useState(crop?.stage2_days?.toString() ?? '')
+  const [s3days, setS3days] = useState(crop?.stage3_days?.toString() ?? '')
+  const [s4days, setS4days] = useState(crop?.stage4_days?.toString() ?? '')
+  const [r1, setR1] = useState(crop?.root_depth_stage1_cm?.toString() ?? '')
+  const [r2, setR2] = useState(crop?.root_depth_stage2_cm?.toString() ?? '')
+  const [r3, setR3] = useState(crop?.root_depth_stage3_cm?.toString() ?? '')
+  const [r4, setR4] = useState(crop?.root_depth_stage4_cm?.toString() ?? '')
+  const [f1, setF1] = useState(crop?.f_factor_stage1?.toString() ?? '')
+  const [f2, setF2] = useState(crop?.f_factor_stage2?.toString() ?? '')
+  const [f3, setF3] = useState(crop?.f_factor_stage3?.toString() ?? '')
+  const [f4, setF4] = useState(crop?.f_factor_stage4?.toString() ?? '')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const totalDays = useMemo(() => {
+    const vals = [s1days, s2days, s3days, s4days].map(v => parseInt(v) || 0)
+    return vals.reduce((a, b) => a + b, 0)
+  }, [s1days, s2days, s3days, s4days])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) return
+    setError('')
+    setLoading(true)
+
+    const payload = {
+      name: name.trim(),
+      company_id: companyId,
+      kc_ini:   kcIni   ? Number(kcIni)   : null,
+      kc_mid:   kcMid   ? Number(kcMid)   : null,
+      kc_final: kcFinal ? Number(kcFinal) : null,
+      stage1_days: s1days ? Number(s1days) : null,
+      stage2_days: s2days ? Number(s2days) : null,
+      stage3_days: s3days ? Number(s3days) : null,
+      stage4_days: s4days ? Number(s4days) : null,
+      root_depth_stage1_cm: r1 ? Number(r1) : null,
+      root_depth_stage2_cm: r2 ? Number(r2) : null,
+      root_depth_stage3_cm: r3 ? Number(r3) : null,
+      root_depth_stage4_cm: r4 ? Number(r4) : null,
+      f_factor_stage1: f1 ? Number(f1) : null,
+      f_factor_stage2: f2 ? Number(f2) : null,
+      f_factor_stage3: f3 ? Number(f3) : null,
+      f_factor_stage4: f4 ? Number(f4) : null,
+      total_cycle_days: totalDays > 0 ? totalDays : null,
+    }
+
+    try {
+      if (isEdit) {
+        await updateCrop(crop.id, payload)
+      } else {
+        await createCrop(payload)
+      }
+
+      onSaved()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao salvar cultura')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const stageData = [
+    { label: 'Fase 1 — Inicial',         days: s1days, setDays: setS1days, root: r1, setRoot: setR1, f: f1, setF: setF1, kc: kcIni,   setKc: setKcIni,   kcLabel: 'Kc ini',   hint: 'constante' },
+    { label: 'Fase 2 — Desenvolvimento', days: s2days, setDays: setS2days, root: r2, setRoot: setR2, f: f2, setF: setF2, kc: null,    setKc: null,       kcLabel: null,       hint: 'interpolado' },
+    { label: 'Fase 3 — Médio',           days: s3days, setDays: setS3days, root: r3, setRoot: setR3, f: f3, setF: setF3, kc: kcMid,   setKc: setKcMid,   kcLabel: 'Kc mid',   hint: 'constante' },
+    { label: 'Fase 4 — Final',           days: s4days, setDays: setS4days, root: r4, setRoot: setR4, f: f4, setF: setF4, kc: kcFinal, setKc: setKcFinal, kcLabel: 'Kc final', hint: 'interpolado' },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
+      <div style={{
+        background: '#111f14', border: '1px solid #1f3022', borderRadius: 20, padding: 28,
+        width: '100%', maxWidth: 560, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)',
+        maxHeight: '92vh', overflowY: 'auto',
+      }}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>{isEdit ? 'Editar Cultura' : 'Nova Cultura'}</h2>
+          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#3a5240', cursor: 'pointer' }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.25)', color: '#ef4444' }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* Nome */}
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Nome da Cultura *</label>
+            <input
+              type="text" value={name} onChange={e => setName(e.target.value)} required
+              placeholder="Ex: Soja, Milho Safrinha..."
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none' }}
+              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
+              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+            />
+          </div>
+
+          {/* 4 Fases */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>
+                Fases de Desenvolvimento — FAO-56
+              </span>
+              <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+              {totalDays > 0 && (
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#4a9e1a' }}>Ciclo: {totalDays} dias</span>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {stageData.map((stage, i) => (
+                <div key={i} style={{ background: '#162219', border: '1px solid #1f3022', borderRadius: 12, padding: '14px 16px' }}>
+                  {/* Título da fase */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                      background: 'rgb(74 158 26 / 0.15)', border: '1px solid rgb(74 158 26 / 0.3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, fontWeight: 700, color: '#4a9e1a',
+                    }}>
+                      {i + 1}
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#becec0' }}>{stage.label}</span>
+                    <span style={{ fontSize: 10, color: '#3a5240', marginLeft: 4 }}>Kc {stage.hint}</span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: stage.kcLabel ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr', gap: 10 }}>
+                    <NumInput
+                      label="Duração" value={stage.days} onChange={stage.setDays}
+                      placeholder="dias" unit="dias" small
+                    />
+                    <NumInput
+                      label="Profund. raiz" value={stage.root} onChange={stage.setRoot}
+                      placeholder="cm" unit="cm" small
+                    />
+                    <NumInput
+                      label="Fator f" value={stage.f} onChange={stage.setF}
+                      placeholder="0.00" small hint="0-1"
+                    />
+                    {stage.kcLabel && stage.setKc && (
+                      <NumInput
+                        label={stage.kcLabel} value={stage.kc ?? ''} onChange={stage.setKc}
+                        placeholder="0.00" small
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Botões */}
+          <div className="flex gap-3">
+            <button type="button" onClick={onClose}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid #2a3d2d', color: '#7a9e82', cursor: 'pointer' }}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={loading}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              {loading && <Loader2 size={14} className="animate-spin" />}
+              {isEdit ? 'Salvar' : 'Criar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ─── Card cultura na lista ────────────────────────────────────
+function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
+  crop: Crop; isCustom: boolean
+  onEdit: () => void; onDelete: () => void; onDuplicate: () => void; deleting: boolean
+}) {
+  const [expanded, setExpanded] = useState(false)
+
+  const sumDays = (crop.stage1_days ?? 0) + (crop.stage2_days ?? 0) + (crop.stage3_days ?? 0) + (crop.stage4_days ?? 0)
+  const totalDays = crop.total_cycle_days ?? (sumDays > 0 ? sumDays : null)
+
+  const hasStages = crop.stage1_days || crop.stage2_days || crop.stage3_days || crop.stage4_days
+
+  const stageRows = [
+    { label: 'Fase 1', days: crop.stage1_days, root: crop.root_depth_stage1_cm, f: crop.f_factor_stage1, kc: crop.kc_ini,   kcLabel: 'Kc ini',      hint: 'constante' },
+    { label: 'Fase 2', days: crop.stage2_days, root: crop.root_depth_stage2_cm, f: crop.f_factor_stage2, kc: null,          kcLabel: 'interpolado', hint: '' },
+    { label: 'Fase 3', days: crop.stage3_days, root: crop.root_depth_stage3_cm, f: crop.f_factor_stage3, kc: crop.kc_mid,   kcLabel: 'Kc mid',      hint: 'constante' },
+    { label: 'Fase 4', days: crop.stage4_days, root: crop.root_depth_stage4_cm, f: crop.f_factor_stage4, kc: crop.kc_final, kcLabel: 'Kc final',    hint: 'interpolado' },
+  ]
+
+  return (
+    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14 }}>
+      {/* Linha principal */}
+      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: 'rgb(74 158 26 / 0.1)', border: '1px solid rgb(74 158 26 / 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Wheat size={16} style={{ color: '#4a9e1a' }} />
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#ecefec' }}>{crop.name}</p>
+            {!isCustom && (
+              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 3, background: '#162219', color: '#3a5240', border: '1px solid #1f3022' }}>
+                <Lock size={9} /> padrão FAO-56
+              </span>
+            )}
+            {totalDays ? <span style={{ fontSize: 11, color: '#535c3e' }}>{totalDays} dias</span> : null}
+          </div>
+          {/* Kc resumo */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[
+              { label: 'Kc ini',   value: crop.kc_ini },
+              { label: 'Kc mid',   value: crop.kc_mid },
+              { label: 'Kc final', value: crop.kc_final },
+            ].filter(k => k.value !== null).map(k => (
+              <div key={k.label} style={{ background: '#162219', borderRadius: 7, padding: '5px 10px', textAlign: 'center' }}>
+                <span style={{ fontSize: 9, color: '#535c3e', display: 'block' }}>{k.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#4a9e1a', fontFamily: 'var(--font-mono)' }}>{k.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {hasStages && (
+            <button onClick={() => setExpanded(v => !v)} title="Ver fases"
+              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#4a9e1a', display: 'flex', alignItems: 'center' }}>
+              <ChevronRight size={14} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
+            </button>
+          )}
+          {isCustom ? (
+            <>
+              <button onClick={onEdit} title="Editar"
+                style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1c2e20'; (e.currentTarget as HTMLElement).style.color = '#becec0' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+                <Pencil size={14} />
+              </button>
+              <button onClick={onDelete} disabled={deleting} title="Excluir"
+                style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              </button>
+            </>
+          ) : (
+            <button onClick={onDuplicate} title="Duplicar para minhas culturas"
+              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(74 158 26 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#4a9e1a' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+              <Copy size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Detalhes expandíveis das fases */}
+      {expanded && (
+        <div style={{ borderTop: '1px solid #1a2e1d', padding: '14px 18px' }}>
+          <div style={{ border: '1px solid #1f3022', borderRadius: 10, overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 70px 55px 70px', background: '#162219', padding: '8px 14px', gap: 8 }}>
+              {['Fase', 'Descrição', 'Dias', 'Raiz (cm)', 'Fator f', 'Kc'].map(h => (
+                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#535c3e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+              ))}
+            </div>
+            {stageRows.map((row, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 70px 55px 70px', padding: '10px 14px', gap: 8, borderTop: '1px solid #1a2e1d', background: i % 2 ? '#0f1b12' : 'transparent' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#4a9e1a' }}>Fase {i + 1}</span>
+                <span style={{ fontSize: 12, color: '#7a9e82' }}>{['Inicial', 'Desenvolvimento', 'Médio', 'Final'][i]} <span style={{ color: '#3a5240', fontSize: 10 }}>{row.hint ? `(${row.hint})` : ''}</span></span>
+                <span style={{ fontSize: 13, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
+                <span style={{ fontSize: 13, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{row.root ?? '—'}</span>
+                <span style={{ fontSize: 13, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{row.f ?? '—'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: row.kc ? '#4a9e1a' : '#3a5240', fontFamily: 'var(--font-mono)' }}>{row.kc ?? row.kcLabel}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Página ──────────────────────────────────────────────────
+export default function CulturasPage() {
+  const { company, loading: authLoading } = useAuth()
+  const [crops, setCrops] = useState<Crop[]>([])
+  const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingCrop, setEditingCrop] = useState<Crop | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const loadCrops = useCallback(async () => {
+    if (!company?.id) {
+      setCrops([])
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const data = await listCropsByCompany(company.id)
+      setCrops(data)
+    } finally {
+      setLoading(false)
+    }
+  }, [company?.id])
+
+  useEffect(() => {
+    if (authLoading) return
+    loadCrops()
+  }, [authLoading, loadCrops])
+
+  async function handleDelete(id: string) {
+    if (!confirm('Excluir esta cultura?')) return
+    setDeletingId(id)
+    try {
+      await deleteCrop(id)
+      await loadCrops()
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  async function handleDuplicate(crop: Crop) {
+    if (!company?.id) return
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, created_at, company_id: _cid, ...rest } = crop
+    const newCrop = await createCrop({
+      ...rest,
+      name: `${crop.name} (cópia)`,
+      company_id: company.id,
+    }).catch(() => null)
+    if (newCrop) {
+      await loadCrops()
+      setEditingCrop(newCrop)
+      setModalOpen(true)
+    }
+  }
+
+  const defaultCrops = crops.filter(c => c.company_id === null)
+  const customCrops  = crops.filter(c => c.company_id === company?.id)
+
+  return (
+    <>
+      <div className="flex flex-col gap-5 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: '#ecefec' }}>Culturas</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#7a9e82' }}>
+              {defaultCrops.length} padrão · {customCrops.length} personalizada{customCrops.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <button
+            onClick={() => { setEditingCrop(null); setModalOpen(true) }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgb(74 158 26 / 0.3)' }}
+          >
+            <Plus size={16} />
+            Nova Cultura
+          </button>
+        </div>
+
+        {authLoading || loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={24} className="animate-spin" style={{ color: '#4a9e1a' }} />
+          </div>
+        ) : (
+          <>
+            {customCrops.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#3a5240' }}>Minhas Culturas</span>
+                  <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+                </div>
+                <div className="flex flex-col gap-3">
+                  {customCrops.map(c => (
+                    <CropCard key={c.id} crop={c} isCustom
+                      onEdit={() => { setEditingCrop(c); setModalOpen(true) }}
+                      onDelete={() => handleDelete(c.id)}
+                      onDuplicate={() => handleDuplicate(c)}
+                      deleting={deletingId === c.id}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#3a5240' }}>Culturas Padrão FAO-56</span>
+                <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+              </div>
+              <div className="flex flex-col gap-3">
+                {defaultCrops.map(c => (
+                  <CropCard key={c.id} crop={c} isCustom={false}
+                    onEdit={() => {}} onDelete={() => {}} onDuplicate={() => handleDuplicate(c)} deleting={false}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {modalOpen && (
+        company?.id && (
+        <CropModal
+          crop={editingCrop}
+          companyId={company.id}
+          onClose={() => setModalOpen(false)}
+          onSaved={loadCrops}
+        />
+        )
+      )}
+    </>
+  )
+}
