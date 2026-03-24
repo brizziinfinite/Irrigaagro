@@ -124,7 +124,7 @@ function getClimateSourceBadge(source: ManagementExternalData['climateSource'] |
       icon: Satellite,
       color: '#0093D0',
       border: '1px solid rgb(0 147 208 / 0.20)',
-      background: 'rgb(74 158 26 / 0.06)',
+      background: 'rgba(0,147,208,0.06)',
     }
   }
 
@@ -430,7 +430,7 @@ function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: n
             ? 'rgb(239 68 68 / 0.1)'
             : firstIrrigIdx <= 3
               ? 'rgb(245 158 11 / 0.1)'
-              : 'rgb(74 158 26 / 0.08)',
+              : 'rgba(0,147,208,0.08)',
           border: firstIrrigIdx <= 1
             ? '1px solid rgb(239 68 68 / 0.3)'
             : firstIrrigIdx <= 3

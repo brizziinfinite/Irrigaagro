@@ -52,7 +52,7 @@ export function AppShell({ user, children }: AppShellProps) {
           onMenuClick={() => setMobileOpen(true)}
         />
         <main
-          className="flex-1 overflow-auto p-6 md:p-8"
+          className="flex-1 overflow-auto p-5 md:p-7 lg:p-8"
           style={{ background: 'var(--color-surface-bg)' }}
         >
           {children}

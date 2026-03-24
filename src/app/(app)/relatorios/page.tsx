@@ -457,7 +457,7 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
   // Fases — regiões coloridas
   const stageColors: Record<number, string> = {
     1: 'rgb(6 182 212 / 0.06)',
-    2: 'rgb(74 158 26 / 0.06)',
+    2: 'rgba(0,147,208,0.06)',
     3: 'rgb(245 158 11 / 0.06)',
     4: 'rgb(236 72 153 / 0.06)',
   }
@@ -555,7 +555,7 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
             const barW = Math.max(3, innerW / sorted.length * 0.5)
             return (
               <rect key={i} x={xPos(i) - barW / 2} y={PAD.top + innerH - barH} width={barW} height={barH}
-                fill="rgb(74 158 26 / 0.5)" stroke="rgb(74 158 26 / 0.8)" strokeWidth="1" rx="2" />
+                fill="rgba(0,147,208,0.5)" stroke="rgba(0,147,208,0.8)" strokeWidth="1" rx="2" />
             )
           })}
 
@@ -601,7 +601,7 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
       </div>
       <div style={{ padding: '8px 18px 10px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
-          <div style={{ width: 8, height: 12, background: 'rgb(74 158 26 / 0.5)', borderRadius: 1 }} /> Irrigação aplicada
+          <div style={{ width: 8, height: 12, background: 'rgba(0,147,208,0.5)', borderRadius: 1 }} /> Irrigação aplicada
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
           <div style={{ width: 8, height: 12, background: 'rgb(56 189 248 / 0.4)', borderRadius: 1 }} /> Chuva
@@ -1225,7 +1225,7 @@ export default function RelatoriosPage() {
                 border: `2px dashed ${uploadFile ? '#0093D0' : 'rgba(255,255,255,0.06)'}`,
                 borderRadius: 12, padding: '20px 16px', textAlign: 'center',
                 cursor: 'pointer', transition: 'border-color 0.2s',
-                background: uploadFile ? 'rgb(74 158 26 / 0.05)' : 'transparent',
+                background: uploadFile ? 'rgba(0,147,208,0.05)' : 'transparent',
               }}
             >
               <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#556677', margin: '0 auto 6px' }} />

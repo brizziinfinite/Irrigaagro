@@ -459,7 +459,7 @@ export function DashboardClient({
   const activePivots = summary.activePivots
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6">
 
       {/* Título */}
       <div className="flex items-center justify-between gap-4">
@@ -494,10 +494,10 @@ export function DashboardClient({
         </div>
         <Link href="/manejo" style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          padding: '9px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-          background: '#0093D0',
-          color: '#fff', textDecoration: 'none',
-          boxShadow: '0 2px 8px rgb(0 147 208 / 0.35)',
+          padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+          background: 'linear-gradient(135deg, #005A8C, #0093D0)',
+          color: '#fff', textDecoration: 'none', flexShrink: 0,
+          boxShadow: '0 4px 16px rgba(0,147,208,0.4)',
         }}>
           <Droplets size={14} /> Manejo Diário
         </Link>
