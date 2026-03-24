@@ -67,7 +67,7 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
           onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-card2)'}
           onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)'}
         >
-          <Droplets size={13} style={{ color: '#4a9e1a' }} />
+          <Droplets size={13} style={{ color: '#0093D0' }} />
           <span className="font-medium whitespace-nowrap">Safra 2025/26 · Soja</span>
           <ChevronDown size={12} style={{ color: 'var(--color-text-faint)' }} />
         </button>

@@ -13,15 +13,15 @@ export function PrecipChart() {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#2a3d2d" vertical={false} />
-        <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#535c3e' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: '#535c3e' }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+        <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#556677' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: '#556677' }} axisLine={false} tickLine={false} />
         <Tooltip
-          contentStyle={{ background: '#162219', border: '1px solid #2a3d2d', borderRadius: 10, fontSize: 12, color: '#ecefec' }}
+          contentStyle={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12, color: '#e2e8f0' }}
         />
         <Legend wrapperStyle={{ fontSize: 11, color: '#a9b4a2' }} />
         <Bar dataKey="chuva"     name="Chuva"     fill="#06b6d4" radius={[5, 5, 0, 0]} />
-        <Bar dataKey="irrigacao" name="Irrigação" fill="#4a9e1a" radius={[5, 5, 0, 0]} />
+        <Bar dataKey="irrigacao" name="Irrigação" fill="#0093D0" radius={[5, 5, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )

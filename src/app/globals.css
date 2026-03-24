@@ -6,64 +6,64 @@
   --font-body:    'Inter', system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 
-  /* === VERDE AGTECH (ref: Dribbble Agritech Analytics) === */
-  --color-green-950: #021a06;
-  --color-green-900: #040703;
-  --color-green-800: #0b1a0e;
-  --color-green-700: #123427;
-  --color-green-600: #166502;
-  --color-green-500: #1a7d03;
-  --color-green-400: #4a9e1a;
-  --color-green-300: #7ca136;
-  --color-green-200: #a8c97a;
-  --color-green-100: #becec0;
-  --color-green-50:  #ecefec;
+  /* === AZUL AGTECH (tema principal) === */
+  --color-blue-950: #020b14;
+  --color-blue-900: #080e14;
+  --color-blue-800: #0d1520;
+  --color-blue-700: #0f1923;
+  --color-blue-600: #152233;
+  --color-blue-500: #0093D0;
+  --color-blue-400: #22d3ee;
+  --color-blue-300: #7dd3fc;
+  --color-blue-200: #bae6fd;
+  --color-blue-100: #e0f2fe;
 
-  /* === SUPERFÍCIES (dark theme) === */
-  --color-surface-bg:       #040703;
-  --color-surface-sidebar:  #0b1a0e;
-  --color-surface-card:     #111f14;
-  --color-surface-card2:    #162219;
-  --color-surface-elevated: #1c2e20;
-  --color-surface-border:   #2a3d2d;
-  --color-surface-border2:  #1f3022;
+  /* === SUPERFÍCIES (dark blue theme) === */
+  --color-surface-bg:       #080e14;
+  --color-surface-sidebar:  #0d1520;
+  --color-surface-card:     #0f1923;
+  --color-surface-card2:    #0d1520;
+  --color-surface-elevated: #152233;
+  --color-surface-border:   rgba(255,255,255,0.08);
+  --color-surface-border2:  rgba(255,255,255,0.06);
 
   /* === TEXTOS === */
-  --color-text:           #ecefec;
-  --color-text-secondary: #becec0;
-  --color-text-muted:     #a9b4a2;
-  --color-text-faint:     #535c3e;
+  --color-text:           #e2e8f0;
+  --color-text-secondary: #8899aa;
+  --color-text-muted:     #6b7a8d;
+  --color-text-faint:     #556677;
 
   /* === STATUS (semáforo de irrigação) === */
-  --color-status-blue:   #06b6d4;
+  --color-status-blue:   #0093D0;
   --color-status-green:  #22c55e;
   --color-status-yellow: #f59e0b;
   --color-status-red:    #ef4444;
 
   /* === SOMBRAS === */
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04);
-  --shadow-float: 0 20px 48px -8px rgb(0 0 0 / 0.6);
+  --shadow-card:  0 1px 3px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-float: 0 20px 48px -8px rgb(0 0 0 / 0.7);
 }
 
 /* ====== VARIÁVEIS CSS (disponíveis via var() em todos os componentes) ====== */
 :root {
-  --color-surface-bg:       #040703;
-  --color-surface-sidebar:  #0b1a0e;
-  --color-surface-card:     #111f14;
-  --color-surface-card2:    #162219;
-  --color-surface-elevated: #1c2e20;
-  --color-surface-border:   #2a3d2d;
-  --color-surface-border2:  #1f3022;
+  --color-surface-bg:       #080e14;
+  --color-surface-sidebar:  #0d1520;
+  --color-surface-card:     #0f1923;
+  --color-surface-card2:    #0d1520;
+  --color-surface-elevated: #152233;
+  --color-surface-border:   rgba(255,255,255,0.08);
+  --color-surface-border2:  rgba(255,255,255,0.06);
 
-  --color-text:           #ecefec;
-  --color-text-secondary: #becec0;
-  --color-text-muted:     #a9b4a2;
-  --color-text-faint:     #535c3e;
+  --color-text:           #e2e8f0;
+  --color-text-secondary: #8899aa;
+  --color-text-muted:     #6b7a8d;
+  --color-text-faint:     #556677;
 
-  --color-green-400: #4a9e1a;
-  --color-green-600: #166502;
+  --color-brand:     #0093D0;
+  --color-brand-2:   #22c55e;
+  --color-cyan:      #22d3ee;
 
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
 
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
@@ -100,14 +100,14 @@ h1, h2, h3 {
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-surface-border);
+  background: rgba(255,255,255,0.08);
   border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--color-text-faint); }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 
 /* ====== FOCUS ====== */
 *:focus-visible {
-  outline: 2px solid var(--color-green-400);
+  outline: 2px solid #0093D0;
   outline-offset: 2px;
 }
 
@@ -121,27 +121,27 @@ h1, h2, h3 {
   to   { opacity: 1; }
 }
 @keyframes pulse-ring {
-  0%   { box-shadow: 0 0 0 0 rgb(26 125 3 / 0.5); }
-  70%  { box-shadow: 0 0 0 8px rgb(26 125 3 / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(26 125 3 / 0); }
+  0%   { box-shadow: 0 0 0 0 rgb(0 147 208 / 0.5); }
+  70%  { box-shadow: 0 0 0 8px rgb(0 147 208 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(0 147 208 / 0); }
 }
 
 /* ====== SURFACE CLASSES ====== */
 @layer utilities {
   .card {
-    background-color: #111f14;
-    border: 1px solid #1f3022;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04);
+    background-color: #0f1923;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.04);
     border-radius: 16px;
   }
 
   .card-elevated {
-    background-color: #1c2e20;
-    border: 1px solid #2a3d2d;
+    background-color: #152233;
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 16px;
   }
 
-  .status-blue   { color: #06b6d4; background: rgb(6 182 212 / 0.12);   border: 1px solid rgb(6 182 212 / 0.25); }
+  .status-blue   { color: #0093D0; background: rgb(0 147 208 / 0.12);   border: 1px solid rgb(0 147 208 / 0.25); }
   .status-green  { color: #22c55e; background: rgb(34 197 94 / 0.12);   border: 1px solid rgb(34 197 94 / 0.25); }
   .status-yellow { color: #f59e0b; background: rgb(245 158 11 / 0.12);  border: 1px solid rgb(245 158 11 / 0.25); }
   .status-red    { color: #ef4444; background: rgb(239 68 68 / 0.12);   border: 1px solid rgb(239 68 68 / 0.25); }
@@ -152,10 +152,10 @@ h1, h2, h3 {
 
 /* ====== GLASSMORPHISM ====== */
 .glass {
-  background: rgb(17 31 20 / 0.7);
+  background: rgb(15 25 35 / 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgb(255 255 255 / 0.06);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 /* ====== MOISTURE BAR ====== */

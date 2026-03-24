@@ -32,7 +32,7 @@ function calcCTA(cc: number, pm: number, ds: number, rootCm: number): number {
 function PhaseTimeline({ plantingDate, crop }: { plantingDate: string; crop: Crop }) {
   const stages = [
     { label: 'Ini', days: crop.stage1_days, color: '#22c55e' },
-    { label: 'Dev', days: crop.stage2_days, color: '#4a9e1a' },
+    { label: 'Dev', days: crop.stage2_days, color: '#0093D0' },
     { label: 'Mid', days: crop.stage3_days, color: '#f59e0b' },
     { label: 'Fin', days: crop.stage4_days, color: '#ef4444' },
   ]
@@ -54,13 +54,13 @@ function PhaseTimeline({ plantingDate, crop }: { plantingDate: string; crop: Cro
           return (
             <div key={i}>
               <div style={{ fontSize: 9, color: s.color, fontWeight: 700 }}>{s.label} {s.days}d</div>
-              <div style={{ fontSize: 9, color: '#535c3e' }}>{fmtDate(stageStart)}</div>
+              <div style={{ fontSize: 9, color: '#556677' }}>{fmtDate(stageStart)}</div>
             </div>
           )
         })}
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 9, color: '#7a9e82', fontWeight: 700 }}>Colheita</div>
-          <div style={{ fontSize: 9, color: '#535c3e' }}>{fmtDate(addDays(start, totalDays))}</div>
+          <div style={{ fontSize: 9, color: '#8899aa', fontWeight: 700 }}>Colheita</div>
+          <div style={{ fontSize: 9, color: '#556677' }}>{fmtDate(addDays(start, totalDays))}</div>
         </div>
       </div>
     </div>
@@ -73,18 +73,18 @@ function StyledSelect({ label, value, onChange, children, required }: {
 }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
         {label}{required && ' *'}
       </label>
       <div style={{ position: 'relative' }}>
         <select value={value} onChange={e => onChange(e.target.value)} required={required}
-          style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: value ? '#ecefec' : '#535c3e', outline: 'none', appearance: 'none', cursor: 'pointer' }}
-          onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-          onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+          style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: value ? '#e2e8f0' : '#556677', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+          onFocus={e => e.target.style.borderColor = '#0093D0'}
+          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
         >
           {children}
         </select>
-        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#535c3e', pointerEvents: 'none' }} />
+        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
       </div>
     </div>
   )
@@ -95,16 +95,16 @@ function NumField({ label, value, onChange, placeholder, unit, hint }: {
 }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>{label}</label>
       <div style={{ position: 'relative' }}>
         <input type="number" step="any" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          style={{ width: '100%', padding: unit ? '10px 44px 10px 14px' : '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none' }}
-          onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-          onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+          style={{ width: '100%', padding: unit ? '10px 44px 10px 14px' : '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+          onFocus={e => e.target.style.borderColor = '#0093D0'}
+          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
         />
-        {unit && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#535c3e', pointerEvents: 'none' }}>{unit}</span>}
+        {unit && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#556677', pointerEvents: 'none' }}>{unit}</span>}
       </div>
-      {hint && <p style={{ fontSize: 11, color: '#3a5240', marginTop: 3 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 11, color: '#556677', marginTop: 3 }}>{hint}</p>}
     </div>
   )
 }
@@ -112,8 +112,8 @@ function NumField({ label, value, onChange, placeholder, unit, hint }: {
 function SectionLabel({ text }: { text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
-      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>{text}</span>
-      <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>{text}</span>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
     </div>
   )
 }
@@ -191,10 +191,10 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
-      <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 20, padding: 28, width: '100%', maxWidth: 540, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)', maxHeight: '92vh', overflowY: 'auto' }}>
+      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 540, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)', maxHeight: '92vh', overflowY: 'auto' }}>
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>{isEdit ? 'Editar Safra' : 'Nova Safra'}</h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#3a5240', cursor: 'pointer' }}><X size={16} /></button>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>{isEdit ? 'Editar Safra' : 'Nova Safra'}</h2>
+          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#556677', cursor: 'pointer' }}><X size={16} /></button>
         </div>
 
         {error && (
@@ -205,12 +205,12 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
           <SectionLabel text="Identificação" />
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Nome da Safra *</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Nome da Safra *</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)} required
               placeholder="Ex: Safra 2025/26 Soja — Pivô Central"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none' }}
-              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+              onFocus={e => e.target.style.borderColor = '#0093D0'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
           </div>
 
@@ -227,8 +227,8 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
           {/* Aviso: múltiplas safras no mesmo pivô */}
           <div style={{ display: 'flex', gap: 8, padding: '10px 12px', borderRadius: 10, background: 'rgb(6 182 212 / 0.06)', border: '1px solid rgb(6 182 212 / 0.15)' }}>
             <Info size={13} style={{ color: '#06b6d4', flexShrink: 0, marginTop: 1 }} />
-            <p style={{ fontSize: 11, color: '#535c3e', lineHeight: 1.5 }}>
-              Um pivô pode ter <strong style={{ color: '#7a9e82' }}>múltiplas safras ativas</strong> ao mesmo tempo — ex: 50% soja + 50% milho. Cada safra tem seu próprio balanço hídrico.
+            <p style={{ fontSize: 11, color: '#556677', lineHeight: 1.5 }}>
+              Um pivô pode ter <strong style={{ color: '#8899aa' }}>múltiplas safras ativas</strong> ao mesmo tempo — ex: 50% soja + 50% milho. Cada safra tem seu próprio balanço hídrico.
             </p>
           </div>
 
@@ -240,18 +240,18 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
           </StyledSelect>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Data de Plantio</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Data de Plantio</label>
             <input type="date" value={plantingDate} onChange={e => setPlantingDate(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: plantingDate ? '#ecefec' : '#535c3e', outline: 'none', colorScheme: 'dark' }}
-              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: plantingDate ? '#e2e8f0' : '#556677', outline: 'none', colorScheme: 'dark' }}
+              onFocus={e => e.target.style.borderColor = '#0093D0'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
           </div>
 
           {/* Timeline ao vivo */}
           {selectedCrop && plantingDate && (
-            <div style={{ background: '#162219', border: '1px solid #1f3022', borderRadius: 12, padding: '14px 16px' }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#4a9e1a', marginBottom: 2 }}>📅 Cronograma — {selectedCrop.name}</p>
+            <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#0093D0', marginBottom: 2 }}>📅 Cronograma — {selectedCrop.name}</p>
               <PhaseTimeline plantingDate={plantingDate} crop={selectedCrop} />
             </div>
           )}
@@ -266,18 +266,18 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
 
           {/* CTA ao vivo */}
           {ctaPreview !== null && (
-            <div style={{ background: '#162219', border: '1px solid rgb(74 158 26 / 0.2)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ background: '#0d1520', border: '1px solid rgb(0 147 208 / 0.20)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 16 }}>
               <div>
-                <p style={{ fontSize: 10, color: '#3a5240', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CTA estimada</p>
-                <p style={{ fontSize: 22, fontWeight: 800, color: '#4a9e1a', fontFamily: 'var(--font-mono)', lineHeight: 1.2 }}>
-                  {ctaPreview.toFixed(1)} <span style={{ fontSize: 12, fontWeight: 400, color: '#535c3e' }}>mm</span>
+                <p style={{ fontSize: 10, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CTA estimada</p>
+                <p style={{ fontSize: 22, fontWeight: 800, color: '#0093D0', fontFamily: 'var(--font-mono)', lineHeight: 1.2 }}>
+                  {ctaPreview.toFixed(1)} <span style={{ fontSize: 12, fontWeight: 400, color: '#556677' }}>mm</span>
                 </p>
-                <p style={{ fontSize: 10, color: '#3a5240' }}>raiz fase {selectedCrop?.root_depth_stage3_cm ? '3' : '1'}: {peakRoot} cm</p>
+                <p style={{ fontSize: 10, color: '#556677' }}>raiz fase {selectedCrop?.root_depth_stage3_cm ? '3' : '1'}: {peakRoot} cm</p>
               </div>
-              <div style={{ flex: 1, fontSize: 11, color: '#3a5240', lineHeight: 1.9 }}>
+              <div style={{ flex: 1, fontSize: 11, color: '#556677', lineHeight: 1.9 }}>
                 <p>CTA = ((CC − PM) ÷ 10) × Ds × Raiz</p>
                 <p>= (({cc} − {pm}) ÷ 10) × {ds} × {peakRoot} cm</p>
-                <p style={{ color: '#535c3e' }}>CAD = CTA × f  →  calculado por fase no manejo</p>
+                <p style={{ color: '#556677' }}>CAD = CTA × f  →  calculado por fase no manejo</p>
               </div>
             </div>
           )}
@@ -289,13 +289,13 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             <NumField label="Fator f base" value={fFactor} onChange={setFFactor}
               placeholder="0.50" hint="Fallback quando a cultura não define fator f por fase" />
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Observações</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Observações</label>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 rows={3}
                 placeholder="Anotações operacionais da safra"
-                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none', resize: 'vertical' }}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', resize: 'vertical' }}
               />
             </div>
           </div>
@@ -304,22 +304,22 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button type="button" onClick={() => setIsActive(v => !v)}
-              style={{ width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', background: isActive ? 'linear-gradient(135deg, #166502, #4a9e1a)' : '#162219', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              style={{ width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', background: isActive ? '#0093D0' : '#0d1520', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: 3, left: isActive ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgb(0 0 0 / 0.4)' }} />
             </button>
             <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#ecefec' }}>{isActive ? 'Safra Ativa' : 'Safra Inativa'}</p>
-              <p style={{ fontSize: 11, color: '#535c3e' }}>{isActive ? 'Aparece no Dashboard e Manejo Diário' : 'Arquivada'}</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{isActive ? 'Safra Ativa' : 'Safra Inativa'}</p>
+              <p style={{ fontSize: 11, color: '#556677' }}>{isActive ? 'Aparece no Dashboard e Manejo Diário' : 'Arquivada'}</p>
             </div>
           </div>
 
           <div className="flex gap-3 mt-2">
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid #2a3d2d', color: '#7a9e82', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
               Cancelar
             </button>
             <button type="submit" disabled={loading}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {loading && <Loader2 size={14} className="animate-spin" />}
               {isEdit ? 'Salvar' : 'Criar Safra'}
             </button>
@@ -346,27 +346,27 @@ function SeasonCard({ season, onEdit, onDelete, deleting }: {
     : null
 
   return (
-    <div style={{ background: '#111f14', border: `1px solid ${season.is_active ? 'rgb(74 158 26 / 0.25)' : '#1f3022'}`, borderRadius: 16, padding: '18px 20px' }}>
+    <div style={{ background: '#0f1923', border: `1px solid ${season.is_active ? 'rgb(0 147 208 / 0.25)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 16, padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-        <div style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0, background: season.is_active ? 'rgb(74 158 26 / 0.15)' : '#162219', border: `1px solid ${season.is_active ? 'rgb(74 158 26 / 0.3)' : '#1f3022'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Sprout size={18} style={{ color: season.is_active ? '#4a9e1a' : '#3a5240' }} />
+        <div style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0, background: season.is_active ? 'rgb(0 147 208 / 0.12)' : '#0d1520', border: `1px solid ${season.is_active ? 'rgb(0 147 208 / 0.25)' : 'rgba(255,255,255,0.06)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Sprout size={18} style={{ color: season.is_active ? '#0093D0' : '#556677' }} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#ecefec' }}>{season.name}</p>
-            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgb(34 197 94 / 0.12)' : '#162219', color: season.is_active ? '#22c55e' : '#535c3e', border: `1px solid ${season.is_active ? 'rgb(34 197 94 / 0.25)' : '#1f3022'}` }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>{season.name}</p>
+            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgb(34 197 94 / 0.12)' : '#0d1520', color: season.is_active ? '#22c55e' : '#556677', border: `1px solid ${season.is_active ? 'rgb(34 197 94 / 0.25)' : 'rgba(255,255,255,0.06)'}` }}>
               {season.is_active ? '● Ativa' : 'Inativa'}
             </span>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 12, color: '#535c3e' }}>
+            <span style={{ fontSize: 12, color: '#556677' }}>
               {season.farms.name}{season.pivots ? ` · ${season.pivots.name}` : ''}
             </span>
-            {season.crops && <span style={{ fontSize: 12, color: '#7a9e82', fontWeight: 500 }}>🌱 {season.crops.name}</span>}
+            {season.crops && <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500 }}>🌱 {season.crops.name}</span>}
             {season.planting_date && (
-              <span style={{ fontSize: 12, color: '#535c3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 12, color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <CalendarDays size={11} />
                 {new Date(season.planting_date + 'T12:00:00').toLocaleDateString('pt-BR')}
                 {harvestDate && ` → ${harvestDate}`}
@@ -376,24 +376,24 @@ function SeasonCard({ season, onEdit, onDelete, deleting }: {
 
           {/* Chips */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {season.field_capacity && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#162219', color: '#7a9e82', display: 'flex', alignItems: 'center', gap: 3 }}><Droplets size={10} />CC {season.field_capacity}%</span>}
-            {season.wilting_point && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#162219', color: '#7a9e82' }}>PM {season.wilting_point}%</span>}
-            {season.bulk_density && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#162219', color: '#7a9e82' }}>Ds {season.bulk_density}</span>}
-            {cta && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgb(74 158 26 / 0.1)', color: '#4a9e1a', border: '1px solid rgb(74 158 26 / 0.2)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}><FlaskConical size={10} />CTA {cta.toFixed(1)} mm</span>}
+            {season.field_capacity && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#0d1520', color: '#8899aa', display: 'flex', alignItems: 'center', gap: 3 }}><Droplets size={10} />CC {season.field_capacity}%</span>}
+            {season.wilting_point && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#0d1520', color: '#8899aa' }}>PM {season.wilting_point}%</span>}
+            {season.bulk_density && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#0d1520', color: '#8899aa' }}>Ds {season.bulk_density}</span>}
+            {cta && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgb(0 147 208 / 0.10)', color: '#0093D0', border: '1px solid rgb(0 147 208 / 0.20)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}><FlaskConical size={10} />CTA {cta.toFixed(1)} mm</span>}
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           <button onClick={onEdit} title="Editar"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1c2e20'; (e.currentTarget as HTMLElement).style.color = '#becec0' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
             <Pencil size={14} />
           </button>
           <button onClick={onDelete} disabled={deleting} title="Excluir"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
           </button>
         </div>
@@ -465,9 +465,9 @@ export default function SafrasPage() {
   function GroupHeader({ label, count }: { label: string; count: number }) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#3a5240' }}>{label}</span>
-        <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#162219', color: '#3a5240' }}>{count}</span>
-        <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>{label}</span>
+        <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#0d1520', color: '#556677' }}>{count}</span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
       </div>
     )
   }
@@ -477,15 +477,15 @@ export default function SafrasPage() {
       <div className="flex flex-col gap-5 max-w-4xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#ecefec' }}>Safras</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#7a9e82' }}>
+            <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Safras</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
               {activeSeasons.length} ativa{activeSeasons.length !== 1 ? 's' : ''} · {inactiveSeasons.length} arquivada{inactiveSeasons.length !== 1 ? 's' : ''}
             </p>
           </div>
           <button
             onClick={() => { setEditingSeason(null); setModalOpen(true) }}
             disabled={farms.length === 0}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? '#162219' : 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: farms.length === 0 ? '#3a5240' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(74 158 26 / 0.3)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? '#0d1520' : '#0093D0', border: 'none', color: farms.length === 0 ? '#556677' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(0 147 208 / 0.25)' }}
           >
             <Plus size={16} /> Nova Safra
           </button>
@@ -493,21 +493,21 @@ export default function SafrasPage() {
 
         {authLoading || loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin" style={{ color: '#4a9e1a' }} />
+            <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
           </div>
         ) : farms.length === 0 ? (
-          <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
-            <Sprout size={28} style={{ color: '#4a9e1a', margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#ecefec', marginBottom: 8 }}>Cadastre uma fazenda primeiro</h3>
-            <p style={{ fontSize: 14, color: '#535c3e' }}>Acesse <strong style={{ color: '#7a9e82' }}>Configuração → Fazendas</strong> para começar.</p>
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+            <Sprout size={28} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>Cadastre uma fazenda primeiro</h3>
+            <p style={{ fontSize: 14, color: '#556677' }}>Acesse <strong style={{ color: '#8899aa' }}>Configuração → Fazendas</strong> para começar.</p>
           </div>
         ) : seasons.length === 0 ? (
-          <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
-            <Sprout size={28} style={{ color: '#4a9e1a', margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#ecefec', marginBottom: 8 }}>Nenhuma safra cadastrada</h3>
-            <p style={{ fontSize: 14, color: '#535c3e', marginBottom: 24 }}>Configure a primeira safra para iniciar o manejo hídrico.</p>
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+            <Sprout size={28} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra cadastrada</h3>
+            <p style={{ fontSize: 14, color: '#556677', marginBottom: 24 }}>Configure a primeira safra para iniciar o manejo hídrico.</p>
             <button onClick={() => { setEditingSeason(null); setModalOpen(true) }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer' }}>
               <Plus size={16} /> Criar Safra
             </button>
           </div>

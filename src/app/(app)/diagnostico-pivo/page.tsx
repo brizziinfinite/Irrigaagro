@@ -108,8 +108,8 @@ function SummaryCard({
 }) {
   return (
     <div style={{
-      background: '#111f14',
-      border: '1px solid #1f3022',
+      background: '#0f1923',
+      border: '1px solid rgba(255,255,255,0.06)',
       borderRadius: 16,
       padding: 18,
       display: 'flex',
@@ -119,27 +119,27 @@ function SummaryCard({
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>{eyebrow}</p>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#becec0', marginTop: 4 }}>{title}</p>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>{eyebrow}</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#8899aa', marginTop: 4 }}>{title}</p>
         </div>
         <div style={{
           width: 34,
           height: 34,
           borderRadius: 10,
-          border: '1px solid #1f3022',
-          background: '#162219',
+          border: '1px solid rgba(255,255,255,0.06)',
+          background: '#0d1520',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#7a9e82',
+          color: '#8899aa',
           flexShrink: 0,
         }}>
           {icon}
         </div>
       </div>
       <div style={{ marginTop: 'auto' }}>
-        <p style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: '#ecefec' }}>{value}</p>
-        <p style={{ fontSize: 12, color: '#7a9e82', lineHeight: 1.5, marginTop: 8 }}>{helper}</p>
+        <p style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: '#e2e8f0' }}>{value}</p>
+        <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5, marginTop: 8 }}>{helper}</p>
         {tone ? (
           <div style={{ marginTop: 12 }}>
             <StatusPill label={tone.label} tone={tone} />
@@ -236,32 +236,32 @@ export default function PivotDiagnosticsPage() {
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 32px' }}>
       <div style={{
-        background: 'linear-gradient(135deg, #111f14 0%, #162219 60%, #1b2c1e 100%)',
-        border: '1px solid #1f3022',
+        background: 'linear-gradient(135deg, #0f1923 0%, #0d1520 60%, #1b2c1e 100%)',
+        border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 24,
         padding: '24px 24px 22px',
         marginBottom: 20,
       }}>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#7a9e82' }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8899aa' }}>
           Diagnóstico operacional
         </p>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginTop: 10 }}>
           <div style={{ maxWidth: 760 }}>
-            <h1 style={{ fontSize: 34, lineHeight: 1.05, fontWeight: 800, color: '#ecefec' }}>
+            <h1 style={{ fontSize: 34, lineHeight: 1.05, fontWeight: 800, color: '#e2e8f0' }}>
               Centro operacional do pivô em campo.
             </h1>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: '#7a9e82', marginTop: 10 }}>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: '#8899aa', marginTop: 10 }}>
               Visualize rapidamente clima, ETo, chuva, safra ativa, prontidão da automação e lacunas operacionais do pivô selecionado.
             </p>
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
             <div style={{ minWidth: 140, padding: '14px 16px', borderRadius: 16, background: 'rgb(255 255 255 / 0.04)', border: '1px solid rgb(255 255 255 / 0.08)' }}>
-              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#7a9e82' }}>Pivôs</p>
-              <p style={{ fontSize: 24, fontWeight: 800, color: '#ecefec', marginTop: 6 }}>{summaries.length}</p>
+              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8899aa' }}>Pivôs</p>
+              <p style={{ fontSize: 24, fontWeight: 800, color: '#e2e8f0', marginTop: 6 }}>{summaries.length}</p>
             </div>
             <div style={{ minWidth: 220, padding: '14px 16px', borderRadius: 16, background: 'rgb(255 255 255 / 0.04)', border: '1px solid rgb(255 255 255 / 0.08)' }}>
-              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#7a9e82' }}>Selecionado</p>
-              <p style={{ fontSize: 20, fontWeight: 800, color: '#ecefec', marginTop: 6, lineHeight: 1.1 }}>{selectedSummary?.pivotName ?? '—'}</p>
+              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8899aa' }}>Selecionado</p>
+              <p style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0', marginTop: 6, lineHeight: 1.1 }}>{selectedSummary?.pivotName ?? '—'}</p>
             </div>
           </div>
         </div>
@@ -285,8 +285,8 @@ export default function PivotDiagnosticsPage() {
       ) : null}
 
       <div style={{
-        background: '#111f14',
-        border: '1px solid #1f3022',
+        background: '#0f1923',
+        border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 16,
         padding: 20,
         display: 'grid',
@@ -296,7 +296,7 @@ export default function PivotDiagnosticsPage() {
         marginBottom: 20,
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#becec0', marginBottom: 6 }}>Selecionar pivô</label>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 6 }}>Selecionar pivô</label>
           <div style={{ position: 'relative' }}>
             <select
               value={selectedPivotId}
@@ -307,9 +307,9 @@ export default function PivotDiagnosticsPage() {
                 padding: '10px 14px',
                 borderRadius: 10,
                 fontSize: 14,
-                background: '#1c2e20',
-                border: '1px solid #2a3d2d',
-                color: '#ecefec',
+                background: '#0d1520',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: '#e2e8f0',
                 outline: 'none',
               }}
             >
@@ -322,32 +322,32 @@ export default function PivotDiagnosticsPage() {
           </div>
         </div>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>Fazenda</p>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#ecefec', marginTop: 6 }}>{selectedSummary?.farmName ?? '—'}</p>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Fazenda</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginTop: 6 }}>{selectedSummary?.farmName ?? '—'}</p>
         </div>
         {statusTone ? <StatusPill label={statusTone.label} tone={statusTone} /> : null}
       </div>
 
       {loading || diagnosticLoading ? (
-        <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: '#7a9e82' }}>Carregando diagnóstico do pivô...</p>
+        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: '#8899aa' }}>Carregando diagnóstico do pivô...</p>
         </div>
       ) : !diagnostic ? (
-        <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: '#7a9e82' }}>Selecione um pivô para visualizar o diagnóstico.</p>
+        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: '#8899aa' }}>Selecione um pivô para visualizar o diagnóstico.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{
-            background: '#111f14',
-            border: '1px solid #1f3022',
+            background: '#0f1923',
+            border: '1px solid rgba(255,255,255,0.06)',
             borderRadius: 16,
             padding: 20,
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
               <div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>Resumo operacional de hoje</p>
-                <p style={{ fontSize: 12, color: '#7a9e82', marginTop: 4 }}>Leitura rápida para decisão de manejo no pivô selecionado</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Resumo operacional de hoje</p>
+                <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>Leitura rápida para decisão de manejo no pivô selecionado</p>
               </div>
               <StatusPill label={statusTone?.label ?? diagnostic.status} tone={statusTone ?? getStatusConfig(diagnostic.status)} />
             </div>
@@ -422,68 +422,68 @@ export default function PivotDiagnosticsPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: 20 }}>
+            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
                 <div>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>Automação do manejo diário</p>
-                  <p style={{ fontSize: 12, color: '#7a9e82', marginTop: 4 }}>Prontidão atual para geração operacional do manejo</p>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Automação do manejo diário</p>
+                  <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>Prontidão atual para geração operacional do manejo</p>
                 </div>
                 <StatusPill label={automationTone?.label ?? diagnostic.automationStatus} tone={automationTone ?? getStatusConfig(diagnostic.automationStatus)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-                <div style={{ borderRadius: 14, border: '1px solid #1f3022', background: '#162219', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>Status da automação</p>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: '#ecefec', marginTop: 10 }}>{diagnostic.automationStatus}</p>
-                  <p style={{ fontSize: 13, lineHeight: 1.6, color: '#7a9e82', marginTop: 8 }}>
+                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Status da automação</p>
+                  <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.automationStatus}</p>
+                  <p style={{ fontSize: 13, lineHeight: 1.6, color: '#8899aa', marginTop: 8 }}>
                     {diagnostic.hasManagementToday ? 'O pivô já possui manejo salvo para hoje.' : diagnostic.automationReason ?? 'Sem motivo adicional registrado.'}
                   </p>
                 </div>
-                <div style={{ borderRadius: 14, border: '1px solid #1f3022', background: '#162219', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>Ação sugerida</p>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: '#ecefec', marginTop: 10 }}>{diagnostic.suggestedAction}</p>
-                  <p style={{ fontSize: 13, lineHeight: 1.6, color: '#7a9e82', marginTop: 8 }}>
+                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Ação sugerida</p>
+                  <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.suggestedAction}</p>
+                  <p style={{ fontSize: 13, lineHeight: 1.6, color: '#8899aa', marginTop: 8 }}>
                     {diagnostic.automationReason ?? 'O pivô tem contexto suficiente para seguir com a operação.'}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: 20 }}>
+            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
                 <div>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>Contexto do pivô</p>
-                  <p style={{ fontSize: 12, color: '#7a9e82', marginTop: 4 }}>Identificação, safra e vínculos principais</p>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Contexto do pivô</p>
+                  <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>Identificação, safra e vínculos principais</p>
                 </div>
                 <StatusPill label="contexto" tone={{ label: 'contexto', color: '#06b6d4', bg: 'rgb(6 182 212 / 0.12)', border: 'rgb(6 182 212 / 0.25)' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div style={{ borderRadius: 14, border: '1px solid #1f3022', background: '#162219', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>Pivô</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#ecefec', marginTop: 10 }}>{diagnostic.pivot.name}</p>
-                  <p style={{ fontSize: 13, color: '#7a9e82', marginTop: 6 }}>{diagnostic.farm.name}</p>
+                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Pivô</p>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.pivot.name}</p>
+                  <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>{diagnostic.farm.name}</p>
                 </div>
-                <div style={{ borderRadius: 14, border: '1px solid #1f3022', background: '#162219', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>Coordenadas</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#ecefec', marginTop: 10 }}>
+                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Coordenadas</p>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>
                     {diagnostic.pivot.latitude != null && diagnostic.pivot.longitude != null
                       ? `${formatNumber(diagnostic.pivot.latitude, 6)}, ${formatNumber(diagnostic.pivot.longitude, 6)}`
                       : 'Sem coordenadas'}
                   </p>
-                  <p style={{ fontSize: 13, color: '#7a9e82', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <MapPin size={12} /> {diagnostic.pivot.latitude != null && diagnostic.pivot.longitude != null ? 'Geolocalização disponível' : 'Necessária para fallback climático'}
                   </p>
                 </div>
-                <div style={{ borderRadius: 14, border: '1px solid #1f3022', background: '#162219', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>Safra ativa</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#ecefec', marginTop: 10 }}>{diagnostic.activeSeason?.name ?? 'Sem safra ativa'}</p>
-                  <p style={{ fontSize: 13, color: '#7a9e82', marginTop: 6 }}>
+                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Safra ativa</p>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.activeSeason?.name ?? 'Sem safra ativa'}</p>
+                  <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>
                     {diagnostic.activeSeason?.planting_date ? `Plantio: ${formatDate(diagnostic.activeSeason.planting_date)}` : 'Sem data de plantio'}
                   </p>
                 </div>
-                <div style={{ borderRadius: 14, border: '1px solid #1f3022', background: '#162219', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>Cultura</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#ecefec', marginTop: 10 }}>{diagnostic.crop?.name ?? 'Sem cultura vinculada'}</p>
-                  <p style={{ fontSize: 13, color: '#7a9e82', marginTop: 6 }}>
+                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Cultura</p>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.crop?.name ?? 'Sem cultura vinculada'}</p>
+                  <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>
                     {diagnostic.preferredStation?.name
                       ? `Estação preferencial: ${diagnostic.preferredStation.name}`
                       : diagnostic.farmStations[0]?.name
@@ -495,26 +495,26 @@ export default function PivotDiagnosticsPage() {
             </div>
           </div>
 
-          <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: 20 }}>
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
               <div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>Alertas e diagnóstico</p>
-                <p style={{ fontSize: 12, color: '#7a9e82', marginTop: 4 }}>Lacunas operacionais que afetam leitura e automação</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Alertas e diagnóstico</p>
+                <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>Lacunas operacionais que afetam leitura e automação</p>
               </div>
               <StatusPill label={diagnostic.alerts.length > 0 ? `${diagnostic.alerts.length} alerta(s)` : 'sem alertas'} tone={diagnostic.alerts.length > 0 ? getStatusConfig('atenção') : getStatusConfig('OK')} />
             </div>
             {diagnostic.alerts.length === 0 ? (
-              <div style={{ borderRadius: 14, border: '1px solid #1f3022', background: '#162219', padding: 16 }}>
-                <p style={{ fontSize: 14, color: '#7a9e82' }}>Sem alertas operacionais para o pivô selecionado.</p>
+              <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
+                <p style={{ fontSize: 14, color: '#8899aa' }}>Sem alertas operacionais para o pivô selecionado.</p>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
                 {diagnostic.alerts.map((alert) => {
                   const tone = alert.toLowerCase().includes('sem') ? getStatusConfig('sem dados') : getStatusConfig('atenção')
                   return (
-                    <div key={alert} style={{ borderRadius: 14, border: '1px solid #1f3022', background: '#162219', padding: 16 }}>
+                    <div key={alert} style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: '#ecefec', lineHeight: 1.5 }}>{alert}</p>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', lineHeight: 1.5 }}>{alert}</p>
                         <StatusPill label={tone.label} tone={tone} />
                       </div>
                     </div>

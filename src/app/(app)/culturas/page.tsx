@@ -21,7 +21,7 @@ function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
 }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#becec0', marginBottom: 5 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>{label}</label>
       <div style={{ position: 'relative' }}>
         <input
           type="number" step="any" value={value} onChange={e => onChange(e.target.value)}
@@ -29,18 +29,18 @@ function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
           style={{
             width: '100%', padding: unit ? `${small ? 8 : 10}px ${unit.length > 2 ? 48 : 36}px ${small ? 8 : 10}px 10px` : `${small ? 8 : 10}px 10px`,
             borderRadius: 8, fontSize: small ? 13 : 14,
-            background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none',
+            background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
           }}
-          onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-          onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+          onFocus={e => e.target.style.borderColor = '#0093D0'}
+          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
         />
         {unit && (
-          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#535c3e', pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#556677', pointerEvents: 'none' }}>
             {unit}
           </span>
         )}
       </div>
-      {hint && <p style={{ fontSize: 10, color: '#3a5240', marginTop: 3 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 10, color: '#556677', marginTop: 3 }}>{hint}</p>}
     </div>
   )
 }
@@ -127,14 +127,14 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
       <div style={{
-        background: '#111f14', border: '1px solid #1f3022', borderRadius: 20, padding: 28,
+        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28,
         width: '100%', maxWidth: 560, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)',
         maxHeight: '92vh', overflowY: 'auto',
       }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>{isEdit ? 'Editar Cultura' : 'Nova Cultura'}</h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#3a5240', cursor: 'pointer' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>{isEdit ? 'Editar Cultura' : 'Nova Cultura'}</h2>
+          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#556677', cursor: 'pointer' }}>
             <X size={16} />
           </button>
         </div>
@@ -148,43 +148,43 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Nome */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Nome da Cultura *</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Nome da Cultura *</label>
             <input
               type="text" value={name} onChange={e => setName(e.target.value)} required
               placeholder="Ex: Soja, Milho Safrinha..."
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none' }}
-              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+              onFocus={e => e.target.style.borderColor = '#0093D0'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
           </div>
 
           {/* 4 Fases */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>
                 Fases de Desenvolvimento — FAO-56
               </span>
-              <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
               {totalDays > 0 && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#4a9e1a' }}>Ciclo: {totalDays} dias</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#0093D0' }}>Ciclo: {totalDays} dias</span>
               )}
             </div>
 
             <div className="flex flex-col gap-3">
               {stageData.map((stage, i) => (
-                <div key={i} style={{ background: '#162219', border: '1px solid #1f3022', borderRadius: 12, padding: '14px 16px' }}>
+                <div key={i} style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
                   {/* Título da fase */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                     <div style={{
                       width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                      background: 'rgb(74 158 26 / 0.15)', border: '1px solid rgb(74 158 26 / 0.3)',
+                      background: 'rgb(0 147 208 / 0.12)', border: '1px solid rgb(0 147 208 / 0.25)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontWeight: 700, color: '#4a9e1a',
+                      fontSize: 10, fontWeight: 700, color: '#0093D0',
                     }}>
                       {i + 1}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#becec0' }}>{stage.label}</span>
-                    <span style={{ fontSize: 10, color: '#3a5240', marginLeft: 4 }}>Kc {stage.hint}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>{stage.label}</span>
+                    <span style={{ fontSize: 10, color: '#556677', marginLeft: 4 }}>Kc {stage.hint}</span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: stage.kcLabel ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr', gap: 10 }}>
@@ -215,11 +215,11 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
           {/* Botões */}
           <div className="flex gap-3">
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid #2a3d2d', color: '#7a9e82', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
               Cancelar
             </button>
             <button type="submit" disabled={loading}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {loading && <Loader2 size={14} className="animate-spin" />}
               {isEdit ? 'Salvar' : 'Criar'}
             </button>
@@ -250,22 +250,22 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
   ]
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14 }}>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
       {/* Linha principal */}
       <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: 'rgb(74 158 26 / 0.1)', border: '1px solid rgb(74 158 26 / 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Wheat size={16} style={{ color: '#4a9e1a' }} />
+        <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: 'rgb(0 147 208 / 0.10)', border: '1px solid rgb(0 147 208 / 0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Wheat size={16} style={{ color: '#0093D0' }} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#ecefec' }}>{crop.name}</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{crop.name}</p>
             {!isCustom && (
-              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 3, background: '#162219', color: '#3a5240', border: '1px solid #1f3022' }}>
+              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 3, background: '#0d1520', color: '#556677', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <Lock size={9} /> padrão FAO-56
               </span>
             )}
-            {totalDays ? <span style={{ fontSize: 11, color: '#535c3e' }}>{totalDays} dias</span> : null}
+            {totalDays ? <span style={{ fontSize: 11, color: '#556677' }}>{totalDays} dias</span> : null}
           </div>
           {/* Kc resumo */}
           <div style={{ display: 'flex', gap: 6 }}>
@@ -274,9 +274,9 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
               { label: 'Kc mid',   value: crop.kc_mid },
               { label: 'Kc final', value: crop.kc_final },
             ].filter(k => k.value !== null).map(k => (
-              <div key={k.label} style={{ background: '#162219', borderRadius: 7, padding: '5px 10px', textAlign: 'center' }}>
-                <span style={{ fontSize: 9, color: '#535c3e', display: 'block' }}>{k.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#4a9e1a', fontFamily: 'var(--font-mono)' }}>{k.value}</span>
+              <div key={k.label} style={{ background: '#0d1520', borderRadius: 7, padding: '5px 10px', textAlign: 'center' }}>
+                <span style={{ fontSize: 9, color: '#556677', display: 'block' }}>{k.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{k.value}</span>
               </div>
             ))}
           </div>
@@ -285,30 +285,30 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {hasStages && (
             <button onClick={() => setExpanded(v => !v)} title="Ver fases"
-              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#4a9e1a', display: 'flex', alignItems: 'center' }}>
+              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#0093D0', display: 'flex', alignItems: 'center' }}>
               <ChevronRight size={14} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
             </button>
           )}
           {isCustom ? (
             <>
               <button onClick={onEdit} title="Editar"
-                style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1c2e20'; (e.currentTarget as HTMLElement).style.color = '#becec0' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+                style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
                 <Pencil size={14} />
               </button>
               <button onClick={onDelete} disabled={deleting} title="Excluir"
-                style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
+                style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
                 {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               </button>
             </>
           ) : (
             <button onClick={onDuplicate} title="Duplicar para minhas culturas"
-              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#162219', color: '#7a9e82' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(74 158 26 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#4a9e1a' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}>
+              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(0 147 208 / 0.10)'; (e.currentTarget as HTMLElement).style.color = '#0093D0' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
               <Copy size={14} />
             </button>
           )}
@@ -317,22 +317,22 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
 
       {/* Detalhes expandíveis das fases */}
       {expanded && (
-        <div style={{ borderTop: '1px solid #1a2e1d', padding: '14px 18px' }}>
-          <div style={{ border: '1px solid #1f3022', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', padding: '14px 18px' }}>
+          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 70px 55px 70px', background: '#162219', padding: '8px 14px', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 70px 55px 70px', background: '#0d1520', padding: '8px 14px', gap: 8 }}>
               {['Fase', 'Descrição', 'Dias', 'Raiz (cm)', 'Fator f', 'Kc'].map(h => (
-                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#535c3e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
               ))}
             </div>
             {stageRows.map((row, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 70px 55px 70px', padding: '10px 14px', gap: 8, borderTop: '1px solid #1a2e1d', background: i % 2 ? '#0f1b12' : 'transparent' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#4a9e1a' }}>Fase {i + 1}</span>
-                <span style={{ fontSize: 12, color: '#7a9e82' }}>{['Inicial', 'Desenvolvimento', 'Médio', 'Final'][i]} <span style={{ color: '#3a5240', fontSize: 10 }}>{row.hint ? `(${row.hint})` : ''}</span></span>
-                <span style={{ fontSize: 13, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
-                <span style={{ fontSize: 13, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{row.root ?? '—'}</span>
-                <span style={{ fontSize: 13, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{row.f ?? '—'}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: row.kc ? '#4a9e1a' : '#3a5240', fontFamily: 'var(--font-mono)' }}>{row.kc ?? row.kcLabel}</span>
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 70px 55px 70px', padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#0093D0' }}>Fase {i + 1}</span>
+                <span style={{ fontSize: 12, color: '#8899aa' }}>{['Inicial', 'Desenvolvimento', 'Médio', 'Final'][i]} <span style={{ color: '#556677', fontSize: 10 }}>{row.hint ? `(${row.hint})` : ''}</span></span>
+                <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
+                <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.root ?? '—'}</span>
+                <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.f ?? '—'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: row.kc ? '#0093D0' : '#556677', fontFamily: 'var(--font-mono)' }}>{row.kc ?? row.kcLabel}</span>
               </div>
             ))}
           </div>
@@ -408,14 +408,14 @@ export default function CulturasPage() {
       <div className="flex flex-col gap-5 max-w-4xl mx-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#ecefec' }}>Culturas</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#7a9e82' }}>
+            <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Culturas</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
               {defaultCrops.length} padrão · {customCrops.length} personalizada{customCrops.length !== 1 ? 's' : ''}
             </p>
           </div>
           <button
             onClick={() => { setEditingCrop(null); setModalOpen(true) }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgb(74 158 26 / 0.3)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgb(0 147 208 / 0.25)' }}
           >
             <Plus size={16} />
             Nova Cultura
@@ -424,15 +424,15 @@ export default function CulturasPage() {
 
         {authLoading || loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin" style={{ color: '#4a9e1a' }} />
+            <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
           </div>
         ) : (
           <>
             {customCrops.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#3a5240' }}>Minhas Culturas</span>
-                  <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>Minhas Culturas</span>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
                 </div>
                 <div className="flex flex-col gap-3">
                   {customCrops.map(c => (
@@ -449,8 +449,8 @@ export default function CulturasPage() {
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#3a5240' }}>Culturas Padrão FAO-56</span>
-                <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>Culturas Padrão FAO-56</span>
+                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
               </div>
               <div className="flex flex-col gap-3">
                 {defaultCrops.map(c => (

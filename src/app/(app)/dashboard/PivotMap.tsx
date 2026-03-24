@@ -29,7 +29,7 @@ const STATUS_COLORS: Record<IrrigationStatus, { fill: string; stroke: string; la
   verde:     { fill: '#22c55e', stroke: '#16a34a', label: 'OK' },
   amarelo:   { fill: '#f59e0b', stroke: '#d97706', label: 'Atenção' },
   vermelho:  { fill: '#ef4444', stroke: '#dc2626', label: 'Irrigar Agora' },
-  sem_safra: { fill: '#3a5240', stroke: '#1f3022', label: 'Sem safra' },
+  sem_safra: { fill: '#556677', stroke: 'rgba(255,255,255,0.06)', label: 'Sem safra' },
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -105,12 +105,12 @@ export function PivotMap({ pivots }: PivotMapProps) {
         const popupHtml = `
           <div style="
             font-family: system-ui, sans-serif;
-            background: #111f14;
-            border: 1px solid #1f3022;
+            background: #0f1923;
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 12px;
             padding: 14px 16px;
             min-width: 200px;
-            color: #ecefec;
+            color: #e2e8f0;
           ">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
               <div style="
@@ -120,29 +120,29 @@ export function PivotMap({ pivots }: PivotMapProps) {
               "></div>
               <strong style="font-size:14px;">${pivot.name}</strong>
             </div>
-            <p style="font-size:11px;color:#535c3e;margin:0 0 10px;">${pivot.farm_name}</p>
+            <p style="font-size:11px;color:#556677;margin:0 0 10px;">${pivot.farm_name}</p>
 
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
-              <div style="background:#162219;border-radius:8px;padding:8px;text-align:center;">
-                <div style="font-size:15px;font-weight:700;color:#ecefec;">${m?.eto_mm != null ? m.eto_mm.toFixed(1) : '—'}</div>
-                <div style="font-size:10px;color:#535c3e;">ETo (mm)</div>
+              <div style="background:#0d1520;border-radius:8px;padding:8px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#e2e8f0;">${m?.eto_mm != null ? m.eto_mm.toFixed(1) : '—'}</div>
+                <div style="font-size:10px;color:#556677;">ETo (mm)</div>
               </div>
-              <div style="background:#162219;border-radius:8px;padding:8px;text-align:center;">
-                <div style="font-size:15px;font-weight:700;color:#ecefec;">${m?.etc_mm != null ? m.etc_mm.toFixed(1) : '—'}</div>
-                <div style="font-size:10px;color:#535c3e;">ETc (mm)</div>
+              <div style="background:#0d1520;border-radius:8px;padding:8px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#e2e8f0;">${m?.etc_mm != null ? m.etc_mm.toFixed(1) : '—'}</div>
+                <div style="font-size:10px;color:#556677;">ETc (mm)</div>
               </div>
-              <div style="background:#162219;border-radius:8px;padding:8px;text-align:center;">
-                <div style="font-size:15px;font-weight:700;color:#ecefec;">${m?.rainfall_mm != null ? m.rainfall_mm.toFixed(1) : '—'}</div>
-                <div style="font-size:10px;color:#535c3e;">Chuva</div>
+              <div style="background:#0d1520;border-radius:8px;padding:8px;text-align:center;">
+                <div style="font-size:15px;font-weight:700;color:#e2e8f0;">${m?.rainfall_mm != null ? m.rainfall_mm.toFixed(1) : '—'}</div>
+                <div style="font-size:10px;color:#556677;">Chuva</div>
               </div>
             </div>
 
             <div>
               <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                <span style="font-size:10px;color:#535c3e;">Cap. Campo</span>
+                <span style="font-size:10px;color:#556677;">Cap. Campo</span>
                 <span style="font-size:10px;font-weight:600;color:${barColor};">${pct !== null ? pct.toFixed(0) + '%' : '—'}</span>
               </div>
-              <div style="height:5px;background:#162219;border-radius:99px;overflow:hidden;">
+              <div style="height:5px;background:#0d1520;border-radius:99px;overflow:hidden;">
                 <div style="width:${barWidth}%;height:100%;background:${barColor};border-radius:99px;"></div>
               </div>
             </div>
@@ -236,11 +236,11 @@ export function PivotMap({ pivots }: PivotMapProps) {
   if (pivotsWithCoords.length === 0) {
     return (
       <div style={{
-        background: '#111f14', border: '1px solid #1f3022', borderRadius: 16,
-        padding: '20px 24px', color: '#3a5240', fontSize: 13, textAlign: 'center',
+        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
+        padding: '20px 24px', color: '#556677', fontSize: 13, textAlign: 'center',
       }}>
         Nenhum pivô com coordenadas cadastradas.{' '}
-        <a href="/pivos" style={{ color: '#4a9e1a', textDecoration: 'none' }}>
+        <a href="/pivos" style={{ color: '#0093D0', textDecoration: 'none' }}>
           Adicione latitude/longitude nos pivôs
         </a>{' '}
         para ver o mapa.
@@ -249,7 +249,7 @@ export function PivotMap({ pivots }: PivotMapProps) {
   }
 
   return (
-    <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1px solid #1f3022' }}>
+    <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
       {/* CSS: pulse animation + popup style */}
       <style>{`
         @keyframes irrigaPulse {
@@ -270,17 +270,17 @@ export function PivotMap({ pivots }: PivotMapProps) {
           display: none !important;
         }
         .leaflet-container {
-          background: #0b1a0e !important;
+          background: #080e14 !important;
           font-family: system-ui, sans-serif !important;
         }
         .leaflet-control-zoom a {
-          background: #111f14 !important;
-          border-color: #1f3022 !important;
-          color: #7a9e82 !important;
+          background: #0f1923 !important;
+          border-color: rgba(255,255,255,0.06) !important;
+          color: #8899aa !important;
         }
         .leaflet-control-zoom a:hover {
-          background: #162219 !important;
-          color: #ecefec !important;
+          background: #0d1520 !important;
+          color: #e2e8f0 !important;
         }
       `}</style>
 
@@ -290,7 +290,7 @@ export function PivotMap({ pivots }: PivotMapProps) {
       <div style={{
         position: 'absolute', top: 12, right: 12, zIndex: 1000,
         background: 'rgb(11 26 14 / 0.92)',
-        border: '1px solid #1f3022',
+        border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 10, padding: '8px 12px',
         display: 'flex', flexDirection: 'column', gap: 5,
         backdropFilter: 'blur(4px)',
@@ -302,7 +302,7 @@ export function PivotMap({ pivots }: PivotMapProps) {
               background: val.fill,
               boxShadow: `0 0 4px ${val.fill}`,
             }} />
-            <span style={{ fontSize: 11, color: '#7a9e82' }}>{val.label}</span>
+            <span style={{ fontSize: 11, color: '#8899aa' }}>{val.label}</span>
           </div>
         ))}
       </div>

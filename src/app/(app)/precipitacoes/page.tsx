@@ -39,7 +39,7 @@ function parseFlexDate(raw: string): string | null {
 }
 
 function rainfallColor(mm: number): { text: string; bg: string } {
-  if (mm <= 0)    return { text: '#7a9e82', bg: 'transparent' }
+  if (mm <= 0)    return { text: '#8899aa', bg: 'transparent' }
   if (mm < 10)   return { text: '#06b6d4', bg: 'rgb(6 182 212 / 0.08)' }
   if (mm < 30)   return { text: '#3b82f6', bg: 'rgb(59 130 246 / 0.12)' }
   return { text: '#1d4ed8', bg: 'rgb(29 78 216 / 0.18)' }
@@ -99,9 +99,9 @@ function RainfallChips({
           key={c.label}
           style={{
             padding: '6px 14px', borderRadius: 20,
-            background: c.value > 0 ? 'rgb(6 182 212 / 0.1)' : '#162219',
-            border: `1px solid ${c.value > 0 ? 'rgb(6 182 212 / 0.3)' : '#1f3022'}`,
-            color: c.value > 0 ? '#06b6d4' : '#535c3e',
+            background: c.value > 0 ? 'rgb(6 182 212 / 0.1)' : '#0d1520',
+            border: `1px solid ${c.value > 0 ? 'rgb(6 182 212 / 0.3)' : 'rgba(255,255,255,0.06)'}`,
+            color: c.value > 0 ? '#06b6d4' : '#556677',
             fontSize: 12, fontWeight: 600,
           }}
         >
@@ -193,9 +193,9 @@ function RainfallBarChart({ records, year, month }: { records: RainfallRecord[];
           <div style={{
             position: 'absolute', top: 4, left,
             transform: 'translateX(-50%)',
-            background: '#0b1a0e', border: '1px solid #1f3022',
+            background: '#080e14', border: '1px solid rgba(255,255,255,0.06)',
             borderRadius: 6, padding: '4px 8px',
-            fontSize: 11, color: '#ecefec', whiteSpace: 'nowrap',
+            fontSize: 11, color: '#e2e8f0', whiteSpace: 'nowrap',
             pointerEvents: 'none', zIndex: 10,
           }}>
             Dia {d.day}: {d.mm.toFixed(1)} mm
@@ -290,14 +290,14 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div style={{
-        width: 320, background: '#111f14', border: '1px solid #1f3022',
+        width: 320, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ color: '#ecefec', fontSize: 15, fontWeight: 700 }}>
+          <h3 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700 }}>
             Precipitação — {displayDate}
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#535c3e', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#556677', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
@@ -305,7 +305,7 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
         {existing && (
           <div style={{
             fontSize: 11, padding: '3px 10px', borderRadius: 20,
-            background: '#162219', border: '1px solid #1f3022', color: '#535c3e',
+            background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#556677',
             alignSelf: 'flex-start',
           }}>
             Fonte: {existing.source === 'manual' ? 'Manual' : existing.source === 'import' ? 'Importação' : 'Estação'}
@@ -326,7 +326,7 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
         )}
 
         <div>
-          <label style={{ fontSize: 12, color: '#7a9e82', display: 'block', marginBottom: 6 }}>
+          <label style={{ fontSize: 12, color: '#8899aa', display: 'block', marginBottom: 6 }}>
             Chuva (mm)
           </label>
           <input
@@ -340,8 +340,8 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
             onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
             style={{
               width: '100%', padding: '10px 12px', borderRadius: 8,
-              background: '#162219', border: '1px solid #1f3022',
-              color: '#ecefec', fontSize: 24, fontWeight: 700,
+              background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
+              color: '#e2e8f0', fontSize: 24, fontWeight: 700,
               outline: 'none', boxSizing: 'border-box',
               textAlign: 'center',
             }}
@@ -354,7 +354,7 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
             disabled={saving}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg, #166502, #3d8c15)',
+              background: '#0093D0',
               color: '#fff', fontWeight: 600, fontSize: 13,
               opacity: saving ? 0.7 : 1,
             }}
@@ -367,8 +367,8 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
               disabled={saving}
               style={{
                 padding: '10px 14px', borderRadius: 8,
-                background: '#162219', border: '1px solid #1f3022',
-                color: '#7a9e82', cursor: 'pointer', fontSize: 13,
+                background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
+                color: '#8899aa', cursor: 'pointer', fontSize: 13,
               }}
             >
               Limpar
@@ -378,8 +378,8 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
             onClick={onClose}
             style={{
               padding: '10px 14px', borderRadius: 8,
-              background: 'transparent', border: '1px solid #1f3022',
-              color: '#535c3e', cursor: 'pointer', fontSize: 13,
+              background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
+              color: '#556677', cursor: 'pointer', fontSize: 13,
             }}
           >
             Cancelar
@@ -534,30 +534,30 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
     >
       <div style={{
         width: 520, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto',
-        background: '#111f14', border: '1px solid #1f3022',
+        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ color: '#ecefec', fontSize: 15, fontWeight: 700 }}>Importar Google Sheets</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#535c3e', padding: 4 }}>
+          <h3 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700 }}>Importar Google Sheets</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#556677', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
 
-        <p style={{ fontSize: 12, color: '#7a9e82' }}>
+        <p style={{ fontSize: 12, color: '#8899aa' }}>
           A planilha deve ser pública (Arquivo → Compartilhar → Qualquer pessoa com o link).
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <label style={{ fontSize: 12, color: '#7a9e82' }}>URL da Planilha</label>
+          <label style={{ fontSize: 12, color: '#8899aa' }}>URL da Planilha</label>
           <input
             type="text"
             placeholder="https://docs.google.com/spreadsheets/d/..."
             value={url}
             onChange={e => handleUrlChange(e.target.value)}
             style={{
-              padding: '9px 12px', borderRadius: 8, background: '#162219',
-              border: '1px solid #1f3022', color: '#ecefec', fontSize: 13, outline: 'none',
+              padding: '9px 12px', borderRadius: 8, background: '#0d1520',
+              border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none',
             }}
           />
         </div>
@@ -565,17 +565,17 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
         {/* Seletor de aba — auto-detectado ou manual */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <label style={{ fontSize: 12, color: '#7a9e82' }}>Aba</label>
-            {loadingTabs && <span style={{ fontSize: 11, color: '#535c3e' }}>detectando abas…</span>}
-            {tabs.length > 0 && <span style={{ fontSize: 11, color: '#4a9e1a' }}>{tabs.length} aba{tabs.length > 1 ? 's' : ''} encontrada{tabs.length > 1 ? 's' : ''}</span>}
+            <label style={{ fontSize: 12, color: '#8899aa' }}>Aba</label>
+            {loadingTabs && <span style={{ fontSize: 11, color: '#556677' }}>detectando abas…</span>}
+            {tabs.length > 0 && <span style={{ fontSize: 11, color: '#0093D0' }}>{tabs.length} aba{tabs.length > 1 ? 's' : ''} encontrada{tabs.length > 1 ? 's' : ''}</span>}
           </div>
           {tabs.length > 0 ? (
             <select
               value={gid}
               onChange={e => { setGid(e.target.value); setPreview(null); setHeaders([]) }}
               style={{
-                padding: '9px 12px', borderRadius: 8, background: '#162219',
-                border: '1px solid #1f3022', color: '#ecefec', fontSize: 13, outline: 'none', cursor: 'pointer',
+                padding: '9px 12px', borderRadius: 8, background: '#0d1520',
+                border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer',
               }}
             >
               {tabs.map(t => (
@@ -589,8 +589,8 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
               value={gid}
               onChange={e => setGid(e.target.value)}
               style={{
-                padding: '9px 12px', borderRadius: 8, background: '#162219',
-                border: '1px solid #1f3022', color: '#ecefec', fontSize: 13, outline: 'none',
+                padding: '9px 12px', borderRadius: 8, background: '#0d1520',
+                border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none',
               }}
             />
           )}
@@ -598,13 +598,13 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 12, color: '#7a9e82' }}>Coluna da Data (índice)</label>
+            <label style={{ fontSize: 12, color: '#8899aa' }}>Coluna da Data (índice)</label>
             <select
               value={dateCol}
               onChange={e => setDateCol(e.target.value)}
               style={{
-                padding: '9px 12px', borderRadius: 8, background: '#162219',
-                border: '1px solid #1f3022', color: '#ecefec', fontSize: 13, outline: 'none',
+                padding: '9px 12px', borderRadius: 8, background: '#0d1520',
+                border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none',
               }}
             >
               {headers.length > 0
@@ -614,13 +614,13 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
             </select>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 12, color: '#7a9e82' }}>Coluna de mm (índice)</label>
+            <label style={{ fontSize: 12, color: '#8899aa' }}>Coluna de mm (índice)</label>
             <select
               value={mmCol}
               onChange={e => setMmCol(e.target.value)}
               style={{
-                padding: '9px 12px', borderRadius: 8, background: '#162219',
-                border: '1px solid #1f3022', color: '#ecefec', fontSize: 13, outline: 'none',
+                padding: '9px 12px', borderRadius: 8, background: '#0d1520',
+                border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none',
               }}
             >
               {headers.length > 0
@@ -642,8 +642,8 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
           disabled={loading || !url}
           style={{
             padding: '10px', borderRadius: 8, cursor: 'pointer',
-            background: '#162219', border: '1px solid #1f3022',
-            color: '#ecefec', fontWeight: 600, fontSize: 13,
+            background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
+            color: '#e2e8f0', fontWeight: 600, fontSize: 13,
             opacity: loading || !url ? 0.5 : 1,
           }}
         >
@@ -657,7 +657,7 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
                 <thead>
                   <tr>
                     {headers.map((h, i) => (
-                      <th key={i} style={{ padding: '6px 10px', background: '#162219', color: '#7a9e82', textAlign: 'left', borderBottom: '1px solid #1f3022' }}>
+                      <th key={i} style={{ padding: '6px 10px', background: '#0d1520', color: '#8899aa', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                         {h || `Col ${i}`}
                       </th>
                     ))}
@@ -667,7 +667,7 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
                   {preview.map((row, ri) => (
                     <tr key={ri}>
                       {row.map((cell, ci) => (
-                        <td key={ci} style={{ padding: '5px 10px', color: '#ecefec', borderBottom: '1px solid #1a2e1d' }}>
+                        <td key={ci} style={{ padding: '5px 10px', color: '#e2e8f0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                           {cell}
                         </td>
                       ))}
@@ -679,10 +679,10 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
 
             {importing && (
               <div>
-                <div style={{ height: 6, borderRadius: 3, background: '#162219', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#166502,#3b82f6)', borderRadius: 3, transition: 'width 0.2s' }} />
+                <div style={{ height: 6, borderRadius: 3, background: '#0d1520', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#003d5c,#3b82f6)', borderRadius: 3, transition: 'width 0.2s' }} />
                 </div>
-                <p style={{ fontSize: 11, color: '#535c3e', marginTop: 4 }}>{progress}%</p>
+                <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>{progress}%</p>
               </div>
             )}
 
@@ -691,7 +691,7 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
               disabled={importing}
               style={{
                 padding: '11px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: 'linear-gradient(135deg, #166502, #3d8c15)',
+                background: '#0093D0',
                 color: '#fff', fontWeight: 600, fontSize: 13,
                 opacity: importing ? 0.7 : 1,
               }}
@@ -701,7 +701,7 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
           </>
         )}
 
-        <p style={{ fontSize: 11, color: '#3a5240' }}>
+        <p style={{ fontSize: 11, color: '#556677' }}>
           Formatos de data aceitos: YYYY-MM-DD · DD/MM/YYYY · DD/MM/YY
         </p>
       </div>
@@ -761,7 +761,7 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
       {/* Header */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
         {DAY_LABELS.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#3a5240', padding: '4px 0' }}>
+          <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#556677', padding: '4px 0' }}>
             {d}
           </div>
         ))}
@@ -784,8 +784,8 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
                 minHeight: 64,
                 borderRadius: 8,
                 padding: '6px 8px',
-                background: isSelected ? 'rgb(74 158 26 / 0.1)' : col.bg,
-                border: `1px solid ${isToday ? '#4a9e1a' : isSelected ? 'rgb(74 158 26 / 0.4)' : '#1f3022'}`,
+                background: isSelected ? 'rgb(0 147 208 / 0.10)' : col.bg,
+                border: `1px solid ${isToday ? '#0093D0' : isSelected ? 'rgb(0 147 208 / 0.35)' : 'rgba(255,255,255,0.06)'}`,
                 cursor: cell.inMonth ? 'pointer' : 'default',
                 opacity: cell.inMonth ? 1 : 0.25,
                 display: 'flex', flexDirection: 'column', gap: 2,
@@ -796,7 +796,7 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <span style={{
                   fontSize: 11, fontWeight: isToday ? 700 : 500,
-                  color: isToday ? '#4a9e1a' : '#7a9e82',
+                  color: isToday ? '#0093D0' : '#8899aa',
                 }}>
                   {cell.day}
                 </span>
@@ -1013,9 +1013,9 @@ export default function PrecipitacoesPage() {
             <CloudRain size={18} color="#fff" />
           </div>
           <div>
-            <h1 style={{ fontSize: 18, fontWeight: 700, color: '#ecefec' }}>Precipitações</h1>
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0' }}>Precipitações</h1>
             {selectedPivot && (
-              <p style={{ fontSize: 12, color: '#535c3e' }}>{selectedPivot.farm_name} · {selectedPivot.name}</p>
+              <p style={{ fontSize: 12, color: '#556677' }}>{selectedPivot.farm_name} · {selectedPivot.name}</p>
             )}
           </div>
         </div>
@@ -1028,8 +1028,8 @@ export default function PrecipitacoesPage() {
             disabled={loadingPivots || pivots.length === 0}
             style={{
               padding: '8px 12px', borderRadius: 8,
-              background: '#162219', border: '1px solid #1f3022',
-              color: '#ecefec', fontSize: 13, outline: 'none', cursor: 'pointer',
+              background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
+              color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer',
             }}
           >
             {pivots.map(p => (
@@ -1044,8 +1044,8 @@ export default function PrecipitacoesPage() {
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 8,
-              background: '#162219', border: '1px solid #1f3022',
-              color: '#7a9e82', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+              background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
+              color: '#8899aa', cursor: 'pointer', fontSize: 13, fontWeight: 500,
             }}
           >
             <Upload size={14} />
@@ -1083,10 +1083,10 @@ export default function PrecipitacoesPage() {
       {!loadingPivots && pivots.length === 0 && (
         <div style={{
           padding: '40px 24px', textAlign: 'center',
-          background: '#162219', border: '1px solid #1f3022', borderRadius: 12,
-          color: '#535c3e', fontSize: 14,
+          background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12,
+          color: '#556677', fontSize: 14,
         }}>
-          <Calendar size={32} color="#1f3022" style={{ margin: '0 auto 12px' }} />
+          <Calendar size={32} color="rgba(255,255,255,0.06)" style={{ margin: '0 auto 12px' }} />
           Nenhum pivô cadastrado. Cadastre um pivô para registrar precipitações.
         </div>
       )}
@@ -1098,36 +1098,36 @@ export default function PrecipitacoesPage() {
 
           {/* Month navigation */}
           <div style={{
-            background: '#162219', border: '1px solid #1f3022', borderRadius: 12, padding: '12px 16px',
+            background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 16px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <button
                 onClick={prevMonth}
-                style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#7a9e82' }}
+                style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}
               >
                 <ChevronLeft size={16} />
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ecefec' }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>
                   {MONTH_NAMES[month]} {year}
                 </h2>
-                {loadingRecords && <span style={{ fontSize: 11, color: '#535c3e' }}>carregando…</span>}
+                {loadingRecords && <span style={{ fontSize: 11, color: '#556677' }}>carregando…</span>}
               </div>
 
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
                   onClick={goToday}
                   style={{
-                    background: '#111f14', border: '1px solid #1f3022', borderRadius: 8,
-                    padding: '6px 12px', cursor: 'pointer', color: '#7a9e82', fontSize: 12,
+                    background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8,
+                    padding: '6px 12px', cursor: 'pointer', color: '#8899aa', fontSize: 12,
                   }}
                 >
                   Hoje
                 </button>
                 <button
                   onClick={nextMonth}
-                  style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#7a9e82' }}
+                  style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -1148,17 +1148,17 @@ export default function PrecipitacoesPage() {
 
           {/* Bar chart */}
           <div style={{
-            background: '#162219', border: '1px solid #1f3022', borderRadius: 12, padding: '16px',
+            background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#7a9e82' }}>Distribuição diária — {MONTH_NAMES[month]}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>Distribuição diária — {MONTH_NAMES[month]}</span>
               <div style={{ width: 10, height: 2, background: '#f59e0b', borderRadius: 1 }} />
-              <span style={{ fontSize: 10, color: '#535c3e' }}>média mensal</span>
+              <span style={{ fontSize: 10, color: '#556677' }}>média mensal</span>
             </div>
             <RainfallBarChart records={monthRecords} year={year} month={month} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-              <span style={{ fontSize: 10, color: '#3a5240' }}>1</span>
-              <span style={{ fontSize: 10, color: '#3a5240' }}>{new Date(year, month + 1, 0).getDate()}</span>
+              <span style={{ fontSize: 10, color: '#556677' }}>1</span>
+              <span style={{ fontSize: 10, color: '#556677' }}>{new Date(year, month + 1, 0).getDate()}</span>
             </div>
           </div>
         </>

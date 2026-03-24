@@ -51,17 +51,17 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.7)' }}>
-      <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 20, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)' }}>
+      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)' }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#ecefec' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
             {isEdit ? 'Editar Fazenda' : 'Nova Fazenda'}
           </h2>
           <button
             onClick={onClose}
-            style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#3a5240', cursor: 'pointer' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#7a9e82'; (e.currentTarget as HTMLElement).style.background = '#1c2e20' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#3a5240'; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+            style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#556677', cursor: 'pointer' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#8899aa'; (e.currentTarget as HTMLElement).style.background = '#0d1520' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#556677'; (e.currentTarget as HTMLElement).style.background = 'transparent' }}
           >
             <X size={16} />
           </button>
@@ -75,7 +75,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
               Nome da Fazenda *
             </label>
             <input
@@ -86,15 +86,15 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
               placeholder="Ex: Fazenda Primavera"
               style={{
                 width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none',
+                background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
               }}
-              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+              onFocus={e => e.target.style.borderColor = '#0093D0'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
               Altitude (m)
             </label>
             <input
@@ -104,10 +104,10 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
               placeholder="Ex: 820"
               style={{
                 width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none',
+                background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
               }}
-              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+              onFocus={e => e.target.style.borderColor = '#0093D0'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
           </div>
 
@@ -117,7 +117,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
               onClick={onClose}
               style={{
                 flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500,
-                background: 'transparent', border: '1px solid #2a3d2d', color: '#7a9e82', cursor: 'pointer',
+                background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer',
               }}
             >
               Cancelar
@@ -127,7 +127,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
               disabled={loading}
               style={{
                 flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600,
-                background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer',
+                background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
                 opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}
             >
@@ -198,8 +198,8 @@ export default function FazendasPage() {
         {/* Cabeçalho */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#ecefec' }}>Fazendas</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#7a9e82' }}>
+            <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Fazendas</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
               {farms.length} {farms.length === 1 ? 'fazenda cadastrada' : 'fazendas cadastradas'}
             </p>
           </div>
@@ -208,8 +208,8 @@ export default function FazendasPage() {
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-              background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer',
-              boxShadow: '0 2px 8px rgb(74 158 26 / 0.3)',
+              background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
+              boxShadow: '0 2px 8px rgb(0 147 208 / 0.25)',
             }}
           >
             <Plus size={16} />
@@ -220,22 +220,22 @@ export default function FazendasPage() {
         {/* Conteúdo */}
         {authLoading || loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin" style={{ color: '#4a9e1a' }} />
+            <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
           </div>
         ) : farms.length === 0 ? (
           // Empty state
-          <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
             <div style={{
               width: 64, height: 64, borderRadius: 16, margin: '0 auto 16px',
-              background: 'rgb(74 158 26 / 0.1)', border: '1px solid rgb(74 158 26 / 0.2)',
+              background: 'rgb(0 147 208 / 0.10)', border: '1px solid rgb(0 147 208 / 0.20)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <Building2 size={28} style={{ color: '#4a9e1a' }} />
+              <Building2 size={28} style={{ color: '#0093D0' }} />
             </div>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#ecefec', marginBottom: 8 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>
               Nenhuma fazenda cadastrada
             </h3>
-            <p style={{ fontSize: 14, color: '#535c3e', marginBottom: 24 }}>
+            <p style={{ fontSize: 14, color: '#556677', marginBottom: 24 }}>
               Cadastre sua primeira fazenda para começar a gerenciar a irrigação.
             </p>
             <button
@@ -243,7 +243,7 @@ export default function FazendasPage() {
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
                 padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-                background: 'linear-gradient(135deg, #166502, #4a9e1a)', border: 'none', color: '#fff', cursor: 'pointer',
+                background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
               }}
             >
               <Plus size={16} />
@@ -256,23 +256,23 @@ export default function FazendasPage() {
               <div
                 key={farm.id}
                 style={{
-                  background: '#111f14', border: '1px solid #1f3022', borderRadius: 14,
+                  background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14,
                   padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14,
                 }}
               >
                 {/* Ícone */}
                 <div style={{
                   width: 42, height: 42, borderRadius: 10, flexShrink: 0,
-                  background: 'rgb(74 158 26 / 0.1)', border: '1px solid rgb(74 158 26 / 0.2)',
+                  background: 'rgb(0 147 208 / 0.10)', border: '1px solid rgb(0 147 208 / 0.20)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <MapPin size={18} style={{ color: '#4a9e1a' }} />
+                  <MapPin size={18} style={{ color: '#0093D0' }} />
                 </div>
 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 15, fontWeight: 600, color: '#ecefec' }}>{farm.name}</p>
-                  <p style={{ fontSize: 12, color: '#535c3e', marginTop: 2 }}>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0' }}>{farm.name}</p>
+                  <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
                     {farm.altitude ? `Altitude: ${farm.altitude} m` : 'Altitude não informada'}
                     {farm.area_m2 ? ` · ${(farm.area_m2 / 10000).toFixed(1)} ha` : ''}
                   </p>
@@ -285,10 +285,10 @@ export default function FazendasPage() {
                     title="Editar"
                     style={{
                       padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer',
-                      background: '#162219', color: '#7a9e82',
+                      background: '#0d1520', color: '#8899aa',
                     }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1c2e20'; (e.currentTarget as HTMLElement).style.color = '#becec0' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
                   >
                     <Pencil size={14} />
                   </button>
@@ -298,10 +298,10 @@ export default function FazendasPage() {
                     title="Excluir"
                     style={{
                       padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer',
-                      background: '#162219', color: '#7a9e82',
+                      background: '#0d1520', color: '#8899aa',
                     }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#162219'; (e.currentTarget as HTMLElement).style.color = '#7a9e82' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
                   >
                     {deletingId === farm.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                   </button>

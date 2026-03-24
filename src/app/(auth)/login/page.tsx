@@ -39,7 +39,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'linear-gradient(135deg, #166502, #4a9e1a)' }}>
+            style={{ background: '#0093D0' }}>
             <Droplets size={26} className="text-white" strokeWidth={2.5} />
           </div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>IrrigaAgro</h1>
@@ -47,7 +47,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04)' }}>
+        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.4), 0 0 0 1px rgb(255 255 255 / 0.04)' }}>
           <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--color-text)' }}>Entrar na sua conta</h2>
 
           {error && (
@@ -114,7 +114,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-opacity disabled:opacity-60 mt-1"
-              style={{ background: 'linear-gradient(135deg, #166502, #4a9e1a)' }}
+              style={{ background: '#0093D0' }}
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : null}
               {loading ? 'Entrando...' : 'Entrar'}

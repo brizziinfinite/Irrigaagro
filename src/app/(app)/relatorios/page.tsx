@@ -194,18 +194,18 @@ function emptyKPIs(): SeasonKPIs {
 
 // ─── Sub-componentes ──────────────────────────────────────────
 
-function KpiCard({ label, value, unit, color = '#ecefec', icon: Icon, sub }: {
+function KpiCard({ label, value, unit, color = '#e2e8f0', icon: Icon, sub }: {
   label: string; value: string; unit?: string; color?: string
   icon?: typeof Droplets; sub?: string
 }) {
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, padding: '16px 18px' }}>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px' }}>
       {Icon && <Icon size={14} style={{ color, marginBottom: 8 }} />}
       <p style={{ fontSize: 22, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-        {value} <span style={{ fontSize: 12, fontWeight: 400, color: '#535c3e' }}>{unit}</span>
+        {value} <span style={{ fontSize: 12, fontWeight: 400, color: '#556677' }}>{unit}</span>
       </p>
-      <p style={{ fontSize: 11, color: '#7a9e82', marginTop: 5 }}>{label}</p>
-      {sub && <p style={{ fontSize: 10, color: '#3a5240', marginTop: 2 }}>{sub}</p>}
+      <p style={{ fontSize: 11, color: '#8899aa', marginTop: 5 }}>{label}</p>
+      {sub && <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{sub}</p>}
     </div>
   )
 }
@@ -217,10 +217,10 @@ function StressGauge({ value }: { value: number }) {
   const refMax = 12 // valor máximo recomendado pelos reports
 
   return (
-    <div style={{ background: '#111f14', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px' }}>
+    <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <AlertTriangle size={14} style={{ color }} />
-        <span style={{ fontSize: 11, color: '#7a9e82' }}>Índice de Stress Hídrico</span>
+        <span style={{ fontSize: 11, color: '#8899aa' }}>Índice de Stress Hídrico</span>
       </div>
       <p style={{ fontSize: 28, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {fmtNum(value)}%
@@ -228,12 +228,12 @@ function StressGauge({ value }: { value: number }) {
       <p style={{ fontSize: 10, color, marginTop: 4, fontWeight: 600 }}>{label}</p>
 
       {/* Barra */}
-      <div style={{ marginTop: 10, height: 6, background: '#162219', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ marginTop: 10, height: 6, background: '#0d1520', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
         {/* Linha de referência 10-12% */}
         <div style={{ position: 'absolute', left: `${(refMax / 40) * 100}%`, top: 0, bottom: 0, width: 2, background: '#f59e0b', opacity: 0.6 }} />
         <div style={{ width: `${Math.min(100, (value / 40) * 100)}%`, height: '100%', background: color, borderRadius: 99 }} />
       </div>
-      <p style={{ fontSize: 9, color: '#3a5240', marginTop: 3 }}>Referência: máx. 10–12% (Irriger)</p>
+      <p style={{ fontSize: 9, color: '#556677', marginTop: 3 }}>Referência: máx. 10–12% (Irriger)</p>
     </div>
   )
 }
@@ -245,29 +245,29 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
     { label: '15 dias', ...last15 },
   ]
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid #1f3022' }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#ecefec' }}>Consumo por Período (Últimos)</span>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Consumo por Período (Últimos)</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: 0 }}>
         {/* Header */}
         {['', 'ETc (mm)', 'Irrig. (mm)', 'Chuva (mm)'].map((h, i) => (
-          <div key={i} style={{ padding: '8px 14px', background: '#162219', borderBottom: '1px solid #1f3022' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#535c3e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+          <div key={i} style={{ padding: '8px 14px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
           </div>
         ))}
         {rows.map((r, i) => (
           <>
-            <div key={`l${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid #1a2e1d' : 'none', background: i % 2 ? '#0f1b12' : 'transparent' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#becec0' }}>{r.label}</span>
+            <div key={`l${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>{r.label}</span>
             </div>
-            <div key={`c${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid #1a2e1d' : 'none', background: i % 2 ? '#0f1b12' : 'transparent' }}>
+            <div key={`c${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
               <span style={{ fontSize: 13, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.consumption)}</span>
             </div>
-            <div key={`ir${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid #1a2e1d' : 'none', background: i % 2 ? '#0f1b12' : 'transparent' }}>
-              <span style={{ fontSize: 13, color: '#4a9e1a', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.irrigation)}</span>
+            <div key={`ir${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+              <span style={{ fontSize: 13, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.irrigation)}</span>
             </div>
-            <div key={`ra${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid #1a2e1d' : 'none', background: i % 2 ? '#0f1b12' : 'transparent' }}>
+            <div key={`ra${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
               <span style={{ fontSize: 13, color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall)}</span>
             </div>
           </>
@@ -279,21 +279,21 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
 
 function StageTable({ stages }: { stages: StageStats[] }) {
   if (stages.length === 0) return null
-  const stageColors = ['', '#06b6d4', '#4a9e1a', '#f59e0b', '#ec4899']
+  const stageColors = ['', '#06b6d4', '#0093D0', '#f59e0b', '#ec4899']
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid #1f3022', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Leaf size={13} style={{ color: '#4a9e1a' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#ecefec' }}>Histórico por Fase Fenológica</span>
-        <span style={{ fontSize: 10, color: '#535c3e', marginLeft: 'auto' }}>como Irriger</span>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Leaf size={13} style={{ color: '#0093D0' }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Histórico por Fase Fenológica</span>
+        <span style={{ fontSize: 10, color: '#556677', marginLeft: 'auto' }}>como Irriger</span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#162219' }}>
+            <tr style={{ background: '#0d1520' }}>
               {['Fase', 'Dias', 'Irrigação (mm)', 'Precipitação (mm)', 'ETc (mm)', 'ETp (mm)', 'Stress (%)'].map(h => (
-                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#535c3e', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid #1f3022', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -301,17 +301,17 @@ function StageTable({ stages }: { stages: StageStats[] }) {
             {stages.map((s, i) => {
               const stressColor = s.stressIndex < 10 ? '#22c55e' : s.stressIndex < 20 ? '#f59e0b' : '#ef4444'
               return (
-                <tr key={s.stage} style={{ background: i % 2 ? '#0f1b12' : 'transparent', borderBottom: i < stages.length - 1 ? '1px solid #1a2e1d' : 'none' }}>
+                <tr key={s.stage} style={{ background: i % 2 ? '#080e14' : 'transparent', borderBottom: i < stages.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                   <td style={{ padding: '10px 14px' }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: stageColors[s.stage] ?? '#ecefec' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: stageColors[s.stage] ?? '#e2e8f0' }}>
                       Fase {s.stage} — {s.label}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#becec0', fontFamily: 'var(--font-mono)' }}>{s.days}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#4a9e1a', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.irrigationMm)}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{s.days}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.irrigationMm)}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.rainfallMm)}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.etcMm)}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#7a9e82', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.etpMm)}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.etpMm)}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: stressColor, fontFamily: 'var(--font-mono)' }}>
                       {fmtNum(s.stressIndex)}%
@@ -330,9 +330,9 @@ function StageTable({ stages }: { stages: StageStats[] }) {
 function IrrigComparisonTable({ events }: { events: IrrigComparison[] }) {
   if (events.length === 0) {
     return (
-      <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, padding: '32px 24px', textAlign: 'center' }}>
-        <Droplets size={24} style={{ color: '#3a5240', margin: '0 auto 10px' }} />
-        <p style={{ fontSize: 13, color: '#535c3e' }}>Nenhum evento de irrigação registrado ainda.</p>
+      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '32px 24px', textAlign: 'center' }}>
+        <Droplets size={24} style={{ color: '#556677', margin: '0 auto 10px' }} />
+        <p style={{ fontSize: 13, color: '#556677' }}>Nenhum evento de irrigação registrado ainda.</p>
       </div>
     )
   }
@@ -352,11 +352,11 @@ function IrrigComparisonTable({ events }: { events: IrrigComparison[] }) {
   }
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid #1f3022', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Droplets size={13} style={{ color: '#4a9e1a' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#ecefec' }}>Irrigações — Recomendado vs Aplicado</span>
-        <span style={{ fontSize: 10, color: '#535c3e', marginLeft: 'auto' }}>como Irriga Global</span>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Droplets size={13} style={{ color: '#0093D0' }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Irrigações — Recomendado vs Aplicado</span>
+        <span style={{ fontSize: 10, color: '#556677', marginLeft: 'auto' }}>como Irriga Global</span>
       </div>
 
       {Object.entries(byMonth).map(([month, monthEvents]) => {
@@ -367,30 +367,30 @@ function IrrigComparisonTable({ events }: { events: IrrigComparison[] }) {
         return (
           <div key={month}>
             {/* Cabeçalho do mês */}
-            <div style={{ padding: '8px 18px', background: '#162219', borderBottom: '1px solid #1f3022', borderTop: '1px solid #1f3022', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#7a9e82', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <div style={{ padding: '8px 18px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {monthNames[mo]} / {year}
               </span>
-              <span style={{ fontSize: 10, color: '#535c3e' }}>
+              <span style={{ fontSize: 10, color: '#556677' }}>
                 Total recomendado: <span style={{ color: '#f59e0b' }}>{fmtNum(totalRec)} mm</span>
                 {' · '}
-                Aplicado: <span style={{ color: '#4a9e1a' }}>{fmtNum(totalApp)} mm</span>
+                Aplicado: <span style={{ color: '#0093D0' }}>{fmtNum(totalApp)} mm</span>
               </span>
             </div>
 
             {/* Linhas de eventos */}
             {monthEvents.map((e, i) => {
-              const deltaColor = e.delta === null ? '#535c3e' : e.delta >= 0 ? '#22c55e' : '#ef4444'
+              const deltaColor = e.delta === null ? '#556677' : e.delta >= 0 ? '#22c55e' : '#ef4444'
               const hasApplied = e.applied !== null && e.applied !== undefined
 
               return (
                 <div key={e.date} style={{
                   display: 'grid', gridTemplateColumns: '100px 120px 120px 120px 1fr',
                   alignItems: 'center', gap: 4, padding: '9px 18px',
-                  borderBottom: i < monthEvents.length - 1 ? '1px solid #1a2e1d' : 'none',
-                  background: i % 2 ? '#0f1b12' : 'transparent',
+                  borderBottom: i < monthEvents.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  background: i % 2 ? '#080e14' : 'transparent',
                 }}>
-                  <span style={{ fontSize: 12, color: '#becec0' }}>{fmtDate(e.date)}</span>
+                  <span style={{ fontSize: 12, color: '#8899aa' }}>{fmtDate(e.date)}</span>
                   {/* Barra recomendada */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ height: 6, width: `${Math.min(100, (e.recommended / 20) * 100)}%`, minWidth: 4, background: '#f59e0b', borderRadius: 99 }} />
@@ -400,11 +400,11 @@ function IrrigComparisonTable({ events }: { events: IrrigComparison[] }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {hasApplied ? (
                       <>
-                        <div style={{ height: 6, width: `${Math.min(100, ((e.applied ?? 0) / 20) * 100)}%`, minWidth: 4, background: '#4a9e1a', borderRadius: 99 }} />
-                        <span style={{ fontSize: 12, color: '#4a9e1a', fontFamily: 'var(--font-mono)' }}>{fmtNum(e.applied)}</span>
+                        <div style={{ height: 6, width: `${Math.min(100, ((e.applied ?? 0) / 20) * 100)}%`, minWidth: 4, background: '#0093D0', borderRadius: 99 }} />
+                        <span style={{ fontSize: 12, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(e.applied)}</span>
                       </>
                     ) : (
-                      <span style={{ fontSize: 11, color: '#3a5240' }}>não registrado</span>
+                      <span style={{ fontSize: 11, color: '#556677' }}>não registrado</span>
                     )}
                   </div>
                   {/* Delta */}
@@ -412,7 +412,7 @@ function IrrigComparisonTable({ events }: { events: IrrigComparison[] }) {
                     {e.delta !== null ? (e.delta >= 0 ? '+' : '') + fmtNum(e.delta) : '—'}
                   </span>
                   {/* Acumulado do mês */}
-                  <span style={{ fontSize: 10, color: '#3a5240', textAlign: 'right' }}>
+                  <span style={{ fontSize: 10, color: '#556677', textAlign: 'right' }}>
                     {(() => {
                       const idx = monthEvents.indexOf(e)
                       const acc = monthEvents.slice(0, idx + 1).reduce((s, x) => s + (x.applied ?? 0), 0)
@@ -500,18 +500,18 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
   const yTicks = [0, 25, 50, 75, 100, 125].map(v => ({ v, y: yRight(v) }))
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid #1f3022', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <TrendingDown size={13} style={{ color: '#4a9e1a' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#ecefec' }}>ADc% ao Longo da Safra — com Fases Fenológicas</span>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <TrendingDown size={13} style={{ color: '#0093D0' }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>ADc% ao Longo da Safra — com Fases Fenológicas</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
           {[1,2,3,4].map(s => (
-            <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#535c3e' }}>
+            <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
               <div style={{ width: 10, height: 10, borderRadius: 2, background: stageColors[s]?.replace('0.06', '0.5') ?? '#333' }} />
               Fase {s}
             </span>
           ))}
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#535c3e' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
             <div style={{ width: 2, height: 10, background: '#f59e0b', opacity: 0.6 }} />CAD
           </span>
         </div>
@@ -531,7 +531,7 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
 
           {/* Grade */}
           {yTicks.map(({ v, y }) => (
-            <line key={v} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="#1a2e1d" strokeWidth="1" />
+            <line key={v} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
           ))}
 
           {/* Linha CAD dinâmica (um segmento por registro) */}
@@ -582,31 +582,31 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
             if (v === null || v === undefined) return null
             const cad = cadPercents[i]
             const color = v >= 80 ? '#22c55e' : v >= cad ? '#f59e0b' : '#ef4444'
-            return <circle key={i} cx={xPos(i)} cy={yRight(v)} r="3" fill={color} stroke="#111f14" strokeWidth="1.5" />
+            return <circle key={i} cx={xPos(i)} cy={yRight(v)} r="3" fill={color} stroke="#0f1923" strokeWidth="1.5" />
           })}
 
           {/* Eixo Y */}
           {yTicks.map(({ v, y }) => (
-            <text key={v} x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#535c3e">{v}%</text>
+            <text key={v} x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#556677">{v}%</text>
           ))}
 
           {/* Eixo X */}
           {xTicks.map(({ i, label }) => (
-            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#535c3e">{label}</text>
+            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#556677">{label}</text>
           ))}
 
-          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="#1f3022" strokeWidth="1" />
-          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="#1f3022" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
         </svg>
       </div>
-      <div style={{ padding: '8px 18px 10px', borderTop: '1px solid #1a2e1d', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#535c3e' }}>
+      <div style={{ padding: '8px 18px 10px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
           <div style={{ width: 8, height: 12, background: 'rgb(74 158 26 / 0.5)', borderRadius: 1 }} /> Irrigação aplicada
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#535c3e' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
           <div style={{ width: 8, height: 12, background: 'rgb(56 189 248 / 0.4)', borderRadius: 1 }} /> Chuva
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#535c3e' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
           <div style={{ width: 16, height: 3, background: '#c9a227', borderRadius: 99 }} /> ADc%
         </span>
       </div>
@@ -652,14 +652,14 @@ function EnergyKpiCard({ label, value, unit, status, meta }: {
   label: string; value: string; unit?: string
   status?: SemColor | string; meta?: string
 }) {
-  const color = status ? semColor(status) : '#ecefec'
+  const color = status ? semColor(status) : '#e2e8f0'
   return (
-    <div style={{ background: '#111f14', border: `1px solid ${color}30`, borderRadius: 14, padding: '14px 16px' }}>
+    <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '14px 16px' }}>
       <p style={{ fontSize: 20, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-        {value} <span style={{ fontSize: 11, fontWeight: 400, color: '#535c3e' }}>{unit}</span>
+        {value} <span style={{ fontSize: 11, fontWeight: 400, color: '#556677' }}>{unit}</span>
       </p>
-      <p style={{ fontSize: 11, color: '#7a9e82', marginTop: 5 }}>{label}</p>
-      {meta && <p style={{ fontSize: 10, color: '#3a5240', marginTop: 2 }}>{meta}</p>}
+      <p style={{ fontSize: 11, color: '#8899aa', marginTop: 5 }}>{label}</p>
+      {meta && <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{meta}</p>}
     </div>
   )
 }
@@ -691,18 +691,18 @@ function EnergyBarChart({ bills }: { bills: EnergyBill[] }) {
   }
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid #1f3022', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <Bolt size={13} style={{ color: '#f59e0b' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#ecefec' }}>Histórico de Energia — Reativa % e Custo/mm/ha</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Histórico de Energia — Reativa % e Custo/mm/ha</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 14 }}>
-          <span style={{ fontSize: 10, color: '#535c3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 10, height: 10, background: 'rgb(239 68 68 / 0.5)', borderRadius: 2 }} /> Reativa %
           </span>
-          <span style={{ fontSize: 10, color: '#535c3e', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 16, height: 3, background: '#4a9e1a', borderRadius: 99 }} /> R$/mm/ha
+          <span style={{ fontSize: 10, color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: 16, height: 3, background: '#0093D0', borderRadius: 99 }} /> R$/mm/ha
           </span>
-          <span style={{ fontSize: 10, color: '#535c3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 12, height: 2, background: '#f59e0b', borderRadius: 99, opacity: 0.6 }} /> Meta
           </span>
         </div>
@@ -712,7 +712,7 @@ function EnergyBarChart({ bills }: { bills: EnergyBill[] }) {
           {/* Grade */}
           {[0, 25, 50, 75, 100].map(pct => {
             const y = PAD.top + innerH - (pct / 100) * innerH
-            return <line key={pct} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="#1a2e1d" strokeWidth="1" />
+            return <line key={pct} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
           })}
 
           {/* Meta reativa 2% */}
@@ -747,30 +747,30 @@ function EnergyBarChart({ bills }: { bills: EnergyBill[] }) {
                 const v = b.cost_per_mm_ha ?? 0
                 return `${xPos(i)},${yLine(v)}`
               }).join(' ')}
-              fill="none" stroke="#4a9e1a" strokeWidth="2" strokeLinejoin="round"
+              fill="none" stroke="#0093D0" strokeWidth="2" strokeLinejoin="round"
             />
           )}
           {sorted.map((b, i) => {
             const v = b.cost_per_mm_ha ?? 0
             if (!b.cost_per_mm_ha) return null
             const dotColor = v <= 1.5 ? '#22c55e' : v <= 2 ? '#f59e0b' : '#ef4444'
-            return <circle key={i} cx={xPos(i)} cy={yLine(v)} r="4" fill={dotColor} stroke="#111f14" strokeWidth="2" />
+            return <circle key={i} cx={xPos(i)} cy={yLine(v)} r="4" fill={dotColor} stroke="#0f1923" strokeWidth="2" />
           })}
 
           {/* Eixo X */}
           {sorted.map((b, i) => (
-            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#535c3e">
+            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#556677">
               {monthLabel(b.reference_month)}
             </text>
           ))}
 
           {/* Eixo Y (reativa %) */}
           {[0, 2, 5, 10].map(v => (
-            <text key={v} x={PAD.left - 4} y={yBar(v) + 4} textAnchor="end" fontSize="8" fill="#535c3e">{v}%</text>
+            <text key={v} x={PAD.left - 4} y={yBar(v) + 4} textAnchor="end" fontSize="8" fill="#556677">{v}%</text>
           ))}
 
-          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="#1f3022" strokeWidth="1" />
-          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="#1f3022" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
         </svg>
       </div>
     </div>
@@ -782,17 +782,17 @@ function EnergyTable({ bills }: { bills: EnergyBill[] }) {
   if (sorted.length === 0) return null
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid #1f3022', display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <Bolt size={13} style={{ color: '#f59e0b' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#ecefec' }}>Histórico de Contas</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Histórico de Contas</span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#162219' }}>
+            <tr style={{ background: '#0d1520' }}>
               {['Mês', 'kWh', 'Custo Total', 'Reativa %', 'HR %', 'Custo/mm/ha', 'Ponta (R$)', 'Status'].map(h => (
-                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#535c3e', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid #1f3022', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -810,10 +810,10 @@ function EnergyTable({ bills }: { bills: EnergyBill[] }) {
                 : [reactiveStatus, reservedStatus, costStatus].some(s => s === 'yellow') ? 'yellow' : 'green'
 
               return (
-                <tr key={b.id} style={{ background: i % 2 ? '#0f1b12' : 'transparent', borderBottom: i < sorted.length - 1 ? '1px solid #1a2e1d' : 'none' }}>
-                  <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#becec0' }}>{b.reference_month}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#7a9e82', fontFamily: 'var(--font-mono)' }}>{b.kwh_total ? fmtNum(b.kwh_total, 0) : '—'}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{b.cost_total_brl ? `R$ ${fmtNum(b.cost_total_brl, 2)}` : '—'}</td>
+                <tr key={b.id} style={{ background: i % 2 ? '#080e14' : 'transparent', borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#8899aa' }}>{b.reference_month}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{b.kwh_total ? fmtNum(b.kwh_total, 0) : '—'}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{b.cost_total_brl ? `R$ ${fmtNum(b.cost_total_brl, 2)}` : '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: semColor(reactiveStatus), fontFamily: 'var(--font-mono)' }}>
                       {reactivePct !== null ? `${fmtNum(reactivePct)}%` : '—'}
@@ -829,7 +829,7 @@ function EnergyTable({ bills }: { bills: EnergyBill[] }) {
                       {costMmHa !== null ? `R$ ${fmtNum(costMmHa, 2)}` : '—'}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#7a9e82', fontFamily: 'var(--font-mono)' }}>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>
                     {b.cost_peak_brl ? `R$ ${fmtNum(b.cost_peak_brl, 2)}` : '—'}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
@@ -980,7 +980,7 @@ export default function RelatoriosPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-        <Loader2 size={24} className="animate-spin" style={{ color: '#4a9e1a' }} />
+        <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
       </div>
     )
   }
@@ -988,9 +988,9 @@ export default function RelatoriosPage() {
   if (seasons.length === 0) {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '48px 24px', textAlign: 'center' }}>
-        <Sprout size={32} style={{ color: '#4a9e1a', margin: '0 auto 16px' }} />
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#ecefec', marginBottom: 8 }}>Nenhuma safra cadastrada</h2>
-        <p style={{ fontSize: 13, color: '#535c3e' }}>Cadastre uma safra para gerar relatórios.</p>
+        <Sprout size={32} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra cadastrada</h2>
+        <p style={{ fontSize: 13, color: '#556677' }}>Cadastre uma safra para gerar relatórios.</p>
       </div>
     )
   }
@@ -1001,8 +1001,8 @@ export default function RelatoriosPage() {
       {/* Título */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#ecefec' }}>Relatórios de Safra</h1>
-          <p style={{ fontSize: 13, color: '#7a9e82', marginTop: 2 }}>KPIs comparativos de irrigação, estresse e consumo hídrico</p>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0' }}>Relatórios de Safra</h1>
+          <p style={{ fontSize: 13, color: '#8899aa', marginTop: 2 }}>KPIs comparativos de irrigação, estresse e consumo hídrico</p>
         </div>
         {records.length > 0 && (
           <button
@@ -1010,7 +1010,7 @@ export default function RelatoriosPage() {
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 16px', borderRadius: 10, fontSize: 12, fontWeight: 600,
-              background: '#162219', border: '1px solid #2a3d2d', color: '#7a9e82',
+              background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa',
               cursor: 'pointer',
             }}
           >
@@ -1020,13 +1020,13 @@ export default function RelatoriosPage() {
       </div>
 
       {/* Seletor de safra */}
-      <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, padding: '16px 20px' }}>
-        <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Safra</label>
+      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 20px' }}>
+        <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Safra</label>
         <div style={{ position: 'relative', maxWidth: 480 }}>
           <select
             value={selectedSeasonId}
             onChange={e => setSelectedSeasonId(e.target.value)}
-            style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+            style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
           >
             {seasons.map(s => (
               <option key={s.id} value={s.id}>
@@ -1035,23 +1035,23 @@ export default function RelatoriosPage() {
               </option>
             ))}
           </select>
-          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#535c3e', pointerEvents: 'none' }} />
+          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
         </div>
 
         {/* Resumo da safra selecionada */}
         {selectedSeason && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
             {selectedSeason.crops && (
-              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgb(74 158 26 / 0.1)', border: '1px solid rgb(74 158 26 / 0.2)', color: '#4a9e1a', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgb(0 147 208 / 0.10)', border: '1px solid rgb(0 147 208 / 0.20)', color: '#0093D0', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Sprout size={10} /> {selectedSeason.crops.name}
               </span>
             )}
             {selectedSeason.planting_date && (
-              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#162219', color: '#535c3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Calendar size={10} /> Plantio: {fmtDateLong(selectedSeason.planting_date)}
               </span>
             )}
-            <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#162219', color: '#535c3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
               <BarChart2 size={10} /> {kpis.totalDays} dias com registros
             </span>
           </div>
@@ -1060,18 +1060,18 @@ export default function RelatoriosPage() {
 
       {/* Loading de registros */}
       {loadingRecords && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#535c3e', fontSize: 13 }}>
-          <Loader2 size={14} className="animate-spin" style={{ color: '#4a9e1a' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#556677', fontSize: 13 }}>
+          <Loader2 size={14} className="animate-spin" style={{ color: '#0093D0' }} />
           Carregando dados da safra...
         </div>
       )}
 
       {/* Sem dados */}
       {!loadingRecords && records.length === 0 && (
-        <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
-          <BarChart2 size={28} style={{ color: '#3a5240', margin: '0 auto 12px' }} />
-          <p style={{ fontSize: 14, color: '#535c3e' }}>Nenhum registro de manejo diário para esta safra.</p>
-          <p style={{ fontSize: 12, color: '#3a5240', marginTop: 4 }}>Registre dados no Manejo Diário para gerar relatórios.</p>
+        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
+          <BarChart2 size={28} style={{ color: '#556677', margin: '0 auto 12px' }} />
+          <p style={{ fontSize: 14, color: '#556677' }}>Nenhum registro de manejo diário para esta safra.</p>
+          <p style={{ fontSize: 12, color: '#556677', marginTop: 4 }}>Registre dados no Manejo Diário para gerar relatórios.</p>
         </div>
       )}
 
@@ -1081,11 +1081,11 @@ export default function RelatoriosPage() {
           <div>
             <SectionTitle icon={BarChart2} text="Resumo da Safra" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
-              <KpiCard label="Total Irrigado" value={fmtNum(kpis.totalIrrigationMm)} unit="mm" color="#4a9e1a" icon={Droplets} />
+              <KpiCard label="Total Irrigado" value={fmtNum(kpis.totalIrrigationMm)} unit="mm" color="#0093D0" icon={Droplets} />
               <KpiCard label="Precipitação Total" value={fmtNum(kpis.totalRainfallMm)} unit="mm" color="#38bdf8" icon={CloudRain} />
               <KpiCard label="ETc Acumulada" value={fmtNum(kpis.totalEtcMm)} unit="mm" color="#06b6d4" icon={Droplets}
                 sub={`ETo: ${fmtNum(kpis.totalEtoMm)} mm`} />
-              <KpiCard label="Eventos de Irrigação" value={String(kpis.irrigationEvents)} color="#7a9e82" icon={Zap} />
+              <KpiCard label="Eventos de Irrigação" value={String(kpis.irrigationEvents)} color="#8899aa" icon={Zap} />
               <KpiCard label="CC% Mínimo" value={fmtNum(kpis.minFieldCapacity, 0)} unit="%" color="#f59e0b" icon={TrendingDown}
                 sub={`média: ${fmtNum(kpis.avgFieldCapacity, 0)}%`} />
               <KpiCard label="Dias em Estresse" value={String(kpis.stressDays)} color="#ef4444" icon={AlertTriangle}
@@ -1111,8 +1111,8 @@ export default function RelatoriosPage() {
             <PeriodTable last7={kpis.last7} last10={kpis.last10} last15={kpis.last15} />
 
             {/* Eficiência de irrigação */}
-            <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#ecefec' }}>Eficiência Hídrica</span>
+            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Eficiência Hídrica</span>
               {[
                 {
                   label: 'ETc / (Irrig + Chuva)',
@@ -1139,16 +1139,16 @@ export default function RelatoriosPage() {
                 },
               ].map(item => {
                 const v = item.value
-                const color = v === null ? '#535c3e' : item.good(v) ? '#22c55e' : '#f59e0b'
+                const color = v === null ? '#556677' : item.good(v) ? '#22c55e' : '#f59e0b'
                 return (
-                  <div key={item.label} style={{ background: '#162219', borderRadius: 10, padding: '10px 14px' }}>
+                  <div key={item.label} style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                      <span style={{ fontSize: 11, color: '#7a9e82' }}>{item.label}</span>
+                      <span style={{ fontSize: 11, color: '#8899aa' }}>{item.label}</span>
                       <span style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>
                         {v !== null ? fmtNum(v, 0) + '%' : '—'}
                       </span>
                     </div>
-                    <p style={{ fontSize: 10, color: '#3a5240', marginTop: 2 }}>{item.desc}</p>
+                    <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{item.desc}</p>
                   </div>
                 )
               })}
@@ -1174,45 +1174,45 @@ export default function RelatoriosPage() {
       )}
 
       {/* ══ SEÇÃO ENERGIA ══════════════════════════════════════════ */}
-      <div style={{ borderTop: '1px solid #1a2e1d', paddingTop: 24 }}>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 24 }}>
         <SectionTitle icon={Bolt} text="Conta de Energia — KPIs Elétricos" />
 
         {/* Seletor de Pivô + Upload */}
-        <div style={{ marginTop: 12, background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ marginTop: 12, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             {/* Seletor de pivô */}
             <div style={{ flex: 1, minWidth: 200 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#becec0', marginBottom: 5 }}>Pivô</label>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Pivô</label>
               <div style={{ position: 'relative' }}>
                 <select
                   value={selectedPivotId}
                   onChange={e => setSelectedPivotId(e.target.value)}
-                  style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+                  style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
                 >
                   {pivots.map(p => (
                     <option key={p.id} value={p.id}>{p.name} — {p.farm_name}</option>
                   ))}
                 </select>
-                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#535c3e', pointerEvents: 'none' }} />
+                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
               </div>
             </div>
 
             {/* Lâmina irrigada no mês (opcional para custo/mm/ha) */}
             <div style={{ width: 160 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#becec0', marginBottom: 5 }}>Lâmina irrigada no mês (mm/ha)</label>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Lâmina irrigada no mês (mm/ha)</label>
               <input
                 type="number"
                 value={irrigatedMmHa}
                 onChange={e => setIrrigatedMmHa(e.target.value)}
                 placeholder="ex: 45"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 10, fontSize: 13, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none' }}
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
               />
             </div>
           </div>
 
           {/* Dropzone */}
           <div>
-            <label style={{ display: 'block', fontSize: 11, color: '#becec0', marginBottom: 5 }}>Arquivo da conta (PDF, JPG, PNG)</label>
+            <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Arquivo da conta (PDF, JPG, PNG)</label>
             <div
               onClick={() => fileInputRef.current?.click()}
               onDragOver={e => e.preventDefault()}
@@ -1222,17 +1222,17 @@ export default function RelatoriosPage() {
                 if (f) setUploadFile(f)
               }}
               style={{
-                border: `2px dashed ${uploadFile ? '#4a9e1a' : '#1f3022'}`,
+                border: `2px dashed ${uploadFile ? '#0093D0' : 'rgba(255,255,255,0.06)'}`,
                 borderRadius: 12, padding: '20px 16px', textAlign: 'center',
                 cursor: 'pointer', transition: 'border-color 0.2s',
                 background: uploadFile ? 'rgb(74 158 26 / 0.05)' : 'transparent',
               }}
             >
-              <Upload size={18} style={{ color: uploadFile ? '#4a9e1a' : '#3a5240', margin: '0 auto 6px' }} />
-              <p style={{ fontSize: 12, color: uploadFile ? '#4a9e1a' : '#535c3e' }}>
+              <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#556677', margin: '0 auto 6px' }} />
+              <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : '#556677' }}>
                 {uploadFile ? uploadFile.name : 'Clique ou arraste o arquivo aqui'}
               </p>
-              {!uploadFile && <p style={{ fontSize: 10, color: '#3a5240', marginTop: 2 }}>PDF, JPG ou PNG</p>}
+              {!uploadFile && <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>PDF, JPG ou PNG</p>}
             </div>
             <input
               ref={fileInputRef}
@@ -1254,9 +1254,9 @@ export default function RelatoriosPage() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                background: (!uploadFile || !selectedPivotId || uploading) ? '#162219' : '#4a9e1a',
-                border: '1px solid #2a3d2d',
-                color: (!uploadFile || !selectedPivotId || uploading) ? '#535c3e' : '#fff',
+                background: (!uploadFile || !selectedPivotId || uploading) ? '#0d1520' : '#0093D0',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: (!uploadFile || !selectedPivotId || uploading) ? '#556677' : '#fff',
                 cursor: (!uploadFile || !selectedPivotId || uploading) ? 'not-allowed' : 'pointer',
               }}
             >
@@ -1281,7 +1281,7 @@ export default function RelatoriosPage() {
           const costStatus = costMmHa === null ? 'unknown' : costMmHa <= 1.5 ? 'green' : costMmHa <= 2 ? 'yellow' : 'red'
           return (
             <div style={{ marginTop: 14 }}>
-              <p style={{ fontSize: 10, color: '#535c3e', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <p style={{ fontSize: 10, color: '#556677', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Último mês: {latest.reference_month}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
@@ -1341,18 +1341,18 @@ export default function RelatoriosPage() {
 
         {/* Loading */}
         {loadingBills && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#535c3e', fontSize: 12, marginTop: 12 }}>
-            <Loader2 size={13} className="animate-spin" style={{ color: '#4a9e1a' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#556677', fontSize: 12, marginTop: 12 }}>
+            <Loader2 size={13} className="animate-spin" style={{ color: '#0093D0' }} />
             Carregando contas...
           </div>
         )}
 
         {/* Sem dados */}
         {!loadingBills && energyBills.length === 0 && (
-          <div style={{ marginTop: 12, background: '#111f14', border: '1px solid #1f3022', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
-            <Bolt size={24} style={{ color: '#3a5240', margin: '0 auto 10px' }} />
-            <p style={{ fontSize: 13, color: '#535c3e' }}>Nenhuma conta de energia para este pivô.</p>
-            <p style={{ fontSize: 11, color: '#3a5240', marginTop: 4 }}>Faça upload de uma conta acima para começar.</p>
+          <div style={{ marginTop: 12, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
+            <Bolt size={24} style={{ color: '#556677', margin: '0 auto 10px' }} />
+            <p style={{ fontSize: 13, color: '#556677' }}>Nenhuma conta de energia para este pivô.</p>
+            <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>Faça upload de uma conta acima para começar.</p>
           </div>
         )}
       </div>
@@ -1363,9 +1363,9 @@ export default function RelatoriosPage() {
 function SectionTitle({ icon: Icon, text }: { icon: typeof BarChart2; text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <Icon size={13} style={{ color: '#4a9e1a' }} />
-      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#3a5240' }}>{text}</span>
-      <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+      <Icon size={13} style={{ color: '#0093D0' }} />
+      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>{text}</span>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
     </div>
   )
 }

@@ -122,8 +122,8 @@ function getClimateSourceBadge(source: ManagementExternalData['climateSource'] |
       type: 'pivot_station',
       label: 'Dados automáticos — Estação do pivô',
       icon: Satellite,
-      color: '#4a9e1a',
-      border: '1px solid rgb(74 158 26 / 0.2)',
+      color: '#0093D0',
+      border: '1px solid rgb(0 147 208 / 0.20)',
       background: 'rgb(74 158 26 / 0.06)',
     }
   }
@@ -186,7 +186,7 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
 }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#becec0', marginBottom: 5 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>{label}</label>
       <div style={{ position: 'relative' }}>
         <input
           type={type} step={type === 'number' ? 'any' : undefined}
@@ -196,14 +196,14 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
             width: '100%',
             padding: unit ? '9px 36px 9px 10px' : '9px 10px',
             borderRadius: 8, fontSize: 13,
-            background: '#1c2e20', border: '1px solid #2a3d2d',
-            color: '#ecefec', outline: 'none',
+            background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+            color: '#e2e8f0', outline: 'none',
           }}
-          onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-          onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+          onFocus={e => e.target.style.borderColor = '#0093D0'}
+          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
         />
         {unit && (
-          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#535c3e', pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#556677', pointerEvents: 'none' }}>
             {unit}
           </span>
         )}
@@ -215,8 +215,8 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
 function SectionLabel({ text }: { text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 2px' }}>
-      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#3a5240' }}>{text}</span>
-      <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>{text}</span>
+      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
     </div>
   )
 }
@@ -236,7 +236,7 @@ function CalcResultCard({ eto, etc, kc, cta, cad, adcNew, fieldCapacityPercent, 
   const stageLabels = ['', 'Inicial', 'Desenv.', 'Médio', 'Final']
 
   return (
-    <div style={{ background: '#111f14', border: `1px solid ${cfg.border}`, borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ background: '#0f1923', border: `1px solid ${cfg.border}`, borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Header semáforo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: cfg.bg, border: `1px solid ${cfg.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -244,11 +244,11 @@ function CalcResultCard({ eto, etc, kc, cta, cad, adcNew, fieldCapacityPercent, 
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: cfg.color }}>{cfg.label}</p>
-          <p style={{ fontSize: 11, color: '#535c3e' }}>{cfg.desc}</p>
+          <p style={{ fontSize: 11, color: '#556677' }}>{cfg.desc}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 11, color: '#535c3e' }}>DAS {das} · Fase {cropStage}</p>
-          <p style={{ fontSize: 11, color: '#7a9e82' }}>{stageLabels[cropStage] ?? ''}</p>
+          <p style={{ fontSize: 11, color: '#556677' }}>DAS {das} · Fase {cropStage}</p>
+          <p style={{ fontSize: 11, color: '#8899aa' }}>{stageLabels[cropStage] ?? ''}</p>
         </div>
       </div>
 
@@ -257,38 +257,38 @@ function CalcResultCard({ eto, etc, kc, cta, cad, adcNew, fieldCapacityPercent, 
         {[
           { icon: Sun,      label: 'ETo',  value: fmtNum(eto), unit: 'mm/d', color: '#f59e0b' },
           { icon: Droplets, label: 'ETc',  value: fmtNum(etc), unit: 'mm/d', color: '#06b6d4' },
-          { icon: Info,     label: 'Kc',   value: fmtNum(kc, 3), unit: '',   color: '#4a9e1a' },
+          { icon: Info,     label: 'Kc',   value: fmtNum(kc, 3), unit: '',   color: '#0093D0' },
         ].map(({ icon: Icon, label, value, unit, color }) => (
-          <div key={label} style={{ background: '#162219', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+          <div key={label} style={{ background: '#0d1520', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
             <Icon size={13} style={{ color, margin: '0 auto 4px' }} />
-            <p style={{ fontSize: 18, fontWeight: 700, color: '#ecefec', lineHeight: 1 }}>{value}</p>
-            <p style={{ fontSize: 10, color: '#3a5240', marginTop: 2 }}>{label}{unit ? ` (${unit})` : ''}</p>
+            <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', lineHeight: 1 }}>{value}</p>
+            <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{label}{unit ? ` (${unit})` : ''}</p>
           </div>
         ))}
       </div>
 
       {/* Balanço hídrico */}
-      <div style={{ background: '#162219', borderRadius: 12, padding: '12px 16px' }}>
+      <div style={{ background: '#0d1520', borderRadius: 12, padding: '12px 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 11, color: '#535c3e' }}>ADc atual</span>
-          <span style={{ fontSize: 11, fontWeight: 600, color: '#ecefec' }}>{fmtNum(adcNew)} mm</span>
+          <span style={{ fontSize: 11, color: '#556677' }}>ADc atual</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#e2e8f0' }}>{fmtNum(adcNew)} mm</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 11, color: '#535c3e' }}>CAD (limite)</span>
-          <span style={{ fontSize: 11, color: '#7a9e82' }}>{fmtNum(cad)} mm</span>
+          <span style={{ fontSize: 11, color: '#556677' }}>CAD (limite)</span>
+          <span style={{ fontSize: 11, color: '#8899aa' }}>{fmtNum(cad)} mm</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-          <span style={{ fontSize: 11, color: '#535c3e' }}>CTA (máx)</span>
-          <span style={{ fontSize: 11, color: '#535c3e' }}>{fmtNum(cta)} mm</span>
+          <span style={{ fontSize: 11, color: '#556677' }}>CTA (máx)</span>
+          <span style={{ fontSize: 11, color: '#556677' }}>{fmtNum(cta)} mm</span>
         </div>
 
         {/* Barra de umidade */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-            <span style={{ fontSize: 10, color: '#3a5240' }}>Capacidade de Campo</span>
+            <span style={{ fontSize: 10, color: '#556677' }}>Capacidade de Campo</span>
             <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color }}>{fmtNum(fieldCapacityPercent, 0)}%</span>
           </div>
-          <div style={{ height: 8, background: '#0f1b12', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
+          <div style={{ height: 8, background: '#080e14', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
             {/* Linha CAD */}
             <div style={{
               position: 'absolute', left: `${clamp50((cad / cta) * 100)}%`,
@@ -302,9 +302,9 @@ function CalcResultCard({ eto, etc, kc, cta, cad, adcNew, fieldCapacityPercent, 
             }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-            <span style={{ fontSize: 9, color: '#1a2e1d' }}>0</span>
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.04)' }}>0</span>
             <span style={{ fontSize: 9, color: '#f59e0b' }}>CAD {fmtNum((cad / cta) * 100, 0)}%</span>
-            <span style={{ fontSize: 9, color: '#3a5240' }}>100%</span>
+            <span style={{ fontSize: 9, color: '#556677' }}>100%</span>
           </div>
         </div>
       </div>
@@ -315,16 +315,16 @@ function CalcResultCard({ eto, etc, kc, cta, cad, adcNew, fieldCapacityPercent, 
           <p style={{ fontSize: 11, fontWeight: 600, color: cfg.color, marginBottom: 6 }}>Recomendação de Irrigação</p>
           <div style={{ display: 'flex', gap: 16 }}>
             <div>
-              <p style={{ fontSize: 10, color: '#535c3e' }}>Lâmina necessária</p>
+              <p style={{ fontSize: 10, color: '#556677' }}>Lâmina necessária</p>
               <p style={{ fontSize: 20, fontWeight: 800, color: cfg.color, fontFamily: 'var(--font-mono)' }}>
-                {fmtNum(recommendedDepthMm)} <span style={{ fontSize: 11, fontWeight: 400, color: '#535c3e' }}>mm</span>
+                {fmtNum(recommendedDepthMm)} <span style={{ fontSize: 11, fontWeight: 400, color: '#556677' }}>mm</span>
               </p>
             </div>
             {recommendedSpeedPercent !== null && (
               <div>
-                <p style={{ fontSize: 10, color: '#535c3e' }}>Velocidade sugerida</p>
-                <p style={{ fontSize: 20, fontWeight: 800, color: '#4a9e1a', fontFamily: 'var(--font-mono)' }}>
-                  {recommendedSpeedPercent}% <span style={{ fontSize: 11, fontWeight: 400, color: '#535c3e' }}>vel.</span>
+                <p style={{ fontSize: 10, color: '#556677' }}>Velocidade sugerida</p>
+                <p style={{ fontSize: 20, fontWeight: 800, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
+                  {recommendedSpeedPercent}% <span style={{ fontSize: 11, fontWeight: 400, color: '#556677' }}>vel.</span>
                 </p>
               </div>
             )}
@@ -344,24 +344,24 @@ function clamp50(v: number): number {
 function HistoryTable({ records }: { records: DailyManagement[] }) {
   if (records.length === 0) {
     return (
-      <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '32px 24px', textAlign: 'center' }}>
-        <Calendar size={24} style={{ color: '#3a5240', margin: '0 auto 10px' }} />
-        <p style={{ fontSize: 13, color: '#535c3e' }}>Nenhum registro ainda.</p>
+      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '32px 24px', textAlign: 'center' }}>
+        <Calendar size={24} style={{ color: '#556677', margin: '0 auto 10px' }} />
+        <p style={{ fontSize: 13, color: '#556677' }}>Nenhum registro ainda.</p>
       </div>
     )
   }
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, overflow: 'hidden' }}>
       {/* Cabeçalho */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '90px 40px 55px 55px 55px 55px 55px 55px 60px',
         gap: 4, padding: '10px 16px',
-        background: '#162219', borderBottom: '1px solid #1f3022',
+        background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
         {['Data', 'DAS', 'ETo', 'ETc', 'Kc', 'Chuva', 'ADc', 'CC%', 'Status'].map(h => (
-          <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#535c3e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+          <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
       </div>
 
@@ -377,16 +377,16 @@ function HistoryTable({ records }: { records: DailyManagement[] }) {
             display: 'grid',
             gridTemplateColumns: '90px 40px 55px 55px 55px 55px 55px 55px 60px',
             gap: 4, padding: '10px 16px',
-            borderBottom: i < records.length - 1 ? '1px solid #1a2e1d' : 'none',
-            background: i % 2 ? '#0f1b12' : 'transparent',
+            borderBottom: i < records.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+            background: i % 2 ? '#080e14' : 'transparent',
           }}>
-            <span style={{ fontSize: 12, color: '#becec0' }}>{fmtDate(r.date)}</span>
-            <span style={{ fontSize: 12, color: '#535c3e' }}>{r.das ?? '—'}</span>
-            <span style={{ fontSize: 12, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
-            <span style={{ fontSize: 12, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.etc_mm)}</span>
-            <span style={{ fontSize: 12, color: '#4a9e1a', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.kc, 3)}</span>
+            <span style={{ fontSize: 12, color: '#8899aa' }}>{fmtDate(r.date)}</span>
+            <span style={{ fontSize: 12, color: '#556677' }}>{r.das ?? '—'}</span>
+            <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
+            <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.etc_mm)}</span>
+            <span style={{ fontSize: 12, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.kc, 3)}</span>
             <span style={{ fontSize: 12, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall_mm)}</span>
-            <span style={{ fontSize: 12, color: '#ecefec', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.ctda)}</span>
+            <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.ctda)}</span>
             <span style={{ fontSize: 12, color: cfg.color, fontFamily: 'var(--font-mono)' }}>{fmtNum(r.field_capacity_percent, 0)}%</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <StatusIcon size={11} style={{ color: cfg.color }} />
@@ -407,17 +407,17 @@ function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: n
   const firstIrrigIdx = days.findIndex(d => d.isIrrigationDay)
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid #1f3022', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <TrendingDown size={14} style={{ color: '#4a9e1a' }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#ecefec' }}>Projeção — próximos 7 dias</span>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <TrendingDown size={14} style={{ color: '#0093D0' }} />
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>Projeção — próximos 7 dias</span>
         {avgEto !== null && (
-          <span style={{ fontSize: 11, color: '#535c3e', marginLeft: 'auto' }}>
+          <span style={{ fontSize: 11, color: '#556677', marginLeft: 'auto' }}>
             ETo média: <span style={{ color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{avgEto.toFixed(1)} mm/d</span>
           </span>
         )}
-        <span style={{ fontSize: 10, color: '#3a5240', padding: '3px 8px', borderRadius: 20, background: '#162219' }}>sem chuva prevista</span>
+        <span style={{ fontSize: 10, color: '#556677', padding: '3px 8px', borderRadius: 20, background: '#0d1520' }}>sem chuva prevista</span>
       </div>
 
       {/* Alerta de início de irrigação */}
@@ -435,19 +435,19 @@ function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: n
             ? '1px solid rgb(239 68 68 / 0.3)'
             : firstIrrigIdx <= 3
               ? '1px solid rgb(245 158 11 / 0.3)'
-              : '1px solid rgb(74 158 26 / 0.2)',
+              : '1px solid rgb(0 147 208 / 0.20)',
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
-          <Zap size={13} style={{ color: firstIrrigIdx <= 1 ? '#ef4444' : firstIrrigIdx <= 3 ? '#f59e0b' : '#4a9e1a', flexShrink: 0 }} />
+          <Zap size={13} style={{ color: firstIrrigIdx <= 1 ? '#ef4444' : firstIrrigIdx <= 3 ? '#f59e0b' : '#0093D0', flexShrink: 0 }} />
           <div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: firstIrrigIdx <= 1 ? '#ef4444' : firstIrrigIdx <= 3 ? '#f59e0b' : '#4a9e1a' }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: firstIrrigIdx <= 1 ? '#ef4444' : firstIrrigIdx <= 3 ? '#f59e0b' : '#0093D0' }}>
               {firstIrrigIdx === 0
                 ? 'Iniciar irrigação hoje!'
                 : firstIrrigIdx === 1
                   ? 'Iniciar irrigação amanhã'
                   : `Iniciar irrigação em ${firstIrrigIdx + 1} dias (${fmtDate(days[firstIrrigIdx].date)})`}
             </p>
-            <p style={{ fontSize: 10, color: '#535c3e' }}>
+            <p style={{ fontSize: 10, color: '#556677' }}>
               Lâmina necessária: {fmtNum(days[firstIrrigIdx].recommendedDepthMm)} mm
               {days[firstIrrigIdx].recommendedSpeedPercent !== null
                 ? ` · Velocidade: ${days[firstIrrigIdx].recommendedSpeedPercent}%`
@@ -475,20 +475,20 @@ function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: n
                 alignItems: 'center', gap: 8,
                 padding: isAlert ? '8px 10px' : '6px 10px',
                 borderRadius: 10,
-                background: isAlert ? cfg.bg : i % 2 ? '#0f1b12' : 'transparent',
+                background: isAlert ? cfg.bg : i % 2 ? '#080e14' : 'transparent',
                 border: isAlert ? `1px solid ${cfg.border}` : '1px solid transparent',
               }}
             >
               {/* Data */}
-              <span style={{ fontSize: 11, color: isAlert ? cfg.color : '#becec0', fontWeight: isAlert ? 700 : 400 }}>
+              <span style={{ fontSize: 11, color: isAlert ? cfg.color : '#8899aa', fontWeight: isAlert ? 700 : 400 }}>
                 {i === 0 ? 'Amanhã' : fmtDate(day.date)}
               </span>
 
               {/* DAS */}
-              <span style={{ fontSize: 10, color: '#535c3e' }}>D{day.das}</span>
+              <span style={{ fontSize: 10, color: '#556677' }}>D{day.das}</span>
 
               {/* Barra de umidade */}
-              <div style={{ position: 'relative', height: 14, background: '#0f1b12', borderRadius: 99, overflow: 'visible' }}>
+              <div style={{ position: 'relative', height: 14, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
                 {/* Linha CAD */}
                 <div style={{
                   position: 'absolute', left: `${cadPct}%`,
@@ -509,7 +509,7 @@ function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: n
               </span>
 
               {/* ETc */}
-              <span style={{ fontSize: 10, color: '#535c3e', textAlign: 'right' }}>
+              <span style={{ fontSize: 10, color: '#556677', textAlign: 'right' }}>
                 <span style={{ color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(day.etcAvg)}</span> mm
               </span>
 
@@ -524,13 +524,13 @@ function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: n
       </div>
 
       {/* Legenda */}
-      <div style={{ padding: '10px 20px', borderTop: '1px solid #1a2e1d', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10, color: '#3a5240' }}>Legenda:</span>
+      <div style={{ padding: '10px 20px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, color: '#556677' }}>Legenda:</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <div style={{ width: 2, height: 10, background: '#f59e0b', opacity: 0.7 }} />
-          <span style={{ fontSize: 10, color: '#535c3e' }}>Limite CAD</span>
+          <span style={{ fontSize: 10, color: '#556677' }}>Limite CAD</span>
         </div>
-        <span style={{ fontSize: 10, color: '#535c3e' }}>ETc estimada sem chuva · Projeção conservadora</span>
+        <span style={{ fontSize: 10, color: '#556677' }}>ETc estimada sem chuva · Projeção conservadora</span>
       </div>
     </div>
   )
@@ -628,22 +628,22 @@ function TimelineChart({ records }: { records: DailyManagement[] }) {
   }))
 
   return (
-    <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid #1f3022', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <BarChart2 size={14} style={{ color: '#4a9e1a' }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#ecefec' }}>Timeline — Histórico Comparativo</span>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <BarChart2 size={14} style={{ color: '#0093D0' }} />
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>Timeline — Histórico Comparativo</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#becec0' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#8899aa' }}>
             <svg width="20" height="4"><line x1="0" y1="2" x2="20" y2="2" stroke="#f59e0b" strokeWidth="2" /></svg>ETo
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#becec0' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#8899aa' }}>
             <svg width="20" height="4"><line x1="0" y1="2" x2="20" y2="2" stroke="#06b6d4" strokeWidth="2" /></svg>ETc
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#becec0' }}>
-            <svg width="20" height="4"><line x1="0" y1="2" x2="20" y2="2" stroke="#4a9e1a" strokeWidth="2" strokeDasharray="4 2" /></svg>ADc%
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#8899aa' }}>
+            <svg width="20" height="4"><line x1="0" y1="2" x2="20" y2="2" stroke="#0093D0" strokeWidth="2" strokeDasharray="4 2" /></svg>ADc%
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#becec0' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#8899aa' }}>
             <div style={{ width: 8, height: 14, background: 'rgb(6 182 212 / 0.4)', borderRadius: 2, border: '1px solid rgb(6 182 212 / 0.5)' }} />Chuva
           </span>
         </div>
@@ -659,7 +659,7 @@ function TimelineChart({ records }: { records: DailyManagement[] }) {
           {/* Grade horizontal */}
           {yTicksLeft.map(({ v, y }) => (
             <line key={v} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
-              stroke="#1a2e1d" strokeWidth="1" />
+              stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
           ))}
 
           {/* Linha CAD (50% do eixo direito) */}
@@ -693,7 +693,7 @@ function TimelineChart({ records }: { records: DailyManagement[] }) {
 
           {/* Linha ADc% */}
           {pathAdc && (
-            <path d={pathAdc} fill="none" stroke="#4a9e1a" strokeWidth="2"
+            <path d={pathAdc} fill="none" stroke="#0093D0" strokeWidth="2"
               strokeDasharray="5 3" strokeLinejoin="round" />
           )}
 
@@ -704,49 +704,49 @@ function TimelineChart({ records }: { records: DailyManagement[] }) {
             const color = pct >= 80 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444'
             return (
               <circle key={i} cx={xPos(i)} cy={yRight(pct)} r="3"
-                fill={color} stroke="#111f14" strokeWidth="1.5" />
+                fill={color} stroke="#0f1923" strokeWidth="1.5" />
             )
           })}
 
           {/* Eixo Y esquerdo — labels */}
           {yTicksLeft.map(({ v, y, label }) => (
             <text key={v} x={PAD.left - 6} y={y + 4}
-              textAnchor="end" fontSize="9" fill="#535c3e">{label}</text>
+              textAnchor="end" fontSize="9" fill="#556677">{label}</text>
           ))}
 
           {/* Eixo Y esquerdo — título */}
           <text
             x={10} y={PAD.top + innerH / 2}
-            textAnchor="middle" fontSize="9" fill="#3a5240"
+            textAnchor="middle" fontSize="9" fill="#556677"
             transform={`rotate(-90, 10, ${PAD.top + innerH / 2})`}
           >mm/dia</text>
 
           {/* Eixo Y direito — labels */}
           {yTicksRight.map(({ v, y, label }) => (
             <text key={v} x={W - PAD.right + 6} y={y + 4}
-              textAnchor="start" fontSize="9" fill="#535c3e">{label}</text>
+              textAnchor="start" fontSize="9" fill="#556677">{label}</text>
           ))}
 
           {/* Eixo X — labels */}
           {xTicks.map(({ i, label }) => (
             <text key={i} x={xPos(i)} y={H - 6}
-              textAnchor="middle" fontSize="9" fill="#535c3e">{label}</text>
+              textAnchor="middle" fontSize="9" fill="#556677">{label}</text>
           ))}
 
           {/* Eixo base */}
           <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH}
-            stroke="#1f3022" strokeWidth="1" />
+            stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
           <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH}
-            stroke="#1f3022" strokeWidth="1" />
+            stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
         </svg>
       </div>
 
       {/* Rodapé */}
-      <div style={{ padding: '8px 20px 12px', borderTop: '1px solid #1a2e1d', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10, color: '#3a5240' }}>
+      <div style={{ padding: '8px 20px 12px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, color: '#556677' }}>
           Linha tracejada âmbar = limite CAD (50% CC)
         </span>
-        <span style={{ fontSize: 10, color: '#3a5240' }}>
+        <span style={{ fontSize: 10, color: '#556677' }}>
           Pontos ADc% coloridos: <span style={{ color: '#22c55e' }}>verde ≥80%</span> · <span style={{ color: '#f59e0b' }}>amarelo ≥50%</span> · <span style={{ color: '#ef4444' }}>vermelho &lt;50%</span>
         </span>
       </div>
@@ -1041,7 +1041,7 @@ export default function ManejoPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-        <Loader2 size={24} className="animate-spin" style={{ color: '#4a9e1a' }} />
+        <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
       </div>
     )
   }
@@ -1049,10 +1049,10 @@ export default function ManejoPage() {
   if (seasons.length === 0) {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '48px 24px', textAlign: 'center' }}>
-        <Sprout size={32} style={{ color: '#4a9e1a', margin: '0 auto 16px' }} />
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#ecefec', marginBottom: 8 }}>Nenhuma safra ativa</h2>
-        <p style={{ fontSize: 13, color: '#535c3e' }}>
-          Cadastre uma safra ativa em <strong style={{ color: '#7a9e82' }}>Safras</strong> para iniciar o manejo diário.
+        <Sprout size={32} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra ativa</h2>
+        <p style={{ fontSize: 13, color: '#556677' }}>
+          Cadastre uma safra ativa em <strong style={{ color: '#8899aa' }}>Safras</strong> para iniciar o manejo diário.
         </p>
       </div>
     )
@@ -1063,21 +1063,21 @@ export default function ManejoPage() {
 
       {/* Título */}
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#ecefec' }}>Manejo Diário</h1>
-        <p style={{ fontSize: 13, color: '#7a9e82', marginTop: 2 }}>Balanço Hídrico FAO-56 Penman-Monteith</p>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0' }}>Manejo Diário</h1>
+        <p style={{ fontSize: 13, color: '#8899aa', marginTop: 2 }}>Balanço Hídrico FAO-56 Penman-Monteith</p>
       </div>
 
       {/* Seletor de safra */}
-      <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#becec0', marginBottom: 6 }}>Safra</label>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Safra</label>
           <div style={{ position: 'relative' }}>
             <select
               value={selectedSeasonId}
               onChange={e => setSelectedSeasonId(e.target.value)}
-              style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#1c2e20', border: '1px solid #2a3d2d', color: '#ecefec', outline: 'none', appearance: 'none', cursor: 'pointer' }}
-              onFocus={e => e.target.style.borderColor = '#4a9e1a'}
-              onBlur={e => e.target.style.borderColor = '#2a3d2d'}
+              style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+              onFocus={e => e.target.style.borderColor = '#0093D0'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             >
               {seasons.map(s => (
                 <option key={s.id} value={s.id}>
@@ -1085,7 +1085,7 @@ export default function ManejoPage() {
                 </option>
               ))}
             </select>
-            <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#535c3e', pointerEvents: 'none' }} />
+            <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
           </div>
         </div>
 
@@ -1093,12 +1093,12 @@ export default function ManejoPage() {
         {selectedSeason && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {selectedSeason.crops && (
-              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgb(74 158 26 / 0.1)', border: '1px solid rgb(74 158 26 / 0.2)', color: '#4a9e1a', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'rgb(0 147 208 / 0.10)', border: '1px solid rgb(0 147 208 / 0.20)', color: '#0093D0', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Sprout size={10} /> {selectedSeason.crops.name}
               </span>
             )}
             {das !== null && (
-              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#162219', color: '#7a9e82' }}>
+              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#8899aa' }}>
                 DAS {das}
               </span>
             )}
@@ -1106,17 +1106,17 @@ export default function ManejoPage() {
               const info = getStageInfoForDas(selectedSeason.crops!, das)
               return (
                 <>
-                  <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#162219', color: '#7a9e82' }}>
+                  <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#8899aa' }}>
                     Fase {info.stage} — Kc {info.kc.toFixed(3)}
                   </span>
-                  <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#162219', color: '#7a9e82', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#8899aa', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <FlaskConical size={10} /> f = {info.fFactor.toFixed(2)}
                   </span>
                 </>
               )
             })()}
             {selectedSeason.planting_date && (
-              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#162219', color: '#535c3e', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Calendar size={10} /> Plantio: {fmtDate(selectedSeason.planting_date)}
               </span>
             )}
@@ -1128,7 +1128,7 @@ export default function ManejoPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
         {/* Coluna esquerda: formulário */}
-        <div style={{ background: '#111f14', border: '1px solid #1f3022', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           <SectionLabel text="Data" />
           <InputField
@@ -1140,9 +1140,9 @@ export default function ManejoPage() {
 
           {/* Badge de fonte climática */}
           {weatherLoading && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 8, background: '#162219', border: '1px solid #1f3022' }}>
-              <Loader2 size={12} className="animate-spin" style={{ color: '#4a9e1a' }} />
-              <span style={{ fontSize: 11, color: '#535c3e' }}>Buscando dados climáticos...</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <Loader2 size={12} className="animate-spin" style={{ color: '#0093D0' }} />
+              <span style={{ fontSize: 11, color: '#556677' }}>Buscando dados climáticos...</span>
             </div>
           )}
           {!weatherLoading && (() => {
@@ -1157,8 +1157,8 @@ export default function ManejoPage() {
             )
           })()}
           {!weatherLoading && externalInfo && (
-            <div style={{ padding: '8px 12px', borderRadius: 8, background: '#162219', border: '1px solid #1f3022' }}>
-              <span style={{ fontSize: 11, color: '#7a9e82' }}>{externalInfo}</span>
+            <div style={{ padding: '8px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: 11, color: '#8899aa' }}>{externalInfo}</span>
             </div>
           )}
 
@@ -1196,27 +1196,27 @@ export default function ManejoPage() {
           </div>
 
           {/* ADc anterior */}
-          <div style={{ background: '#162219', border: '1px solid #1f3022', borderRadius: 10, padding: '10px 14px' }}>
-            <p style={{ fontSize: 10, color: '#3a5240', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>ADc anterior (automático)</p>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#4a9e1a', fontFamily: 'var(--font-mono)' }}>
+          <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px' }}>
+            <p style={{ fontSize: 10, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>ADc anterior (automático)</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
               {fmtNum(adcPrev)} mm
-              <span style={{ fontSize: 11, fontWeight: 400, color: '#535c3e', marginLeft: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 400, color: '#556677', marginLeft: 6 }}>
                 {history.length > 0 ? 'do último registro' : 'ADc inicial da safra'}
               </span>
             </p>
           </div>
 
           {calcResult && (
-            <div style={{ background: '#162219', border: '1px solid #1f3022', borderRadius: 10, padding: '10px 14px' }}>
-              <p style={{ fontSize: 10, color: '#3a5240', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Rastreabilidade da ETo</p>
-              <p style={{ fontSize: 13, fontWeight: 700, color: '#ecefec' }}>
+            <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px' }}>
+              <p style={{ fontSize: 10, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Rastreabilidade da ETo</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>
                 {fmtNum(calcResult.eto)} mm/dia
-                <span style={{ fontSize: 11, fontWeight: 400, color: '#7a9e82', marginLeft: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 400, color: '#8899aa', marginLeft: 6 }}>
                   via {getEToSourceLabel(calcResult.etoSource)} · confiança {getEToConfidenceLabel(calcResult.etoConfidence as EToConfidence | null)}
                 </span>
               </p>
               {calcResult.etoNotes && (
-                <p style={{ fontSize: 11, color: '#535c3e', marginTop: 4 }}>{calcResult.etoNotes}</p>
+                <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>{calcResult.etoNotes}</p>
               )}
             </div>
           )}
@@ -1240,11 +1240,11 @@ export default function ManejoPage() {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               padding: '11px 0', borderRadius: 10, fontSize: 14, fontWeight: 600,
-              background: calcResult ? 'linear-gradient(135deg, #166502, #4a9e1a)' : '#162219',
-              border: 'none', color: calcResult ? '#fff' : '#3a5240',
+              background: calcResult ? '#0093D0' : '#0d1520',
+              border: 'none', color: calcResult ? '#fff' : '#556677',
               cursor: calcResult ? 'pointer' : 'not-allowed',
               opacity: saving ? 0.7 : 1,
-              boxShadow: calcResult ? '0 2px 8px rgb(74 158 26 / 0.3)' : 'none',
+              boxShadow: calcResult ? '0 2px 8px rgb(0 147 208 / 0.25)' : 'none',
             }}
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -1272,18 +1272,18 @@ export default function ManejoPage() {
           ) : (
             <div style={{
               height: '100%', minHeight: 300,
-              background: '#111f14', border: '1px dashed #1f3022', borderRadius: 16,
+              background: '#0f1923', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 16,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 8, color: '#3a5240',
+              gap: 8, color: '#556677',
             }}>
               <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
-                <Thermometer size={28} style={{ color: '#3a5240' }} />
-                <Sun size={28} style={{ color: '#3a5240' }} />
-                <CloudRain size={28} style={{ color: '#3a5240' }} />
-                <Wind size={28} style={{ color: '#3a5240' }} />
+                <Thermometer size={28} style={{ color: '#556677' }} />
+                <Sun size={28} style={{ color: '#556677' }} />
+                <CloudRain size={28} style={{ color: '#556677' }} />
+                <Wind size={28} style={{ color: '#556677' }} />
               </div>
-              <p style={{ fontSize: 13, color: '#535c3e' }}>Preencha Tmax e Tmin para calcular</p>
-              <p style={{ fontSize: 11, color: '#3a5240' }}>Os demais campos têm valores padrão</p>
+              <p style={{ fontSize: 13, color: '#556677' }}>Preencha Tmax e Tmin para calcular</p>
+              <p style={{ fontSize: 11, color: '#556677' }}>Os demais campos têm valores padrão</p>
             </div>
           )}
         </div>
@@ -1304,12 +1304,12 @@ export default function ManejoPage() {
       {/* Histórico */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <Clock size={13} style={{ color: '#3a5240' }} />
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#3a5240' }}>
+          <Clock size={13} style={{ color: '#556677' }} />
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>
             Histórico — últimos 30 dias
           </span>
-          <div style={{ flex: 1, height: 1, background: '#1a2e1d' }} />
-          <span style={{ fontSize: 11, color: '#3a5240' }}>{history.length} registros</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+          <span style={{ fontSize: 11, color: '#556677' }}>{history.length} registros</span>
         </div>
         <HistoryTable records={history} />
       </div>
