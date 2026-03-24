@@ -68,11 +68,11 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
-            padding: '9px 12px',
+            gap: 12,
+            padding: '11px 14px',
             borderRadius: 8,
             textDecoration: 'none',
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: active ? 600 : 400,
             color: active ? '#e2e8f0' : '#8899aa',
             background: active ? 'rgba(0,147,208,0.12)' : 'transparent',
@@ -87,9 +87,9 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'
           }}
         >
-          <Icon size={16} style={{ color: active ? '#0093D0' : '#556677', flexShrink: 0 }} />
+          <Icon size={18} style={{ color: active ? '#0093D0' : '#556677', flexShrink: 0 }} />
           <span style={{ flex: 1 }}>{label}</span>
-          {active && <ChevronRight size={12} style={{ color: '#0093D0' }} />}
+          {active && <ChevronRight size={13} style={{ color: '#0093D0' }} />}
         </Link>
       </li>
     );
@@ -132,41 +132,41 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
       >
         {/* Logo/Brand */}
         <div style={{
-          padding: '20px 16px 16px',
+          padding: '24px 18px 18px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
+          gap: 12,
         }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+            width: 40, height: 40, borderRadius: 12, flexShrink: 0,
             background: 'rgba(0,147,208,0.12)',
             border: '1px solid rgba(0,147,208,0.25)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <PivotIcon size={22} />
+            <PivotIcon size={26} />
           </div>
           <div>
-            <h1 style={{ fontSize: 17, lineHeight: 1.1, margin: 0 }}>
+            <h1 style={{ fontSize: 20, lineHeight: 1.1, margin: 0 }}>
               <span style={{ fontWeight: 800, color: '#0093D0' }}>Irriga</span>
               <span style={{ fontWeight: 300, color: '#22c55e' }}>Agro</span>
             </h1>
-            <p style={{ fontSize: 10, color: '#556677', margin: 0 }}>Gerenciamento Hídrico</p>
+            <p style={{ fontSize: 11, color: '#556677', margin: 0, marginTop: 1 }}>Gerenciamento Hídrico</p>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 8px' }}>
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '16px 10px' }}>
 
           {/* OPERACIONAL */}
           <p style={{
-            fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '0.08em', color: '#556677',
-            padding: '4px 12px 6px', margin: '0 0 2px',
+            padding: '0 12px 8px', margin: '0 0 2px',
           }}>
             Operacional
           </p>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, marginBottom: 16 }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, marginBottom: 20 }}>
             {OPERACIONAL.map(item => (
               <NavItem key={item.path} icon={item.icon} label={item.label} path={item.path} />
             ))}
@@ -174,11 +174,10 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
 
           {/* CONFIGURAÇÃO */}
           <p style={{
-            fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '0.08em', color: '#556677',
-            padding: '4px 12px 6px', margin: '0 0 2px',
+            padding: '12px 12px 8px', margin: '0 0 2px',
             borderTop: '1px solid rgba(255,255,255,0.04)',
-            paddingTop: 12,
           }}>
             Configuração
           </p>

@@ -517,7 +517,7 @@ export function DashboardClient({
       }))} />
 
       {/* Clima + Gauges + Alertas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <WeatherBlock lastManagementBySeason={lastManagementBySeason} />
         <SoilGauges
           pivots={pivots}
@@ -533,7 +533,7 @@ export function DashboardClient({
       </div>
 
       {/* Histórico + Tabela */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
         <div className="xl:col-span-3">
           <HistoryChart historyBySeason={historyBySeason} activeSeasons={activeSeasons} />
         </div>

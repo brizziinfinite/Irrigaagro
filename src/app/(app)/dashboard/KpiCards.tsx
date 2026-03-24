@@ -53,13 +53,13 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map(({ label, value, unit, subtitle, color, Icon }) => (
         <div key={label} style={{
           background: '#0f1923',
           border: '1px solid rgba(255,255,255,0.06)',
           borderRadius: 14,
-          padding: '16px 18px',
+          padding: '20px 22px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <span style={{
