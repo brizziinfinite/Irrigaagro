@@ -39,8 +39,8 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
 
   return (
     <div style={{
-      background: '#111f14',
-      border: '1px solid #1f3022',
+      background: '#0f1923',
+      border: '1px solid rgba(255,255,255,0.06)',
       borderRadius: 16,
       padding: 18,
       height: '100%',
@@ -49,7 +49,7 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
         <span style={{
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#3a5240',
+          letterSpacing: '0.06em', color: '#556677',
         }}>
           Histórico 7 dias
         </span>
@@ -60,23 +60,23 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
           height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexDirection: 'column', gap: 8,
         }}>
-          <p style={{ fontSize: 12, color: '#535c3e', textAlign: 'center' }}>
+          <p style={{ fontSize: 12, color: '#556677', textAlign: 'center' }}>
             Histórico aparecerá após os primeiros registros de manejo.
           </p>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={240}>
           <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a2e1d" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: '#535c3e', fontSize: 10 }}
-              axisLine={{ stroke: '#1f3022' }}
+              tick={{ fill: '#556677', fontSize: 10 }}
+              axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
               tickLine={false}
             />
             <YAxis
               yAxisId="mm"
-              tick={{ fill: '#535c3e', fontSize: 10 }}
+              tick={{ fill: '#556677', fontSize: 10 }}
               axisLine={false}
               tickLine={false}
             />
@@ -84,24 +84,24 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
               yAxisId="pct"
               orientation="right"
               domain={[0, 100]}
-              tick={{ fill: '#535c3e', fontSize: 10 }}
+              tick={{ fill: '#556677', fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) => `${v}%`}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#111f14',
-                border: '1px solid #1f3022',
+                backgroundColor: '#0d1520',
+                border: '1px solid rgba(255,255,255,0.06)',
                 borderRadius: 10,
-                color: '#ecefec',
+                color: '#e2e8f0',
                 fontSize: 12,
               }}
-              labelStyle={{ color: '#7a9e82', marginBottom: 4 }}
+              labelStyle={{ color: '#8899aa', marginBottom: 4 }}
               cursor={{ fill: 'rgb(255 255 255 / 0.03)' }}
             />
             <Legend
-              wrapperStyle={{ fontSize: 11, color: '#535c3e', paddingTop: 8 }}
+              wrapperStyle={{ fontSize: 11, color: '#556677', paddingTop: 8 }}
               formatter={(value: string) => {
                 const labels: Record<string, string> = {
                   irrigation: 'Irrigação (mm)',

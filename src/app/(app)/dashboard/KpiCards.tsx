@@ -23,7 +23,7 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
       value: aguaHoje > 0 ? aguaHoje.toFixed(1) : '0',
       unit: 'mm',
       subtitle: 'Lâmina recomendada total',
-      color: '#06b6d4',
+      color: '#22d3ee',
       Icon: Droplets,
     },
     {
@@ -56,8 +56,8 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map(({ label, value, unit, subtitle, color, Icon }) => (
         <div key={label} style={{
-          background: '#111f14',
-          border: '1px solid #1f3022',
+          background: '#0f1923',
+          border: '1px solid rgba(255,255,255,0.06)',
           borderRadius: 14,
           padding: '16px 18px',
         }}>
@@ -67,7 +67,7 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
-              color: '#3a5240',
+              color: '#556677',
             }}>
               {label}
             </span>
@@ -75,7 +75,7 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
             <span style={{
-              fontSize: 28,
+              fontSize: 32,
               fontWeight: 800,
               fontFamily: 'var(--font-mono)',
               color,
@@ -83,9 +83,9 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
             }}>
               {value}
             </span>
-            <span style={{ fontSize: 11, color: '#535c3e' }}>{unit}</span>
+            <span style={{ fontSize: 11, color: '#556677' }}>{unit}</span>
           </div>
-          <p style={{ fontSize: 11, color: '#535c3e', marginTop: 4 }}>{subtitle}</p>
+          <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>{subtitle}</p>
         </div>
       ))}
     </div>

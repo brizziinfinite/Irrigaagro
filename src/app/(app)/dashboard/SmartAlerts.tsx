@@ -23,7 +23,7 @@ interface AlertItem {
 const ALERT_CONFIG: Record<AlertTipo, { color: string; bg: string; border: string; Icon: typeof AlertCircle }> = {
   urgente: { color: '#ef4444', bg: 'rgb(239 68 68 / 0.08)',  border: 'rgb(239 68 68 / 0.2)',  Icon: AlertCircle   },
   aviso:   { color: '#f59e0b', bg: 'rgb(245 158 11 / 0.08)', border: 'rgb(245 158 11 / 0.2)', Icon: AlertTriangle },
-  info:    { color: '#06b6d4', bg: 'rgb(6 182 212 / 0.08)',  border: 'rgb(6 182 212 / 0.2)',  Icon: CheckCircle2  },
+  info:    { color: '#22d3ee', bg: 'rgb(34 211 238 / 0.08)', border: 'rgb(34 211 238 / 0.2)', Icon: CheckCircle2  },
 }
 
 export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot, activePivotIds }: SmartAlertsProps) {
@@ -53,8 +53,8 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
 
   return (
     <div style={{
-      background: '#111f14',
-      border: '1px solid #1f3022',
+      background: '#0f1923',
+      border: '1px solid rgba(255,255,255,0.06)',
       borderRadius: 14,
       padding: '16px 18px',
       display: 'flex',
@@ -66,7 +66,7 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
         <Info size={12} style={{ color: '#f59e0b' }} />
         <span style={{
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#3a5240',
+          letterSpacing: '0.06em', color: '#556677',
         }}>
           Alertas Inteligentes
         </span>
@@ -87,7 +87,7 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
       {alerts.length === 0 ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
           <CheckCircle2 size={14} style={{ color: '#22c55e', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: '#535c3e' }}>Nenhum alerta no momento.</span>
+          <span style={{ fontSize: 12, color: '#556677' }}>Nenhum alerta no momento.</span>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -105,7 +105,7 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
                 border: `1px solid ${cfg.border}`,
               }}>
                 <Icon size={13} style={{ color: cfg.color, flexShrink: 0, marginTop: 1 }} />
-                <span style={{ fontSize: 12, color: '#becec0', flex: 1, lineHeight: 1.5 }}>
+                <span style={{ fontSize: 12, color: '#8899aa', flex: 1, lineHeight: 1.5 }}>
                   {alert.msg}
                 </span>
                 {alert.tipo === 'urgente' && (

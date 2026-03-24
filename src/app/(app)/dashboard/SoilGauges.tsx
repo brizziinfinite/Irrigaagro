@@ -22,7 +22,7 @@ function GaugeCircle({ pct, color }: { pct: number; color: string }) {
   return (
     <svg width="110" height="110" viewBox="0 0 110 110">
       {/* Track */}
-      <circle cx="55" cy="55" r={r} fill="none" stroke="#1f3022" strokeWidth="7" />
+      <circle cx="55" cy="55" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
       {/* Value arc */}
       <circle
         cx="55" cy="55" r={r}
@@ -36,11 +36,11 @@ function GaugeCircle({ pct, color }: { pct: number; color: string }) {
         style={{ transition: 'stroke-dashoffset 0.8s ease' }}
       />
       {/* Texto central */}
-      <text x="55" y="53" textAnchor="middle" fill="#ecefec" fontSize="22" fontWeight="700"
+      <text x="55" y="53" textAnchor="middle" fill="#e2e8f0" fontSize="22" fontWeight="700"
         fontFamily="var(--font-mono)">
         {Math.round(pct)}
       </text>
-      <text x="55" y="68" textAnchor="middle" fill="#535c3e" fontSize="10">%</text>
+      <text x="55" y="68" textAnchor="middle" fill="#556677" fontSize="10">%</text>
     </svg>
   )
 }
@@ -50,8 +50,8 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
 
   return (
     <div style={{
-      background: '#111f14',
-      border: '1px solid #1f3022',
+      background: '#0f1923',
+      border: '1px solid rgba(255,255,255,0.06)',
       borderRadius: 14,
       padding: '16px 18px',
       display: 'flex',
@@ -62,14 +62,14 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#3a5240',
+          letterSpacing: '0.06em', color: '#556677',
         }}>
           Umidade do Solo
         </span>
       </div>
 
       {activePivots.length === 0 ? (
-        <p style={{ fontSize: 12, color: '#535c3e', textAlign: 'center', padding: '12px 0' }}>
+        <p style={{ fontSize: 12, color: '#556677', textAlign: 'center', padding: '12px 0' }}>
           Nenhum pivô com safra ativa.
         </p>
       ) : (
@@ -85,7 +85,7 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
               const m = lastManagementByPivot[pivot.id]
               const pct = m?.field_capacity_percent ?? null
               const threshold = pivot.alert_threshold_percent ?? 70
-              const color = pct !== null ? gaugeColor(pct, threshold) : '#3a5240'
+              const color = pct !== null ? gaugeColor(pct, threshold) : '#556677'
 
               return (
                 <div key={pivot.id} style={{
@@ -98,12 +98,12 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
                     <GaugeCircle pct={pct} color={color} />
                   ) : (
                     <svg width="110" height="110" viewBox="0 0 110 110">
-                      <circle cx="55" cy="55" r="45" fill="none" stroke="#1f3022" strokeWidth="7" />
-                      <text x="55" y="58" textAnchor="middle" fill="#3a5240" fontSize="14">—</text>
+                      <circle cx="55" cy="55" r="45" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+                      <text x="55" y="58" textAnchor="middle" fill="#556677" fontSize="14">—</text>
                     </svg>
                   )}
                   <span style={{
-                    fontSize: 11, color: '#7a9e82', fontWeight: 600,
+                    fontSize: 11, color: '#8899aa', fontWeight: 600,
                     textAlign: 'center', maxWidth: 110,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>
@@ -128,7 +128,7 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
             ].map(({ color, label }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
-                <span style={{ fontSize: 10, color: '#535c3e' }}>{label}</span>
+                <span style={{ fontSize: 10, color: '#556677' }}>{label}</span>
               </div>
             ))}
           </div>

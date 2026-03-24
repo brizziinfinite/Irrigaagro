@@ -9,11 +9,11 @@ import type { ProjectionDay } from '@/lib/water-balance'
 type IrrigationStatus = 'azul' | 'verde' | 'amarelo' | 'vermelho' | 'sem_safra'
 
 const STATUS_CONFIG: Record<IrrigationStatus, { label: string; color: string; bg: string; border: string; icon: typeof CheckCircle2 }> = {
-  azul:      { label: 'Irrigando',     color: '#06b6d4', bg: 'rgb(6 182 212 / 0.12)',  border: 'rgb(6 182 212 / 0.25)',  icon: Droplets      },
+  azul:      { label: 'Irrigando',     color: '#0093D0', bg: 'rgb(0 147 208 / 0.12)',   border: 'rgb(0 147 208 / 0.25)',  icon: Droplets      },
   verde:     { label: 'OK',            color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',   border: 'rgb(34 197 94 / 0.25)',  icon: CheckCircle2  },
   amarelo:   { label: 'Atenção',       color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',  border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle },
   vermelho:  { label: 'Irrigar Agora', color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',   border: 'rgb(239 68 68 / 0.25)',  icon: AlertCircle   },
-  sem_safra: { label: 'Sem safra',     color: '#535c3e', bg: 'rgb(83 92 62 / 0.12)',    border: 'rgb(83 92 62 / 0.25)',   icon: Info          },
+  sem_safra: { label: 'Sem safra',     color: '#556677', bg: 'rgb(85 102 119 / 0.12)',  border: 'rgb(85 102 119 / 0.25)', icon: Info          },
 }
 
 function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, threshold = 70): IrrigationStatus {
@@ -73,18 +73,18 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
 
   const filtered = filter === 'all' ? pivotsWithStatus : pivotsWithStatus.filter(p => p.status === filter)
 
-  const filterButtons = ([
-    { key: 'all'      as FilterType, label: `Todos · ${counts.all}`,            color: '#7a9e82' },
+  const filterButtons = (([
+    { key: 'all'      as FilterType, label: `Todos · ${counts.all}`,            color: '#8899aa' },
     { key: 'vermelho' as FilterType, label: `Irrigar · ${counts.vermelho}`,      color: '#ef4444' },
     { key: 'amarelo'  as FilterType, label: `Atenção · ${counts.amarelo}`,       color: '#f59e0b' },
     { key: 'verde'    as FilterType, label: `OK · ${counts.verde}`,              color: '#22c55e' },
-  ] as Array<{ key: FilterType; label: string; color: string }>)
+  ] as Array<{ key: FilterType; label: string; color: string }>))
     .filter(b => b.key === 'all' || counts[b.key as IrrigationStatus] > 0)
 
   return (
     <div style={{
-      background: '#111f14',
-      border: '1px solid #1f3022',
+      background: '#0f1923',
+      border: '1px solid rgba(255,255,255,0.06)',
       borderRadius: 16,
       overflow: 'hidden',
       height: '100%',
@@ -92,10 +92,10 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
       flexDirection: 'column',
     }}>
       {/* Header + filtros */}
-      <div style={{ padding: '14px 16px', borderBottom: '1px solid #1f3022' }}>
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <span style={{
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#3a5240', display: 'block', marginBottom: 10,
+          letterSpacing: '0.06em', color: '#556677', display: 'block', marginBottom: 10,
         }}>
           Pivôs
         </span>
@@ -109,8 +109,8 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
                 padding: '4px 10px', borderRadius: 99,
                 cursor: 'pointer',
                 background: filter === key ? `${color}20` : 'transparent',
-                border: `1px solid ${filter === key ? `${color}50` : '#1f3022'}`,
-                color: filter === key ? color : '#535c3e',
+                border: `1px solid ${filter === key ? `${color}50` : 'rgba(255,255,255,0.06)'}`,
+                color: filter === key ? color : '#556677',
                 transition: 'all 0.15s',
               }}
             >
@@ -125,13 +125,13 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
         display: 'grid',
         gridTemplateColumns: '1fr 80px 60px 48px 48px 80px',
         padding: '8px 16px',
-        background: '#162219',
-        borderBottom: '1px solid #1a2e1d',
+        background: '#0d1520',
+        borderBottom: '1px solid rgba(255,255,255,0.04)',
       }}>
         {['Pivô', 'Status', 'Umid.', 'ETo', 'Chuva', 'Próx. Irrig.'].map(col => (
           <span key={col} style={{
             fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#3a5240',
+            letterSpacing: '0.06em', color: '#556677',
           }}>
             {col}
           </span>
@@ -142,14 +142,14 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {filtered.length === 0 ? (
           <div style={{ padding: '20px 16px', textAlign: 'center' }}>
-            <span style={{ fontSize: 12, color: '#535c3e' }}>Nenhum pivô neste filtro.</span>
+            <span style={{ fontSize: 12, color: '#556677' }}>Nenhum pivô neste filtro.</span>
           </div>
         ) : (
           filtered.map(({ pivot, m, status, threshold, nextIrrigation }, i) => {
             const cfg = STATUS_CONFIG[status]
             const StatusIcon = cfg.icon
             const pct = m?.field_capacity_percent ?? null
-            const pctColor = pct === null ? '#535c3e'
+            const pctColor = pct === null ? '#556677'
               : pct >= threshold ? '#22c55e'
               : pct >= threshold - 10 ? '#f59e0b'
               : '#ef4444'
@@ -161,17 +161,17 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
                   display: 'grid',
                   gridTemplateColumns: '1fr 80px 60px 48px 48px 80px',
                   padding: '10px 16px',
-                  borderBottom: i < filtered.length - 1 ? '1px solid #1a2e1d' : 'none',
+                  borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   alignItems: 'center',
                 }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#162219'}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#0d1520'}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
               >
                 {/* Nome */}
                 <div>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: '#ecefec', lineHeight: 1.2 }}>{pivot.name}</p>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: '#e2e8f0', lineHeight: 1.2 }}>{pivot.name}</p>
                   {pivot.farms?.name && (
-                    <p style={{ fontSize: 10, color: '#535c3e', marginTop: 1 }}>{pivot.farms.name}</p>
+                    <p style={{ fontSize: 10, color: '#556677', marginTop: 1 }}>{pivot.farms.name}</p>
                   )}
                 </div>
 
@@ -195,7 +195,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
                 </span>
 
                 {/* ETo */}
-                <span style={{ fontSize: 12, color: '#7a9e82', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>
                   {fmtVal(m?.eto_mm)}
                 </span>
 
@@ -213,7 +213,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
                     {nextIrrigation}
                   </Link>
                 ) : (
-                  <span style={{ fontSize: 11, color: '#3a5240' }}>—</span>
+                  <span style={{ fontSize: 11, color: '#556677' }}>—</span>
                 )}
               </div>
             )
