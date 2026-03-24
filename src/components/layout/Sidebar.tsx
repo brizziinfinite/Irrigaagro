@@ -197,8 +197,8 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           margin: '0 8px 8px',
           padding: '10px 12px',
           borderRadius: 10,
-          background: 'rgba(34,197,94,0.06)',
-          border: '1px solid rgba(34,197,94,0.15)',
+          background: 'rgba(0,147,208,0.06)',
+          border: '1px solid rgba(0,147,208,0.15)',
         }}>
           <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#22c55e', margin: '0 0 3px' }}>
             Safra ativa
