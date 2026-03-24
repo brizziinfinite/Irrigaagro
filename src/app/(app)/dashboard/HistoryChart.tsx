@@ -2,13 +2,22 @@
 
 import {
   ResponsiveContainer, ComposedChart, Bar, Line,
-  XAxis, YAxis, Tooltip, Legend, CartesianGrid,
+  XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts'
 import type { DailyManagement, Season } from '@/types/database'
 
 interface HistoryChartProps {
   historyBySeason: Record<string, DailyManagement[]>
   activeSeasons: Season[]
+}
+
+// últimos 7 dias como placeholder
+function last7DaysLabels(): string[] {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  })
 }
 
 export function HistoryChart({ historyBySeason }: HistoryChartProps) {
@@ -26,16 +35,18 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
     }
   }
 
-  const chartData = Array.from(dayMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, d]) => ({
-      date: new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      irrigation: Number(d.irrigation.toFixed(1)),
-      rainfall: Number(d.rainfall.toFixed(1)),
-      moisture: d.count > 0 ? Number((d.moisture / d.count).toFixed(0)) : null,
-    }))
+  const hasData = dayMap.size > 0
 
-  const hasData = chartData.length > 0
+  const chartData = hasData
+    ? Array.from(dayMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, d]) => ({
+          date: new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          irrigation: Number(d.irrigation.toFixed(1)),
+          rainfall: Number(d.rainfall.toFixed(1)),
+          moisture: d.count > 0 ? Number((d.moisture / d.count).toFixed(0)) : null,
+        }))
+    : last7DaysLabels().map(date => ({ date, irrigation: 0, rainfall: 0, moisture: null }))
 
   return (
     <div style={{
@@ -44,28 +55,38 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
       borderRadius: 16,
       padding: 18,
       height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <span style={{
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
           letterSpacing: '0.06em', color: '#556677',
         }}>
           Histórico 7 dias
         </span>
+        {!hasData && (
+          <span style={{ fontSize: 10, color: '#556677' }}>Aguardando registros</span>
+        )}
       </div>
 
-      {!hasData ? (
-        <div style={{
-          height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexDirection: 'column', gap: 8,
-        }}>
-          <p style={{ fontSize: 12, color: '#556677', textAlign: 'center' }}>
-            Histórico aparecerá após os primeiros registros de manejo.
-          </p>
-        </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={240}>
+      {/* Legenda */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+        {[
+          { color: '#0093D0', label: 'Irrigação (mm)' },
+          { color: '#22d3ee', label: 'Chuva (mm)' },
+        ].map(({ color, label }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: color, opacity: hasData ? 1 : 0.3 }} />
+            <span style={{ fontSize: 10, color: '#556677' }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Gráfico — sempre renderiza estrutura */}
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
@@ -89,42 +110,35 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
               tickLine={false}
               tickFormatter={(v: number) => `${v}%`}
             />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#0d1520',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 10,
-                color: '#e2e8f0',
-                fontSize: 12,
-              }}
-              labelStyle={{ color: '#8899aa', marginBottom: 4 }}
-              cursor={{ fill: 'rgb(255 255 255 / 0.03)' }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: 11, color: '#556677', paddingTop: 8 }}
-              formatter={(value: string) => {
-                const labels: Record<string, string> = {
-                  irrigation: 'Irrigação (mm)',
-                  rainfall: 'Chuva (mm)',
-                  moisture: 'Umidade (%)',
-                }
-                return labels[value] ?? value
-              }}
-            />
-            <Bar yAxisId="mm" dataKey="irrigation" fill="#0093D0" radius={[4, 4, 0, 0]} maxBarSize={32} />
-            <Bar yAxisId="mm" dataKey="rainfall" fill="#22d3ee" opacity={0.7} radius={[4, 4, 0, 0]} maxBarSize={32} />
-            <Line
-              yAxisId="pct"
-              type="monotone"
-              dataKey="moisture"
-              stroke="#22c55e"
-              strokeWidth={2}
-              dot={{ fill: '#22c55e', r: 3, strokeWidth: 0 }}
-              connectNulls
-            />
+            {hasData && (
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#0d1520',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: 10,
+                  color: '#e2e8f0',
+                  fontSize: 12,
+                }}
+                labelStyle={{ color: '#8899aa', marginBottom: 4 }}
+                cursor={{ fill: 'rgb(255 255 255 / 0.03)' }}
+              />
+            )}
+            <Bar yAxisId="mm" dataKey="irrigation" fill={hasData ? '#0093D0' : 'rgba(0,147,208,0.15)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            <Bar yAxisId="mm" dataKey="rainfall" fill={hasData ? '#22d3ee' : 'rgba(34,211,238,0.12)'} opacity={0.7} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            {hasData && (
+              <Line
+                yAxisId="pct"
+                type="monotone"
+                dataKey="moisture"
+                stroke="#22c55e"
+                strokeWidth={2}
+                dot={{ fill: '#22c55e', r: 3, strokeWidth: 0 }}
+                connectNulls
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
-      )}
+      </div>
     </div>
   )
 }

@@ -58,24 +58,31 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
         <div key={label} style={{
           background: '#0f1923',
           border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 14,
-          padding: '20px 22px',
+          borderRadius: 16,
+          padding: '22px 24px 20px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <span style={{
               fontSize: 10,
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.06em',
+              letterSpacing: '0.08em',
               color: '#556677',
             }}>
               {label}
             </span>
-            <Icon size={14} style={{ color }} />
+            <div style={{
+              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+              background: `${color}18`,
+              border: `1px solid ${color}30`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon size={14} style={{ color }} />
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
             <span style={{
-              fontSize: 32,
+              fontSize: 36,
               fontWeight: 800,
               fontFamily: 'var(--font-mono)',
               color,
@@ -83,9 +90,9 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
             }}>
               {value}
             </span>
-            <span style={{ fontSize: 11, color: '#556677' }}>{unit}</span>
+            <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500 }}>{unit}</span>
           </div>
-          <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>{subtitle}</p>
+          <p style={{ fontSize: 11, color: '#556677', marginTop: 6 }}>{subtitle}</p>
         </div>
       ))}
     </div>

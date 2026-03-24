@@ -45,6 +45,10 @@ interface PivotTableProps {
 
 type FilterType = 'all' | IrrigationStatus
 
+// 7 colunas: Pivô | Status | Umid. | ETo | Chuva | Lâmina | Próx. Irrig.
+const GRID_COLS = '1fr 90px 56px 46px 46px 60px 80px'
+const HEADERS   = ['Pivô', 'Status', 'Umid.', 'ETo', 'Chuva', 'Lâmina', 'Próx. Irrig.']
+
 export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, projectionByPivot }: PivotTableProps) {
   const [filter, setFilter] = useState<FilterType>('all')
 
@@ -61,7 +65,6 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
     return { pivot, m, status, threshold, nextIrrigation }
   })
 
-  // Counts para filtros
   const counts = {
     all: pivotsWithStatus.length,
     azul: pivotsWithStatus.filter(p => p.status === 'azul').length,
@@ -73,12 +76,12 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
 
   const filtered = filter === 'all' ? pivotsWithStatus : pivotsWithStatus.filter(p => p.status === filter)
 
-  const filterButtons = (([
+  const filterButtons = ([
     { key: 'all'      as FilterType, label: `Todos · ${counts.all}`,            color: '#8899aa' },
     { key: 'vermelho' as FilterType, label: `Irrigar · ${counts.vermelho}`,      color: '#ef4444' },
     { key: 'amarelo'  as FilterType, label: `Atenção · ${counts.amarelo}`,       color: '#f59e0b' },
     { key: 'verde'    as FilterType, label: `OK · ${counts.verde}`,              color: '#22c55e' },
-  ] as Array<{ key: FilterType; label: string; color: string }>))
+  ] as Array<{ key: FilterType; label: string; color: string }>)
     .filter(b => b.key === 'all' || counts[b.key as IrrigationStatus] > 0)
 
   return (
@@ -87,9 +90,6 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
       border: '1px solid rgba(255,255,255,0.06)',
       borderRadius: 16,
       overflow: 'hidden',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
     }}>
       {/* Header + filtros */}
       <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -120,15 +120,15 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
         </div>
       </div>
 
-      {/* Tabela header */}
+      {/* Tabela header — 7 colunas */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 80px 60px 48px 48px 80px',
+        gridTemplateColumns: GRID_COLS,
         padding: '8px 16px',
-        background: '#0d1520',
+        background: '#141e2b',
         borderBottom: '1px solid rgba(255,255,255,0.04)',
       }}>
-        {['Pivô', 'Status', 'Umid.', 'ETo', 'Chuva', 'Próx. Irrig.'].map(col => (
+        {HEADERS.map(col => (
           <span key={col} style={{
             fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: '#556677',
@@ -139,7 +139,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
       </div>
 
       {/* Rows */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div>
         {filtered.length === 0 ? (
           <div style={{ padding: '20px 16px', textAlign: 'center' }}>
             <span style={{ fontSize: 12, color: '#556677' }}>Nenhum pivô neste filtro.</span>
@@ -153,13 +153,14 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
               : pct >= threshold ? '#22c55e'
               : pct >= threshold - 10 ? '#f59e0b'
               : '#ef4444'
+            const lamina = m?.actual_depth_mm ?? m?.recommended_depth_mm ?? null
 
             return (
               <div
                 key={pivot.id}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 80px 60px 48px 48px 80px',
+                  gridTemplateColumns: GRID_COLS,
                   padding: '10px 16px',
                   borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   alignItems: 'center',
@@ -202,6 +203,11 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
                 {/* Chuva */}
                 <span style={{ fontSize: 12, color: '#60a5fa', fontFamily: 'var(--font-mono)' }}>
                   {fmtVal(m?.rainfall_mm)}
+                </span>
+
+                {/* Lâmina */}
+                <span style={{ fontSize: 12, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
+                  {lamina != null ? `${lamina.toFixed(1)}mm` : '—'}
                 </span>
 
                 {/* Próx. irrigação */}

@@ -10,6 +10,7 @@ import { SoilGauges } from './SoilGauges'
 import { SmartAlerts } from './SmartAlerts'
 import { HistoryChart } from './HistoryChart'
 import { PivotTable } from './PivotTable'
+import { ProjectionBlock } from './ProjectionBlock'
 import type { ProjectionDay } from '@/lib/water-balance'
 import {
   CircleDot, Building2, Plus, ArrowRight,
@@ -458,16 +459,16 @@ export function DashboardClient({
   const activePivots = summary.activePivots
 
   return (
-    <div className="flex flex-col gap-5 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto">
 
       {/* Título */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Dashboard</h1>
-          <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#e2e8f0', letterSpacing: '-0.01em' }}>Dashboard</h1>
+          <p className="text-sm mt-1" style={{ color: '#8899aa' }}>
             {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
           </p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
             {[
               { label: 'Automação pronta', value: summary.automationReady, color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)', border: 'rgb(34 197 94 / 0.25)' },
               { label: 'Com restrições', value: summary.automationRestricted, color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)', border: 'rgb(245 158 11 / 0.25)' },
@@ -517,7 +518,7 @@ export function DashboardClient({
       }))} />
 
       {/* Clima + Gauges + Alertas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <WeatherBlock lastManagementBySeason={lastManagementBySeason} />
         <SoilGauges
           pivots={pivots}
@@ -532,20 +533,23 @@ export function DashboardClient({
         />
       </div>
 
-      {/* Histórico + Tabela */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+      {/* Histórico + Projeção (grid 60/40) */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
         <div className="xl:col-span-3">
           <HistoryChart historyBySeason={historyBySeason} activeSeasons={activeSeasons} />
         </div>
         <div className="xl:col-span-2">
-          <PivotTable
-            pivots={pivots}
-            lastManagementByPivot={lastManagementByPivot}
-            activePivotIds={activePivotIds}
-            projectionByPivot={projectionByPivot}
-          />
+          <ProjectionBlock projectionBySeason={projectionBySeason} activeSeasons={activeSeasons} />
         </div>
       </div>
+
+      {/* Tabela de Pivôs — full width */}
+      <PivotTable
+        pivots={pivots}
+        lastManagementByPivot={lastManagementByPivot}
+        activePivotIds={activePivotIds}
+        projectionByPivot={projectionByPivot}
+      />
 
       {/* Cards por fazenda */}
       {Object.entries(grouped).map(([farmName, farmPivots]) => (

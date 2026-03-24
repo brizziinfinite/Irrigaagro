@@ -16,14 +16,18 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
-// SVG icon de pivô central
-function PivotIcon({ size = 28 }: { size?: number }) {
+// SVG icon de pivô central — mockup aprovado
+function PivotIcon({ size = 20 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
-      <circle cx="14" cy="14" r="12" stroke="#0093D0" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.4" />
-      <circle cx="14" cy="14" r="7" stroke="#0093D0" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.65" />
-      <circle cx="14" cy="14" r="2.5" fill="#0093D0" />
-      <line x1="14" y1="2" x2="14" y2="8" stroke="#0093D0" strokeWidth="1.5" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="50 50 300 300" fill="none">
+      <circle cx="200" cy="200" r="120" fill="none" stroke="#0093D0" strokeWidth="4"/>
+      <circle cx="200" cy="200" r="45" fill="none" stroke="#0093D0" strokeWidth="2" opacity="0.4"/>
+      <line x1="200" y1="110" x2="200" y2="145" stroke="#0093D0" strokeWidth="3" strokeLinecap="round"/>
+      <line x1="200" y1="255" x2="200" y2="290" stroke="#0093D0" strokeWidth="3" strokeLinecap="round"/>
+      <line x1="110" y1="200" x2="145" y2="200" stroke="#0093D0" strokeWidth="3" strokeLinecap="round"/>
+      <line x1="255" y1="200" x2="290" y2="200" stroke="#0093D0" strokeWidth="3" strokeLinecap="round"/>
+      <circle cx="200" cy="200" r="8" fill="#0093D0"/>
+      <line x1="200" y1="200" x2="300" y2="130" stroke="#4ade80" strokeWidth="3" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -69,10 +73,10 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             display: 'flex',
             alignItems: 'center',
             gap: 12,
-            padding: '11px 14px',
-            borderRadius: 8,
+            padding: '12px 14px',
+            borderRadius: 9,
             textDecoration: 'none',
-            fontSize: 14,
+            fontSize: 14.5,
             fontWeight: active ? 600 : 400,
             color: active ? '#e2e8f0' : '#8899aa',
             background: active ? 'rgba(0,147,208,0.12)' : 'transparent',
@@ -87,7 +91,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'
           }}
         >
-          <Icon size={18} style={{ color: active ? '#0093D0' : '#556677', flexShrink: 0 }} />
+          <Icon size={18} style={{ color: active ? '#0093D0' : '#667788', flexShrink: 0 }} />
           <span style={{ flex: 1 }}>{label}</span>
           {active && <ChevronRight size={13} style={{ color: '#0093D0' }} />}
         </Link>
@@ -124,7 +128,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`fixed left-0 top-0 h-screen w-[260px] z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         style={{
           background: '#0d1520',
           borderRight: '1px solid rgba(255,255,255,0.06)',
@@ -132,41 +136,41 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
       >
         {/* Logo/Brand */}
         <div style={{
-          padding: '24px 18px 18px',
+          padding: '26px 20px 20px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
+          gap: 14,
         }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-            background: 'rgba(0,147,208,0.12)',
-            border: '1px solid rgba(0,147,208,0.25)',
+            width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+            background: 'rgba(0,147,208,0.15)',
+            border: '1px solid rgba(0,147,208,0.28)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <PivotIcon size={26} />
+            <PivotIcon size={22} />
           </div>
           <div>
-            <h1 style={{ fontSize: 20, lineHeight: 1.1, margin: 0 }}>
+            <h1 style={{ fontSize: 22, lineHeight: 1.1, margin: 0, letterSpacing: '-0.01em' }}>
               <span style={{ fontWeight: 800, color: '#0093D0' }}>Irriga</span>
-              <span style={{ fontWeight: 300, color: '#22c55e' }}>Agro</span>
+              <span style={{ fontWeight: 400, color: '#22c55e' }}>Agro</span>
             </h1>
-            <p style={{ fontSize: 11, color: '#556677', margin: 0, marginTop: 1 }}>Gerenciamento Hídrico</p>
+            <p style={{ fontSize: 9, color: '#556677', margin: 0, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Irrigação de Precisão</p>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '16px 10px' }}>
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '18px 12px' }}>
 
           {/* OPERACIONAL */}
           <p style={{
             fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.08em', color: '#556677',
-            padding: '0 12px 8px', margin: '0 0 2px',
+            letterSpacing: '0.09em', color: '#445566',
+            padding: '0 12px 10px', margin: '0 0 2px',
           }}>
             Operacional
           </p>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, marginBottom: 20 }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, marginBottom: 22 }}>
             {OPERACIONAL.map(item => (
               <NavItem key={item.path} icon={item.icon} label={item.label} path={item.path} />
             ))}
@@ -175,9 +179,9 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           {/* CONFIGURAÇÃO */}
           <p style={{
             fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.08em', color: '#556677',
-            padding: '12px 12px 8px', margin: '0 0 2px',
-            borderTop: '1px solid rgba(255,255,255,0.04)',
+            letterSpacing: '0.09em', color: '#445566',
+            padding: '14px 12px 10px', margin: '0 0 2px',
+            borderTop: '1px solid rgba(255,255,255,0.05)',
           }}>
             Configuração
           </p>
@@ -250,7 +254,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
       </aside>
 
       {/* Main Content Margin */}
-      <div className="hidden lg:block w-64" />
+      <div className="hidden lg:block w-[260px]" />
     </>
   );
 }

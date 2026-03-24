@@ -248,8 +248,34 @@ export function PivotMap({ pivots }: PivotMapProps) {
     )
   }
 
+  // Unique farm names for header
+  const farmNames = [...new Set(pivots.map(p => p.farm_name).filter(Boolean))]
+  const farmLabel = farmNames.length === 1 ? farmNames[0] : farmNames.length > 1 ? `${farmNames.length} fazendas` : ''
+
   return (
-    <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)', background: '#0f1923' }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '12px 18px',
+        background: '#0d1520',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+          letterSpacing: '0.08em', color: '#556677',
+        }}>
+          Mapa dos Pivôs
+        </span>
+        {farmLabel && (
+          <span style={{ fontSize: 11, color: '#8899aa' }}>— {farmLabel}</span>
+        )}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 4px #22c55e' }} />
+          <span style={{ fontSize: 10, color: '#556677' }}>{pivotsWithCoords.length} pivô{pivotsWithCoords.length !== 1 ? 's' : ''} no mapa</span>
+        </div>
+      </div>
+      <div style={{ position: 'relative' }}>
       {/* CSS: pulse animation + popup style */}
       <style>{`
         @keyframes irrigaPulse {
@@ -289,7 +315,7 @@ export function PivotMap({ pivots }: PivotMapProps) {
       {/* Legend overlay */}
       <div style={{
         position: 'absolute', top: 12, right: 12, zIndex: 1000,
-        background: 'rgb(11 26 14 / 0.92)',
+        background: 'rgba(8,14,20,0.88)',
         border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 10, padding: '8px 12px',
         display: 'flex', flexDirection: 'column', gap: 5,
@@ -305,6 +331,7 @@ export function PivotMap({ pivots }: PivotMapProps) {
             <span style={{ fontSize: 11, color: '#8899aa' }}>{val.label}</span>
           </div>
         ))}
+      </div>
       </div>
     </div>
   )
