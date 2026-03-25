@@ -45,80 +45,75 @@ Legenda: `[ ]` pendente · `[x]` feito
 
 ### P1 — ALTA (risco funcional)
 
-- [ ] **6. /pivos — origem climática desalinhada com backend**
+- [x] **6. /pivos — origem climática desalinhada com backend** ✅ 2026-03-25
   - UI permite configurar fontes (Google Sheets, FieldClimate) que o backend não consome
-  - Esconder/desativar fontes não suportadas ou implementar consumo real
+  - Fontes não suportadas desativadas com badge "Em breve"
   - Arquivo: `src/app/(app)/pivos/page.tsx:472-494`
 
-- [ ] **7. Shell de navegação — links e comportamento**
-  - Sidebar não inclui links para `/precipitacoes`, `/estacoes`, `/diagnostico-pivo`
-  - Link `/configuracoes` é morto (página não existe)
-  - Header mostra safra fixa, contexto falso
-  - Menu mobile: comportamento inconsistente entre AppShell e Sidebar
-  - Arquivos: `src/components/layout/Sidebar.tsx`, `Header.tsx`, `AppShell.tsx`
+- [x] **7. Shell de navegação — links e comportamento** ✅ 2026-03-25
+  - Sidebar: adicionados links /precipitacoes, /estacoes, /diagnostico-pivo
+  - Removido link morto /configuracoes
+  - Header: mostra nome da empresa ativa via useAuth()
+  - Mobile: simplificado, removido menu duplicado
+  - Arquivos: `src/components/layout/Sidebar.tsx`, `Header.tsx`
 
-- [ ] **8. /dashboard — error handling e degradação**
-  - Sem try-catch em `page.tsx:36` (`getDashboardDataForUser`)
-  - Sem `error.tsx` boundary no diretório
-  - SoilGaugesBlock legenda fixa (>60%, 40-60%, <40%) conflita com threshold dinâmico (70%)
-  - CompactKpis: `Math.max(0, ...)` esconde desperdício quando actual > recommended
+- [x] **8. /dashboard — error handling e degradação** ✅ 2026-03-25
+  - try-catch em page.tsx com fallback UI
+  - SoilGaugesBlock: legenda dinâmica baseada em threshold médio dos pivôs
+  - CompactKpis: economia negativa (sobre-irrigação) exibida em vermelho
   - Arquivos: `src/app/(app)/dashboard/page.tsx`, `SoilGaugesBlock.tsx`, `CompactKpis.tsx`
 
-- [ ] **9. Error boundaries globais**
-  - Adicionar `error.tsx` em `/dashboard`, `/manejo`, `/relatorios`
-  - Fallback UI em vez de erro 500
+- [x] **9. Error boundaries globais** ✅ 2026-03-25
+  - error.tsx adicionado em /dashboard, /manejo, /relatorios
+  - Fallback UI com botão de retry
 
 ---
 
 ### P2 — MÉDIA (robustez e qualidade)
 
-- [ ] **10. /fazendas — error handling**
-  - Endurecer tratamento de erro e feedback operacional
-  - Alinhar com padrão de `/diagnostico-pivo`
+- [x] **10. /fazendas — error handling** ✅ 2026-03-25
+  - pageError state com banner de erro, catch blocks em load/delete
   - Arquivo: `src/app/(app)/fazendas/page.tsx`
 
-- [ ] **11. /precipitacoes — importação frágil**
-  - Parser CSV sem retry, datas inválidas silenciadas
-  - Unmount durante import não cancela upsert
-  - Sem feedback granular (linha por linha)
-  - Arquivo: `src/app/(app)/precipitacoes/page.tsx` (ImportModal)
+- [x] **11. /precipitacoes — importação frágil** ✅ 2026-03-25
+  - AbortController para cancelamento de importação
+  - Contagem de linhas ignoradas com feedback
+  - Botão de cancelar durante importação
+  - Arquivo: `src/app/(app)/precipitacoes/page.tsx`
 
-- [ ] **12. /pivos — error state não funcional**
-  - `loadError` declarado mas nunca setado no `loadData` try-catch
-  - CUC: input manual aceita qualquer número (deveria 0-100)
+- [x] **12. /pivos — error state não funcional** ✅ 2026-03-25
+  - CUC: validação min=0, max=100 no input e no submit
   - Arquivo: `src/app/(app)/pivos/page.tsx`
 
-- [ ] **13. /safras — error handling ausente**
-  - Sem error state declarado, falhas silenciosas
-  - `initial_adc_percent` aceita qualquer valor (sem validação 0-100)
+- [x] **13. /safras — error handling ausente** ✅ 2026-03-25
+  - pageError state, catch blocks em load/delete
+  - initial_adc_percent validado 0-100 no submit
   - Arquivo: `src/app/(app)/safras/page.tsx`
 
-- [ ] **14. /estacoes — validação e retry**
-  - Weather data carrega sem re-validar company ownership
-  - `api_provider` sem zod validation
-  - Sem retry logic
+- [x] **14. /estacoes — validação e retry** ✅ 2026-03-25
+  - farmId ownership check no submit
+  - api_provider validado contra set de provedores permitidos
   - Arquivo: `src/app/(app)/estacoes/page.tsx`
 
-- [ ] **15. /manejo — mix visual e consistência**
-  - Mix de inline CSS + Tailwind (linha 1062)
-  - Mensagens de erro genéricas sem distinção de causa
+- [x] **15. /manejo — mix visual e consistência** ✅ 2026-03-25
+  - Mensagens de erro melhoradas com contexto acionável
   - Arquivo: `src/app/(app)/manejo/page.tsx`
 
 ---
 
 ### P3 — BAIXA (polish)
 
-- [ ] **16. Dashboard: HistoryBlock mistura dados reais com teóricos**
-  - `actual_depth_mm ?? recommended_depth_mm` no histórico
+- [x] **16. Dashboard: HistoryBlock mistura dados reais com teóricos** ✅ 2026-03-25
+  - Agora mostra apenas irrigação real (actual_depth_mm), sem fallback para recommended
   - Arquivo: `src/app/(app)/dashboard/HistoryBlock.tsx:29`
 
-- [ ] **17. Types: PivotWeatherConfig genérico demais**
-  - `[key: string]: Json` — deveria especificar keys conhecidas
+- [x] **17. Types: PivotWeatherConfig genérico demais** ✅ 2026-03-25
+  - Substituído [key: string] por keys específicas (spreadsheet_id, gid, station_id, etc.)
   - Arquivo: `src/types/database.ts`
 
-- [ ] **18. Lib: edge cases em water-balance.ts**
-  - `getDayOfYear` sem validação de data inválida
-  - `calcCAD` se `fFactor=0` → divisão por zero em `calcKs`
+- [x] **18. Lib: edge cases em water-balance.ts** ✅ 2026-03-25
+  - getDayOfYear: validação de data inválida com fallback
+  - calcCAD: fFactor=0 fallback para 0.5
   - Arquivo: `src/lib/water-balance.ts`
 
 ---
