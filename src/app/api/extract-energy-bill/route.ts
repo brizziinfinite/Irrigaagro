@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 // ─── Zod-like validation (sem dependência extra) ──────────────
 
@@ -239,6 +240,35 @@ export async function POST(req: NextRequest) {
     }
     if (!pivotId) {
       return NextResponse.json({ error: 'Campo pivot_id obrigatório' }, { status: 400 })
+    }
+
+    // ── Validar autenticação e ownership do pivot ──
+    const authClient = await createServerClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
+
+    // Verificar que pivot pertence a uma fazenda da empresa do usuário
+    const { data: membership } = await authClient
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id)
+
+    const companyIds = ((membership ?? []) as Array<{ company_id: string }>).map(m => m.company_id)
+    if (companyIds.length === 0) {
+      return NextResponse.json({ error: 'Usuário sem empresa vinculada' }, { status: 403 })
+    }
+
+    const { data: pivotCheck } = await authClient
+      .from('pivots')
+      .select('id, farms!inner(company_id)')
+      .eq('id', pivotId)
+      .in('farms.company_id', companyIds)
+      .maybeSingle()
+
+    if (!pivotCheck) {
+      return NextResponse.json({ error: 'Pivô não pertence à sua empresa' }, { status: 403 })
     }
 
     const mimeType = file.type || 'image/jpeg'
