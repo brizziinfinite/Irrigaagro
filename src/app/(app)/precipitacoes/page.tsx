@@ -1164,8 +1164,8 @@ export default function PrecipitacoesPage() {
         </>
       )}
 
-      {/* Edit modal */}
-      {editModal && pivotId && (
+      {/* Edit modal — only render if pivotId belongs to loaded (company-filtered) pivots */}
+      {editModal && pivotId && pivots.some(p => p.id === pivotId) && (
         <EditModal
           date={editModal.date}
           pivotId={pivotId}
@@ -1176,8 +1176,8 @@ export default function PrecipitacoesPage() {
         />
       )}
 
-      {/* Import modal */}
-      {showImport && pivotId && (
+      {/* Import modal — only render if pivotId belongs to loaded (company-filtered) pivots */}
+      {showImport && pivotId && pivots.some(p => p.id === pivotId) && (
         <ImportModal
           pivotId={pivotId}
           onClose={() => setShowImport(false)}

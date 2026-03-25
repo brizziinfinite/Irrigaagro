@@ -6,6 +6,20 @@ import type {
 } from '@/types/database'
 import type { TypedSupabaseClient } from './base'
 
+export async function validatePivotOwnership(
+  pivotId: string,
+  companyId: string,
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+): Promise<boolean> {
+  const { data } = await (client as any)
+    .from('pivots')
+    .select('id, farms!inner(company_id)')
+    .eq('id', pivotId)
+    .eq('farms.company_id', companyId)
+    .maybeSingle()
+  return data !== null
+}
+
 const rainfallTable = (client: TypedSupabaseClient) => (client as any).from('rainfall_records')
 const RAINFALL_UPSERT_CONFLICT = 'pivot_id,date'
 
