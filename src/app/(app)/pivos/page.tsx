@@ -121,9 +121,9 @@ function parseCoords(raw: string): { lat: number; lng: number } | null {
 }
 
 // ─── Input helper ─────────────────────────────────────────────
-function Field({ label, value, onChange, placeholder, unit, hint }: {
+function Field({ label, value, onChange, placeholder, unit, hint, min, max }: {
   label: string; value: string; onChange: (v: string) => void
-  placeholder?: string; unit?: string; hint?: string
+  placeholder?: string; unit?: string; hint?: string; min?: number; max?: number
 }) {
   return (
     <div>
@@ -137,6 +137,8 @@ function Field({ label, value, onChange, placeholder, unit, hint }: {
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           step="any"
+          min={min}
+          max={max}
           style={{
             width: '100%', padding: unit ? '10px 44px 10px 14px' : '10px 14px',
             borderRadius: 10, fontSize: 14,
@@ -210,6 +212,14 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
     if (coordsRaw.trim() && !parsedCoords) {
       setError('As coordenadas informadas estao em formato invalido.')
       return
+    }
+
+    if (cuc) {
+      const cucNum = Number(cuc)
+      if (isNaN(cucNum) || cucNum < 0 || cucNum > 100) {
+        setError('CUC deve ser entre 0 e 100%.')
+        return
+      }
     }
 
     setError('')
@@ -350,6 +360,8 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
               onChange={setCuc}
               placeholder="Ex: 85"
               unit="%"
+              min={0}
+              max={100}
             />
           </div>
 
@@ -440,18 +452,20 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
           {/* Seletor de fonte */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
             {([
-              { value: 'nasa',          label: 'NASA POWER',    icon: Satellite, desc: 'Por coordenada — sempre disponível' },
-              { value: 'google_sheets', label: 'Google Sheets', icon: Sheet,     desc: 'Sua planilha Plugfield' },
-              { value: 'manual',        label: 'Manual',        icon: Hand,      desc: 'Digitar os dados diariamente' },
+              { value: 'nasa',          label: 'NASA POWER',    icon: Satellite, desc: 'Por coordenada — sempre disponível', disabled: false },
+              { value: 'google_sheets', label: 'Google Sheets', icon: Sheet,     desc: 'Em breve', disabled: true },
+              { value: 'manual',        label: 'Manual',        icon: Hand,      desc: 'Digitar os dados diariamente', disabled: false },
             ] as const).map(opt => (
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => setWeatherSource(opt.value)}
+                onClick={() => !opt.disabled && setWeatherSource(opt.value)}
+                disabled={opt.disabled}
                 style={{
                   padding: '10px 8px', borderRadius: 10, border: `1px solid ${weatherSource === opt.value ? 'rgb(0 147 208 / 0.35)' : 'rgba(255,255,255,0.08)'}`,
                   background: weatherSource === opt.value ? 'rgb(0 147 208 / 0.10)' : '#0d1520',
-                  cursor: 'pointer', textAlign: 'center',
+                  cursor: opt.disabled ? 'not-allowed' : 'pointer', textAlign: 'center',
+                  opacity: opt.disabled ? 0.4 : 1,
                 }}
               >
                 <opt.icon size={14} style={{ color: weatherSource === opt.value ? '#0093D0' : '#556677', margin: '0 auto 4px' }} />
