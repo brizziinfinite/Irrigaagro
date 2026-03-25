@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { DashboardClient } from './DashboardClient'
 import { getDashboardDataForUser } from '@/services/dashboard'
 import type { TypedSupabaseClient } from '@/services/base'
@@ -8,6 +9,8 @@ export default async function DashboardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  const cookieStore = await cookies()
+  const preferredCompanyId = cookieStore.get('irrigaagro:active_company_id')?.value ?? null
 
   if (!user) {
     return (
@@ -34,7 +37,7 @@ export default async function DashboardPage() {
     )
   }
 
-  const dashboard = await getDashboardDataForUser(user.id, supabase)
+  const dashboard = await getDashboardDataForUser(user.id, supabase, preferredCompanyId)
 
   return (
     <DashboardClient

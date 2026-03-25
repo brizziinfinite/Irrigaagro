@@ -36,6 +36,32 @@ interface AuthSession {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const ACTIVE_COMPANY_KEY = 'irrigaagro:active_company_id'
+
+function getPersistedCompanyId(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem(ACTIVE_COMPANY_KEY)
+  } catch {
+    return null
+  }
+}
+
+function persistCompanyId(companyId: string | null): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (companyId) {
+      localStorage.setItem(ACTIVE_COMPANY_KEY, companyId)
+      document.cookie = `${ACTIVE_COMPANY_KEY}=${companyId};path=/;max-age=${60 * 60 * 24 * 365};SameSite=Lax`
+    } else {
+      localStorage.removeItem(ACTIVE_COMPANY_KEY)
+      document.cookie = `${ACTIVE_COMPANY_KEY}=;path=/;max-age=0`
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [session, setSession] = useState<AuthSession | null>(null)
@@ -71,9 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setCompanies(companiesData || [])
 
-      // Set the first company as active
+      // Restore persisted company or fallback to first
       if (companiesData && companiesData.length > 0) {
-        setCompany(companiesData[0])
+        const persistedId = getPersistedCompanyId()
+        const restored = persistedId
+          ? companiesData.find((c) => c.id === persistedId)
+          : null
+        setCompany(restored ?? companiesData[0])
       }
     } catch (err) {
       console.error('Failed to fetch user companies:', err)
@@ -255,6 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null)
       setCompany(null)
       setCompanies([])
+      persistCompanyId(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Sign out failed'
       setError(errorMessage)
@@ -275,6 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setCompany(selectedCompany)
+      persistCompanyId(selectedCompany.id)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to switch company'
       setError(errorMessage)

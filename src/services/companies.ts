@@ -55,8 +55,9 @@ export function resolveActiveCompany(
 
 export async function getUserCompanyOrThrow(
   userId: string,
-  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
+  preferredCompanyId?: string | null
 ): Promise<Company> {
   const companies = await listUserCompanies(userId, client)
-  return unwrapData(resolveActiveCompany(companies), null, 'Nenhuma empresa vinculada ao usuário')
+  return unwrapData(resolveActiveCompany(companies, preferredCompanyId), null, 'Nenhuma empresa vinculada ao usuário')
 }

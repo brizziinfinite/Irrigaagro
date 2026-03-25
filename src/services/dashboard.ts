@@ -38,9 +38,10 @@ export interface DashboardData {
 
 export async function getDashboardDataForUser(
   userId: string,
-  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
+  preferredCompanyId?: string | null
 ): Promise<DashboardData> {
-  const company = await getUserCompanyOrThrow(userId, client)
+  const company = await getUserCompanyOrThrow(userId, client, preferredCompanyId)
   const farms = await listFarmsByCompany(company.id, client)
   const farmMap = new Map(farms.map((farm) => [farm.id, farm]))
   const pivots = (await listPivotsByFarmIds(farms.map((farm) => farm.id), client)).map((pivot) => ({
