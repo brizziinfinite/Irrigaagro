@@ -120,7 +120,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           gap: 14,
         }}>
           <div style={{ minWidth: 0 }}>
-            <IrrigaAgroLogo size={42} className="text-[22px]" />
+            <IrrigaAgroLogo size={42} className="text-[21px]" />
             <p style={{
               fontSize: 9,
               color: '#556677',
@@ -139,7 +139,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             gap: 8,
             padding: '7px 10px',
             borderRadius: 999,
-            background: 'linear-gradient(135deg, rgba(0,147,208,0.12), rgba(34,197,94,0.08))',
+            background: 'rgba(255,255,255,0.03)',
             border: '1px solid rgba(255,255,255,0.06)',
             color: '#a5b4c3',
             fontSize: 10,
