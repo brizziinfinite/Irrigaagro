@@ -13,30 +13,30 @@ Legenda: `[ ]` pendente · `[x]` feito
 
 ### P0 — CRÍTICA (bloqueia produção)
 
-- [ ] **1. Escopo de empresa ativo (client + server)**
+- [x] **1. Escopo de empresa ativo (client + server)** ✅ 2026-03-25
   - `switchCompany` no AuthContext não persiste escolha
   - Server-side (dashboard page.tsx) sempre usa "a primeira empresa"
   - Contamina dashboard, listas e leituras em todas as páginas
   - Arquivos: `src/contexts/AuthContext.tsx`, `src/app/(app)/dashboard/page.tsx`
 
-- [ ] **2. /relatorios — queries sem company filter**
+- [x] **2. /relatorios — queries sem company filter** ✅ 2026-03-25
   - Página não usa `useAuth()`, queries diretas retornam dados de TODAS as empresas
   - `supabase.from('seasons').select('*')` sem `.eq('company_id', ...)`
   - `supabase.from('pivots').select(...)` sem filtro de farm_id
   - Migrar para service layer com company scoping
   - Arquivo: `src/app/(app)/relatorios/page.tsx:873-957`
 
-- [ ] **3. API /extract-energy-bill sem validação de ownership**
+- [x] **3. API /extract-energy-bill sem validação de ownership** ✅ 2026-03-25
   - Aceita qualquer `pivot_id` sem verificar se pertence à empresa do usuário
   - Validar ownership: user → company → farms → pivots antes de aceitar upload
   - Arquivo: `src/app/api/extract-energy-bill/route.ts`
 
-- [ ] **4. management.ts:listActiveManagementSeasonContexts sem company filter**
+- [x] **4. management.ts:listActiveManagementSeasonContexts sem company filter** ✅ 2026-03-25
   - Retorna safras ativas de TODAS as empresas do banco
   - Adicionar filtro por company_id (farms → seasons)
   - Arquivo: `src/services/management.ts:104-129`
 
-- [ ] **5. /precipitacoes — pivotId não validado antes de CRUD**
+- [x] **5. /precipitacoes — pivotId não validado antes de CRUD** ✅ 2026-03-25
   - `upsertRainfallRecord` não verifica se pivotId pertence aos pivots do usuário
   - ImportModal não valida pivotId antes de importar CSV
   - Arquivo: `src/app/(app)/precipitacoes/page.tsx`
