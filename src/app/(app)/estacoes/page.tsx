@@ -187,10 +187,22 @@ function StationModal({ station, farms, onClose, onSaved }: StationModalProps) {
   const [error, setError] = useState('')
   const isEdit = Boolean(station)
 
+  const VALID_PROVIDERS = new Set(['manual', 'fieldclimate', 'davis', 'inmet'])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.farmId || !form.name.trim()) {
       setError('Preencha fazenda e nome da estação.')
+      return
+    }
+
+    if (!farms.some(f => f.id === form.farmId)) {
+      setError('Fazenda selecionada não pertence à sua empresa.')
+      return
+    }
+
+    if (!VALID_PROVIDERS.has(form.apiProvider)) {
+      setError('Provider inválido.')
       return
     }
 

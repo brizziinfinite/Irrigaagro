@@ -161,6 +161,13 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || !farmId) return
+    if (initialAdc) {
+      const adcNum = Number(initialAdc)
+      if (isNaN(adcNum) || adcNum < 0 || adcNum > 100) {
+        setError('ADc inicial deve ser entre 0 e 100%.')
+        return
+      }
+    }
     setError(''); setLoading(true)
     const payload = {
       name: name.trim(), farm_id: farmId,
@@ -413,6 +420,7 @@ export default function SafrasPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingSeason, setEditingSeason] = useState<SeasonFull | null>(null)
   const [deletingId, setDeletingId]       = useState<string | null>(null)
+  const [pageError, setPageError]         = useState('')
 
   const loadData = useCallback(async () => {
     if (!company?.id) {
@@ -425,6 +433,7 @@ export default function SafrasPage() {
     }
 
     setLoading(true)
+    setPageError('')
     try {
       const farmsData = await listFarmsByCompany(company.id)
       const farmIds = farmsData.map((farm) => farm.id)
@@ -438,6 +447,8 @@ export default function SafrasPage() {
       setSeasons(seasonsData as SeasonFull[])
       setPivots(pivotsData)
       setCrops(cropsData)
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : 'Falha ao carregar safras')
     } finally {
       setLoading(false)
     }
@@ -451,9 +462,12 @@ export default function SafrasPage() {
   async function handleDelete(id: string) {
     if (!confirm('Excluir esta safra? O histórico de manejo será removido.')) return
     setDeletingId(id)
+    setPageError('')
     try {
       await deleteSeason(id)
       await loadData()
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : 'Falha ao excluir safra')
     } finally {
       setDeletingId(null)
     }
@@ -475,6 +489,11 @@ export default function SafrasPage() {
   return (
     <>
       <div className="flex flex-col gap-5">
+        {pageError && (
+          <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.25)', color: '#ef4444', fontSize: 13 }}>
+            {pageError}
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Safras</h1>

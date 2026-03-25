@@ -812,7 +812,7 @@ export default function ManejoPage() {
         return active?.id ?? list[0]?.id ?? ''
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao carregar safras do manejo')
+      setError(err instanceof Error ? err.message : 'Falha ao carregar safras. Verifique sua conexão e tente novamente.')
       setSeasons([])
       setSelectedSeasonId('')
     } finally {
@@ -833,7 +833,7 @@ export default function ManejoPage() {
       const data = await listDailyManagementBySeason(seasonId)
       setHistory(data.slice(0, 30))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao carregar histórico do manejo')
+      setError(err instanceof Error ? err.message : 'Falha ao carregar histórico. Verifique se a safra está corretamente configurada.')
       setHistory([])
     }
   }, [])
@@ -890,7 +890,7 @@ export default function ManejoPage() {
       } catch (err) {
         if (!cancelled) {
           setExternalData(null)
-          setError(err instanceof Error ? err.message : 'Falha ao carregar clima do manejo')
+          setError(err instanceof Error ? err.message : 'Falha ao buscar dados climáticos. A estação pode estar indisponível.')
         }
       } finally {
         if (!cancelled) {
@@ -1030,7 +1030,7 @@ export default function ManejoPage() {
       setSaveMsg('Registro salvo com sucesso!')
       await loadHistory(selectedSeason.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao salvar manejo')
+      setError(err instanceof Error ? err.message : 'Falha ao salvar registro. Verifique os dados e tente novamente.')
     } finally {
       setSaving(false)
     }
