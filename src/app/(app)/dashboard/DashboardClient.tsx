@@ -4,13 +4,12 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import type { PivotDiagnostic } from '@/services/pivot-diagnostics'
 import type { Pivot, Season, DailyManagement } from '@/types/database'
-import { KpiCards } from './KpiCards'
-import { WeatherBlock } from './WeatherBlock'
-import { SoilGauges } from './SoilGauges'
-import { SmartAlerts } from './SmartAlerts'
-import { HistoryChart } from './HistoryChart'
-import { PivotTable } from './PivotTable'
+import { DecisionCard } from './DecisionCard'
+import { CriticalPivots } from './CriticalPivots'
 import { ProjectionBlock } from './ProjectionBlock'
+import { CompactKpis } from './CompactKpis'
+import { SoilGaugesBlock } from './SoilGaugesBlock'
+import { HistoryBlock } from './HistoryBlock'
 import type { ProjectionDay } from '@/lib/water-balance'
 import {
   CircleDot, Building2, Plus, ArrowRight,
@@ -459,38 +458,15 @@ export function DashboardClient({
   const activePivots = summary.activePivots
 
   return (
-    <div className="flex flex-col gap-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      {/* Título */}
-      <div className="flex items-center justify-between gap-4">
+      {/* ① Título simples */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#e2e8f0', letterSpacing: '-0.01em' }}>Dashboard</h1>
-          <p className="text-sm mt-1" style={{ color: '#8899aa' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.01em', margin: 0 }}>Dashboard</h1>
+          <p style={{ fontSize: 13, color: '#8899aa', marginTop: 4 }}>
             {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
           </p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-            {[
-              { label: 'Automação pronta', value: summary.automationReady, color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)', border: 'rgb(34 197 94 / 0.25)' },
-              { label: 'Com restrições', value: summary.automationRestricted, color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)', border: 'rgb(245 158 11 / 0.25)' },
-              { label: 'Sem automação', value: summary.automationUnavailable, color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)', border: 'rgb(239 68 68 / 0.25)' },
-              { label: 'Manejo hoje', value: summary.handledToday, color: '#06b6d4', bg: 'rgb(6 182 212 / 0.12)', border: 'rgb(6 182 212 / 0.25)' },
-            ].map((item) => (
-              <span key={item.label} style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 10px',
-                borderRadius: 999,
-                background: item.bg,
-                border: `1px solid ${item.border}`,
-                color: item.color,
-                fontSize: 11,
-                fontWeight: 700,
-              }}>
-                {item.label} · {item.value}
-              </span>
-            ))}
-          </div>
         </div>
         <Link href="/manejo" style={{
           display: 'flex', alignItems: 'center', gap: 8,
@@ -503,55 +479,69 @@ export function DashboardClient({
         </Link>
       </div>
 
-      {/* KPI Cards */}
-      <KpiCards summary={summary} lastManagementBySeason={lastManagementBySeason} />
-
-      {/* Mapa */}
-      <PivotMap pivots={pivots.map(p => ({
-        id:             p.id,
-        name:           p.name,
-        farm_name:      p.farms?.name ?? '',
-        latitude:       p.latitude,
-        longitude:      p.longitude,
-        status:         resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id), p.alert_threshold_percent ?? 70),
-        lastManagement: lastManagementByPivot[p.id] ?? null,
-      }))} />
-
-      {/* Clima + Gauges + Alertas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <WeatherBlock lastManagementBySeason={lastManagementBySeason} />
-        <SoilGauges
-          pivots={pivots}
-          lastManagementByPivot={lastManagementByPivot}
-          activePivotIds={activePivotIds}
-        />
-        <SmartAlerts
-          pivots={pivots}
-          lastManagementByPivot={lastManagementByPivot}
-          diagnosticsByPivot={diagnosticsByPivot}
-          activePivotIds={activePivotIds}
-        />
-      </div>
-
-      {/* Histórico + Projeção (grid 60/40) */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
-        <div className="xl:col-span-3">
-          <HistoryChart historyBySeason={historyBySeason} activeSeasons={activeSeasons} />
-        </div>
-        <div className="xl:col-span-2">
-          <ProjectionBlock projectionBySeason={projectionBySeason} activeSeasons={activeSeasons} />
-        </div>
-      </div>
-
-      {/* Tabela de Pivôs — full width */}
-      <PivotTable
+      {/* ② DecisionCard — resposta em 1 segundo */}
+      <DecisionCard
         pivots={pivots}
+        activeSeasons={activeSeasons}
         lastManagementByPivot={lastManagementByPivot}
-        activePivotIds={activePivotIds}
-        projectionByPivot={projectionByPivot}
+        summary={summary}
       />
 
-      {/* Cards por fazenda */}
+      {/* ③ Mapa */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <span style={{
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#556677',
+          }}>
+            Mapa dos Pivôs
+          </span>
+        </div>
+        <PivotMap pivots={pivots.map(p => ({
+          id:             p.id,
+          name:           p.name,
+          farm_name:      p.farms?.name ?? '',
+          latitude:       p.latitude,
+          longitude:      p.longitude,
+          status:         resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id), p.alert_threshold_percent ?? 70),
+          lastManagement: lastManagementByPivot[p.id] ?? null,
+        }))} />
+      </div>
+
+      {/* ④ Pivôs Críticos + Projeção (50/50) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <CriticalPivots
+          pivots={pivots}
+          lastManagementByPivot={lastManagementByPivot}
+          activePivotIds={activePivotIds}
+          diagnosticsByPivot={diagnosticsByPivot}
+        />
+        <ProjectionBlock
+          projectionBySeason={projectionBySeason}
+          activeSeasons={activeSeasons}
+        />
+      </div>
+
+      {/* ⑤ KPIs compactos (5 colunas) */}
+      <CompactKpis
+        summary={summary}
+        lastManagementBySeason={lastManagementBySeason}
+      />
+
+      {/* ⑥ Gauges + Histórico (1fr / 2fr) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
+        <SoilGaugesBlock
+          pivots={pivots}
+          lastManagementByPivot={lastManagementByPivot}
+          activePivotIds={activePivotIds}
+        />
+        <HistoryBlock
+          historyBySeason={historyBySeason}
+          activeSeasons={activeSeasons}
+        />
+      </div>
+
+      {/* ⑦ Cards por fazenda */}
       {Object.entries(grouped).map(([farmName, farmPivots]) => (
         <div key={farmName}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -561,7 +551,7 @@ export function DashboardClient({
             </span>
             <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
             {farmPivots.map(pivot => (
               <PivotCard
                 key={pivot.id}
@@ -576,6 +566,7 @@ export function DashboardClient({
         </div>
       ))}
 
+      {/* ⑧ Resumo operacional */}
       {(summary.pivotsWithAlerts > 0 || summary.pivotsWithClimateFallback > 0) && (
         <div style={{
           background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
@@ -605,7 +596,7 @@ export function DashboardClient({
         </div>
       )}
 
-      {/* Aviso sem dados */}
+      {/* ⑨ Aviso sem dados */}
       {Object.keys(lastManagementBySeason).length === 0 && activePivots > 0 && (
         <div style={{
           background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
