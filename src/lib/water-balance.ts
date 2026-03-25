@@ -57,9 +57,10 @@ function slopeVaporPressure(T: number): number {
 /** Retorna o número do dia no ano (1–365/366) a partir de YYYY-MM-DD */
 function getDayOfYear(dateStr: string): number {
   const d = new Date(dateStr + 'T12:00:00')
+  if (isNaN(d.getTime())) return 1 // fallback seguro para data inválida
   const start = new Date(d.getFullYear(), 0, 0)
   const diff = d.getTime() - start.getTime()
-  return Math.floor(diff / 86400000)
+  return Math.max(1, Math.floor(diff / 86400000))
 }
 
 /**
@@ -223,9 +224,10 @@ export function calcCTA(
   return ((fieldCapacity - wiltingPoint) / 10) * bulkDensity * rootDepthCm
 }
 
-/** CAD = CTA × f */
+/** CAD = CTA × f (f=0 → fallback to 0.5 to avoid zero-CAD edge case) */
 export function calcCAD(cta: number, fFactor: number): number {
-  return cta * fFactor
+  const f = fFactor > 0 ? fFactor : 0.5
+  return cta * f
 }
 
 // ─── Etapa 4: ETc ────────────────────────────────────────────
