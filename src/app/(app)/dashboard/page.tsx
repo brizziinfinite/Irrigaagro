@@ -37,19 +37,33 @@ export default async function DashboardPage() {
     )
   }
 
-  const dashboard = await getDashboardDataForUser(user.id, supabase, preferredCompanyId)
+  try {
+    const dashboard = await getDashboardDataForUser(user.id, supabase, preferredCompanyId)
 
-  return (
-    <DashboardClient
-      pivots={dashboard.pivots}
-      activeSeasons={dashboard.activeSeasons}
-      hasPivots={dashboard.hasPivots}
-      lastManagementBySeason={dashboard.lastManagementBySeason}
-      historyBySeason={dashboard.historyBySeason}
-      projectionBySeason={dashboard.projectionBySeason}
-      diagnosticsByPivot={dashboard.diagnosticsByPivot}
-      energyBills={dashboard.energyBills}
-      summary={dashboard.summary}
-    />
-  )
+    return (
+      <DashboardClient
+        pivots={dashboard.pivots}
+        activeSeasons={dashboard.activeSeasons}
+        hasPivots={dashboard.hasPivots}
+        lastManagementBySeason={dashboard.lastManagementBySeason}
+        historyBySeason={dashboard.historyBySeason}
+        projectionBySeason={dashboard.projectionBySeason}
+        diagnosticsByPivot={dashboard.diagnosticsByPivot}
+        energyBills={dashboard.energyBills}
+        summary={dashboard.summary}
+      />
+    )
+  } catch (error) {
+    console.error('[dashboard] Failed to load data:', error)
+    return (
+      <div style={{ padding: 40, textAlign: 'center' }}>
+        <p style={{ color: '#ef4444', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+          Erro ao carregar o dashboard
+        </p>
+        <p style={{ color: '#8899aa', fontSize: 13 }}>
+          {error instanceof Error ? error.message : 'Tente recarregar a página.'}
+        </p>
+      </div>
+    )
+  }
 }

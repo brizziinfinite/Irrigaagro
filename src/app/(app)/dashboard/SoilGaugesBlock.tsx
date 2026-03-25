@@ -105,19 +105,27 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
             })}
           </div>
 
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {[
-              { color: '#22c55e', label: '>60%' },
-              { color: '#f59e0b', label: '40-60%' },
-              { color: '#ef4444', label: '<40%' },
-            ].map(({ color, label }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
-                <span style={{ fontSize: 10, color: '#556677' }}>{label}</span>
+          {/* Legend — based on pivot thresholds */}
+          {(() => {
+            const thresholds = activePivots.map(p => p.alert_threshold_percent ?? 70)
+            const avgThreshold = thresholds.length > 0
+              ? Math.round(thresholds.reduce((a, b) => a + b, 0) / thresholds.length)
+              : 70
+            return (
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {[
+                  { color: '#22c55e', label: `>${avgThreshold}%` },
+                  { color: '#f59e0b', label: `${avgThreshold - 10}–${avgThreshold}%` },
+                  { color: '#ef4444', label: `<${avgThreshold - 10}%` },
+                ].map(({ color, label }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
+                    <span style={{ fontSize: 10, color: '#556677' }}>{label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )
+          })()}
         </>
       )}
     </div>
