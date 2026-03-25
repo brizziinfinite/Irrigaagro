@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import type { Season, Crop, Pivot, DailyManagement, EnergyBill } from '@/types/database'
 import { getStageInfoForDas, calcCTA, calcCAD } from '@/lib/water-balance'
@@ -850,6 +851,7 @@ function EnergyTable({ bills }: { bills: EnergyBill[] }) {
 // ─── Página principal ─────────────────────────────────────────
 
 export default function RelatoriosPage() {
+  const { company } = useAuth()
   const [seasons, setSeasons] = useState<SeasonFull[]>([])
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('')
   const [records, setRecords] = useState<DailyManagement[]>([])
@@ -868,28 +870,55 @@ export default function RelatoriosPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadSeasons = useCallback(async () => {
+    if (!company) return
     setLoading(true)
     const supabase = createClient()
+
+    // Buscar farms da empresa para filtrar seasons
+    const { data: farms } = await supabase
+      .from('farms')
+      .select('id')
+      .eq('company_id', company.id)
+
+    const farmIds = (farms ?? []).map((f: { id: string }) => f.id)
+    if (farmIds.length === 0) {
+      setSeasons([])
+      setLoading(false)
+      return
+    }
+
     const { data } = await supabase
       .from('seasons')
       .select('*, crops(*), pivots(*), farms(id, name)')
+      .in('farm_id', farmIds)
       .order('created_at', { ascending: false })
 
     const list = (data as SeasonFull[]) ?? []
     setSeasons(list)
     if (list.length > 0) setSelectedSeasonId(list[0].id)
     setLoading(false)
-  }, [])
+  }, [company])
 
   useEffect(() => { loadSeasons() }, [loadSeasons])
 
-  // Carregar pivôs para seletor de energia
+  // Carregar pivôs para seletor de energia (filtrado por empresa)
   useEffect(() => {
+    if (!company) return
     const supabase = createClient()
     supabase
-      .from('pivots')
-      .select('id, name, farms(name)')
-      .then(({ data }) => {
+      .from('farms')
+      .select('id')
+      .eq('company_id', company.id)
+      .then(({ data: farms }) => {
+        const farmIds = (farms ?? []).map((f: { id: string }) => f.id)
+        if (farmIds.length === 0) { setPivots([]); return }
+        return supabase
+          .from('pivots')
+          .select('id, name, farms(name)')
+          .in('farm_id', farmIds)
+      })
+      .then((res) => {
+        const data = res?.data
         if (!data) return
         type PivotRow = { id: string; name: string; farms: { name: string }[] | { name: string } | null }
         const list = (data as unknown as PivotRow[]).map(p => ({
@@ -900,7 +929,7 @@ export default function RelatoriosPage() {
         setPivots(list)
         if (list.length > 0) setSelectedPivotId(list[0].id)
       })
-  }, [])
+  }, [company])
 
   const loadEnergyBills = useCallback(async (pivotId: string) => {
     if (!pivotId) return
