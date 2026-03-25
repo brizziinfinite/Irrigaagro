@@ -26,7 +26,7 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
     for (const m of records) {
       const existing = dayMap.get(m.date) ?? { irrigation: 0, rainfall: 0, moisture: 0, count: 0 }
       dayMap.set(m.date, {
-        irrigation: existing.irrigation + (m.actual_depth_mm ?? m.recommended_depth_mm ?? 0),
+        irrigation: existing.irrigation + (m.actual_depth_mm ?? 0),
         rainfall: existing.rainfall + (m.rainfall_mm ?? 0),
         moisture: existing.moisture + (m.field_capacity_percent ?? 0),
         count: existing.count + (m.field_capacity_percent !== null ? 1 : 0),

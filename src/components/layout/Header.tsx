@@ -2,7 +2,8 @@
 
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
-import { Bell, ChevronDown, Menu, Droplets } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { Bell, Menu } from 'lucide-react'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -24,6 +25,7 @@ interface HeaderProps {
 
 export function Header({ user: _, onMenuClick }: HeaderProps) {
   const pathname = usePathname()
+  const { company } = useAuth()
   const pageTitle = PAGE_TITLES[pathname] ?? 'IrrigaAgro'
 
   return (
@@ -56,21 +58,19 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Seletor de safra */}
-        <button
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors"
-          style={{
-            border: '1px solid var(--color-surface-border)',
-            background: 'var(--color-surface-elevated)',
-            color: 'var(--color-text-secondary)',
-          }}
-          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-card2)'}
-          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)'}
-        >
-          <Droplets size={13} style={{ color: '#0093D0' }} />
-          <span className="font-medium whitespace-nowrap">Safra 2025/26 · Soja</span>
-          <ChevronDown size={12} style={{ color: 'var(--color-text-faint)' }} />
-        </button>
+        {/* Empresa ativa */}
+        {company && (
+          <span
+            className="px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap"
+            style={{
+              border: '1px solid var(--color-surface-border)',
+              background: 'var(--color-surface-elevated)',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            {company.name}
+          </span>
+        )}
 
         {/* Notificações */}
         <button

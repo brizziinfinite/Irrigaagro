@@ -19,7 +19,8 @@ export interface PivotWeatherConfig {
   spreadsheet_id?: string
   gid?: string
   station_id?: string
-  [key: string]: Json | undefined
+  api_key?: string
+  refresh_interval_min?: number
 }
 
 export interface Company {

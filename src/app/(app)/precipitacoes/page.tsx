@@ -485,15 +485,21 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
     setLoading(false)
   }
 
+  const abortRef = useRef<AbortController | null>(null)
+
   async function handleImport() {
     const sid = extractSpreadsheetId(url)
     if (!sid) return
     setImporting(true)
     setProgress(0)
     setError('')
+
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       const csvUrl = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=${gid}`
-      const res = await fetch(csvUrl)
+      const res = await fetch(csvUrl, { signal: controller.signal })
       if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}). Certifique-se de que está pública: Arquivo → Compartilhar → Qualquer pessoa com o link → Leitor.`)
       const text = await res.text()
       const rows = text.trim().split('\n').map(r =>
@@ -502,29 +508,46 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
       const dataRows = rows.slice(1).filter(r => r.length > Math.max(Number(dateCol), Number(mmCol)))
 
       const parsed: { pivot_id: string; date: string; rainfall_mm: number; source: 'import' }[] = []
+      let skippedRows = 0
       for (const row of dataRows) {
         const dateStr = parseFlexDate(row[Number(dateCol)])
         const mm = parseFloat(row[Number(mmCol)])
-        if (!dateStr || isNaN(mm) || mm < 0) continue
+        if (!dateStr || isNaN(mm) || mm < 0) {
+          skippedRows++
+          continue
+        }
         parsed.push({ pivot_id: pivotId, date: dateStr, rainfall_mm: mm, source: 'import' })
       }
 
       if (parsed.length === 0) {
-        throw new Error('Nenhum registro valido foi encontrado para importacao.')
+        throw new Error(`Nenhum registro válido encontrado. ${skippedRows} linha(s) com data ou valor inválido.`)
       }
 
       const chunkSize = 50
       for (let i = 0; i < parsed.length; i += chunkSize) {
+        if (controller.signal.aborted) throw new Error('Importação cancelada.')
         const chunk = parsed.slice(i, i + chunkSize)
         await upsertRainfallRecords(chunk)
         setProgress(Math.round(((i + chunk.length) / parsed.length) * 100))
       }
+
+      if (skippedRows > 0) {
+        setError(`Importados ${parsed.length} registros. ${skippedRows} linha(s) ignorada(s) por data/valor inválido.`)
+      }
+
       await onImported()
     } catch (e) {
+      if (controller.signal.aborted) return
       setError(e instanceof Error ? e.message : 'Erro durante importação.')
     } finally {
+      abortRef.current = null
       setImporting(false)
     }
+  }
+
+  function handleCancel() {
+    abortRef.current?.abort()
+    setImporting(false)
   }
 
   return (
@@ -698,6 +721,19 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
             >
               {importing ? `Importando… ${progress}%` : `Importar registros`}
             </button>
+            {importing && (
+              <button
+                type="button"
+                onClick={handleCancel}
+                style={{
+                  padding: '10px 0', borderRadius: 10, cursor: 'pointer',
+                  background: 'transparent', border: '1px solid rgb(239 68 68 / 0.3)',
+                  color: '#ef4444', fontWeight: 600, fontSize: 13,
+                }}
+              >
+                Cancelar
+              </button>
+            )}
           </>
         )}
 

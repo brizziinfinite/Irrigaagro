@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -8,13 +7,14 @@ import {
   Sprout,
   Wheat,
   FileBarChart,
-  Settings,
-  Menu,
-  X,
+  CloudRain,
+  Radio,
+  Stethoscope,
   LogOut,
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import IrrigaAgroLogo from '@/components/branding/IrrigaAgroLogo';
 
 // SVG icon de pivô central — mockup aprovado
 function PivotIcon({ size = 20 }: { size?: number }) {
@@ -33,22 +33,23 @@ function PivotIcon({ size = 20 }: { size?: number }) {
 }
 
 const OPERACIONAL = [
-  { icon: LayoutDashboard, label: 'Dashboard',    path: '/dashboard'   },
-  { icon: Droplets,        label: 'Manejo Diário', path: '/manejo'      },
-  { icon: MapPin,          label: 'Fazendas',      path: '/fazendas'    },
-  { icon: PivotIcon,       label: 'Pivôs',         path: '/pivos'       },
-  { icon: Sprout,          label: 'Safras',        path: '/safras'      },
-  { icon: FileBarChart,    label: 'Relatórios',    path: '/relatorios'  },
+  { icon: LayoutDashboard, label: 'Dashboard',       path: '/dashboard'        },
+  { icon: Droplets,        label: 'Manejo Diário',   path: '/manejo'           },
+  { icon: CloudRain,       label: 'Precipitações',   path: '/precipitacoes'    },
+  { icon: MapPin,          label: 'Fazendas',        path: '/fazendas'         },
+  { icon: PivotIcon,       label: 'Pivôs',           path: '/pivos'            },
+  { icon: Sprout,          label: 'Safras',          path: '/safras'           },
+  { icon: FileBarChart,    label: 'Relatórios',      path: '/relatorios'       },
 ];
 
 const CONFIGURACAO = [
-  { icon: Wheat,    label: 'Culturas',       path: '/culturas'       },
-  { icon: Settings, label: 'Configurações',  path: '/configuracoes'  },
+  { icon: Wheat,        label: 'Culturas',         path: '/culturas'          },
+  { icon: Radio,        label: 'Estações',         path: '/estacoes'          },
+  { icon: Stethoscope,  label: 'Diagnóstico',      path: '/diagnostico-pivo'  },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
-  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -59,7 +60,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
   };
 
   const handleNavClick = () => {
-    setIsOpen(false);
+    _props?.onNavigate?.();
   };
 
   function NavItem({ icon: Icon, label, path }: { icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> | typeof PivotIcon; label: string; path: string }) {
@@ -101,34 +102,9 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-40">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          style={{
-            padding: 8, borderRadius: 8,
-            background: '#0d1520',
-            border: '1px solid rgba(255,255,255,0.06)',
-            color: '#e2e8f0',
-            cursor: 'pointer',
-          }}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-60 lg:hidden z-30"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-[260px] z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className="h-screen w-[260px] flex flex-col"
         style={{
           background: '#0d1520',
           borderRight: '1px solid rgba(255,255,255,0.06)',
@@ -140,22 +116,46 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: 14,
         }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-            background: 'rgba(0,147,208,0.15)',
-            border: '1px solid rgba(0,147,208,0.28)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <PivotIcon size={22} />
+          <div style={{ minWidth: 0 }}>
+            <IrrigaAgroLogo size={42} className="text-[21px]" />
+            <p style={{
+              fontSize: 9,
+              color: '#556677',
+              margin: 0,
+              marginTop: 6,
+              textTransform: 'uppercase',
+              letterSpacing: '0.14em',
+            }}>
+              Irrigação de Precisão
+            </p>
           </div>
-          <div>
-            <h1 style={{ fontSize: 22, lineHeight: 1.1, margin: 0, letterSpacing: '-0.01em' }}>
-              <span style={{ fontWeight: 800, color: '#0093D0' }}>Irriga</span>
-              <span style={{ fontWeight: 400, color: '#22c55e' }}>Agro</span>
-            </h1>
-            <p style={{ fontSize: 9, color: '#556677', margin: 0, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Irrigação de Precisão</p>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '7px 10px',
+            borderRadius: 999,
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            color: '#a5b4c3',
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+          }}>
+            <span style={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              background: '#22c55e',
+              boxShadow: '0 0 0 4px rgba(34,197,94,0.12)',
+            }} />
+            SaaS
           </div>
         </div>
 
@@ -252,9 +252,6 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           </button>
         </div>
       </aside>
-
-      {/* Main Content Margin */}
-      <div className="hidden lg:block w-[260px]" />
     </>
   );
 }

@@ -23,11 +23,11 @@ export function CompactKpis({ summary, lastManagementBySeason }: CompactKpisProp
 
   const aguaHoje = managements.reduce((sum, m) => sum + (m.recommended_depth_mm ?? 0), 0)
 
-  // Economia: % water saved vs potential (simplified — show ratio of actual vs recommended)
+  // Economia: % water saved vs potential — negative means over-irrigation
   const totalRecommended = managements.reduce((s, m) => s + (m.recommended_depth_mm ?? 0), 0)
   const totalActual = managements.reduce((s, m) => s + (m.actual_depth_mm ?? 0), 0)
   const economiaPercent = totalRecommended > 0
-    ? Math.max(0, Math.round(((totalRecommended - totalActual) / totalRecommended) * 100))
+    ? Math.round(((totalRecommended - totalActual) / totalRecommended) * 100)
     : null
 
   // Horas operacionais (sum durations from recommended speeds)
@@ -38,7 +38,7 @@ export function CompactKpis({ summary, lastManagementBySeason }: CompactKpisProp
 
   const kpis = [
     { label: 'Água Hoje', value: aguaHoje > 0 ? aguaHoje.toFixed(1) : '0', unit: 'mm', emoji: '💧', color: '#22d3ee' },
-    { label: 'Economia', value: economiaPercent !== null ? `${economiaPercent}` : '—', unit: '%', emoji: '📉', color: '#22c55e' },
+    { label: 'Economia', value: economiaPercent !== null ? `${economiaPercent}` : '—', unit: '%', emoji: '📉', color: economiaPercent !== null && economiaPercent < 0 ? '#ef4444' : '#22c55e' },
     { label: 'Horas Op.', value: String(summary.handledToday), unit: 'reg', emoji: '⏱', color: '#f59e0b' },
     { label: 'Alertas', value: String(summary.pivotsWithAlerts), unit: '', emoji: '⚠️', color: '#ef4444' },
   ]

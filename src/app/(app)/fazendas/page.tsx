@@ -146,6 +146,7 @@ export default function FazendasPage() {
   const { company, loading: authLoading } = useAuth()
   const [farms, setFarms] = useState<Farm[]>([])
   const [loading, setLoading] = useState(true)
+  const [pageError, setPageError] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingFarm, setEditingFarm] = useState<Farm | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -158,9 +159,13 @@ export default function FazendasPage() {
     }
 
     setLoading(true)
+    setPageError('')
     try {
       const data = await listFarmsByCompany(company.id)
       setFarms(data)
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : 'Falha ao carregar fazendas')
+      setFarms([])
     } finally {
       setLoading(false)
     }
@@ -174,9 +179,12 @@ export default function FazendasPage() {
   async function handleDelete(id: string) {
     if (!confirm('Tem certeza que deseja excluir esta fazenda? Todos os pivôs e safras vinculados serão removidos.')) return
     setDeletingId(id)
+    setPageError('')
     try {
       await deleteFarm(id)
       await loadFarms()
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : 'Falha ao excluir fazenda')
     } finally {
       setDeletingId(null)
     }
@@ -195,6 +203,13 @@ export default function FazendasPage() {
   return (
     <>
       <div className="flex flex-col gap-5">
+        {/* Erro de página */}
+        {pageError && (
+          <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.25)', color: '#ef4444', fontSize: 13 }}>
+            {pageError}
+          </div>
+        )}
+
         {/* Cabeçalho */}
         <div className="flex items-center justify-between">
           <div>
