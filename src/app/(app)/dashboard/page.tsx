@@ -19,6 +19,7 @@ export default async function DashboardPage() {
         historyBySeason={{}}
         projectionBySeason={{}}
         diagnosticsByPivot={{}}
+        energyBills={[]}
         summary={{
           totalPivots: 0,
           activePivots: 0,
@@ -44,6 +45,7 @@ export default async function DashboardPage() {
       historyBySeason={dashboard.historyBySeason}
       projectionBySeason={dashboard.projectionBySeason}
       diagnosticsByPivot={dashboard.diagnosticsByPivot}
+      energyBills={dashboard.energyBills}
       summary={dashboard.summary}
     />
   )

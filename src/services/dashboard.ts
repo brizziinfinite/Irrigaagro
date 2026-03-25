@@ -4,8 +4,9 @@ import { listFarmsByCompany } from '@/services/farms'
 import { getPivotDiagnostic, type PivotDiagnostic } from '@/services/pivot-diagnostics'
 import { listManagementSeasonContexts, listDailyManagementBySeason } from '@/services/management'
 import { listPivotsByFarmIds } from '@/services/pivots'
+import { listEnergyBillsByPivotIds } from '@/services/energy-bills'
 import type { TypedSupabaseClient } from '@/services/base'
-import type { DailyManagement, Pivot, Season } from '@/types/database'
+import type { DailyManagement, EnergyBill, Pivot, Season } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { calcDAS } from '@/lib/calculations/management-balance'
 
@@ -22,6 +23,7 @@ export interface DashboardData {
   historyBySeason: Record<string, DailyManagement[]>
   projectionBySeason: Record<string, ProjectionDay[]>
   diagnosticsByPivot: Record<string, PivotDiagnostic>
+  energyBills: EnergyBill[]
   summary: {
     totalPivots: number
     activePivots: number
@@ -100,6 +102,11 @@ export async function getDashboardDataForUser(
     })
   }
 
+  const energyBills = await listEnergyBillsByPivotIds(
+    pivots.map(p => p.id),
+    client
+  )
+
   pivots.sort((a, b) => a.name.localeCompare(b.name))
   const diagnostics = await Promise.all(
     pivots.map(async (pivot) => [pivot.id, await getPivotDiagnostic(company.id, pivot.id, undefined, client)] as const)
@@ -126,6 +133,7 @@ export async function getDashboardDataForUser(
     historyBySeason,
     projectionBySeason,
     diagnosticsByPivot,
+    energyBills,
     summary,
   }
 }

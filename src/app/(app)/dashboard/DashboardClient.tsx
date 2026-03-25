@@ -3,8 +3,10 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import type { PivotDiagnostic } from '@/services/pivot-diagnostics'
-import type { Pivot, Season, DailyManagement } from '@/types/database'
+import { useState } from 'react'
+import type { Pivot, Season, DailyManagement, EnergyBill } from '@/types/database'
 import { DecisionCard } from './DecisionCard'
+import { EnergyBlock } from './EnergyBlock'
 import { CriticalPivots } from './CriticalPivots'
 import { ProjectionBlock } from './ProjectionBlock'
 import { CompactKpis } from './CompactKpis'
@@ -412,6 +414,7 @@ interface Props {
   historyBySeason: Record<string, DailyManagement[]>
   projectionBySeason: Record<string, ProjectionDay[]>
   diagnosticsByPivot: Record<string, PivotDiagnostic>
+  energyBills: EnergyBill[]
   summary: {
     totalPivots: number
     activePivots: number
@@ -432,8 +435,11 @@ export function DashboardClient({
   historyBySeason,
   projectionBySeason,
   diagnosticsByPivot,
+  energyBills,
   summary,
 }: Props) {
+  const [expandedPivots, setExpandedPivots] = useState<Set<string>>(new Set())
+
   if (!hasPivots) return <Onboarding />
 
   const activePivotIds = new Set(activeSeasons.map(s => s.pivot_id).filter((id): id is string => id !== null))
@@ -541,30 +547,110 @@ export function DashboardClient({
         />
       </div>
 
-      {/* ⑦ Cards por fazenda */}
-      {Object.entries(grouped).map(([farmName, farmPivots]) => (
-        <div key={farmName}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <Building2 size={13} style={{ color: '#556677' }} />
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>
-              {farmName}
-            </span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
-            {farmPivots.map(pivot => (
-              <PivotCard
-                key={pivot.id}
-                pivot={pivot}
-                hasActiveSeason={activePivotIds.has(pivot.id)}
-                lastManagement={lastManagementByPivot[pivot.id] ?? null}
-                projection={projectionByPivot[pivot.id] ?? []}
-                diagnostic={diagnosticsByPivot[pivot.id] ?? null}
-              />
-            ))}
-          </div>
+      {/* ⑦ Energia & Custos */}
+      <EnergyBlock energyBills={energyBills} />
+
+      {/* ⑧ Detalhes dos Pivôs — colapsáveis */}
+      <div style={{
+        background: '#0f1923',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 14,
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '14px 20px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <span style={{
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#556677',
+          }}>
+            Detalhes dos Pivôs
+          </span>
+          <span style={{ fontSize: 10, color: '#556677' }}>Clique para expandir</span>
         </div>
-      ))}
+
+        {/* Pivot rows */}
+        {Object.entries(grouped).map(([farmName, farmPivots]) =>
+          farmPivots.map(pivot => {
+            const isOpen = expandedPivots.has(pivot.id)
+            const status = resolveStatus(lastManagementByPivot[pivot.id] ?? null, activePivotIds.has(pivot.id), pivot.alert_threshold_percent ?? 70)
+            const cfg = STATUS_CONFIG[status]
+            const pct = lastManagementByPivot[pivot.id]?.field_capacity_percent ?? null
+
+            return (
+              <div key={pivot.id}>
+                {/* Linha compacta */}
+                <div
+                  onClick={() => {
+                    const next = new Set(expandedPivots)
+                    isOpen ? next.delete(pivot.id) : next.add(pivot.id)
+                    setExpandedPivots(next)
+                  }}
+                  style={{
+                    padding: '14px 20px',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    background: isOpen ? '#141e2b' : 'transparent',
+                    transition: 'background 0.15s',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{pivot.name}</span>
+                    <span style={{ fontSize: 11, color: '#556677' }}>
+                      {farmName}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <span style={{
+                      padding: '4px 10px', borderRadius: 8,
+                      fontSize: 10, fontWeight: 700,
+                      background: cfg.bg, color: cfg.color,
+                      border: `1px solid ${cfg.border}`,
+                    }}>
+                      {cfg.label}
+                    </span>
+                    <span style={{
+                      fontSize: 16, fontWeight: 700,
+                      fontFamily: 'var(--font-mono)',
+                      color: cfg.color,
+                      minWidth: 42, textAlign: 'right',
+                    }}>
+                      {pct !== null ? `${Math.round(pct)}%` : '—'}
+                    </span>
+                    <span style={{
+                      fontSize: 12, color: '#556677',
+                      transform: isOpen ? 'rotate(180deg)' : 'rotate(0)',
+                      transition: 'transform 0.2s',
+                    }}>▼</span>
+                  </div>
+                </div>
+
+                {/* PivotCard expandido */}
+                {isOpen && (
+                  <div style={{ padding: '8px 12px 12px', background: '#141e2b' }}>
+                    <PivotCard
+                      pivot={pivot}
+                      hasActiveSeason={activePivotIds.has(pivot.id)}
+                      lastManagement={lastManagementByPivot[pivot.id] ?? null}
+                      projection={projectionByPivot[pivot.id] ?? []}
+                      diagnostic={diagnosticsByPivot[pivot.id] ?? null}
+                    />
+                  </div>
+                )}
+              </div>
+            )
+          })
+        )}
+      </div>
 
       {/* ⑧ Resumo operacional */}
       {(summary.pivotsWithAlerts > 0 || summary.pivotsWithClimateFallback > 0) && (
