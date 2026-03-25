@@ -102,13 +102,23 @@ export async function listManagementSeasonContexts(
 }
 
 export async function listActiveManagementSeasonContexts(
-  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
+  companyId?: string | null
 ): Promise<ManagementSeasonContext[]> {
-  const { data, error } = await seasonsTable(client)
-    .select('*, farms(*), pivots(*), crops(*)')
+  const selectStr = companyId
+    ? '*, farms!inner(*), pivots(*), crops(*)'
+    : '*, farms(*), pivots(*), crops(*)'
+
+  let query = seasonsTable(client)
+    .select(selectStr)
     .eq('is_active', true)
     .not('planting_date', 'is', null)
-    .order('created_at', { ascending: false })
+
+  if (companyId) {
+    query = query.eq('farms.company_id', companyId)
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false })
 
   if (error) {
     throw managementServiceError('listar safras ativas de', error)
