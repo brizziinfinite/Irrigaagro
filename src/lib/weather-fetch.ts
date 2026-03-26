@@ -20,6 +20,31 @@ export interface WeatherDay {
  * A planilha precisa estar pública ("qualquer pessoa com o link").
  * Usa a aba dataByDay (gid=1375608425 por padrão).
  */
+/** Parseia uma linha CSV respeitando campos entre aspas */
+function parseCsvLine(line: string): string[] {
+  const cols: string[] = []
+  let cur = ''
+  let inQuote = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') {
+      inQuote = !inQuote
+    } else if (ch === ',' && !inQuote) {
+      cols.push(cur.trim())
+      cur = ''
+    } else {
+      cur += ch
+    }
+  }
+  cols.push(cur.trim())
+  return cols
+}
+
+/** Converte string numérica com vírgula ou ponto decimal para number */
+function parseNum(s: string): number {
+  return parseFloat(s.replace(',', '.'))
+}
+
 export async function fetchFromGoogleSheets(
   spreadsheetId: string,
   dateISO: string,          // YYYY-MM-DD
@@ -37,7 +62,7 @@ export async function fetchFromGoogleSheets(
     if (lines.length < 2) return null
 
     // Mapeia cabeçalhos
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
+    const headers = parseCsvLine(lines[0])
     const idx = (col: string) => headers.indexOf(col)
 
     const iDate      = idx('localDate')
@@ -45,33 +70,49 @@ export async function fetchFromGoogleSheets(
     const iTempMin   = idx('tempMin')
     const iHumidity  = idx('humidity')
     const iWind      = idx('wind')
-    const iRadiation = idx('radiationWatts')
+    const iRadiationW  = idx('radiationWatts')
+    const iRadiationWC = idx('radiationWattsCount')
+    const iRadiation   = idx('radiation')
+    const iRadiationC  = idx('radiationCount')
     const iRain      = idx('rainAccum')
 
     // Encontra a linha da data
     for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''))
+      const cols = parseCsvLine(lines[i])
       const rowDate = cols[iDate]?.trim()
 
       if (!rowDate) continue
       // localDate pode ser "2025-04-14" ou "2025-04-14T00:00:00"
       if (!rowDate.startsWith(dateISO)) continue
 
-      const tempMax   = parseFloat(cols[iTempMax])
-      const tempMin   = parseFloat(cols[iTempMin])
-      const humidity  = parseFloat(cols[iHumidity])
-      const windSpeed = parseFloat(cols[iWind])
-      const radiation = parseFloat(cols[iRadiation])
-      const rainfall  = parseFloat(cols[iRain]) || 0
+      const tempMax   = parseNum(cols[iTempMax] ?? '')
+      const tempMin   = parseNum(cols[iTempMin] ?? '')
+      const humidity  = parseNum(cols[iHumidity] ?? '')
+      const windSpeed = parseNum(cols[iWind] ?? '')
+      const rainfall  = parseNum(cols[iRain] ?? '') || 0
 
       if (isNaN(tempMax) || isNaN(tempMin)) return null
+
+      // Radiação: prefere radiationWatts (W/m²); fallback: radiation/radiationCount×3.1
+      let solarRadiation = 200
+      const radW = iRadiationW >= 0 ? parseNum(cols[iRadiationW] ?? '') : NaN
+      if (!isNaN(radW) && radW > 0) {
+        solarRadiation = radW
+      } else if (iRadiation >= 0 && iRadiationC >= 0) {
+        const rad = parseNum(cols[iRadiation] ?? '')
+        const radC = parseNum(cols[iRadiationC] ?? '')
+        // radiation/count = media de 24h em W/m²; ×3.1 ≈ media das horas de sol (8h/dia)
+        if (!isNaN(rad) && !isNaN(radC) && radC > 0) {
+          solarRadiation = Math.min((rad / radC) * 3.1, 800)
+        }
+      }
 
       return {
         tempMax,
         tempMin,
         humidity:       isNaN(humidity)  ? 65  : humidity,
         windSpeed:      isNaN(windSpeed) ? 2   : windSpeed,
-        solarRadiation: isNaN(radiation) ? 200 : radiation,
+        solarRadiation,
         rainfall,
         source: 'google_sheets',
       }
