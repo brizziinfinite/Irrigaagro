@@ -28,9 +28,9 @@ function buildSpeedTable(flowM3h: number, time360h: number, lengthM: number): Sp
   const depth100 = calcDepth100(flowM3h, time360h, lengthM)
   const rows: SpeedTableRow[] = []
   for (let speed = 100; speed >= 5; speed -= 5) {
-    const duration_h = time360h * (100 / speed)
-    const depth_mm = depth100 * (100 / speed)
-    rows.push({ speed_percent: speed, depth_mm: Math.round(depth_mm * 10) / 10, duration_h: Math.round(duration_h * 10) / 10 })
+    const duration_hours = time360h * (100 / speed)
+    const water_depth_mm = depth100 * (100 / speed)
+    rows.push({ speed_percent: speed, water_depth_mm: Math.round(water_depth_mm * 10) / 10, duration_hours: Math.round(duration_hours * 10) / 10 })
   }
   return rows
 }
@@ -65,8 +65,8 @@ function SpeedTable({ rows }: { rows: SpeedTableRow[] }) {
             <span style={{ fontSize: 13, fontWeight: row.speed_percent === 100 ? 700 : 400, color: row.speed_percent === 100 ? '#0093D0' : '#8899aa' }}>
               {row.speed_percent}%
             </span>
-            <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.depth_mm}</span>
-            <span style={{ fontSize: 13, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{row.duration_h}</span>
+            <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.water_depth_mm}</span>
+            <span style={{ fontSize: 13, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{row.duration_hours}</span>
           </div>
         ))}
       </div>

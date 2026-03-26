@@ -126,8 +126,8 @@ export type PivotUpdate = Partial<PivotInsert>
 
 export interface SpeedTableRow {
   speed_percent: number
-  depth_mm: number
-  duration_h: number
+  water_depth_mm: number
+  duration_hours: number
 }
 
 export interface PivotSpeedEntry {
@@ -369,9 +369,6 @@ export interface DailyManagement {
   wind_speed_ms: number | null
   solar_radiation_wm2: number | null
   eto_mm: number | null
-  eto_source: string | null
-  eto_confidence: string | null
-  eto_notes: string | null
   etc_mm: number | null
   rainfall_mm: number | null
   kc: number | null
@@ -409,9 +406,6 @@ export interface DailyManagementInsert {
   wind_speed_ms?: number | null
   solar_radiation_wm2?: number | null
   eto_mm?: number | null
-  eto_source?: string | null
-  eto_confidence?: string | null
-  eto_notes?: string | null
   etc_mm?: number | null
   rainfall_mm?: number | null
   kc?: number | null

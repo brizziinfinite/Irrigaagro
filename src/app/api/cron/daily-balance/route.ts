@@ -199,7 +199,7 @@ export async function GET(req: NextRequest) {
             status: result.status,
             message: result.message,
             climate_source: null,
-            eto_source: existing.eto_source,
+            eto_source: null,
             rainfall_source: existing.rainfall_mm != null ? 'existing_record' : null,
             context: {
               date: today,
@@ -336,9 +336,6 @@ export async function GET(req: NextRequest) {
           wind_speed_ms: climateSnapshot.wind_speed_ms ?? null,
           solar_radiation_wm2: climateSnapshot.solar_radiation_wm2 ?? null,
           eto_mm: result.eto,
-          eto_source: result.etoSource,
-          eto_confidence: result.etoConfidence,
-          eto_notes: result.etoNotes,
           etc_mm: result.etc,
           rainfall_mm: externalData.rainfall?.rainfall_mm ?? climateSnapshot.rainfall_mm ?? 0,
           kc: result.kc,

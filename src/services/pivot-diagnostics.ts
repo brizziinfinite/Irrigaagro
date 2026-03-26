@@ -279,8 +279,8 @@ export async function getPivotDiagnostic(
     climateRoute,
     climateRouteLabel: getClimateRouteLabel(climateRoute),
     etoValue: lastManagement?.eto_mm ?? null,
-    etoSource: lastManagement?.eto_source ?? null,
-    etoConfidence: lastManagement?.eto_confidence ?? null,
+    etoSource: null,
+    etoConfidence: null,
     rainfallValue,
     rainfallDate: latestRainfall?.date ?? (climateSnapshot ? date : null),
     rainfallSource: latestRainfall
