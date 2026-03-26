@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/ingest-weather",
+      "schedule": "0 4 * * *"
+    },
+    {
       "path": "/api/cron/daily-balance",
       "schedule": "0 5 * * *"
     }
