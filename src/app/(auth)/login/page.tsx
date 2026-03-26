@@ -48,7 +48,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-center">
             <div className="w-full max-w-[520px]">
               <div className="mb-8 flex justify-center lg:justify-start">
-                <IrrigaAgroLogo size={52} className="text-[1.9rem]" />
+                <IrrigaAgroLogo size={52} showText className="text-[1.9rem]" />
               </div>
 
               <div className="rounded-[30px] border border-white/7 bg-[rgba(15,25,35,0.82)] p-6 shadow-[0_28px_70px_-42px_rgba(0,0,0,0.95)] backdrop-blur-md sm:p-8 lg:p-9">

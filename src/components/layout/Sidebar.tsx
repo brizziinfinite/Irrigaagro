@@ -116,11 +116,10 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           gap: 14,
         }}>
           <div style={{ minWidth: 0 }}>
-            <IrrigaAgroLogo size={42} className="text-[21px]" />
+            <IrrigaAgroLogo size={42} showText className="text-[21px]" />
             <p style={{
               fontSize: 9,
               color: '#556677',
@@ -131,31 +130,6 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             }}>
               Irrigação de Precisão
             </p>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '7px 10px',
-            borderRadius: 999,
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            color: '#a5b4c3',
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-          }}>
-            <span style={{
-              width: 7,
-              height: 7,
-              borderRadius: '50%',
-              background: '#22c55e',
-              boxShadow: '0 0 0 4px rgba(34,197,94,0.12)',
-            }} />
-            SaaS
           </div>
         </div>
 
