@@ -126,8 +126,8 @@ export type PivotUpdate = Partial<PivotInsert>
 
 export interface SpeedTableRow {
   speed_percent: number
-  depth_mm: number
-  duration_h: number
+  water_depth_mm: number
+  duration_hours: number
 }
 
 export interface PivotSpeedEntry {
