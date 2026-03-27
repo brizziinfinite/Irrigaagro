@@ -102,23 +102,66 @@ interface PivotMeta {
   adcMm: number
 }
 
-// ─── Projeção de % campo após lançamento ──────────────────────
+// ─── ADc projetado para uma data (base para mostrar "Atual" por dia) ──────────
+// Pega o último registro histórico anterior à data, depois aplica os lançamentos
+// do grid para cada dia intermediário (simulação acumulada)
 
-function projectPct(meta: PivotMeta, date: string, laminaStr: string, rainfallStr: string): number | null {
-  const { context, history, ctaMm, cadMm } = meta
+function adcForDate(
+  meta: PivotMeta,
+  date: string,
+  grid: ScheduleGrid,
+): number {
+  const { context, history, ctaMm } = meta
+  const { season, crop } = context
+  if (ctaMm === 0) return 0
+
+  // Ponto de partida: último registro histórico antes da data
+  const lastHistoric = history.find(h => h.date < date)
+  let adc = lastHistoric?.ctda ?? (ctaMm * ((season.initial_adc_percent ?? 100) / 100))
+
+  // Avança dia a dia entre o último histórico e a data alvo aplicando entradas do grid
+  const startDate = lastHistoric ? addDays(lastHistoric.date, 1) : (season.planting_date ?? date)
+  let cursor = startDate
+  const lastEto = history.find(h => h.eto_mm != null)?.eto_mm ?? 5
+
+  while (cursor < date) {
+    const das = season.planting_date ? calcDAS(season.planting_date, cursor) : 1
+    const stageInfo = crop ? getStageInfoForDas(crop, das) : null
+    const kc = stageInfo?.kc ?? 1
+    const etc = calcEtc(lastEto, kc)
+    const cellEntry = grid[season.id]?.[cursor]
+    const irrigMm = cellEntry ? (parseNum(cellEntry.lamina) ?? 0) : 0
+    const rainMm  = cellEntry ? (parseNum(cellEntry.rainfall) ?? 0) : 0
+    adc = calcADc(adc, rainMm, irrigMm, etc, ctaMm)
+    cursor = addDays(cursor, 1)
+  }
+
+  return adc
+}
+
+// % campo projetado para o dia (antes de aplicar o lançamento daquele dia)
+function currentPctForDate(meta: PivotMeta, date: string, grid: ScheduleGrid): number | null {
+  if (meta.ctaMm === 0) return null
+  const adc = adcForDate(meta, date, grid)
+  return (adc / meta.ctaMm) * 100
+}
+
+// ─── Projeção de % campo após lançamento do dia ────────────────
+
+function projectPct(meta: PivotMeta, date: string, laminaStr: string, rainfallStr: string, grid: ScheduleGrid): number | null {
+  const { context, ctaMm } = meta
   const { season, crop } = context
   if (!crop || ctaMm === 0) return null
 
+  const adc = adcForDate(meta, date, grid)  // ADc antes do lançamento deste dia
   const das = season.planting_date ? calcDAS(season.planting_date, date) : 1
   const stageInfo = getStageInfoForDas(crop, das)
-  const prevRecord = history.find(h => h.date < date)
-  const adcPrev = prevRecord?.ctda ?? ((season.initial_adc_percent ?? 100) / 100) * ctaMm
-  const lastEto = history.find(h => h.eto_mm != null)?.eto_mm ?? 5
+  const lastEto = meta.history.find(h => h.eto_mm != null)?.eto_mm ?? 5
   const etc = calcEtc(lastEto, stageInfo.kc)
   const irrigMm = parseNum(laminaStr) ?? 0
   const rainMm  = parseNum(rainfallStr) ?? 0
-  const adcNew  = calcADc(adcPrev, rainMm, irrigMm, etc, ctaMm)
-  return ctaMm > 0 ? (adcNew / ctaMm) * 100 : 0
+  const adcNew  = calcADc(adc, rainMm, irrigMm, etc, ctaMm)
+  return (adcNew / ctaMm) * 100
 }
 
 function pctColor(pct: number | null, threshold: number): string {
@@ -141,7 +184,7 @@ function MiniField({
 }) {
   return (
     <div style={{ width, flexShrink: 0 }}>
-      <p style={{ fontSize: 8, color: '#3a4f60', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+      <p style={{ fontSize: 9, color: '#6a8090', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', fontWeight: 600 }}>
         {label}
       </p>
       <input
@@ -177,7 +220,7 @@ export default function LancamentosPage() {
   useEffect(() => {
     const t = toYMD(new Date())
     setToday(t)
-    setDays(Array.from({ length: 7 }, (_, i) => addDays(t, i)))
+    setDays(Array.from({ length: 14 }, (_, i) => addDays(t, i)))
   }, [])
 
   const [metas, setMetas]       = useState<PivotMeta[]>([])
@@ -225,7 +268,7 @@ export default function LancamentosPage() {
       const g: ScheduleGrid = {}
       for (const m of metaList) {
         g[m.context.season.id] = {}
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 14; i++) {
           const d = addDays(today, i)
           g[m.context.season.id][d] = { rainfall: '', lamina: '', speed: '', speedAuto: false, startTime: '', endTime: '' }
         }
@@ -458,7 +501,7 @@ export default function LancamentosPage() {
           <ChevronLeft size={18} />
         </button>
 
-        <div style={{ display: 'flex', gap: 6, flex: 1, overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: 4, flex: 1 }}>
           {days.map((d, i) => {
             const isToday = d === today
             const active  = i === selectedDay
@@ -469,12 +512,11 @@ export default function LancamentosPage() {
             })
             return (
               <button key={d} onClick={() => setSelectedDay(i)} style={{
-                flex: '0 0 auto', minWidth: 64,
-                padding: '8px 10px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                flex: 1,
+                padding: '7px 4px', borderRadius: 8, border: 'none', cursor: 'pointer',
                 background: active ? '#0093D0' : 'rgba(255,255,255,0.04)',
                 color: active ? '#fff' : '#8899aa',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                position: 'relative',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
               }}>
                 <span style={{ fontSize: 9, textTransform: 'capitalize', opacity: 0.8 }}>
                   {isToday ? 'Hoje' : fmtWeekday(d)}
@@ -520,9 +562,11 @@ export default function LancamentosPage() {
             {metas.map(meta => {
               const { season, pivot, farm } = meta.context
               const threshold = pivot?.alert_threshold_percent ?? 70
-              const currentColor = pctColor(meta.currentPct, threshold)
+              // % campo calculado para o dia selecionado (acumula grid dos dias anteriores)
+              const dayPct = currentPctForDate(meta, currentDate, grid)
+              const currentColor = pctColor(dayPct, threshold)
               const entry = grid[season.id]?.[currentDate] ?? { rainfall: '', lamina: '', speed: '', speedAuto: false, startTime: '', endTime: '' }
-              const projected = projectPct(meta, currentDate, entry.lamina, entry.rainfall)
+              const projected = projectPct(meta, currentDate, entry.lamina, entry.rainfall, grid)
               const projColor = pctColor(projected, threshold)
               const isSavedPivot = savedDays.has(currentDate) // simplificado — salva todos juntos
               const hasEntry = entry.rainfall !== '' || entry.lamina !== ''
@@ -570,7 +614,7 @@ export default function LancamentosPage() {
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: 16, fontWeight: 800, color: currentColor, fontFamily: 'var(--font-mono)' }}>
-                        {meta.currentPct != null ? `${Math.round(meta.currentPct)}%` : '—'}
+                        {dayPct != null ? `${Math.round(dayPct)}%` : '—'}
                       </span>
                       {projected != null && hasEntry && (
                         <>
@@ -624,7 +668,7 @@ export default function LancamentosPage() {
                       type="time"
                       value={entry.endTime}
                       readOnly
-                      color="#22c55e"
+                      color="#f59e0b"
                       width={90}
                     />
                   </div>
