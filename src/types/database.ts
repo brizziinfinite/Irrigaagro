@@ -101,6 +101,8 @@ export interface Pivot {
   weather_source: WeatherSource | null
   weather_config: PivotWeatherConfig | null
   alert_threshold_percent: number | null
+  sector_start_deg: number | null
+  sector_end_deg: number | null
 }
 
 export interface PivotInsert {
@@ -120,6 +122,8 @@ export interface PivotInsert {
   weather_source?: WeatherSource | null
   weather_config?: PivotWeatherConfig | null
   alert_threshold_percent?: number | null
+  sector_start_deg?: number | null
+  sector_end_deg?: number | null
 }
 
 export type PivotUpdate = Partial<PivotInsert>

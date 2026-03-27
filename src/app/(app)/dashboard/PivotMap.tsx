@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import 'leaflet/dist/leaflet.css'
 import type { DailyManagement } from '@/types/database'
+import { buildSectorPolygon, calcIrrigatedAreaHa } from '@/lib/map-utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,9 @@ interface MapPivot {
   longitude: number | null
   status: IrrigationStatus
   lastManagement: DailyManagement | null
+  length_m: number | null
+  sector_start_deg: number | null
+  sector_end_deg: number | null
 }
 
 interface PivotMapProps {
@@ -95,8 +99,39 @@ export function PivotMap({ pivots }: PivotMapProps) {
       for (const pivot of pivotsWithCoords) {
         const col = STATUS_COLORS[pivot.status]
         const m = pivot.lastManagement
+        const lat = pivot.latitude as number
+        const lng = pivot.longitude as number
 
         const pct = m?.field_capacity_percent ?? null
+
+        // ── Real geometry layer (behind markers) ──
+        if (pivot.length_m && pivot.length_m > 0) {
+          const isFullCircle = pivot.sector_start_deg === null || pivot.sector_end_deg === null
+          if (isFullCircle) {
+            L.circle([lat, lng], {
+              radius: pivot.length_m,
+              color: col.stroke,
+              weight: 1.5,
+              fillColor: col.fill,
+              fillOpacity: 0.12,
+              interactive: false,
+            }).addTo(map)
+          } else {
+            const coords = buildSectorPolygon(lat, lng, pivot.length_m, pivot.sector_start_deg, pivot.sector_end_deg)
+            L.polygon(coords, {
+              color: col.stroke,
+              weight: 1.5,
+              fillColor: col.fill,
+              fillOpacity: 0.12,
+              interactive: false,
+            }).addTo(map)
+          }
+        }
+
+        // ── Area calculation for popup ──
+        const areaHa = pivot.length_m
+          ? calcIrrigatedAreaHa(pivot.length_m, pivot.sector_start_deg, pivot.sector_end_deg)
+          : null
 
         // Build popup HTML
         const barWidth = pct !== null ? Math.min(100, Math.max(0, pct)) : 0
@@ -147,6 +182,12 @@ export function PivotMap({ pivots }: PivotMapProps) {
               </div>
             </div>
 
+            ${areaHa !== null ? `
+            <div style="margin-top:8px;font-size:11px;color:#556677;">
+              Área: <strong style="color:#8899aa;">${areaHa.toFixed(1)} ha</strong>
+            </div>
+            ` : ''}
+
             <div style="
               margin-top:10px;padding:4px 10px;border-radius:20px;
               background:${col.fill}20;border:1px solid ${col.fill}40;
@@ -159,7 +200,7 @@ export function PivotMap({ pivots }: PivotMapProps) {
         `
 
         // Custom circle marker
-        const circleMarker = L.circleMarker([pivot.latitude as number, pivot.longitude as number], {
+        const circleMarker = L.circleMarker([lat, lng], {
           radius: 14,
           fillColor: col.fill,
           fillOpacity: 0.85,
@@ -196,7 +237,7 @@ export function PivotMap({ pivots }: PivotMapProps) {
           iconAnchor: [0, 0],
         })
 
-        const marker = L.marker([pivot.latitude as number, pivot.longitude as number], {
+        const marker = L.marker([lat, lng], {
           icon: pulseIcon,
           zIndexOffset: pivot.status === 'vermelho' ? 100 : 0,
         })
@@ -210,12 +251,17 @@ export function PivotMap({ pivots }: PivotMapProps) {
         circleMarker.addTo(map)
       }
 
-      // Fit bounds
-      if (pivotsWithCoords.length > 1) {
-        const bounds = L.latLngBounds(
-          pivotsWithCoords.map(p => [p.latitude as number, p.longitude as number])
-        )
-        map.fitBounds(bounds, { padding: [40, 40] })
+      // Fit bounds — include geometry extents
+      const allPoints: [number, number][] = pivotsWithCoords.map(p => [p.latitude as number, p.longitude as number])
+      if (pivotsWithCoords.length === 1) {
+        const p = pivotsWithCoords[0]
+        if (p.length_m && p.length_m > 0) {
+          const coords = buildSectorPolygon(p.latitude as number, p.longitude as number, p.length_m, p.sector_start_deg, p.sector_end_deg)
+          allPoints.push(...coords)
+        }
+      }
+      if (allPoints.length > 1) {
+        map.fitBounds(L.latLngBounds(allPoints), { padding: [50, 50] })
       }
     })
 

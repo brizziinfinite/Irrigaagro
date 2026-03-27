@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import type { Farm, Pivot, SpeedTableRow } from '@/types/database'
 import { useAuth } from '@/hooks/useAuth'
 import { listFarmsByCompany } from '@/services/farms'
@@ -12,6 +13,23 @@ import {
   type PivotWithFarmName,
 } from '@/services/pivots'
 import { CircleDot, Plus, Pencil, Trash2, X, Loader2, ChevronDown, Table2, ChevronRight, MapPin, Satellite, Sheet, Hand } from 'lucide-react'
+
+const PivotMiniMapDynamic = dynamic(
+  () => import('./PivotMiniMap').then(m => ({ default: m.PivotMiniMap })),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{
+        height: 240, borderRadius: 10, background: '#0d1520',
+        border: '1px solid rgba(255,255,255,0.08)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 12, color: '#556677',
+      }}>
+        Carregando mapa…
+      </div>
+    ),
+  }
+)
 
 // ─── Cálculos ────────────────────────────────────────────────
 function calcArea(lengthM: number): number {
@@ -185,8 +203,15 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
   const [weatherSource, setWeatherSource] = useState<'nasa' | 'google_sheets' | 'manual'>(pivot?.weather_source ?? 'nasa')
   const [spreadsheetId, setSpreadsheetId] = useState(pivot?.weather_config?.spreadsheet_id ?? '')
   const [sheetGid, setSheetGid] = useState(pivot?.weather_config?.gid ?? '')
+  const [sectorStart, setSectorStart] = useState<string>(pivot?.sector_start_deg?.toString() ?? '')
+  const [sectorEnd, setSectorEnd] = useState<string>(pivot?.sector_end_deg?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Stable callback so PivotMiniMap's useEffect doesn't re-run on every render (REGRA #3)
+  const handleLocationChange = useCallback((lat: number, lng: number) => {
+    setCoordsRaw(`${lat.toFixed(6)}, ${lng.toFixed(6)}`)
+  }, [])
 
   // Preview da tabela ao vivo
   const previewTable = useMemo<SpeedTableRow[] | null>(() => {
@@ -222,6 +247,30 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
       }
     }
 
+    // Sector validation
+    const hasStart = sectorStart.trim() !== ''
+    const hasEnd = sectorEnd.trim() !== ''
+    if (hasStart !== hasEnd) {
+      setError('Informe início e fim do setor, ou deixe ambos vazios para círculo completo.')
+      return
+    }
+    if (hasStart && hasEnd) {
+      const sStart = Number(sectorStart)
+      const sEnd = Number(sectorEnd)
+      if (isNaN(sStart) || sStart < 0 || sStart > 360) {
+        setError('Ângulo de início do setor deve ser entre 0 e 360°.')
+        return
+      }
+      if (isNaN(sEnd) || sEnd < 0 || sEnd > 360) {
+        setError('Ângulo de fim do setor deve ser entre 0 e 360°.')
+        return
+      }
+      if (sStart === sEnd) {
+        setError('Ângulos iguais criam um setor vazio. Use 0 e 360 para círculo completo, ou deixe ambos vazios.')
+        return
+      }
+    }
+
     setError('')
     setLoading(true)
 
@@ -239,6 +288,8 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
       weather_config: weatherSource === 'google_sheets' && spreadsheetId
         ? { spreadsheet_id: spreadsheetId, gid: sheetGid || undefined }
         : null,
+      sector_start_deg: sectorStart ? Number(sectorStart) : null,
+      sector_end_deg: sectorEnd ? Number(sectorEnd) : null,
     }
 
     try {
@@ -261,7 +312,7 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
       <div style={{
         background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28,
-        width: '100%', maxWidth: 520, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)',
+        width: '100%', maxWidth: 600, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)',
         maxHeight: '90vh', overflowY: 'auto',
       }}>
         {/* Header */}
@@ -375,6 +426,16 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
             <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
           </div>
 
+          {/* Mini-map — click to position */}
+          <PivotMiniMapDynamic
+            latitude={parsedCoords?.lat ?? null}
+            longitude={parsedCoords?.lng ?? null}
+            lengthM={parseFloat(lengthM) || null}
+            sectorStart={sectorStart ? parseFloat(sectorStart) : null}
+            sectorEnd={sectorEnd ? parseFloat(sectorEnd) : null}
+            onLocationChange={handleLocationChange}
+          />
+
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
               Coordenadas (latitude e longitude)
@@ -409,6 +470,67 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
                 Cole do Google Maps, Google Earth ou GPS. Aceita graus/minutos/segundos ou decimal.
               </p>
             )}
+          </div>
+
+          {/* Separador setor */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Setor de Irrigação</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+            <span style={{ fontSize: 10, color: '#556677' }}>opcional</span>
+          </div>
+          <p style={{ fontSize: 11, color: '#556677', margin: '-8px 0 0' }}>
+            Deixe vazio para círculo completo (360°).
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+                Início do setor
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={sectorStart}
+                  onChange={e => setSectorStart(e.target.value)}
+                  placeholder="Ex: 0"
+                  step="any"
+                  min={0}
+                  max={360}
+                  style={{
+                    width: '100%', padding: '10px 44px 10px 14px', borderRadius: 10, fontSize: 14,
+                    background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#0093D0'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#556677', pointerEvents: 'none' }}>°</span>
+              </div>
+              <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>0=Norte, 90=Leste</p>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+                Fim do setor
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={sectorEnd}
+                  onChange={e => setSectorEnd(e.target.value)}
+                  placeholder="Ex: 270"
+                  step="any"
+                  min={0}
+                  max={360}
+                  style={{
+                    width: '100%', padding: '10px 44px 10px 14px', borderRadius: 10, fontSize: 14,
+                    background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#0093D0'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#556677', pointerEvents: 'none' }}>°</span>
+              </div>
+              <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>sentido horário</p>
+            </div>
           </div>
 
           {/* Limiar de alerta */}
@@ -597,6 +719,11 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
               <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'rgb(6 182 212 / 0.08)', border: '1px solid rgb(6 182 212 / 0.2)', color: '#06b6d4', display: 'flex', alignItems: 'center', gap: 3 }}>
                 {pivot.weather_source === 'nasa' ? <Satellite size={9} /> : <Sheet size={9} />}
                 {pivot.weather_source === 'nasa' ? 'NASA POWER' : 'Google Sheets'}
+              </span>
+            )}
+            {pivot.sector_start_deg != null && (
+              <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'rgb(0 147 208 / 0.08)', border: '1px solid rgb(0 147 208 / 0.2)', color: '#0093D0' }}>
+                Setor {pivot.sector_start_deg}°–{pivot.sector_end_deg}°
               </span>
             )}
             {!pivot.length_m && !pivot.flow_rate_m3h && (

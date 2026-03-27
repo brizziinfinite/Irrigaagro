@@ -504,13 +504,16 @@ export function DashboardClient({
           </span>
         </div>
         <PivotMap pivots={pivots.map(p => ({
-          id:             p.id,
-          name:           p.name,
-          farm_name:      p.farms?.name ?? '',
-          latitude:       p.latitude,
-          longitude:      p.longitude,
-          status:         resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id), p.alert_threshold_percent ?? 70),
-          lastManagement: lastManagementByPivot[p.id] ?? null,
+          id:               p.id,
+          name:             p.name,
+          farm_name:        p.farms?.name ?? '',
+          latitude:         p.latitude,
+          longitude:        p.longitude,
+          status:           resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id), p.alert_threshold_percent ?? 70),
+          lastManagement:   lastManagementByPivot[p.id] ?? null,
+          length_m:         p.length_m,
+          sector_start_deg: p.sector_start_deg,
+          sector_end_deg:   p.sector_end_deg,
         }))} />
       </div>
 
