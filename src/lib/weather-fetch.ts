@@ -10,7 +10,7 @@ export interface WeatherDay {
   windSpeed: number      // m/s
   solarRadiation: number // W/m²
   rainfall: number       // mm
-  source: 'google_sheets' | 'nasa' | 'manual'
+  source: 'google_sheets' | 'nasa' | 'manual' | 'plugfield'
 }
 
 // ─── Google Sheets (Plugfield via CSV público) ────────────────
@@ -119,6 +119,67 @@ export async function fetchFromGoogleSheets(
     }
 
     return null // data não encontrada na planilha
+  } catch {
+    return null
+  }
+}
+
+// ─── Plugfield API ────────────────────────────────────────────
+
+/**
+ * Busca dados climáticos diários direto da API do Plugfield.
+ * Credenciais são por pivô (weather_config), não globais do sistema.
+ * date: YYYY-MM-DD (D-1 do dia atual)
+ */
+export async function fetchFromPlugfield(
+  deviceId: number,
+  dateISO: string,  // YYYY-MM-DD
+  token: string,
+  apiKey: string,
+): Promise<WeatherDay | null> {
+  if (!token || !apiKey) return null
+
+  try {
+    // API espera DD/MM/YYYY
+    const [year, month, day] = dateISO.split('-')
+    const dateFormatted = `${day}/${month}/${year}`
+
+    const url = `https://prod-api.plugfield.com.br/data/daily?device=${deviceId}&begin=${dateFormatted}&end=${dateFormatted}`
+    const res = await fetch(url, {
+      headers: { Authorization: token, 'x-api-key': apiKey },
+      cache: 'no-store',
+    })
+    if (!res.ok) return null
+
+    const data = await res.json()
+    if (!Array.isArray(data) || data.length === 0) return null
+
+    const d = data[0]
+    const tempMax   = d.tempMax
+    const tempMin   = d.tempMin
+    const humidity  = d.humidity
+    const windSpeed = d.wind
+    const rainfall  = d.rainAccum ?? 0
+
+    if (!tempMax || !tempMin) return null
+
+    // Radiação: prefere radiationWatts; fallback: radiation/radiationCount × 3.1
+    let solarRadiation = 200
+    if (d.radiationWatts != null && d.radiationWatts > 0) {
+      solarRadiation = d.radiationWatts
+    } else if (d.radiation != null && d.radiationCount > 0) {
+      solarRadiation = Math.min((d.radiation / d.radiationCount) * 3.1, 800)
+    }
+
+    return {
+      tempMax,
+      tempMin,
+      humidity:       isNaN(humidity)  ? 65 : humidity,
+      windSpeed:      isNaN(windSpeed) ? 2  : windSpeed,
+      solarRadiation,
+      rainfall,
+      source: 'plugfield',
+    }
   } catch {
     return null
   }

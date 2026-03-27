@@ -8,7 +8,7 @@ export type Json =
 
 export type CompanyPlan = 'free' | 'pro' | 'enterprise'
 export type CompanyRole = 'owner' | 'admin' | 'operator' | 'viewer'
-export type WeatherSource = 'nasa' | 'google_sheets' | 'manual'
+export type WeatherSource = 'nasa' | 'google_sheets' | 'manual' | 'plugfield'
 export type WeatherStationProvider = 'manual' | 'fieldclimate' | 'davis' | 'inmet'
 export type RainfallSource = 'manual' | 'import' | 'station'
 export type EnergyBillSource = 'upload' | 'whatsapp' | 'manual'
@@ -56,7 +56,9 @@ export interface PivotWeatherConfig {
   spreadsheet_id?: string
   gid?: string
   station_id?: string
-  api_key?: string
+  plugfield_device_id?: number | string
+  plugfield_token?: string
+  plugfield_api_key?: string
   refresh_interval_min?: number
 }
 
