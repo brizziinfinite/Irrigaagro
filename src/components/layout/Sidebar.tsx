@@ -3,6 +3,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Droplets,
+  ClipboardList,
   MapPin,
   Sprout,
   Wheat,
@@ -34,6 +35,7 @@ function PivotIcon({ size = 20 }: { size?: number }) {
 
 const OPERACIONAL = [
   { icon: LayoutDashboard, label: 'Dashboard',       path: '/dashboard'        },
+  { icon: ClipboardList,   label: 'Lançamentos',     path: '/lancamentos'      },
   { icon: Droplets,        label: 'Manejo Diário',   path: '/manejo'           },
   { icon: CloudRain,       label: 'Precipitações',   path: '/precipitacoes'    },
   { icon: MapPin,          label: 'Fazendas',        path: '/fazendas'         },

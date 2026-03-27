@@ -2,7 +2,7 @@ import { calcProjection, calcCTA, getStageInfoForDas, type ProjectionDay } from 
 import { getUserCompanyOrThrow } from '@/services/companies'
 import { listFarmsByCompany } from '@/services/farms'
 import { getPivotDiagnostic, type PivotDiagnostic } from '@/services/pivot-diagnostics'
-import { listManagementSeasonContexts, listDailyManagementBySeason } from '@/services/management'
+import { listManagementSeasonContexts, listDailyManagementBySeason, type ManagementSeasonContext } from '@/services/management'
 import { listPivotsByFarmIds } from '@/services/pivots'
 import { listEnergyBillsByPivotIds } from '@/services/energy-bills'
 import type { TypedSupabaseClient } from '@/services/base'
@@ -18,6 +18,7 @@ export interface DashboardData {
   companyId: string
   pivots: DashboardPivot[]
   activeSeasons: Season[]
+  contexts: ManagementSeasonContext[]
   hasPivots: boolean
   lastManagementBySeason: Record<string, DailyManagement>
   historyBySeason: Record<string, DailyManagement[]>
@@ -129,6 +130,7 @@ export async function getDashboardDataForUser(
     companyId: company.id,
     pivots,
     activeSeasons,
+    contexts,
     hasPivots: pivots.length > 0,
     lastManagementBySeason,
     historyBySeason,

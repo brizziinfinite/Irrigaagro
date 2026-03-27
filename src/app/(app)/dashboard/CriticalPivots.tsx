@@ -93,7 +93,9 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{pivot.name}</span>
+                    <Link href={`/pivos/${pivot.id}`} style={{ textDecoration: 'none' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{pivot.name}</span>
+                    </Link>
                     {s.label && (
                       <span style={{
                         fontSize: 8, fontWeight: 800, color: s.color,
