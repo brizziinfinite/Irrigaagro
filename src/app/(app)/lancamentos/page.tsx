@@ -653,18 +653,16 @@ export default function LancamentosPage() {
 
       setMetas(metaList)
 
-      // Buscar schedules (silencia erro se tabela ainda não existir)
-      try {
-        const from = today
-        const to   = addDays(today, 6)
-        const allSchedules = await listSchedulesByCompany(company.id, from, to)
-        const byPivot: Record<string, IrrigationSchedule[]> = {}
-        for (const s of allSchedules) {
-          if (!byPivot[s.pivot_id]) byPivot[s.pivot_id] = []
-          byPivot[s.pivot_id].push(s)
-        }
-        setSchedulesByPivot(byPivot)
-      } catch { /* tabela ainda não criada — ignorar */ }
+      // Buscar schedules dos próximos 7 dias
+      const from = today
+      const to   = addDays(today, 6)
+      const allSchedules = await listSchedulesByCompany(company.id, from, to)
+      const byPivot: Record<string, IrrigationSchedule[]> = {}
+      for (const s of allSchedules) {
+        if (!byPivot[s.pivot_id]) byPivot[s.pivot_id] = []
+        byPivot[s.pivot_id].push(s)
+      }
+      setSchedulesByPivot(byPivot)
 
     } catch (e) {
       setPageError(e instanceof Error ? e.message : 'Erro ao carregar dados')
