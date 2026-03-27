@@ -12,6 +12,43 @@ export type WeatherSource = 'nasa' | 'google_sheets' | 'manual'
 export type WeatherStationProvider = 'manual' | 'fieldclimate' | 'davis' | 'inmet'
 export type RainfallSource = 'manual' | 'import' | 'station'
 export type EnergyBillSource = 'upload' | 'whatsapp' | 'manual'
+export type IrrigationScheduleStatus = 'planned' | 'done' | 'cancelled'
+export type IrrigationCancelledReason = 'chuva' | 'quebra' | 'outro'
+
+export interface IrrigationSchedule {
+  id: string
+  company_id: string
+  pivot_id: string
+  season_id: string
+  date: string
+  lamina_mm: number | null
+  speed_percent: number | null
+  start_time: string | null
+  end_time: string | null
+  rainfall_mm: number | null
+  status: IrrigationScheduleStatus
+  cancelled_reason: IrrigationCancelledReason | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface IrrigationScheduleInsert {
+  company_id: string
+  pivot_id: string
+  season_id: string
+  date: string
+  lamina_mm?: number | null
+  speed_percent?: number | null
+  start_time?: string | null
+  end_time?: string | null
+  rainfall_mm?: number | null
+  status?: IrrigationScheduleStatus
+  cancelled_reason?: IrrigationCancelledReason | null
+  notes?: string | null
+}
+
+export type IrrigationScheduleUpdate = Partial<IrrigationScheduleInsert>
 export type CronJobRunStatus = 'running' | 'success' | 'partial_failure' | 'failed'
 export type CronJobEventType = 'run_note' | 'season_processed' | 'season_skipped' | 'season_error'
 
