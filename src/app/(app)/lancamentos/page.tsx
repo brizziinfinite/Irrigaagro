@@ -360,7 +360,7 @@ export default function LancamentosPage() {
   const isSaved = savedDays.has(currentDate)
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', paddingBottom: 60 }}>
+    <div style={{ paddingBottom: 60 }}>
 
       {/* ── Print header ── */}
       <div className="print-only" style={{ display: 'none' }}>
@@ -556,12 +556,12 @@ export default function LancamentosPage() {
                   background: '#0f1923',
                   border: `1px solid ${hasEntry ? 'rgba(0,147,208,0.18)' : 'rgba(255,255,255,0.06)'}`,
                   borderRadius: 12,
-                  padding: '10px 14px',
-                  display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+                  padding: '10px 16px',
+                  display: 'flex', alignItems: 'center', gap: 16,
                 }}>
 
                   {/* ── Info do pivô ── */}
-                  <div style={{ minWidth: 140, flex: '0 0 140px' }}>
+                  <div style={{ flex: '0 0 180px' }}>
                     <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', margin: 0, lineHeight: 1.2 }}>
                       {pivot?.name ?? season.name}
                     </p>
@@ -569,13 +569,13 @@ export default function LancamentosPage() {
                       {farm.name}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 15, fontWeight: 800, color: currentColor, fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ fontSize: 16, fontWeight: 800, color: currentColor, fontFamily: 'var(--font-mono)' }}>
                         {meta.currentPct != null ? `${Math.round(meta.currentPct)}%` : '—'}
                       </span>
                       {projected != null && hasEntry && (
                         <>
-                          <span style={{ fontSize: 11, color: '#334455' }}>→</span>
-                          <span style={{ fontSize: 15, fontWeight: 800, color: projColor, fontFamily: 'var(--font-mono)' }}>
+                          <span style={{ fontSize: 12, color: '#334455' }}>→</span>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: projColor, fontFamily: 'var(--font-mono)' }}>
                             {Math.round(projected)}%
                           </span>
                         </>
@@ -583,14 +583,14 @@ export default function LancamentosPage() {
                     </div>
                   </div>
 
-                  {/* ── Campos compactos ── */}
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', flexWrap: 'wrap', flex: 1 }}>
+                  {/* ── Campos — crescem para preencher largura ── */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flex: 1 }}>
                     <MiniField
                       label="Chuva mm"
                       value={entry.rainfall}
                       onChange={v => updateCell(season.id, currentDate, 'rainfall', v)}
-                      color="rgba(255,255,255,0.7)"
-                      width={68}
+                      color="rgba(255,255,255,0.75)"
+                      width={90}
                     />
                     <MiniField
                       label="Lâmina mm"
@@ -600,7 +600,7 @@ export default function LancamentosPage() {
                       bg="rgba(0,147,208,0.10)"
                       border="rgba(0,147,208,0.25)"
                       bold
-                      width={72}
+                      width={100}
                     />
                     <MiniField
                       label={entry.speedAuto && entry.speed ? 'Vel % ↺' : 'Vel %'}
@@ -609,7 +609,7 @@ export default function LancamentosPage() {
                       color={entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa'}
                       bg={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.04)'}
                       border={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.08)'}
-                      width={60}
+                      width={80}
                     />
                     <MiniField
                       label="Início"
@@ -620,12 +620,12 @@ export default function LancamentosPage() {
                       width={80}
                     />
                     <MiniField
-                      label="Fim"
+                      label="Fim (auto)"
                       type="time"
                       value={entry.endTime}
                       readOnly
                       color="#22c55e"
-                      width={72}
+                      width={90}
                     />
                   </div>
 
@@ -636,13 +636,35 @@ export default function LancamentosPage() {
                     className="no-print"
                     style={{
                       flexShrink: 0,
-                      padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                      fontSize: 12, fontWeight: 700,
-                      background: isSavedPivot ? 'rgba(34,197,94,0.12)' : '#0093D0',
+                      padding: '0 22px',
+                      height: 52,
+                      borderRadius: 10,
+                      border: 'none',
+                      cursor: saving ? 'wait' : 'pointer',
+                      fontSize: 13,
+                      fontWeight: 800,
+                      letterSpacing: '0.02em',
+                      background: isSavedPivot
+                        ? 'rgba(34,197,94,0.12)'
+                        : 'linear-gradient(135deg, #0093D0 0%, #0070a8 100%)',
                       color: isSavedPivot ? '#22c55e' : '#fff',
+                      boxShadow: isSavedPivot ? 'none' : '0 2px 12px rgba(0,147,208,0.35)',
                       whiteSpace: 'nowrap',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
                     }}>
-                    {saving ? '…' : isSavedPivot ? `✓ ${fmtShort(currentDate)}` : `Salvar`}
+                    {saving ? (
+                      <span>Salvando…</span>
+                    ) : isSavedPivot ? (
+                      <>
+                        <span style={{ fontSize: 14 }}>✓</span>
+                        <span style={{ fontSize: 10, fontWeight: 600 }}>Salvo</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Salvar</span>
+                        <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.75 }}>{fmtShort(currentDate)}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               )
