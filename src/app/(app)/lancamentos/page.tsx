@@ -134,6 +134,70 @@ function pctColor(pct: number | null, threshold: number): string {
   return '#22c55e'
 }
 
+// ─── Chip de info agronômica ──────────────────────────────────
+
+function Chip({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      background: `${color}10`, border: `1px solid ${color}28`,
+      borderRadius: 7, padding: '3px 9px', flexShrink: 0,
+    }}>
+      <span style={{ fontSize: 8, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, lineHeight: 1.2 }}>{label}</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color, lineHeight: 1.3, fontFamily: 'var(--font-mono)' }}>{value}</span>
+    </div>
+  )
+}
+
+// ─── Barra d'água (coluna vertical de umidade) ────────────────
+// pct = % atual (0-100), projPct = % após irrigação, threshold = alerta
+
+function WaterBar({
+  pct, projPct = null, threshold, height = 52, width = 16,
+}: {
+  pct: number | null; projPct?: number | null
+  threshold: number; height?: number; width?: number
+}) {
+  const fillColor = pctColor(pct, threshold)
+  const projColor2 = projPct != null ? pctColor(projPct, threshold) : fillColor
+  const fillH   = pct     != null ? Math.max(2, (pct     / 100) * height) : 0
+  const projH   = projPct != null ? Math.max(2, (projPct / 100) * height) : fillH
+  const threshH = (threshold / 100) * height
+
+  return (
+    <div style={{
+      width, height, position: 'relative', flexShrink: 0,
+      background: 'rgba(255,255,255,0.04)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 4, overflow: 'hidden',
+    }}>
+      {/* Barra projeção (fundo, mais clara) */}
+      {projPct != null && projH > fillH && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          height: projH,
+          background: `${projColor2}30`,
+          borderRadius: 3,
+        }} />
+      )}
+      {/* Barra atual */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        height: fillH,
+        background: fillColor,
+        borderRadius: 3,
+        opacity: 0.85,
+      }} />
+      {/* Linha de threshold */}
+      <div style={{
+        position: 'absolute', bottom: threshH, left: 0, right: 0,
+        height: 1,
+        background: 'rgba(245,158,11,0.7)',
+      }} />
+    </div>
+  )
+}
+
 // ─── Mini campo ───────────────────────────────────────────────
 
 function MiniField({
@@ -334,14 +398,14 @@ function PivotCard({
     try { await onSave(filled) } finally { setSaving(false) }
   }
 
-  // Resumo para o card fechado
-  const todayEntry = grid[today]
+  // Dados da fase atual
+  const das = season.planting_date ? calcDAS(season.planting_date, today) : 1
+  const stageInfo = crop ? getStageInfoForDas(crop, das) : null
   const todayPct   = pctForDate(meta, today, grid)
   const todayColor = pctColor(todayPct, threshold)
-  const scheduledCount = days.filter(d => {
-    const s = schedules.find(sc => sc.date === d && sc.status === 'planned')
-    return s != null
-  }).length
+  const scheduledCount = days.filter(d =>
+    schedules.some(sc => sc.date === d && sc.status === 'planned')
+  ).length
 
   return (
     <div style={{
@@ -351,41 +415,56 @@ function PivotCard({
       overflow: 'hidden',
       transition: 'border-color 0.15s',
     }}>
-      {/* ── Cabeçalho do card (sempre visível) ── */}
+      {/* ── Cabeçalho (sempre visível) ── */}
       <div
         onClick={() => setExpanded(e => !e)}
-        style={{
-          padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 14,
-          cursor: 'pointer', userSelect: 'none',
-        }}
+        style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', userSelect: 'none' }}
       >
-        {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Nome + fazenda */}
+        <div style={{ flex: '0 0 180px', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>{name}</span>
-            {crop && <span style={{ fontSize: 10, color: '#445566' }}>{crop.name}</span>}
             {scheduledCount > 0 && (
               <span style={{
-                fontSize: 10, fontWeight: 700, color: '#0093D0',
+                fontSize: 9, fontWeight: 700, color: '#0093D0',
                 background: 'rgba(0,147,208,0.12)', border: '1px solid rgba(0,147,208,0.25)',
                 borderRadius: 99, padding: '1px 7px',
               }}>
-                {scheduledCount} dia{scheduledCount > 1 ? 's' : ''} prog.
+                {scheduledCount} prog.
               </span>
             )}
           </div>
-          <span style={{ fontSize: 11, color: '#445566' }}>{farm.name} · {season.name}</span>
+          <span style={{ fontSize: 10, color: '#445566' }}>{farm.name}</span>
         </div>
 
-        {/* % campo hoje */}
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ fontSize: 9, color: '#445566', margin: '0 0 1px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hoje</p>
-          <span style={{ fontSize: 22, fontWeight: 800, color: todayColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-            {todayPct != null ? `${Math.round(todayPct)}%` : '—'}
-          </span>
+        {/* Chips de info agronômica */}
+        <div style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+          {crop && (
+            <Chip label="Cultura" value={crop.name} color="#22c55e" />
+          )}
+          {stageInfo && (
+            <Chip label="Fase" value={`${stageInfo.stage}ª`} color="#0093D0" />
+          )}
+          <Chip label="DAS" value={`${das}d`} color="#8899aa" />
+          {stageInfo && (
+            <Chip label="Kc" value={stageInfo.kc.toFixed(2)} color="#f59e0b" />
+          )}
+          {season.planting_date && (
+            <Chip label="Plantio" value={fmtShort(season.planting_date)} color="#556677" />
+          )}
         </div>
 
-        {/* Chevron */}
+        {/* % campo + mini barra */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <WaterBar pct={todayPct} threshold={threshold} height={36} width={10} />
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: 9, color: '#445566', margin: '0 0 1px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hoje</p>
+            <span style={{ fontSize: 22, fontWeight: 800, color: todayColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+              {todayPct != null ? `${Math.round(todayPct)}%` : '—'}
+            </span>
+          </div>
+        </div>
+
         <div style={{ color: '#334455', flexShrink: 0 }}>
           {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </div>
@@ -435,16 +514,26 @@ function PivotCard({
                     </p>
                   </div>
 
-                  {/* % campo antes/depois */}
-                  <div style={{ textAlign: 'center', marginBottom: 2 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: pctColor(dayPct, threshold), fontFamily: 'var(--font-mono)' }}>
-                      {dayPct != null ? `${Math.round(dayPct)}%` : '—'}
-                    </span>
-                    {hasEntry && projPct != null && (
-                      <span style={{ fontSize: 10, color: projColor, fontFamily: 'var(--font-mono)' }}>
-                        {' '}→ {Math.round(projPct)}%
+                  {/* Barra d'água + % */}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
+                    <WaterBar
+                      pct={dayPct}
+                      projPct={hasEntry ? projPct : null}
+                      threshold={threshold}
+                      height={52}
+                      width={16}
+                    />
+                    <div style={{ textAlign: 'left' }}>
+                      <p style={{ fontSize: 9, color: '#445566', margin: '0 0 1px', textTransform: 'uppercase', lineHeight: 1 }}>CC</p>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: pctColor(dayPct, threshold), fontFamily: 'var(--font-mono)', lineHeight: 1, display: 'block' }}>
+                        {dayPct != null ? `${Math.round(dayPct)}%` : '—'}
                       </span>
-                    )}
+                      {hasEntry && projPct != null && (
+                        <span style={{ fontSize: 10, fontWeight: 700, color: projColor, fontFamily: 'var(--font-mono)', display: 'block', marginTop: 1 }}>
+                          →{Math.round(projPct)}%
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Campos */}
@@ -564,17 +653,18 @@ export default function LancamentosPage() {
 
       setMetas(metaList)
 
-      // Buscar schedules dos próximos 7 dias para todos os pivôs
-      const from = today
-      const to   = addDays(today, 6)
-      const allSchedules = await listSchedulesByCompany(company.id, from, to)
-
-      const byPivot: Record<string, IrrigationSchedule[]> = {}
-      for (const s of allSchedules) {
-        if (!byPivot[s.pivot_id]) byPivot[s.pivot_id] = []
-        byPivot[s.pivot_id].push(s)
-      }
-      setSchedulesByPivot(byPivot)
+      // Buscar schedules (silencia erro se tabela ainda não existir)
+      try {
+        const from = today
+        const to   = addDays(today, 6)
+        const allSchedules = await listSchedulesByCompany(company.id, from, to)
+        const byPivot: Record<string, IrrigationSchedule[]> = {}
+        for (const s of allSchedules) {
+          if (!byPivot[s.pivot_id]) byPivot[s.pivot_id] = []
+          byPivot[s.pivot_id].push(s)
+        }
+        setSchedulesByPivot(byPivot)
+      } catch { /* tabela ainda não criada — ignorar */ }
 
     } catch (e) {
       setPageError(e instanceof Error ? e.message : 'Erro ao carregar dados')
