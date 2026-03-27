@@ -13,15 +13,25 @@ export default function GotejoLogo({
   showText = true,
   className = '',
 }: GotejoLogoProps) {
+  // Ícone: size px de altura. Wordmark: ~2× o ícone para ficar proporcional.
+  const iconH = size
+  const iconW = Math.round(size * 0.87) // viewBox 200×230 → ratio ≈ 0.87
+  const wordSize = Math.round(size * 0.95) // "Gotejo" quase igual à altura do ícone
+  const tagSize = Math.round(size * 0.22)  // tagline bem menor
+
   return (
-    <div className={`flex items-center gap-3 ${className}`} style={{ alignItems: 'center' }}>
+    <div
+      className={className}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.3) }}
+    >
       <svg
-        width={size}
-        height={Math.round(size * 1.15)}
+        width={iconW}
+        height={iconH}
         viewBox="0 0 200 230"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="Logotipo Gotejo"
+        style={{ flexShrink: 0 }}
       >
         <defs>
           <linearGradient id="dropGrad" x1="60" y1="10" x2="160" y2="210" gradientUnits="userSpaceOnUse">
@@ -43,7 +53,14 @@ export default function GotejoLogo({
 
       {showText && (
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-          <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 22, letterSpacing: 1, lineHeight: 1 }}>
+          {/* Wordmark */}
+          <span style={{
+            fontFamily: "'DM Serif Display', serif",
+            fontSize: wordSize,
+            letterSpacing: '0.02em',
+            lineHeight: 1,
+            display: 'block',
+          }}>
             <span style={{
               background: 'linear-gradient(135deg, #00D4AA, #38BDF8)',
               WebkitBackgroundClip: 'text',
@@ -51,13 +68,19 @@ export default function GotejoLogo({
             }}>G</span>
             <span style={{ color: '#fff' }}>otejo</span>
           </span>
+          {/* Tagline — width: 100% estica para cobrir a largura do wordmark acima */}
           <span style={{
-            fontSize: 7,
-            fontWeight: 500,
+            display: 'block',
+            fontSize: tagSize,
+            fontWeight: 600,
             textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.25)',
-            letterSpacing: '2.8px',
-            marginTop: 3,
+            color: 'rgba(255,255,255,0.28)',
+            letterSpacing: '0.28em',
+            marginTop: Math.round(size * 0.08),
+            width: '100%',
+            textAlign: 'justify',
+            // "text-align: justify" não estica a última linha, então usamos este truque:
+            textAlignLast: 'justify',
           }}>Irrigação Inteligente</span>
         </div>
       )}
