@@ -44,21 +44,38 @@ function parseNum(v: string): number | null {
   return isFinite(n) ? n : null
 }
 
-// Encontra velocidade pela tabela do pivô para uma lâmina
-function speedFromTable(table: PivotSpeedEntry[], laminaMm: number): number | null {
+// Encontra a entrada da tabela para uma lâmina:
+// menor water_depth_mm que ainda >= laminaMm (velocidade mais alta que entrega o suficiente)
+function entryFromTable(table: PivotSpeedEntry[], laminaMm: number): PivotSpeedEntry | null {
   if (!table.length || laminaMm <= 0) return null
   // Ordenar crescente por water_depth_mm
   const sorted = [...table].sort((a, b) => a.water_depth_mm - b.water_depth_mm)
-  // Menor velocidade que aplica ao menos a lâmina (maior percentual = menor lâmina)
-  // Queremos o entry com water_depth_mm >= laminaMm e menor speed_percent (mais lento = mais água)
-  // Na lógica do pivô: menor velocidade = mais tempo = mais água
+  // Candidatos: todos que entregam ao menos a lâmina solicitada
   const candidates = sorted.filter(e => e.water_depth_mm >= laminaMm)
   if (candidates.length === 0) {
-    // Lâmina maior que máximo da tabela — usar a de menor velocidade
-    return sorted[0].speed_percent
+    // Lâmina maior que máximo da tabela — usar a de menor velocidade (mais água)
+    return sorted[0]
   }
-  // Entre os que aplicam suficiente, usar o de maior velocidade (mais rápido que ainda atinge)
-  return candidates[candidates.length - 1].speed_percent
+  // O primeiro candidato tem o menor water_depth_mm suficiente = maior velocidade possível
+  return candidates[0]
+}
+
+function speedFromTable(table: PivotSpeedEntry[], laminaMm: number): number | null {
+  return entryFromTable(table, laminaMm)?.speed_percent ?? null
+}
+
+function durationFromTable(table: PivotSpeedEntry[], laminaMm: number): number | null {
+  return entryFromTable(table, laminaMm)?.duration_hours ?? null
+}
+
+// Calcula hora final dado hora inicial (HH:MM) + duração em horas
+function calcEndTime(startTime: string, durationHours: number): string {
+  if (!startTime || !durationHours) return ''
+  const [hStr, mStr] = startTime.split(':')
+  const totalMin = parseInt(hStr) * 60 + parseInt(mStr) + Math.round(durationHours * 60)
+  const h = Math.floor(totalMin / 60) % 24
+  const m = totalMin % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
 // ─── Tipos ────────────────────────────────────────────────────
@@ -67,8 +84,10 @@ function speedFromTable(table: PivotSpeedEntry[], laminaMm: number): number | nu
 interface CellEntry {
   rainfall: string
   lamina: string
-  speed: string      // auto-preenchido ou manual
-  speedAuto: boolean // se foi preenchido automaticamente
+  speed: string       // auto-preenchido ou manual
+  speedAuto: boolean  // se foi preenchido automaticamente
+  startTime: string   // HH:MM — manual
+  endTime: string     // HH:MM — calculado automaticamente
 }
 
 type ScheduleGrid = Record<string, Record<string, CellEntry>> // [seasonId][date]
@@ -109,6 +128,44 @@ function pctColor(pct: number | null, threshold: number): string {
   return '#22c55e'
 }
 
+// ─── Campo de entrada individual ─────────────────────────────
+
+function Field({
+  label, value, onChange, type = 'number', placeholder = '0',
+  color = '#8899aa', bgColor = 'rgba(255,255,255,0.06)',
+  borderColor = 'rgba(255,255,255,0.10)', readOnly = false,
+  bold = false,
+}: {
+  label: string; value: string; onChange?: (v: string) => void
+  type?: string; placeholder?: string; color?: string
+  bgColor?: string; borderColor?: string; readOnly?: boolean; bold?: boolean
+}) {
+  return (
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <p style={{ fontSize: 9, color: '#445566', margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+        {label}
+      </p>
+      <input
+        type={type} placeholder={placeholder}
+        value={value}
+        readOnly={readOnly}
+        onChange={e => onChange?.(e.target.value)}
+        style={{
+          width: '100%', padding: '7px 6px', borderRadius: 6,
+          background: readOnly ? 'rgba(255,255,255,0.03)' : bgColor,
+          border: `1px solid ${readOnly ? 'rgba(255,255,255,0.06)' : borderColor}`,
+          color: readOnly ? '#445566' : color,
+          fontSize: 13, textAlign: 'center',
+          fontFamily: 'var(--font-mono)',
+          fontWeight: bold ? 700 : 400,
+          boxSizing: 'border-box',
+          cursor: readOnly ? 'default' : undefined,
+        }}
+      />
+    </div>
+  )
+}
+
 // ─── Célula de entrada ────────────────────────────────────────
 
 function Cell({
@@ -117,90 +174,90 @@ function Cell({
   entry: CellEntry
   meta: PivotMeta
   date: string
-  onChange: (field: 'rainfall' | 'lamina' | 'speed', value: string, auto?: boolean) => void
+  onChange: (field: keyof CellEntry, value: string | boolean, auto?: boolean) => void
 }) {
-  const threshold = meta.context.pivot?.alert_threshold_percent ?? 70
-  const projected = projectPct(meta, date, entry.lamina, entry.rainfall)
-  const projColor = pctColor(projected, threshold)
-  const hasData = entry.rainfall !== '' || entry.lamina !== ''
+  function handleLamina(v: string) {
+    onChange('lamina', v)
+    const mm = parseNum(v)
+    if (mm != null && mm > 0 && meta.speedTable.length > 0) {
+      const tableEntry = entryFromTable(meta.speedTable, mm)
+      if (tableEntry) {
+        onChange('speed', String(tableEntry.speed_percent), true)
+        // Recalcular hora final se já tem hora inicial
+        if (entry.startTime) {
+          onChange('endTime', calcEndTime(entry.startTime, tableEntry.duration_hours))
+        }
+      }
+    } else if (v === '') {
+      onChange('speed', '', true)
+      onChange('endTime', '')
+    }
+  }
+
+  function handleStartTime(v: string) {
+    onChange('startTime', v)
+    // Recalcular hora final se tem lâmina
+    const mm = parseNum(entry.lamina)
+    if (mm != null && mm > 0 && meta.speedTable.length > 0) {
+      const tableEntry = entryFromTable(meta.speedTable, mm)
+      if (tableEntry && v) {
+        onChange('endTime', calcEndTime(v, tableEntry.duration_hours))
+      }
+    }
+  }
 
   return (
-    <div style={{
-      padding: '10px 8px',
-      background: hasData ? 'rgba(0,147,208,0.06)' : 'rgba(255,255,255,0.02)',
-      border: `1px solid ${hasData ? 'rgba(0,147,208,0.2)' : 'rgba(255,255,255,0.06)'}`,
-      borderRadius: 10,
-      display: 'flex', flexDirection: 'column', gap: 6,
-    }}>
-      {/* Chuva */}
-      <div>
-        <p style={{ fontSize: 9, color: '#445566', margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chuva</p>
-        <input
-          type="number" min="0" step="0.1" placeholder="0"
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Linha 1: Chuva | Lâmina | Velocidade */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Field
+          label="Chuva (mm)"
           value={entry.rainfall}
-          onChange={e => onChange('rainfall', e.target.value)}
-          style={{
-            width: '100%', padding: '6px 8px', borderRadius: 6,
-            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
-            color: 'rgba(255,255,255,0.75)', fontSize: 13, textAlign: 'center',
-            fontFamily: 'var(--font-mono)', boxSizing: 'border-box',
-          }}
+          onChange={v => onChange('rainfall', v)}
+          color="rgba(255,255,255,0.75)"
+          bgColor="rgba(255,255,255,0.06)"
+          borderColor="rgba(255,255,255,0.10)"
         />
-      </div>
-
-      {/* Lâmina */}
-      <div>
-        <p style={{ fontSize: 9, color: '#0093D0', margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lâmina</p>
-        <input
-          type="number" min="0" step="0.1" placeholder="0"
+        <Field
+          label="Lâmina (mm)"
           value={entry.lamina}
-          onChange={e => {
-            const v = e.target.value
-            onChange('lamina', v)
-            // Auto-fill speed from table
-            const mm = parseNum(v)
-            if (mm != null && mm > 0 && meta.speedTable.length > 0) {
-              const spd = speedFromTable(meta.speedTable, mm)
-              if (spd != null) onChange('speed', String(spd), true)
-            } else if (v === '') {
-              onChange('speed', '', true)
-            }
-          }}
-          style={{
-            width: '100%', padding: '6px 8px', borderRadius: 6,
-            background: 'rgba(0,147,208,0.10)', border: '1px solid rgba(0,147,208,0.25)',
-            color: '#0093D0', fontSize: 13, textAlign: 'center',
-            fontFamily: 'var(--font-mono)', fontWeight: 700, boxSizing: 'border-box',
-          }}
+          onChange={handleLamina}
+          color="#0093D0"
+          bgColor="rgba(0,147,208,0.10)"
+          borderColor="rgba(0,147,208,0.25)"
+          bold
         />
-      </div>
-
-      {/* Velocidade */}
-      <div>
-        <p style={{ fontSize: 9, color: '#f59e0b', margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Vel. {entry.speedAuto && entry.speed ? '(auto)' : ''}
-        </p>
-        <input
-          type="number" min="1" max="100" step="1" placeholder="—"
+        <Field
+          label={`Vel.% ${entry.speedAuto && entry.speed ? '↺' : ''}`}
           value={entry.speed}
-          onChange={e => onChange('speed', e.target.value, false)}
-          style={{
-            width: '100%', padding: '6px 8px', borderRadius: 6,
-            background: 'rgba(245,158,11,0.06)', border: `1px solid ${entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.08)'}`,
-            color: entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa',
-            fontSize: 13, textAlign: 'center', fontFamily: 'var(--font-mono)', boxSizing: 'border-box',
-          }}
+          onChange={v => onChange('speed', v, false)}
+          color={entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa'}
+          bgColor={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.04)'}
+          borderColor={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.08)'}
         />
       </div>
 
-      {/* Projeção */}
-      {projected != null && hasData && (
-        <div style={{ textAlign: 'center', marginTop: 2 }}>
-          <span style={{ fontSize: 11, fontWeight: 800, color: projColor, fontFamily: 'var(--font-mono)' }}>
-            → {Math.round(projected)}%
-          </span>
-        </div>
-      )}
+      {/* Linha 2: Hora Início | Hora Fim (calculada) */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Field
+          label="Início"
+          type="time"
+          value={entry.startTime}
+          onChange={handleStartTime}
+          color="#e2e8f0"
+          bgColor="rgba(255,255,255,0.06)"
+          borderColor="rgba(255,255,255,0.12)"
+        />
+        <Field
+          label="Fim (auto)"
+          type="time"
+          value={entry.endTime}
+          readOnly
+          color="#22c55e"
+        />
+        {/* Espaço equivalente ao campo Vel */}
+        <div style={{ flex: 1 }} />
+      </div>
     </div>
   )
 }
@@ -267,7 +324,7 @@ export default function LancamentosPage() {
         g[m.context.season.id] = {}
         for (let i = 0; i < 7; i++) {
           const d = addDays(today, i)
-          g[m.context.season.id][d] = { rainfall: '', lamina: '', speed: '', speedAuto: false }
+          g[m.context.season.id][d] = { rainfall: '', lamina: '', speed: '', speedAuto: false, startTime: '', endTime: '' }
         }
       }
       setGrid(g)
@@ -281,7 +338,7 @@ export default function LancamentosPage() {
   useEffect(() => { load() }, [load])
 
   // ── Update cell ──
-  function updateCell(seasonId: string, date: string, field: 'rainfall' | 'lamina' | 'speed', value: string, auto = false) {
+  function updateCell(seasonId: string, date: string, field: keyof CellEntry, value: string | boolean, auto = false) {
     setGrid(prev => ({
       ...prev,
       [seasonId]: {
@@ -334,6 +391,8 @@ export default function LancamentosPage() {
           rainfall_mm:             rainMm,
           actual_depth_mm:         irrigMm > 0 ? irrigMm : null,
           actual_speed_percent:    speedPct,
+          irrigation_start:        entry.startTime || null,
+          irrigation_end:          entry.endTime || null,
           recommended_depth_mm:    recDepth,
           field_capacity_percent:  fcPct,
           needs_irrigation:        adcNew < meta.cadMm,
@@ -376,9 +435,10 @@ export default function LancamentosPage() {
       for (const d of daysWithData) {
         const e = grid[meta.context.season.id][d]
         const parts: string[] = []
-        if (e.rainfall) parts.push(`🌧 Chuva: *${e.rainfall} mm*`)
-        if (e.lamina)   parts.push(`💦 Lâmina: *${e.lamina} mm*`)
-        if (e.speed)    parts.push(`⚙️ Vel: *${e.speed}%*`)
+        if (e.rainfall)  parts.push(`🌧 Chuva: *${e.rainfall} mm*`)
+        if (e.lamina)    parts.push(`💦 Lâmina: *${e.lamina} mm*`)
+        if (e.speed)     parts.push(`⚙️ Vel: *${e.speed}%*`)
+        if (e.startTime) parts.push(`🕐 *${e.startTime}${e.endTime ? ` → ${e.endTime}` : ''}*`)
         lines.push(`  • ${fmtWeekday(d)} ${fmtShort(d)}: ${parts.join(' | ')}`)
       }
       lines.push('')
@@ -454,8 +514,9 @@ export default function LancamentosPage() {
                       {hasD ? (
                         <>
                           {e.lamina && <div style={{ fontWeight: 700, color: '#16A34A' }}>{e.lamina} mm</div>}
-                          {e.rainfall && <div style={{ color: '#0284C7', fontSize: 11 }}>🌧 {e.rainfall}</div>}
+                          {e.rainfall && <div style={{ color: '#0284C7', fontSize: 11 }}>🌧 {e.rainfall} mm</div>}
                           {e.speed && <div style={{ color: '#888', fontSize: 10 }}>{e.speed}%</div>}
+                          {e.startTime && <div style={{ color: '#555', fontSize: 10 }}>{e.startTime}{e.endTime ? ` → ${e.endTime}` : ''}</div>}
                         </>
                       ) : <span style={{ color: '#ccc' }}>—</span>}
                     </td>
@@ -566,7 +627,7 @@ export default function LancamentosPage() {
               const { season, pivot, farm } = meta.context
               const threshold = pivot?.alert_threshold_percent ?? 70
               const currentColor = pctColor(meta.currentPct, threshold)
-              const entry = grid[season.id]?.[currentDate] ?? { rainfall: '', lamina: '', speed: '', speedAuto: false }
+              const entry = grid[season.id]?.[currentDate] ?? { rainfall: '', lamina: '', speed: '', speedAuto: false, startTime: '', endTime: '' }
               const projected = projectPct(meta, currentDate, entry.lamina, entry.rainfall)
               const projColor = pctColor(projected, threshold)
 
@@ -619,7 +680,7 @@ export default function LancamentosPage() {
                     entry={entry}
                     meta={meta}
                     date={currentDate}
-                    onChange={(field, value, auto) => updateCell(season.id, currentDate, field, value, auto)}
+                    onChange={(field, value, auto) => updateCell(season.id, currentDate, field as keyof CellEntry, value as string, auto)}
                   />
                 </div>
               )
