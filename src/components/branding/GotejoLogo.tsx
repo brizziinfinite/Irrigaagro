@@ -13,11 +13,10 @@ export default function GotejoLogo({
   showText = true,
   className = '',
 }: GotejoLogoProps) {
-  // Ícone: size px de altura. Wordmark: ~2× o ícone para ficar proporcional.
   const iconH = size
-  const iconW = Math.round(size * 0.87) // viewBox 200×230 → ratio ≈ 0.87
-  const wordSize = Math.round(size * 0.95) // "Gotejo" quase igual à altura do ícone
-  const tagSize = Math.round(size * 0.22)  // tagline bem menor
+  const iconW = Math.round(size * 0.87)
+  const wordSize = Math.round(size * 0.95)
+  const tagSize = Math.round(size * 0.195)
 
   return (
     <div
@@ -59,7 +58,7 @@ export default function GotejoLogo({
             fontSize: wordSize,
             letterSpacing: '0.02em',
             lineHeight: 1,
-            display: 'block',
+            whiteSpace: 'nowrap',
           }}>
             <span style={{
               background: 'linear-gradient(135deg, #00D4AA, #38BDF8)',
@@ -68,20 +67,34 @@ export default function GotejoLogo({
             }}>G</span>
             <span style={{ color: '#fff' }}>otejo</span>
           </span>
-          {/* Tagline — width: 100% estica para cobrir a largura do wordmark acima */}
-          <span style={{
-            display: 'block',
-            fontSize: tagSize,
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.28)',
-            letterSpacing: '0.28em',
-            marginTop: Math.round(size * 0.08),
-            width: '100%',
-            textAlign: 'justify',
-            // "text-align: justify" não estica a última linha, então usamos este truque:
-            textAlignLast: 'justify',
-          }}>Irrigação Inteligente</span>
+
+          {/*
+            Tagline: usamos um SVG de texto para garantir que a largura seja
+            exatamente igual à do wordmark — sem distorção, sem depender de JS.
+            O SVG tem width=100% e o <text> usa textLength="100%" lengthAdjust="spacing"
+            para distribuir o espaço entre letras automaticamente.
+          */}
+          <svg
+            width="100%"
+            height={tagSize + 2}
+            viewBox={`0 0 100 ${tagSize + 2}`}
+            preserveAspectRatio="none"
+            style={{ marginTop: Math.round(size * 0.07), overflow: 'visible' }}
+          >
+            <text
+              x="0"
+              y={tagSize}
+              fontSize={tagSize}
+              fontWeight="600"
+              fontFamily="inherit"
+              fill="rgba(255,255,255,0.28)"
+              textLength="100"
+              lengthAdjust="spacing"
+              style={{ textTransform: 'uppercase', letterSpacing: 0 }}
+            >
+              IRRIGAÇÃO INTELIGENTE
+            </text>
+          </svg>
         </div>
       )}
     </div>
