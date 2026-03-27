@@ -128,21 +128,20 @@ function pctColor(pct: number | null, threshold: number): string {
   return '#22c55e'
 }
 
-// ─── Campo de entrada individual ─────────────────────────────
+// ─── Mini campo de entrada ────────────────────────────────────
 
-function Field({
-  label, value, onChange, type = 'number', placeholder = '0',
-  color = '#8899aa', bgColor = 'rgba(255,255,255,0.06)',
-  borderColor = 'rgba(255,255,255,0.10)', readOnly = false,
-  bold = false,
+function MiniField({
+  label, value, onChange, type = 'number', placeholder = '—',
+  color = '#8899aa', bg = 'rgba(255,255,255,0.05)',
+  border = 'rgba(255,255,255,0.09)', readOnly = false, bold = false, width = 72,
 }: {
   label: string; value: string; onChange?: (v: string) => void
   type?: string; placeholder?: string; color?: string
-  bgColor?: string; borderColor?: string; readOnly?: boolean; bold?: boolean
+  bg?: string; border?: string; readOnly?: boolean; bold?: boolean; width?: number
 }) {
   return (
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <p style={{ fontSize: 9, color: '#445566', margin: '0 0 3px', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+    <div style={{ width, flexShrink: 0 }}>
+      <p style={{ fontSize: 8, color: '#3a4f60', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
         {label}
       </p>
       <input
@@ -151,113 +150,17 @@ function Field({
         readOnly={readOnly}
         onChange={e => onChange?.(e.target.value)}
         style={{
-          width: '100%', padding: '7px 6px', borderRadius: 6,
-          background: readOnly ? 'rgba(255,255,255,0.03)' : bgColor,
-          border: `1px solid ${readOnly ? 'rgba(255,255,255,0.06)' : borderColor}`,
-          color: readOnly ? '#445566' : color,
-          fontSize: 13, textAlign: 'center',
+          width: '100%', padding: '5px 4px', borderRadius: 5,
+          background: readOnly ? 'rgba(255,255,255,0.02)' : bg,
+          border: `1px solid ${readOnly ? 'rgba(255,255,255,0.05)' : border}`,
+          color: readOnly ? '#334455' : color,
+          fontSize: 12, textAlign: 'center',
           fontFamily: 'var(--font-mono)',
           fontWeight: bold ? 700 : 400,
           boxSizing: 'border-box',
-          cursor: readOnly ? 'default' : undefined,
+          cursor: readOnly ? 'default' : 'text',
         }}
       />
-    </div>
-  )
-}
-
-// ─── Célula de entrada ────────────────────────────────────────
-
-function Cell({
-  entry, meta, date, onChange,
-}: {
-  entry: CellEntry
-  meta: PivotMeta
-  date: string
-  onChange: (field: keyof CellEntry, value: string | boolean, auto?: boolean) => void
-}) {
-  function handleLamina(v: string) {
-    onChange('lamina', v)
-    const mm = parseNum(v)
-    if (mm != null && mm > 0 && meta.speedTable.length > 0) {
-      const tableEntry = entryFromTable(meta.speedTable, mm)
-      if (tableEntry) {
-        onChange('speed', String(tableEntry.speed_percent), true)
-        // Recalcular hora final se já tem hora inicial
-        if (entry.startTime) {
-          onChange('endTime', calcEndTime(entry.startTime, tableEntry.duration_hours))
-        }
-      }
-    } else if (v === '') {
-      onChange('speed', '', true)
-      onChange('endTime', '')
-    }
-  }
-
-  function handleStartTime(v: string) {
-    onChange('startTime', v)
-    // Recalcular hora final se tem lâmina
-    const mm = parseNum(entry.lamina)
-    if (mm != null && mm > 0 && meta.speedTable.length > 0) {
-      const tableEntry = entryFromTable(meta.speedTable, mm)
-      if (tableEntry && v) {
-        onChange('endTime', calcEndTime(v, tableEntry.duration_hours))
-      }
-    }
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* Linha 1: Chuva | Lâmina | Velocidade */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Field
-          label="Chuva (mm)"
-          value={entry.rainfall}
-          onChange={v => onChange('rainfall', v)}
-          color="rgba(255,255,255,0.75)"
-          bgColor="rgba(255,255,255,0.06)"
-          borderColor="rgba(255,255,255,0.10)"
-        />
-        <Field
-          label="Lâmina (mm)"
-          value={entry.lamina}
-          onChange={handleLamina}
-          color="#0093D0"
-          bgColor="rgba(0,147,208,0.10)"
-          borderColor="rgba(0,147,208,0.25)"
-          bold
-        />
-        <Field
-          label={`Vel.% ${entry.speedAuto && entry.speed ? '↺' : ''}`}
-          value={entry.speed}
-          onChange={v => onChange('speed', v, false)}
-          color={entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa'}
-          bgColor={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.04)'}
-          borderColor={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.08)'}
-        />
-      </div>
-
-      {/* Linha 2: Hora Início | Hora Fim (calculada) */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Field
-          label="Início"
-          type="time"
-          value={entry.startTime}
-          onChange={handleStartTime}
-          color="#e2e8f0"
-          bgColor="rgba(255,255,255,0.06)"
-          borderColor="rgba(255,255,255,0.12)"
-        />
-        <Field
-          label="Fim (auto)"
-          type="time"
-          value={entry.endTime}
-          readOnly
-          color="#22c55e"
-        />
-        {/* Espaço equivalente ao campo Vel */}
-        <div style={{ flex: 1 }} />
-      </div>
     </div>
   )
 }
@@ -612,17 +515,8 @@ export default function LancamentosPage() {
         </div>
       ) : (
         <>
-          {/* ── Column headers ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 12, marginBottom: 8, padding: '0 4px' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Pivô / Parcela</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#0093D0', textAlign: 'center' }}>
-              {fmtWeekday(currentDate).charAt(0).toUpperCase() + fmtWeekday(currentDate).slice(1)} · {fmtShort(currentDate)}
-              {currentDate === today && <span style={{ color: '#22c55e', marginLeft: 8, fontSize: 10 }}>Hoje</span>}
-            </span>
-          </div>
-
-          {/* ── Pivot rows ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* ── Pivot rows — um card compacto por pivô ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {metas.map(meta => {
               const { season, pivot, farm } = meta.context
               const threshold = pivot?.alert_threshold_percent ?? 70
@@ -630,76 +524,133 @@ export default function LancamentosPage() {
               const entry = grid[season.id]?.[currentDate] ?? { rainfall: '', lamina: '', speed: '', speedAuto: false, startTime: '', endTime: '' }
               const projected = projectPct(meta, currentDate, entry.lamina, entry.rainfall)
               const projColor = pctColor(projected, threshold)
+              const isSavedPivot = savedDays.has(currentDate) // simplificado — salva todos juntos
+              const hasEntry = entry.rainfall !== '' || entry.lamina !== ''
+
+              function handleLamina(v: string) {
+                updateCell(season.id, currentDate, 'lamina', v)
+                const mm = parseNum(v)
+                if (mm != null && mm > 0 && meta.speedTable.length > 0) {
+                  const te = entryFromTable(meta.speedTable, mm)
+                  if (te) {
+                    updateCell(season.id, currentDate, 'speed', String(te.speed_percent), true)
+                    if (entry.startTime) updateCell(season.id, currentDate, 'endTime', calcEndTime(entry.startTime, te.duration_hours))
+                  }
+                } else if (v === '') {
+                  updateCell(season.id, currentDate, 'speed', '', true)
+                  updateCell(season.id, currentDate, 'endTime', '')
+                }
+              }
+
+              function handleStart(v: string) {
+                updateCell(season.id, currentDate, 'startTime', v)
+                const mm = parseNum(entry.lamina)
+                if (mm != null && mm > 0 && meta.speedTable.length > 0) {
+                  const te = entryFromTable(meta.speedTable, mm)
+                  if (te && v) updateCell(season.id, currentDate, 'endTime', calcEndTime(v, te.duration_hours))
+                }
+              }
 
               return (
                 <div key={season.id} style={{
-                  background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: 12, padding: '14px 16px',
-                  display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16, alignItems: 'start',
+                  background: '#0f1923',
+                  border: `1px solid ${hasEntry ? 'rgba(0,147,208,0.18)' : 'rgba(255,255,255,0.06)'}`,
+                  borderRadius: 12,
+                  padding: '10px 14px',
+                  display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
                 }}>
-                  {/* Pivot info */}
-                  <div>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
+
+                  {/* ── Info do pivô ── */}
+                  <div style={{ minWidth: 140, flex: '0 0 140px' }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', margin: 0, lineHeight: 1.2 }}>
                       {pivot?.name ?? season.name}
                     </p>
-                    <p style={{ fontSize: 11, color: '#445566', margin: '2px 0 6px' }}>
-                      {farm.name} · {season.name}
+                    <p style={{ fontSize: 10, color: '#445566', margin: '1px 0 4px', lineHeight: 1.3 }}>
+                      {farm.name}
                     </p>
-
-                    {/* Current % → projected % */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontSize: 9, color: '#445566', margin: '0 0 2px', textTransform: 'uppercase' }}>Atual</p>
-                        <span style={{ fontSize: 18, fontWeight: 800, color: currentColor, fontFamily: 'var(--font-mono)' }}>
-                          {meta.currentPct != null ? `${Math.round(meta.currentPct)}%` : '—'}
-                        </span>
-                      </div>
-                      {projected != null && (entry.lamina !== '' || entry.rainfall !== '') && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: currentColor, fontFamily: 'var(--font-mono)' }}>
+                        {meta.currentPct != null ? `${Math.round(meta.currentPct)}%` : '—'}
+                      </span>
+                      {projected != null && hasEntry && (
                         <>
-                          <span style={{ color: '#334455', fontSize: 16 }}>→</span>
-                          <div style={{ textAlign: 'center' }}>
-                            <p style={{ fontSize: 9, color: '#445566', margin: '0 0 2px', textTransform: 'uppercase' }}>Após</p>
-                            <span style={{ fontSize: 18, fontWeight: 800, color: projColor, fontFamily: 'var(--font-mono)' }}>
-                              {Math.round(projected)}%
-                            </span>
-                          </div>
+                          <span style={{ fontSize: 11, color: '#334455' }}>→</span>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: projColor, fontFamily: 'var(--font-mono)' }}>
+                            {Math.round(projected)}%
+                          </span>
                         </>
                       )}
                     </div>
-
-                    {/* Speed table indicator */}
-                    {meta.speedTable.length > 0 && (
-                      <p style={{ fontSize: 10, color: '#334455', margin: '8px 0 0' }}>
-                        {meta.speedTable.length} velocidades cadastradas
-                      </p>
-                    )}
                   </div>
 
-                  {/* Entry cell */}
-                  <Cell
-                    entry={entry}
-                    meta={meta}
-                    date={currentDate}
-                    onChange={(field, value, auto) => updateCell(season.id, currentDate, field as keyof CellEntry, value as string, auto)}
-                  />
+                  {/* ── Campos compactos ── */}
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', flexWrap: 'wrap', flex: 1 }}>
+                    <MiniField
+                      label="Chuva mm"
+                      value={entry.rainfall}
+                      onChange={v => updateCell(season.id, currentDate, 'rainfall', v)}
+                      color="rgba(255,255,255,0.7)"
+                      width={68}
+                    />
+                    <MiniField
+                      label="Lâmina mm"
+                      value={entry.lamina}
+                      onChange={handleLamina}
+                      color="#0093D0"
+                      bg="rgba(0,147,208,0.10)"
+                      border="rgba(0,147,208,0.25)"
+                      bold
+                      width={72}
+                    />
+                    <MiniField
+                      label={entry.speedAuto && entry.speed ? 'Vel % ↺' : 'Vel %'}
+                      value={entry.speed}
+                      onChange={v => updateCell(season.id, currentDate, 'speed', v, false)}
+                      color={entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa'}
+                      bg={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.04)'}
+                      border={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.08)'}
+                      width={60}
+                    />
+                    <MiniField
+                      label="Início"
+                      type="time"
+                      value={entry.startTime}
+                      onChange={handleStart}
+                      color="#e2e8f0"
+                      width={80}
+                    />
+                    <MiniField
+                      label="Fim"
+                      type="time"
+                      value={entry.endTime}
+                      readOnly
+                      color="#22c55e"
+                      width={72}
+                    />
+                  </div>
+
+                  {/* ── Botão Salvar individual ── */}
+                  <button
+                    onClick={handleSaveDay}
+                    disabled={saving}
+                    className="no-print"
+                    style={{
+                      flexShrink: 0,
+                      padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                      fontSize: 12, fontWeight: 700,
+                      background: isSavedPivot ? 'rgba(34,197,94,0.12)' : '#0093D0',
+                      color: isSavedPivot ? '#22c55e' : '#fff',
+                      whiteSpace: 'nowrap',
+                    }}>
+                    {saving ? '…' : isSavedPivot ? `✓ ${fmtShort(currentDate)}` : `Salvar`}
+                  </button>
                 </div>
               )
             })}
           </div>
 
-          {/* ── Footer ── */}
-          <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }} className="no-print">
-            {/* Salvar dia */}
-            <button onClick={handleSaveDay} disabled={saving}
-              style={{
-                flex: 1, minWidth: 200, padding: '14px 20px', borderRadius: 12,
-                fontSize: 15, fontWeight: 800, border: 'none', cursor: 'pointer',
-                background: isSaved ? 'rgba(34,197,94,0.15)' : '#0093D0',
-                color: isSaved ? '#22c55e' : '#fff',
-              }}>
-              {saving ? 'Salvando…' : isSaved ? `✓ Salvo — ${fmtShort(currentDate)}` : `Salvar ${fmtShort(currentDate)}`}
-            </button>
-
+          {/* ── Footer — só Imprimir e WhatsApp ── */}
+          <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }} className="no-print">
             {/* Imprimir */}
             {savedDays.size > 0 && (
               <button onClick={handlePrint}
