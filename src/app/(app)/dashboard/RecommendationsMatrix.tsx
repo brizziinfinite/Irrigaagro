@@ -62,7 +62,7 @@ function WeatherIconSvg({ icon, size = 18 }: { icon: WeatherIcon; size?: number 
 
 // ─── Share text builder ───────────────────────────────────────
 function buildShareText(recs: PivotRecommendation[], days: string[]): string {
-  const header = `IrrigaAgro — Recomendações 7 dias (${new Date().toLocaleDateString('pt-BR')})\n`
+  const header = `Gotejo — Recomendações 7 dias (${new Date().toLocaleDateString('pt-BR')})\n`
   const dateRow = 'Pivô'.padEnd(20) + days.map(d => d.slice(5).replace('-', '/')).join('  ') + '\n'
   const separator = '─'.repeat(70) + '\n'
 
@@ -148,7 +148,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: P
     const text = buildShareText(filtered, forecastDays)
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title: 'IrrigaAgro — Recomendações', text })
+        await navigator.share({ title: 'Gotejo — Recomendações', text })
         return
       } catch {
         // fall through to clipboard

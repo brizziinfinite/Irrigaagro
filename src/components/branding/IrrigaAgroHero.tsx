@@ -1,7 +1,8 @@
 'use client'
 
 import { Droplets, Leaf, Orbit } from 'lucide-react'
-import IrrigaAgroLogo from './IrrigaAgroLogo'
+import GotejoLogo from './GotejoLogo'
+
 
 const FEATURES = [
   { icon: Droplets, label: 'Manejo hídrico diário' },
@@ -21,18 +22,18 @@ export default function IrrigaAgroHero() {
 
       <div className="relative z-10 space-y-10">
         <div className="inline-flex items-center rounded-full border border-white/8 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-          Plataforma IrrigaAgro
+          Plataforma Gotejo
         </div>
 
         <div className="space-y-6">
-          <IrrigaAgroLogo size={42} className="text-[32px]" />
+          <GotejoLogo size={42} className="text-[32px]" />
 
           <div className="max-w-[470px] space-y-4">
             <h2 className="text-[2.6rem] font-semibold leading-[1.02] tracking-[-0.05em] text-slate-50">
               Software agrícola com leitura técnica, simples e confiável.
             </h2>
             <p className="max-w-md text-[15px] leading-7 text-slate-400">
-              O IrrigaAgro organiza a operação de irrigação em uma interface escura, profissional e pensada para uso diário.
+              O Gotejo organiza a operação de irrigação em uma interface escura, profissional e pensada para uso diário.
             </p>
           </div>
         </div>

@@ -1,5 +1,5 @@
 // ============================================================
-// Funções de Balanço Hídrico FAO-56 — IrrigaAgro v2
+// Funções de Balanço Hídrico FAO-56 — Gotejo
 // Todas as funções são puras (sem side effects)
 // ============================================================
 

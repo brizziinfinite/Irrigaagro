@@ -634,7 +634,7 @@ function exportCSV(records: DailyManagement[], seasonName: string) {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a'); a.href = url
-  a.download = `irrigaagro-${seasonName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`
+  a.download = `gotejo-${seasonName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }

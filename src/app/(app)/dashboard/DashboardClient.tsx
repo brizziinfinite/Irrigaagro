@@ -75,7 +75,7 @@ function Onboarding() {
         }}>
           <Droplets size={32} className="text-white" strokeWidth={2} />
         </div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#e2e8f0', marginBottom: 10 }}>Bem-vindo ao IrrigaAgro</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#e2e8f0', marginBottom: 10 }}>Bem-vindo ao Gotejo</h1>
         <p style={{ fontSize: 15, color: '#8899aa', lineHeight: 1.6 }}>
           Siga os passos abaixo para configurar seu sistema de manejo hídrico baseado no método FAO-56.
         </p>

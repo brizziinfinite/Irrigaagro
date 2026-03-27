@@ -15,7 +15,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import IrrigaAgroLogo from '@/components/branding/IrrigaAgroLogo';
+import GotejoLogo from '@/components/branding/GotejoLogo';
 
 // SVG icon de pivô central — mockup aprovado
 function PivotIcon({ size = 20 }: { size?: number }) {
@@ -121,17 +121,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           gap: 14,
         }}>
           <div style={{ minWidth: 0 }}>
-            <IrrigaAgroLogo size={42} showText className="text-[21px]" />
-            <p style={{
-              fontSize: 9,
-              color: '#556677',
-              margin: 0,
-              marginTop: 6,
-              textTransform: 'uppercase',
-              letterSpacing: '0.14em',
-            }}>
-              Irrigação de Precisão
-            </p>
+            <GotejoLogo size={42} showText />
           </div>
         </div>
 
