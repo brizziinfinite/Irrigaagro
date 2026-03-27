@@ -10,17 +10,17 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
   const cookieStore = await cookies()
-  const preferredCompanyId = cookieStore.get('irrigaagro:active_company_id')?.value ?? null
+  const preferredCompanyId = cookieStore.get('gotejo:active_company_id')?.value ?? null
 
   if (!user) {
     return (
       <DashboardClient
         pivots={[]}
         activeSeasons={[]}
+        contexts={[]}
         hasPivots={false}
         lastManagementBySeason={{}}
         historyBySeason={{}}
-        projectionBySeason={{}}
         diagnosticsByPivot={{}}
         energyBills={[]}
         summary={{
@@ -44,10 +44,10 @@ export default async function DashboardPage() {
       <DashboardClient
         pivots={dashboard.pivots}
         activeSeasons={dashboard.activeSeasons}
+        contexts={dashboard.contexts}
         hasPivots={dashboard.hasPivots}
         lastManagementBySeason={dashboard.lastManagementBySeason}
         historyBySeason={dashboard.historyBySeason}
-        projectionBySeason={dashboard.projectionBySeason}
         diagnosticsByPivot={dashboard.diagnosticsByPivot}
         energyBills={dashboard.energyBills}
         summary={dashboard.summary}

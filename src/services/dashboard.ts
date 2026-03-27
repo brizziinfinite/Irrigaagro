@@ -2,7 +2,7 @@ import { calcProjection, calcCTA, getStageInfoForDas, type ProjectionDay } from 
 import { getUserCompanyOrThrow } from '@/services/companies'
 import { listFarmsByCompany } from '@/services/farms'
 import { getPivotDiagnostic, type PivotDiagnostic } from '@/services/pivot-diagnostics'
-import { listManagementSeasonContexts, listDailyManagementBySeason } from '@/services/management'
+import { listManagementSeasonContexts, listDailyManagementBySeason, type ManagementSeasonContext } from '@/services/management'
 import { listPivotsByFarmIds } from '@/services/pivots'
 import { listEnergyBillsByPivotIds } from '@/services/energy-bills'
 import type { TypedSupabaseClient } from '@/services/base'
@@ -18,6 +18,7 @@ export interface DashboardData {
   companyId: string
   pivots: DashboardPivot[]
   activeSeasons: Season[]
+  contexts: ManagementSeasonContext[]
   hasPivots: boolean
   lastManagementBySeason: Record<string, DailyManagement>
   historyBySeason: Record<string, DailyManagement[]>
@@ -41,37 +42,50 @@ export async function getDashboardDataForUser(
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
   preferredCompanyId?: string | null
 ): Promise<DashboardData> {
+  // 1ª rodada: company (depende de userId)
   const company = await getUserCompanyOrThrow(userId, client, preferredCompanyId)
-  const farms = await listFarmsByCompany(company.id, client)
+
+  // 2ª rodada: farms + contexts em paralelo (ambos dependem só de company.id)
+  const [farms, contexts] = await Promise.all([
+    listFarmsByCompany(company.id, client),
+    listManagementSeasonContexts(company.id, client),
+  ])
+
   const farmMap = new Map(farms.map((farm) => [farm.id, farm]))
-  const pivots = (await listPivotsByFarmIds(farms.map((farm) => farm.id), client)).map((pivot) => ({
+  const farmIds = farms.map((farm) => farm.id)
+
+  // 3ª rodada: pivots + histórico de todas as safras ativas em paralelo
+  const activeContexts = contexts.filter((item) => item.season.is_active)
+
+  const [rawPivots, allHistories] = await Promise.all([
+    listPivotsByFarmIds(farmIds, client),
+    Promise.all(activeContexts.map((ctx) => listDailyManagementBySeason(ctx.season.id, client))),
+  ])
+
+  const pivots = rawPivots.map((pivot) => ({
     ...pivot,
     farms: farmMap.get(pivot.farm_id)
       ? { id: pivot.farm_id, name: farmMap.get(pivot.farm_id)!.name }
       : null,
   })) as DashboardPivot[]
-  const contexts = await listManagementSeasonContexts(company.id, client)
 
-  const activeSeasons = contexts
-    .filter((context) => context.season.is_active)
-    .map((context) => context.season)
+  const activeSeasons = activeContexts.map((context) => context.season)
 
+  // Processar históricos (já vieram todos em paralelo)
   const lastManagementBySeason: Record<string, DailyManagement> = {}
   const historyBySeason: Record<string, DailyManagement[]> = {}
   const projectionBySeason: Record<string, ProjectionDay[]> = {}
+  const today = new Date().toISOString().slice(0, 10)
 
-  for (const context of contexts.filter((item) => item.season.is_active)) {
-    const { season, crop, pivot } = context
-    const history = await listDailyManagementBySeason(season.id, client)
+  for (let i = 0; i < activeContexts.length; i++) {
+    const { season, crop, pivot } = activeContexts[i]
+    const history = allHistories[i]
     const lastManagement = history[0] ?? null
-    if (lastManagement) {
-      lastManagementBySeason[season.id] = lastManagement
-    }
+    if (lastManagement) lastManagementBySeason[season.id] = lastManagement
     historyBySeason[season.id] = history.slice(0, 7).reverse()
 
     if (!crop || !season.planting_date) continue
 
-    const today = new Date().toISOString().slice(0, 10)
     const das = calcDAS(season.planting_date, today)
     const avgEto = lastManagement?.eto_mm ?? 5
     let startAdc = 0
@@ -90,28 +104,24 @@ export async function getDashboardDataForUser(
     }
 
     projectionBySeason[season.id] = calcProjection({
-      crop,
-      startDate: today,
-      startDas: das,
-      startAdc,
+      crop, startDate: today, startDas: das, startAdc,
       fieldCapacity: Number(season.field_capacity ?? 32),
-      wiltingPoint: Number(season.wilting_point ?? 14),
-      bulkDensity: Number(season.bulk_density ?? 1.4),
-      avgEto,
-      pivot,
-      days: 7,
+      wiltingPoint:  Number(season.wilting_point  ?? 14),
+      bulkDensity:   Number(season.bulk_density   ?? 1.4),
+      avgEto, pivot, days: 7,
     })
   }
 
-  const energyBills = await listEnergyBillsByPivotIds(
-    pivots.map(p => p.id),
-    client
-  )
-
+  // 4ª rodada: energyBills + diagnostics em paralelo (dependem de pivots)
   pivots.sort((a, b) => a.name.localeCompare(b.name))
-  const diagnostics = await Promise.all(
-    pivots.map(async (pivot) => [pivot.id, await getPivotDiagnostic(company.id, pivot.id, undefined, client)] as const)
-  )
+
+  const [energyBills, diagnostics] = await Promise.all([
+    listEnergyBillsByPivotIds(pivots.map(p => p.id), client),
+    Promise.all(
+      pivots.map(async (pivot) => [pivot.id, await getPivotDiagnostic(company.id, pivot.id, undefined, client)] as const)
+    ),
+  ])
+
   const diagnosticsByPivot = Object.fromEntries(diagnostics)
 
   const summary = {
@@ -129,6 +139,7 @@ export async function getDashboardDataForUser(
     companyId: company.id,
     pivots,
     activeSeasons,
+    contexts,
     hasPivots: pivots.length > 0,
     lastManagementBySeason,
     historyBySeason,

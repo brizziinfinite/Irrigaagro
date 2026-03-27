@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
-import type { Farm, Pivot, SpeedTableRow } from '@/types/database'
+import type { Farm, Pivot, SpeedTableRow, WeatherSource } from '@/types/database'
 import { useAuth } from '@/hooks/useAuth'
 import { listFarmsByCompany } from '@/services/farms'
 import {
@@ -12,7 +12,7 @@ import {
   updatePivot,
   type PivotWithFarmName,
 } from '@/services/pivots'
-import { CircleDot, Plus, Pencil, Trash2, X, Loader2, ChevronDown, Table2, ChevronRight, MapPin, Satellite, Sheet, Hand } from 'lucide-react'
+import { CircleDot, Plus, Pencil, Trash2, X, Loader2, ChevronDown, Table2, ChevronRight, MapPin, Satellite, Sheet, Hand, Radio } from 'lucide-react'
 
 const PivotMiniMapDynamic = dynamic(
   () => import('./PivotMiniMap').then(m => ({ default: m.PivotMiniMap })),
@@ -200,9 +200,12 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
   })
   const parsedCoords = useMemo(() => parseCoords(coordsRaw), [coordsRaw])
   const [alertThreshold, setAlertThreshold] = useState(pivot?.alert_threshold_percent?.toString() ?? '70')
-  const [weatherSource, setWeatherSource] = useState<'nasa' | 'google_sheets' | 'manual'>(pivot?.weather_source ?? 'nasa')
+  const [weatherSource, setWeatherSource] = useState<WeatherSource>(pivot?.weather_source ?? 'nasa')
   const [spreadsheetId, setSpreadsheetId] = useState(pivot?.weather_config?.spreadsheet_id ?? '')
   const [sheetGid, setSheetGid] = useState(pivot?.weather_config?.gid ?? '')
+  const [plugfieldDeviceId, setPlugfieldDeviceId] = useState(pivot?.weather_config?.plugfield_device_id?.toString() ?? '')
+  const [plugfieldToken, setPlugfieldToken] = useState(pivot?.weather_config?.plugfield_token ?? '')
+  const [plugfieldApiKey, setPlugfieldApiKey] = useState(pivot?.weather_config?.plugfield_api_key ?? '')
   const [sectorStart, setSectorStart] = useState<string>(pivot?.sector_start_deg?.toString() ?? '')
   const [sectorEnd, setSectorEnd] = useState<string>(pivot?.sector_end_deg?.toString() ?? '')
   const [loading, setLoading] = useState(false)
@@ -287,7 +290,14 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
       weather_source: weatherSource,
       weather_config: weatherSource === 'google_sheets' && spreadsheetId
         ? { spreadsheet_id: spreadsheetId, gid: sheetGid || undefined }
-        : null,
+        : weatherSource === 'plugfield' && plugfieldDeviceId
+          ? {
+              plugfield_device_id: Number(plugfieldDeviceId),
+              plugfield_token: plugfieldToken || undefined,
+              plugfield_api_key: plugfieldApiKey || undefined,
+              ...(pivot?.weather_config?.station_id ? { station_id: pivot.weather_config.station_id } : {}),
+            }
+          : null,
       sector_start_deg: sectorStart ? Number(sectorStart) : null,
       sector_end_deg: sectorEnd ? Number(sectorEnd) : null,
     }
@@ -572,22 +582,21 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
           </div>
 
           {/* Seletor de fonte */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8 }}>
             {([
-              { value: 'nasa',          label: 'NASA POWER',    icon: Satellite, desc: 'Por coordenada — sempre disponível', disabled: false },
-              { value: 'google_sheets', label: 'Google Sheets', icon: Sheet,     desc: 'Em breve', disabled: true },
-              { value: 'manual',        label: 'Manual',        icon: Hand,      desc: 'Digitar os dados diariamente', disabled: false },
+              { value: 'plugfield',     label: 'Plugfield',     icon: Radio,     desc: 'Estação física — API direta' },
+              { value: 'nasa',          label: 'NASA POWER',    icon: Satellite, desc: 'Por coordenada — gratuito' },
+              { value: 'google_sheets', label: 'Google Sheets', icon: Sheet,     desc: 'Planilha exportada' },
+              { value: 'manual',        label: 'Manual',        icon: Hand,      desc: 'Digitar diariamente' },
             ] as const).map(opt => (
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => !opt.disabled && setWeatherSource(opt.value)}
-                disabled={opt.disabled}
+                onClick={() => setWeatherSource(opt.value)}
                 style={{
                   padding: '10px 8px', borderRadius: 10, border: `1px solid ${weatherSource === opt.value ? 'rgb(0 147 208 / 0.35)' : 'rgba(255,255,255,0.08)'}`,
                   background: weatherSource === opt.value ? 'rgb(0 147 208 / 0.10)' : '#0d1520',
-                  cursor: opt.disabled ? 'not-allowed' : 'pointer', textAlign: 'center',
-                  opacity: opt.disabled ? 0.4 : 1,
+                  cursor: 'pointer', textAlign: 'center',
                 }}
               >
                 <opt.icon size={14} style={{ color: weatherSource === opt.value ? '#0093D0' : '#556677', margin: '0 auto 4px' }} />
@@ -596,6 +605,52 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
               </button>
             ))}
           </div>
+
+          {/* Config Plugfield */}
+          {weatherSource === 'plugfield' && (
+            <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: 11, color: '#8899aa' }}>
+                Credenciais da sua conta Plugfield. Encontre no painel em <strong style={{ color: '#e2e8f0' }}>Configurações → API</strong>.
+              </p>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Device ID</label>
+                <input
+                  type="number"
+                  value={plugfieldDeviceId}
+                  onChange={e => setPlugfieldDeviceId(e.target.value)}
+                  placeholder="Ex: 3228"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, fontSize: 13, background: '#080e14', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+                  onFocus={e => e.target.style.borderColor = '#0093D0'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+                <p style={{ fontSize: 10, color: '#556677', marginTop: 3 }}>Número do equipamento — aparece na URL ao abrir a estação no painel Plugfield.</p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Token (Authorization)</label>
+                <input
+                  type="password"
+                  value={plugfieldToken}
+                  onChange={e => setPlugfieldToken(e.target.value)}
+                  placeholder="eyJhbGci..."
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, fontSize: 13, background: '#080e14', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', fontFamily: 'var(--font-mono)' }}
+                  onFocus={e => e.target.style.borderColor = '#0093D0'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>API Key (x-api-key)</label>
+                <input
+                  type="password"
+                  value={plugfieldApiKey}
+                  onChange={e => setPlugfieldApiKey(e.target.value)}
+                  placeholder="seX5bBCI..."
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, fontSize: 13, background: '#080e14', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', fontFamily: 'var(--font-mono)' }}
+                  onFocus={e => e.target.style.borderColor = '#0093D0'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Config Google Sheets */}
           {weatherSource === 'google_sheets' && (
@@ -609,11 +664,9 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
                   type="text"
                   value={spreadsheetId}
                   onChange={e => {
-                    // Aceita URL completa ou ID direto
                     const val = e.target.value
                     const match = val.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/)
                     setSpreadsheetId(match ? match[1] : val)
-                    // Extrai gid se houver
                     const gidMatch = val.match(/[#&]gid=(\d+)/)
                     if (gidMatch) setSheetGid(gidMatch[1])
                   }}
@@ -717,8 +770,8 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             )}
             {pivot.weather_source && pivot.weather_source !== 'manual' && (
               <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'rgb(6 182 212 / 0.08)', border: '1px solid rgb(6 182 212 / 0.2)', color: '#06b6d4', display: 'flex', alignItems: 'center', gap: 3 }}>
-                {pivot.weather_source === 'nasa' ? <Satellite size={9} /> : <Sheet size={9} />}
-                {pivot.weather_source === 'nasa' ? 'NASA POWER' : 'Google Sheets'}
+                {pivot.weather_source === 'nasa' ? <Satellite size={9} /> : pivot.weather_source === 'plugfield' ? <Radio size={9} /> : <Sheet size={9} />}
+                {pivot.weather_source === 'nasa' ? 'NASA POWER' : pivot.weather_source === 'plugfield' ? 'Plugfield' : 'Google Sheets'}
               </span>
             )}
             {pivot.sector_start_deg != null && (

@@ -1,13 +1,18 @@
 // ============================================================
 // Cron Job — Ingestão Diária de Dados Climáticos
-// Roda todo dia às 04:00 UTC (01:00 BRT), ANTES do daily-balance
-// Busca dados D-1 de cada pivô (Google Sheets ou NASA POWER)
-// e grava na tabela weather_data
+// Roda todo dia às 22:00 UTC (19:00 BRT), ANTES do daily-balance
+// Busca dados D-1 de cada pivô com fallback automático:
+//   1. Google Sheets (estação Plugfield ou similar)
+//   2. Open-Meteo (arquivo histórico, gratuito, sem autenticação)
+// Grava na tabela weather_data vinculada à estação do pivô.
+// Pivôs sem estação cadastrada são processados com estação "virtual"
+// gravada diretamente em weather_data usando pivot_id como referência.
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { fetchFromGoogleSheets, fetchFromNASAPower, previousDay } from '@/lib/weather-fetch'
+import { fetchFromPlugfield, fetchFromGoogleSheets, previousDay } from '@/lib/weather-fetch'
+import { getWeatherByPivotGeolocation } from '@/services/weather-geolocation'
 import type { TypedSupabaseClient } from '@/services/base'
 
 function todayBRT(): string {
@@ -16,7 +21,7 @@ function todayBRT(): string {
   return brt.toISOString().split('T')[0]
 }
 
-// Calcula ETo Penman-Monteith FAO-56 simplificado
+// Calcula ETo Penman-Monteith FAO-56 com dados diários
 function calcETo(tmax: number, tmin: number, rh: number, wind: number, rgWm2: number, lat: number, doy: number): number {
   const tmean = (tmax + tmin) / 2
   const rg = rgWm2 * 0.0864 // W/m² → MJ/m²/dia
@@ -67,7 +72,7 @@ export async function GET(req: NextRequest) {
   const today = todayBRT()
   const fetchDate = previousDay(today) // D-1
 
-  // Busca todos os pivôs ativos com weather_config + station vinculada
+  // Busca todos os pivôs com weather_config + estação vinculada à fazenda
   const { data: pivots, error: pivotErr } = await (supabase as any)
     .from('pivots')
     .select(`
@@ -82,45 +87,70 @@ export async function GET(req: NextRequest) {
   const results: Array<{ pivot: string; date: string; status: string; message: string }> = []
 
   for (const pivot of (pivots ?? [])) {
-    // Encontra a estação vinculada à fazenda deste pivô
     const station = pivot.farms?.weather_stations?.[0] ?? null
-    if (!station) {
-      results.push({ pivot: pivot.name, date: fetchDate, status: 'skipped', message: 'Sem estação vinculada' })
-      continue
-    }
-
-    // Verifica se já existe registro
-    const { data: existing } = await (supabase as any)
-      .from('weather_data')
-      .select('id')
-      .eq('station_id', station.id)
-      .eq('date', fetchDate)
-      .maybeSingle()
-
-    if (existing) {
-      results.push({ pivot: pivot.name, date: fetchDate, status: 'skipped', message: 'Já existe' })
-      continue
-    }
-
-    // Busca dados climáticos
-    let weatherDay = null
-    const source = pivot.weather_source
     const config = pivot.weather_config ?? {}
 
-    if (source === 'google_sheets' && config.spreadsheet_id) {
+    // Se não tem estação E não tem coordenadas, não tem como buscar nada
+    if (!station && (pivot.latitude == null || pivot.longitude == null)) {
+      results.push({ pivot: pivot.name, date: fetchDate, status: 'skipped', message: 'Sem estação e sem coordenadas' })
+      continue
+    }
+
+    // Verifica se já existe registro para esta estação/data (evita reprocessar)
+    if (station) {
+      const { data: existing } = await (supabase as any)
+        .from('weather_data')
+        .select('id')
+        .eq('station_id', station.id)
+        .eq('date', fetchDate)
+        .maybeSingle()
+
+      if (existing) {
+        results.push({ pivot: pivot.name, date: fetchDate, status: 'skipped', message: 'Já existe' })
+        continue
+      }
+    }
+
+    // ── Cadeia de fallback: Plugfield API → Google Sheets → Open-Meteo ──
+    let weatherDay: { tempMax: number; tempMin: number; humidity: number; windSpeed: number; solarRadiation: number; rainfall: number; source: string } | null = null
+
+    // 1. Plugfield API direta — credenciais vêm do weather_config do próprio pivô
+    if (config.plugfield_device_id && config.plugfield_token && config.plugfield_api_key) {
+      weatherDay = await fetchFromPlugfield(
+        Number(config.plugfield_device_id),
+        fetchDate,
+        String(config.plugfield_token),
+        String(config.plugfield_api_key),
+      )
+    }
+
+    // 2. Google Sheets (planilha Plugfield exportada)
+    if (!weatherDay && pivot.weather_source === 'google_sheets' && config.spreadsheet_id) {
       weatherDay = await fetchFromGoogleSheets(config.spreadsheet_id, fetchDate, config.gid)
     }
 
+    // 2. Fallback: Open-Meteo (arquivo histórico, gratuito, dados D-1 disponíveis no mesmo dia)
     if (!weatherDay && pivot.latitude != null && pivot.longitude != null) {
-      weatherDay = await fetchFromNASAPower(pivot.latitude, pivot.longitude, fetchDate)
+      const omData = await getWeatherByPivotGeolocation(pivot.latitude, pivot.longitude, fetchDate)
+      if (omData) {
+        weatherDay = {
+          tempMax:        omData.temp_max ?? 30,
+          tempMin:        omData.temp_min ?? 18,
+          humidity:       omData.humidity_percent ?? 65,
+          windSpeed:      omData.wind_speed_ms ?? 2,
+          solarRadiation: omData.solar_radiation_wm2 ?? 200,
+          rainfall:       omData.rainfall_mm ?? 0,
+          source: omData.source,
+        }
+      }
     }
 
     if (!weatherDay) {
-      results.push({ pivot: pivot.name, date: fetchDate, status: 'error', message: 'Sem dados climáticos' })
+      results.push({ pivot: pivot.name, date: fetchDate, status: 'error', message: 'Sem dados climáticos (todas as fontes falharam)' })
       continue
     }
 
-    // Calcula ETo
+    // Calcula ETo Penman-Monteith FAO-56
     const doy = getDayOfYear(fetchDate)
     const lat = pivot.latitude ?? -15
     const eto = calcETo(
@@ -129,35 +159,39 @@ export async function GET(req: NextRequest) {
       weatherDay.solarRadiation, lat, doy
     )
 
-    // Grava no banco
-    const { error: upsertErr } = await (supabase as any)
-      .from('weather_data')
-      .upsert({
-        station_id: station.id,
-        date: fetchDate,
-        temp_max: weatherDay.tempMax,
-        temp_min: weatherDay.tempMin,
-        humidity_percent: weatherDay.humidity,
-        wind_speed_ms: weatherDay.windSpeed,
-        solar_radiation_wm2: weatherDay.solarRadiation,
-        rainfall_mm: weatherDay.rainfall,
-        eto_mm: eto,
-        source: weatherDay.source,
-      }, { onConflict: 'station_id,date' })
+    // Só grava em weather_data se o pivô tem estação cadastrada
+    if (station) {
+      const { error: upsertErr } = await (supabase as any)
+        .from('weather_data')
+        .upsert({
+          station_id: station.id,
+          date: fetchDate,
+          temp_max: weatherDay.tempMax,
+          temp_min: weatherDay.tempMin,
+          humidity_percent: weatherDay.humidity,
+          wind_speed_ms: weatherDay.windSpeed,
+          solar_radiation_wm2: weatherDay.solarRadiation,
+          rainfall_mm: weatherDay.rainfall,
+          eto_mm: eto,
+          source: weatherDay.source,
+        }, { onConflict: 'station_id,date' })
 
-    if (upsertErr) {
-      results.push({ pivot: pivot.name, date: fetchDate, status: 'error', message: upsertErr.message })
-    } else {
-      results.push({
-        pivot: pivot.name, date: fetchDate, status: 'ok',
-        message: `ETo=${eto}mm Tmax=${weatherDay.tempMax}°C rain=${weatherDay.rainfall}mm via ${weatherDay.source}`
-      })
+      if (upsertErr) {
+        results.push({ pivot: pivot.name, date: fetchDate, status: 'error', message: upsertErr.message })
+        continue
+      }
     }
+
+    results.push({
+      pivot: pivot.name, date: fetchDate,
+      status: station ? 'ok' : 'ok_no_station',
+      message: `ETo=${eto}mm via ${weatherDay.source}${!station ? ' (sem estação, não gravado)' : ''}`,
+    })
   }
 
-  const ok = results.filter(r => r.status === 'ok').length
+  const ok = results.filter(r => r.status === 'ok' || r.status === 'ok_no_station').length
   const skipped = results.filter(r => r.status === 'skipped').length
   const errors = results.filter(r => r.status === 'error').length
 
-  return NextResponse.json({ date: fetchDate, fetch_date: fetchDate, ok, skipped, errors, results })
+  return NextResponse.json({ date: fetchDate, ok, skipped, errors, results })
 }

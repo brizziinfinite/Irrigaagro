@@ -1,5 +1,5 @@
 // ============================================================
-// Funções de Balanço Hídrico FAO-56 — IrrigaAgro v2
+// Funções de Balanço Hídrico FAO-56 — Gotejo
 // Todas as funções são puras (sem side effects)
 // ============================================================
 
@@ -357,7 +357,7 @@ export interface ProjectionDay {
 /**
  * Projeta o balanço hídrico para os próximos `days` dias.
  * Usa ETo média dos últimos registros como estimativa futura.
- * Não considera chuva futura (conservador — pior caso).
+ * Opcionalmente aceita arrays de ETo e chuva por dia (forecast real).
  */
 export function calcProjection(params: {
   crop: Crop
@@ -367,11 +367,13 @@ export function calcProjection(params: {
   fieldCapacity: number
   wiltingPoint: number
   bulkDensity: number
-  avgEto: number         // ETo média dos últimos dias (mm/dia)
+  avgEto: number         // ETo média dos últimos dias (mm/dia) — fallback
   pivot?: Pivot | null
   days?: number
+  etoByDay?: number[]      // ETo real por dia (index 0 = D+1); sobrepõe avgEto
+  rainfallByDay?: number[] // chuva prevista por dia (mm); sobrepõe 0
 }): ProjectionDay[] {
-  const { crop, startDate, startDas, startAdc, fieldCapacity, wiltingPoint, bulkDensity, avgEto, pivot, days = 7 } = params
+  const { crop, startDate, startDas, startAdc, fieldCapacity, wiltingPoint, bulkDensity, avgEto, pivot, days = 7, etoByDay, rainfallByDay } = params
 
   const results: ProjectionDay[] = []
   let adcPrev = startAdc
@@ -389,10 +391,11 @@ export function calcProjection(params: {
     const cta = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, rootDepthCm)
     const cad = calcCAD(cta, fFactor)
 
-    const etcAvg = calcEtc(avgEto, kc)
+    const etoForDay = etoByDay?.[i - 1] ?? avgEto
+    const rainfallForDay = rainfallByDay?.[i - 1] ?? 0
+    const etcAvg = calcEtc(etoForDay, kc)
 
-    // Sem chuva, sem irrigação — projeção conservadora
-    const adcProjected = calcADc(adcPrev, 0, 0, etcAvg, cta)
+    const adcProjected = calcADc(adcPrev, rainfallForDay, 0, etcAvg, cta)
     const fieldCapacityPercent = cta > 0 ? (adcProjected / cta) * 100 : 0
     const status = getIrrigationStatus(adcProjected, cad)
     const recommendedDepthMm = calcRecommendedIrrigation(cad, adcProjected)

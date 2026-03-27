@@ -77,19 +77,33 @@ function PivotAnimation() {
 function Logo({ size = 36 }: { size?: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      {/* SVG icon */}
-      <svg width={size} height={size} viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="10" fill="rgba(0,147,208,0.15)" />
-        <circle cx="18" cy="18" r="3" fill="#0093D0" />
-        <line x1="18" y1="18" x2="18" y2="6" stroke="#0093D0" strokeWidth="2" strokeLinecap="round" />
-        <circle cx="18" cy="9" r="2" fill="#0093D0" opacity="0.7" />
-        <circle cx="18" cy="6" r="2.5" fill="#22d3ee" />
-        <circle cx="18" cy="18" r="12" fill="none" stroke="#22c55e" strokeWidth="1" strokeDasharray="3 4" opacity="0.4" />
+      <svg width={size} height={Math.round(size * 1.15)} viewBox="0 0 200 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="loginDropGrad" x1="60" y1="10" x2="160" y2="210" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#38BDF8"/>
+            <stop offset="50%" stopColor="#00D4AA"/>
+            <stop offset="100%" stopColor="#22C55E"/>
+          </linearGradient>
+          <linearGradient id="loginBarGrad" x1="0" y1="190" x2="0" y2="90" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#00D4AA"/>
+            <stop offset="100%" stopColor="#22C55E"/>
+          </linearGradient>
+        </defs>
+        <path d="M100 12 C100 12 38 98 38 140 C38 176 65 202 100 202 C135 202 162 176 162 140 C162 98 100 12 100 12Z" fill="none" stroke="url(#loginDropGrad)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+        <rect x="66" y="150" width="18" height="36" rx="3" fill="url(#loginBarGrad)" opacity="0.9"/>
+        <rect x="91" y="128" width="18" height="58" rx="3" fill="url(#loginBarGrad)"/>
+        <rect x="116" y="106" width="18" height="80" rx="3" fill="url(#loginBarGrad)" opacity="0.9"/>
+        <line x1="60" y1="189" x2="140" y2="189" stroke="rgba(0,212,170,0.4)" strokeWidth="2" strokeLinecap="round"/>
       </svg>
-      <span style={{ fontSize: size * 0.56, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1 }}>
-        <span style={{ color: '#0093D0' }}>Irriga</span>
-        <span style={{ color: '#22c55e', fontWeight: 400 }}>Agro</span>
-      </span>
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+        <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: size * 0.56, letterSpacing: 1, lineHeight: 1 }}>
+          <span style={{ background: 'linear-gradient(135deg, #00D4AA, #38BDF8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>G</span>
+          <span style={{ color: '#fff' }}>otejo</span>
+        </span>
+        <span style={{ fontSize: 7, fontWeight: 500, textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', letterSpacing: '2.8px', marginTop: 3 }}>
+          Irrigação Inteligente
+        </span>
+      </div>
     </div>
   )
 }
@@ -255,7 +269,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 12, color: '#556677' }}>IrrigaAgro v2</span>
+          <span style={{ fontSize: 12, color: '#556677' }}>Gotejo</span>
           <div style={{ display: 'flex', gap: 16 }}>
             {[
               { label: 'Pivôs', value: '∞' },
@@ -484,7 +498,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ marginTop: 32, textAlign: 'center', fontSize: 11, color: '#556677' }}>
-          Ao continuar, você concorda com os termos de uso do IrrigaAgro.
+          Ao continuar, você concorda com os termos de uso do Gotejo.
         </div>
       </div>
 

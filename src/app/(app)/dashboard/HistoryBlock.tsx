@@ -110,7 +110,7 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
               />
             )}
             <Bar yAxisId="mm" dataKey="irrigation" fill={hasData ? '#0093D0' : 'rgba(0,147,208,0.15)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
-            <Bar yAxisId="mm" dataKey="rainfall" fill={hasData ? '#22d3ee' : 'rgba(34,211,238,0.12)'} opacity={0.7} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            <Bar yAxisId="mm" dataKey="rainfall" fill={hasData ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.10)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
             {hasData && (
               <Line
                 yAxisId="pct"
@@ -130,7 +130,7 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
       <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
         {[
           { color: '#0093D0', label: 'Irrigação' },
-          { color: '#22d3ee', label: 'Chuva' },
+          { color: 'rgba(255,255,255,0.75)', label: 'Chuva' },
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: color, opacity: hasData ? 1 : 0.3 }} />

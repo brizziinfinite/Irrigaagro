@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/ingest-weather",
-      "schedule": "0 4 * * *"
+      "schedule": "0 22 * * *"
     },
     {
       "path": "/api/cron/daily-balance",
-      "schedule": "0 5 * * *"
+      "schedule": "0 23 * * *"
     }
   ]
 }
