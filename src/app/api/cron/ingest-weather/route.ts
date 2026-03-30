@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { fetchFromPlugfield, fetchFromGoogleSheets, previousDay } from '@/lib/weather-fetch'
+import { fetchFromPlugfield, fetchFromGoogleSheets, fetchRsFromNASA, previousDay } from '@/lib/weather-fetch'
 import { getWeatherByPivotGeolocation } from '@/services/weather-geolocation'
 import type { TypedSupabaseClient } from '@/services/base'
 
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── Cadeia de fallback: Plugfield API → Google Sheets → Open-Meteo ──
-    let weatherDay: { tempMax: number; tempMin: number; humidity: number; windSpeed: number; solarRadiation: number; rainfall: number; source: string } | null = null
+    let weatherDay: { tempMax: number; tempMin: number; humidity: number; windSpeed: number; solarRadiation: number; rainfall: number; source: string; evapoPlugfield?: number | null } | null = null
 
     // 1. Plugfield API direta — credenciais vêm do weather_config do próprio pivô
     if (config.plugfield_device_id && config.plugfield_token && config.plugfield_api_key) {
@@ -129,7 +129,7 @@ export async function GET(req: NextRequest) {
       weatherDay = await fetchFromGoogleSheets(config.spreadsheet_id, fetchDate, config.gid)
     }
 
-    // 2. Fallback: Open-Meteo (arquivo histórico, gratuito, dados D-1 disponíveis no mesmo dia)
+    // 3. Fallback: Open-Meteo (arquivo histórico, gratuito, dados D-1 disponíveis no mesmo dia)
     if (!weatherDay && pivot.latitude != null && pivot.longitude != null) {
       const omData = await getWeatherByPivotGeolocation(pivot.latitude, pivot.longitude, fetchDate)
       if (omData) {
@@ -150,13 +150,26 @@ export async function GET(req: NextRequest) {
       continue
     }
 
-    // Calcula ETo Penman-Monteith FAO-56
+    // ── Rs NASA: substitui Rs do Plugfield para cálculo ETo mais preciso ──
+    // NASA POWER tem dados D-1 disponíveis; se falhar, usa Rs do Plugfield como fallback
+    let rsSource = 'plugfield_fallback'
+    let rgForEto = weatherDay.solarRadiation // W/m² (Plugfield fallback)
+
+    if (pivot.latitude != null && pivot.longitude != null) {
+      const rsNasaMJ = await fetchRsFromNASA(pivot.latitude, pivot.longitude, fetchDate)
+      if (rsNasaMJ !== null) {
+        rgForEto = rsNasaMJ / 0.0864 // MJ/m²/dia → W/m²
+        rsSource = 'nasa'
+      }
+    }
+
+    // Calcula ETo Penman-Monteith FAO-56 com Rs correto
     const doy = getDayOfYear(fetchDate)
     const lat = pivot.latitude ?? -15
     const eto = calcETo(
       weatherDay.tempMax, weatherDay.tempMin,
       weatherDay.humidity, weatherDay.windSpeed,
-      weatherDay.solarRadiation, lat, doy
+      rgForEto, lat, doy
     )
 
     // Só grava em weather_data se o pivô tem estação cadastrada
@@ -170,9 +183,11 @@ export async function GET(req: NextRequest) {
           temp_min: weatherDay.tempMin,
           humidity_percent: weatherDay.humidity,
           wind_speed_ms: weatherDay.windSpeed,
-          solar_radiation_wm2: weatherDay.solarRadiation,
+          solar_radiation_wm2: rgForEto,
           rainfall_mm: weatherDay.rainfall,
           eto_mm: eto,
+          eto_plugfield_mm: weatherDay.evapoPlugfield ?? null,
+          rs_source: rsSource,
           source: weatherDay.source,
         }, { onConflict: 'station_id,date' })
 
@@ -185,7 +200,7 @@ export async function GET(req: NextRequest) {
     results.push({
       pivot: pivot.name, date: fetchDate,
       status: station ? 'ok' : 'ok_no_station',
-      message: `ETo=${eto}mm via ${weatherDay.source}${!station ? ' (sem estação, não gravado)' : ''}`,
+      message: `ETo=${eto}mm via ${weatherDay.source}, Rs=${rsSource}${!station ? ' (sem estação, não gravado)' : ''}`,
     })
   }
 

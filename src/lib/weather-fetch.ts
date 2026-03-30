@@ -7,10 +7,12 @@ export interface WeatherDay {
   tempMax: number
   tempMin: number
   humidity: number
-  windSpeed: number      // m/s
-  solarRadiation: number // W/m²
-  rainfall: number       // mm
+  windSpeed: number        // m/s
+  solarRadiation: number   // W/m²
+  rainfall: number         // mm
   source: 'google_sheets' | 'nasa' | 'manual' | 'plugfield'
+  /** Valor bruto de ETo reportado pelo Plugfield (campo 'evapo') — apenas para comparativo */
+  evapoPlugfield?: number | null
 }
 
 // ─── Google Sheets (Plugfield via CSV público) ────────────────
@@ -179,6 +181,7 @@ export async function fetchFromPlugfield(
       solarRadiation,
       rainfall,
       source: 'plugfield',
+      evapoPlugfield: typeof d.evapo === 'number' && !isNaN(d.evapo) ? d.evapo : null,
     }
   } catch {
     return null
@@ -186,6 +189,43 @@ export async function fetchFromPlugfield(
 }
 
 // ─── NASA POWER ───────────────────────────────────────────────
+
+/**
+ * Busca apenas Rs (radiação solar, MJ/m²/dia) da NASA POWER para uma data específica.
+ * Retorna null se NASA não tiver dado disponível ou se o valor for inválido.
+ * Uso: substituir Rs do Plugfield (sensor não calibrado) por Rs NASA mais confiável.
+ */
+export async function fetchRsFromNASA(
+  latitude: number,
+  longitude: number,
+  dateISO: string  // YYYY-MM-DD
+): Promise<number | null> {
+  try {
+    const dateCompact = dateISO.replace(/-/g, '') // YYYYMMDD
+    const url = [
+      'https://power.larc.nasa.gov/api/temporal/daily/point',
+      `?parameters=ALLSKY_SFC_SW_DWN`,
+      `&community=AG`,
+      `&longitude=${longitude}`,
+      `&latitude=${latitude}`,
+      `&start=${dateCompact}`,
+      `&end=${dateCompact}`,
+      `&format=JSON`,
+    ].join('')
+
+    const res = await fetch(url, { cache: 'no-store' })
+    if (!res.ok) return null
+
+    const json = await res.json()
+    const radMJ = json?.properties?.parameter?.ALLSKY_SFC_SW_DWN?.[dateCompact]
+
+    if (radMJ === undefined || radMJ === null || radMJ === -999 || isNaN(radMJ)) return null
+
+    return radMJ // MJ/m²/dia
+  } catch {
+    return null
+  }
+}
 
 /**
  * Busca dados climáticos diários da NASA POWER por coordenada geográfica.
