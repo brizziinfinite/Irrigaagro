@@ -36,6 +36,12 @@ function todayBRT(): string {
   return brt.toISOString().split('T')[0]
 }
 
+function previousDay(dateISO: string): string {
+  const d = new Date(dateISO + 'T12:00:00')
+  d.setDate(d.getDate() - 1)
+  return d.toISOString().split('T')[0]
+}
+
 function serializeError(error: unknown): string {
   return error instanceof Error ? error.message : 'Erro desconhecido'
 }
@@ -122,7 +128,7 @@ export async function GET(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   ) as TypedSupabaseClient
 
-  const today = todayBRT()
+  const today = previousDay(todayBRT()) // processa D-1, alinhado ao ingest-weather
   const startedAt = Date.now()
   const requestId = getRequestId(req)
   const triggerSource = getTriggerSource(req)
