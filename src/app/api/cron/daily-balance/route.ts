@@ -128,7 +128,11 @@ export async function GET(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   ) as TypedSupabaseClient
 
-  const today = previousDay(todayBRT()) // processa D-1, alinhado ao ingest-weather
+  // Aceita ?date=YYYY-MM-DD para reprocessamento histórico
+  // Aceita ?force=true para sobrescrever registros existentes
+  const dateParam = req.nextUrl.searchParams.get('date')
+  const force = req.nextUrl.searchParams.get('force') === 'true'
+  const today = dateParam ?? previousDay(todayBRT()) // processa D-1 por padrão
   const startedAt = Date.now()
   const requestId = getRequestId(req)
   const triggerSource = getTriggerSource(req)
@@ -186,7 +190,7 @@ export async function GET(req: NextRequest) {
         const history = await listDailyManagementBySeason(season.id, supabase)
         const existing = history.find((record) => record.date === today) ?? null
 
-        if (existing) {
+        if (existing && !force) {
           const result: CronSeasonResult = {
             season_id: season.id,
             season_name: seasonLabel,
