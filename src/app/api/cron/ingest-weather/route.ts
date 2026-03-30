@@ -166,11 +166,21 @@ export async function GET(req: NextRequest) {
     // Calcula ETo Penman-Monteith FAO-56 com Rs correto
     const doy = getDayOfYear(fetchDate)
     const lat = pivot.latitude ?? -15
-    const eto = calcETo(
+    let eto = calcETo(
       weatherDay.tempMax, weatherDay.tempMin,
       weatherDay.humidity, weatherDay.windSpeed,
       rgForEto, lat, doy
     )
+
+    // ── Fator de correção empírico para Rs Plugfield ──────────────────
+    // Quando Rs vem do Plugfield (sensor não calibrado), aplica fator de correção
+    // baseado em comparação com estações de referência (Davis).
+    // Quando NASA disponibilizar os dados, recalibramos o fator com dados reais.
+    // Configurável via ETO_PLUGFIELD_CORRECTION_FACTOR (padrão 0.82).
+    if (rsSource === 'plugfield_fallback') {
+      const factor = parseFloat(process.env.ETO_PLUGFIELD_CORRECTION_FACTOR ?? '0.82')
+      eto = Math.round(eto * factor * 100) / 100
+    }
 
     // Só grava em weather_data se o pivô tem estação cadastrada
     if (station) {
@@ -197,10 +207,13 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    const correctionNote = rsSource === 'plugfield_fallback'
+      ? ` [fator=${process.env.ETO_PLUGFIELD_CORRECTION_FACTOR ?? '0.82'}]`
+      : ''
     results.push({
       pivot: pivot.name, date: fetchDate,
       status: station ? 'ok' : 'ok_no_station',
-      message: `ETo=${eto}mm via ${weatherDay.source}, Rs=${rsSource}${!station ? ' (sem estação, não gravado)' : ''}`,
+      message: `ETo=${eto}mm via ${weatherDay.source}, Rs=${rsSource}${correctionNote}${!station ? ' (sem estação, não gravado)' : ''}`,
     })
   }
 
