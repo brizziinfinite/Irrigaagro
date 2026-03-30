@@ -378,6 +378,8 @@ export interface WeatherData {
   rainfall_mm: number | null
   eto_mm: number | null
   eto_corrected_mm: number | null
+  eto_plugfield_mm: number | null
+  rs_source: string | null
   source: string
   raw_data: Json | null
   created_at: string
@@ -394,6 +396,8 @@ export interface WeatherDataInsert {
   rainfall_mm?: number | null
   eto_mm?: number | null
   eto_corrected_mm?: number | null
+  eto_plugfield_mm?: number | null
+  rs_source?: string | null
   source?: string
   raw_data?: Json | null
 }

@@ -16,6 +16,9 @@ import {
   type PivotDiagnostic,
   type PivotDiagnosticSummary,
 } from '@/services/pivot-diagnostics'
+import { listWeatherDataByStation } from '@/services/weather-data'
+import type { WeatherData } from '@/types/database'
+import { isSuperAdmin } from '@/lib/super-admin'
 
 function formatDate(value: string): string {
   return new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR')
@@ -150,14 +153,140 @@ function SummaryCard({
   )
 }
 
+function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: boolean }) {
+  // Filtra apenas linhas com eto_plugfield_mm preenchido (dados do Plugfield)
+  const calibRows = rows.filter(r => r.eto_plugfield_mm != null && r.eto_mm != null)
+
+  const avg = calibRows.length > 0
+    ? calibRows.reduce((acc, r) => acc + (r.eto_mm! - r.eto_plugfield_mm!), 0) / calibRows.length
+    : null
+
+  function rowColor(diff: number): string {
+    const abs = Math.abs(diff)
+    if (abs < 0.5) return '#22c55e'
+    if (abs < 1.5) return '#f59e0b'
+    return '#ef4444'
+  }
+
+  function rowBg(diff: number): string {
+    const abs = Math.abs(diff)
+    if (abs < 0.5) return 'rgb(34 197 94 / 0.06)'
+    if (abs < 1.5) return 'rgb(245 158 11 / 0.06)'
+    return 'rgb(239 68 68 / 0.06)'
+  }
+
+  return (
+    <div style={{ background: '#0f1923', border: '1px solid rgba(245,158,11,0.20)', borderRadius: 16, padding: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16, alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Comparativo ETo — Calibração</p>
+            <span style={{
+              fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
+              color: '#f59e0b', background: 'rgb(245 158 11 / 0.12)', border: '1px solid rgb(245 158 11 / 0.25)',
+              borderRadius: 6, padding: '3px 7px', lineHeight: 1,
+            }}>SUPER ADMIN</span>
+          </div>
+          <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>
+            ETo FAO-56 com Rs NASA vs valor bruto Plugfield — últimos 30 dias
+          </p>
+        </div>
+        {avg !== null && (
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#556677' }}>Diferença média</p>
+            <p style={{ fontSize: 22, fontWeight: 800, color: avg >= 0 ? '#22c55e' : '#ef4444', marginTop: 4 }}>
+              {avg >= 0 ? '+' : ''}{avg.toFixed(2)} mm
+            </p>
+            <p style={{ fontSize: 11, color: '#556677', marginTop: 2 }}>{calibRows.length} dias com dados Plugfield</p>
+          </div>
+        )}
+      </div>
+
+      {loading ? (
+        <p style={{ fontSize: 13, color: '#8899aa', padding: '24px 0', textAlign: 'center' }}>Carregando histórico...</p>
+      ) : calibRows.length === 0 ? (
+        <div style={{ borderRadius: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', padding: 16 }}>
+          <p style={{ fontSize: 13, color: '#8899aa' }}>
+            Sem dados de calibração disponíveis. O campo <code style={{ color: '#f59e0b', fontSize: 12 }}>eto_plugfield_mm</code> será preenchido após o próximo ciclo do cron com dados Plugfield.
+          </p>
+        </div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                {['Data', 'Rs fonte', 'ETo FAO-56 (nosso)', 'ETo Plugfield', 'Diferença (mm)', 'Diferença (%)'].map(h => (
+                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#556677', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {calibRows.map(row => {
+                const diff = row.eto_mm! - row.eto_plugfield_mm!
+                const diffPct = row.eto_plugfield_mm! !== 0 ? (diff / row.eto_plugfield_mm!) * 100 : 0
+                const color = rowColor(diff)
+                return (
+                  <tr key={row.id} style={{ background: rowBg(diff), borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <td style={{ padding: '8px 12px', color: '#e2e8f0', whiteSpace: 'nowrap' }}>
+                      {new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </td>
+                    <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
+                      {row.rs_source === 'nasa' ? (
+                        <span style={{ color: '#0093D0', fontWeight: 600 }}>NASA</span>
+                      ) : row.rs_source === 'plugfield_fallback' ? (
+                        <span style={{ color: '#8899aa' }}>Plugfield</span>
+                      ) : (
+                        <span style={{ color: '#556677' }}>{row.rs_source ?? '—'}</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '8px 12px', color: '#e2e8f0', fontVariantNumeric: 'tabular-nums' }}>
+                      {row.eto_mm!.toFixed(2)} mm
+                    </td>
+                    <td style={{ padding: '8px 12px', color: '#8899aa', fontVariantNumeric: 'tabular-nums' }}>
+                      {row.eto_plugfield_mm!.toFixed(2)} mm
+                    </td>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>
+                      {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
+                    </td>
+                    <td style={{ padding: '8px 12px', color, fontVariantNumeric: 'tabular-nums' }}>
+                      {diff >= 0 ? '+' : ''}{diffPct.toFixed(1)}%
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+            {avg !== null && (
+              <tfoot>
+                <tr style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                  <td colSpan={4} style={{ padding: '8px 12px', color: '#8899aa', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                    Média do período
+                  </td>
+                  <td style={{ padding: '8px 12px', fontWeight: 800, color: avg >= 0 ? '#22c55e' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>
+                    {avg >= 0 ? '+' : ''}{avg.toFixed(2)}
+                  </td>
+                  <td style={{ padding: '8px 12px', color: '#8899aa' }}>—</td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function PivotDiagnosticsPage() {
-  const { company, loading: authLoading } = useAuth()
+  const { company, user, loading: authLoading } = useAuth()
   const [summaries, setSummaries] = useState<PivotDiagnosticSummary[]>([])
   const [selectedPivotId, setSelectedPivotId] = useState('')
   const [diagnostic, setDiagnostic] = useState<PivotDiagnostic | null>(null)
   const [loading, setLoading] = useState(true)
   const [diagnosticLoading, setDiagnosticLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [etoHistory, setEtoHistory] = useState<WeatherData[]>([])
+  const [etoHistoryLoading, setEtoHistoryLoading] = useState(false)
+
+  const superAdmin = isSuperAdmin(user?.email)
 
   useEffect(() => {
     if (authLoading) return
@@ -224,6 +353,33 @@ export default function PivotDiagnosticsPage() {
     loadDiagnostic()
     return () => { cancelled = true }
   }, [company?.id, selectedPivotId])
+
+  // Super admin: carrega histórico de weather_data para comparativo ETo
+  const etoStationId = diagnostic?.preferredStation?.id ?? diagnostic?.farmStations[0]?.id ?? null
+
+  useEffect(() => {
+    if (!superAdmin || !etoStationId) {
+      setEtoHistory([])
+      return
+    }
+
+    let cancelled = false
+
+    async function loadEtoHistory() {
+      setEtoHistoryLoading(true)
+      try {
+        const data = await listWeatherDataByStation(etoStationId!, 30)
+        if (!cancelled) setEtoHistory(data)
+      } catch {
+        if (!cancelled) setEtoHistory([])
+      } finally {
+        if (!cancelled) setEtoHistoryLoading(false)
+      }
+    }
+
+    loadEtoHistory()
+    return () => { cancelled = true }
+  }, [superAdmin, etoStationId])
 
   const selectedSummary = useMemo(
     () => summaries.find((item) => item.pivotId === selectedPivotId) ?? null,
@@ -523,6 +679,10 @@ export default function PivotDiagnosticsPage() {
               </div>
             )}
           </div>
+
+          {superAdmin && (
+            <EtoCalibrationPanel rows={etoHistory} loading={etoHistoryLoading} />
+          )}
         </div>
       )}
     </div>
