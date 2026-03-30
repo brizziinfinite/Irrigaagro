@@ -224,10 +224,16 @@ export function calcCTA(
   return ((fieldCapacity - wiltingPoint) / 10) * bulkDensity * rootDepthCm
 }
 
-/** CAD = CTA × f (f=0 → fallback to 0.5 to avoid zero-CAD edge case) */
+/**
+ * CAD = CTA × (1 - f)
+ * Equivalente a: PM + (CC - PM) × (1 - f) expresso em mm
+ * f = fração de depleção permitida antes do estresse (FAO-56 Tabela 22)
+ * Para milho: f = 0.55 → CAD = 45% da CTA → irrigar acima de ~72% do campo
+ * Fallback: f=0.5 → CAD = 50% da CTA
+ */
 export function calcCAD(cta: number, fFactor: number): number {
   const f = fFactor > 0 ? fFactor : 0.5
-  return cta * f
+  return cta * (1 - f)
 }
 
 // ─── Etapa 4: ETc ────────────────────────────────────────────
@@ -277,9 +283,16 @@ export function getIrrigationStatus(
 
 // ─── Etapa 8: Recomendação de irrigação ──────────────────────
 
-/** Lâmina necessária para atingir 100% da CAD */
-export function calcRecommendedIrrigation(cad: number, adc: number): number {
-  return Math.max(0, cad - adc)
+/**
+ * Lâmina necessária para repor até a capacidade de campo (CTA).
+ * Só recomenda irrigar quando ADc caiu abaixo da CAD (ponto crítico).
+ * cta = capacidade total de água (teto = 100% campo)
+ * cad = capacidade de água disponível = CTA × (1-f) = ponto crítico
+ * adc = água atual no solo
+ */
+export function calcRecommendedIrrigation(cta: number, cad: number, adc: number): number {
+  if (adc >= cad) return 0          // ainda acima do ponto crítico, não irrigar
+  return Math.max(0, cta - adc)     // repõe até 100% de campo
 }
 
 /**
@@ -398,7 +411,7 @@ export function calcProjection(params: {
     const adcProjected = calcADc(adcPrev, rainfallForDay, 0, etcAvg, cta)
     const fieldCapacityPercent = cta > 0 ? (adcProjected / cta) * 100 : 0
     const status = getIrrigationStatus(adcProjected, cad)
-    const recommendedDepthMm = calcRecommendedIrrigation(cad, adcProjected)
+    const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcProjected)
     const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
     // Marca o primeiro dia que cai abaixo da CAD
@@ -435,7 +448,7 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
   const status = getIrrigationStatus(adcNew, cad, isIrrigating)
-  const recommendedDepthMm = calcRecommendedIrrigation(cad, adcNew)
+  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew)
   const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
   return {

@@ -5,6 +5,7 @@ import {
   calcCTA,
   calcEtc,
   calcKs,
+  calcRecommendedIrrigation,
   findRecommendedSpeed,
   getIrrigationStatus,
   getStageInfoForDas,
@@ -118,7 +119,7 @@ export function computeResolvedManagementBalance(
   const ks = calcKs(adcNew, cad)
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
   const status = getIrrigationStatus(adcNew, cad, Boolean(actualSpeedPercent && actualSpeedPercent > 0))
-  const recommendedDepthMm = Math.max(0, cad - adcNew)
+  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew)
   const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
   return {
