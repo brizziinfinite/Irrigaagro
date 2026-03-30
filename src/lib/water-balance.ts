@@ -297,13 +297,21 @@ export function calcRecommendedIrrigation(cta: number, cad: number, adc: number)
 
 /**
  * Encontra a menor % de velocidade do pivô que aplica ao menos a lâmina necessária.
- * Se não encontrar (sem tabela ou lâmina = 0), retorna null.
+ * Aplica correção pelo CUC: lâmina_bruta = lâmina_líquida / (CUC/100)
+ * Garante que o ponto mais seco do pivô receba a lâmina mínima necessária.
+ * CUC=90% → precisa aplicar 11% a mais para cobrir a não-uniformidade.
  */
 export function findRecommendedSpeed(
   pivot: Pivot,
   depthMm: number
 ): number | null {
   if (depthMm <= 0 || !pivot.time_360_h || !pivot.flow_rate_m3h || !pivot.length_m) return null
+
+  // Corrige lâmina pelo CUC: divide pela eficiência de distribuição
+  // Ex: precisa 10mm, CUC=90% → aplica 10/0.90 = 11.1mm para garantir
+  // cobertura mínima em toda a área (ponto mais seco recebe 10mm)
+  const cuc = (pivot.cuc_percent ?? 85) / 100
+  const depthCorrected = depthMm / cuc
 
   // Lâmina bruta para cada % de velocidade (10..100) usando geometria do pivô
   // Área = π × r² (m²); fluxo total = flow_rate_m3h (m³/h)
@@ -312,24 +320,22 @@ export function findRecommendedSpeed(
   // Lâmina = Volume / Área_m²  × 1000 (para mm)
   const area = Math.PI * Math.pow(pivot.length_m, 2)
 
-  // Encontra menor velocidade que aplica >= depthMm
+  // Encontra a MAIOR velocidade (menor tempo) que aplica >= depthCorrected
   for (let speed = 100; speed >= 10; speed -= 10) {
     const durHours = pivot.time_360_h / (speed / 100)
     const volumeM3 = pivot.flow_rate_m3h * durHours
     const lamina = (volumeM3 / area) * 1000 // mm
 
-    if (lamina >= depthMm) {
-      // Continua reduzindo para encontrar o mínimo necessário
-      // Queremos a MAIOR velocidade (menor tempo) que ainda atinge a lâmina
-      continue
+    if (lamina >= depthCorrected) {
+      continue  // ainda atende, tenta velocidade maior (menos tempo)
     } else {
-      // Speed anterior era o menor que atendia
+      // velocidade anterior era a maior que ainda atendia
       const prevSpeed = speed + 10
       return prevSpeed <= 100 ? prevSpeed : null
     }
   }
 
-  // Velocidade 10% é suficiente
+  // Velocidade 10% é suficiente para cobrir a lâmina corrigida
   return 10
 }
 
