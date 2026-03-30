@@ -394,6 +394,7 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
 
 interface ImportModalProps {
   pivotId: string
+  allPivots: PivotOption[]
   onClose: () => void
   onImported: () => Promise<void>
 }
@@ -403,7 +404,31 @@ interface SheetTab {
   gid: string
 }
 
-function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
+/** Parseia CSV respeitando campos entre aspas e vírgula decimal */
+function parseCsvLinePrecip(line: string): string[] {
+  const cols: string[] = []
+  let cur = ''
+  let inQuote = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') { inQuote = !inQuote }
+    else if (ch === ',' && !inQuote) { cols.push(cur.trim()); cur = '' }
+    else { cur += ch }
+  }
+  cols.push(cur.trim())
+  return cols
+}
+
+/** Detecta índice de coluna pelo nome do cabeçalho (case-insensitive, parcial) */
+function detectCol(headers: string[], keywords: string[]): string {
+  for (const kw of keywords) {
+    const idx = headers.findIndex(h => h.toLowerCase().includes(kw.toLowerCase()))
+    if (idx >= 0) return String(idx)
+  }
+  return '0'
+}
+
+function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalProps) {
   const [url, setUrl]           = useState('')
   const [gid, setGid]           = useState('0')
   const [tabs, setTabs]         = useState<SheetTab[]>([])
@@ -416,6 +441,8 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
   const [importing, setImporting] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError]       = useState('')
+  // Pivôs selecionados para importação (começa com o pivô atual)
+  const [selectedPivotIds, setSelectedPivotIds] = useState<string[]>([pivotId])
 
   function extractSpreadsheetId(raw: string): string | null {
     const m = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
@@ -473,12 +500,14 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
       const res = await fetch(csvUrl)
       if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}). Certifique-se de que está pública: Arquivo → Compartilhar → Qualquer pessoa com o link → Leitor.`)
       const text = await res.text()
-      const rows = text.trim().split('\n').map(r =>
-        r.split(',').map(c => c.replace(/^"|"$/g, '').trim())
-      )
+      const rows = text.trim().split('\n').map(r => parseCsvLinePrecip(r))
       if (rows.length < 2) throw new Error('Planilha vazia ou sem dados.')
-      setHeaders(rows[0])
+      const hdrs = rows[0]
+      setHeaders(hdrs)
       setPreview(rows.slice(1, 6))
+      // Auto-detectar colunas pelo cabeçalho
+      setDateCol(detectCol(hdrs, ['data', 'date']))
+      setMmCol(detectCol(hdrs, ['precipita', 'chuva', 'mm', 'rain']))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro ao buscar planilha.')
     }
@@ -502,38 +531,41 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
       const res = await fetch(csvUrl, { signal: controller.signal })
       if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}). Certifique-se de que está pública: Arquivo → Compartilhar → Qualquer pessoa com o link → Leitor.`)
       const text = await res.text()
-      const rows = text.trim().split('\n').map(r =>
-        r.split(',').map(c => c.replace(/^"|"$/g, '').trim())
-      )
+      const rows = text.trim().split('\n').map(r => parseCsvLinePrecip(r))
       const dataRows = rows.slice(1).filter(r => r.length > Math.max(Number(dateCol), Number(mmCol)))
 
-      const parsed: { pivot_id: string; date: string; rainfall_mm: number; source: 'import' }[] = []
+      if (selectedPivotIds.length === 0) throw new Error('Selecione ao menos um pivô para importar.')
+
+      // Parseia datas e mm uma vez, replica para cada pivô selecionado
+      const validRows: { date: string; rainfall_mm: number }[] = []
       let skippedRows = 0
       for (const row of dataRows) {
         const dateStr = parseFlexDate(row[Number(dateCol)])
-        const mm = parseFloat(row[Number(mmCol)])
-        if (!dateStr || isNaN(mm) || mm < 0) {
-          skippedRows++
-          continue
-        }
-        parsed.push({ pivot_id: pivotId, date: dateStr, rainfall_mm: mm, source: 'import' })
+        const mmRaw = row[Number(mmCol)].replace(',', '.')  // vírgula decimal → ponto
+        const mm = parseFloat(mmRaw)
+        if (!dateStr || isNaN(mm) || mm < 0) { skippedRows++; continue }
+        validRows.push({ date: dateStr, rainfall_mm: mm })
       }
 
-      if (parsed.length === 0) {
+      if (validRows.length === 0) {
         throw new Error(`Nenhum registro válido encontrado. ${skippedRows} linha(s) com data ou valor inválido.`)
       }
+
+      // Gera registros para todos os pivôs selecionados
+      const parsed = validRows.flatMap(r =>
+        selectedPivotIds.map(pid => ({ pivot_id: pid, date: r.date, rainfall_mm: r.rainfall_mm, source: 'import' as const }))
+      )
 
       const chunkSize = 50
       for (let i = 0; i < parsed.length; i += chunkSize) {
         if (controller.signal.aborted) throw new Error('Importação cancelada.')
-        const chunk = parsed.slice(i, i + chunkSize)
-        await upsertRainfallRecords(chunk)
-        setProgress(Math.round(((i + chunk.length) / parsed.length) * 100))
+        await upsertRainfallRecords(parsed.slice(i, i + chunkSize))
+        setProgress(Math.round(((i + chunkSize) / parsed.length) * 100))
       }
 
-      if (skippedRows > 0) {
-        setError(`Importados ${parsed.length} registros. ${skippedRows} linha(s) ignorada(s) por data/valor inválido.`)
-      }
+      const msg = `${validRows.length} registros importados para ${selectedPivotIds.length} pivô(s).` +
+        (skippedRows > 0 ? ` ${skippedRows} linha(s) ignorada(s).` : '')
+      setError(msg)
 
       await onImported()
     } catch (e) {
@@ -617,6 +649,26 @@ function ImportModal({ pivotId, onClose, onImported }: ImportModalProps) {
               }}
             />
           )}
+        </div>
+
+        {/* Seletor de pivôs — múltipla seleção */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <label style={{ fontSize: 12, color: '#8899aa' }}>Importar para os pivôs</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {allPivots.map(p => (
+              <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#e2e8f0' }}>
+                <input
+                  type="checkbox"
+                  checked={selectedPivotIds.includes(p.id)}
+                  onChange={e => setSelectedPivotIds(prev =>
+                    e.target.checked ? [...prev, p.id] : prev.filter(id => id !== p.id)
+                  )}
+                  style={{ accentColor: '#0093D0', width: 14, height: 14 }}
+                />
+                {p.farm_name} · {p.name}
+              </label>
+            ))}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 12 }}>
@@ -1216,6 +1268,7 @@ export default function PrecipitacoesPage() {
       {showImport && pivotId && pivots.some(p => p.id === pivotId) && (
         <ImportModal
           pivotId={pivotId}
+          allPivots={pivots}
           onClose={() => setShowImport(false)}
           onImported={handleImported}
         />
