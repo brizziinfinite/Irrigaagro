@@ -273,9 +273,22 @@ export function calcKs(adc: number, cad: number): number {
 export function getIrrigationStatus(
   adc: number,
   cad: number,
-  isIrrigating = false
+  isIrrigating = false,
+  cta = 0,
+  alertThresholdPct: number | null = null
 ): IrrigationStatus {
   if (isIrrigating) return 'azul'
+
+  // Se o pivô tem threshold configurado (ex: 70%), usa ele como gatilho
+  // Caso contrário usa CAD como limiar agronomico
+  if (alertThresholdPct != null && cta > 0) {
+    const thresholdMm = (alertThresholdPct / 100) * cta
+    const warningMm = ((alertThresholdPct + 10) / 100) * cta  // 10pp acima = atenção
+    if (adc >= warningMm) return 'verde'
+    if (adc >= thresholdMm) return 'amarelo'
+    return 'vermelho'
+  }
+
   if (adc >= cad) return 'verde'
   if (adc >= cad * 0.5) return 'amarelo'
   return 'vermelho'
@@ -284,15 +297,31 @@ export function getIrrigationStatus(
 // ─── Etapa 8: Recomendação de irrigação ──────────────────────
 
 /**
- * Lâmina necessária para repor até a capacidade de campo (CTA).
- * Só recomenda irrigar quando ADc caiu abaixo da CAD (ponto crítico).
- * cta = capacidade total de água (teto = 100% campo)
- * cad = capacidade de água disponível = CTA × (1-f) = ponto crítico
- * adc = água atual no solo
+ * Lâmina necessária para irrigação.
+ *
+ * Se o pivô tem threshold e target configurados:
+ *   - Dispara quando ADc < threshold_mm (ex: 70% de CTA)
+ *   - Repõe até target_mm (ex: 80% de CTA)
+ *
+ * Caso contrário (comportamento padrão FAO-56):
+ *   - Dispara quando ADc < CAD
+ *   - Repõe até CTA (100% de campo)
  */
-export function calcRecommendedIrrigation(cta: number, cad: number, adc: number): number {
-  if (adc >= cad) return 0          // ainda acima do ponto crítico, não irrigar
-  return Math.max(0, cta - adc)     // repõe até 100% de campo
+export function calcRecommendedIrrigation(
+  cta: number,
+  cad: number,
+  adc: number,
+  alertThresholdPct: number | null = null,
+  targetPct: number | null = null
+): number {
+  if (alertThresholdPct != null && cta > 0) {
+    const thresholdMm = (alertThresholdPct / 100) * cta
+    if (adc >= thresholdMm) return 0
+    const replenishTo = targetPct != null ? (targetPct / 100) * cta : cta
+    return Math.max(0, replenishTo - adc)
+  }
+  if (adc >= cad) return 0
+  return Math.max(0, cta - adc)
 }
 
 /**
@@ -416,12 +445,14 @@ export function calcProjection(params: {
 
     const adcProjected = calcADc(adcPrev, rainfallForDay, 0, etcAvg, cta)
     const fieldCapacityPercent = cta > 0 ? (adcProjected / cta) * 100 : 0
-    const status = getIrrigationStatus(adcProjected, cad)
-    const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcProjected)
+    const alertThresholdPct = pivot?.alert_threshold_percent ?? null
+    const status = getIrrigationStatus(adcProjected, cad, false, cta, alertThresholdPct)
+    const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcProjected, alertThresholdPct, null)
     const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
-    // Marca o primeiro dia que cai abaixo da CAD
-    const isIrrigationDay = !firstIrrigationMarked && adcProjected < cad
+    // Marca o primeiro dia que precisa irrigar
+    const thresholdMm = alertThresholdPct != null && cta > 0 ? (alertThresholdPct / 100) * cta : cad
+    const isIrrigationDay = !firstIrrigationMarked && adcProjected < thresholdMm
     if (isIrrigationDay) firstIrrigationMarked = true
 
     results.push({

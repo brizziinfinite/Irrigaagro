@@ -118,8 +118,13 @@ export function computeResolvedManagementBalance(
   const adcNew = calcADc(adcPrev, rainfallMm, irrigationMm, etc, cta)
   const ks = calcKs(adcNew, cad)
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
-  const status = getIrrigationStatus(adcNew, cad, Boolean(actualSpeedPercent && actualSpeedPercent > 0))
-  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew)
+
+  // Usa threshold configurado no pivô (ex: 70%) como gatilho
+  // e repõe até 100% de campo (target implícito)
+  const alertThresholdPct = pivot?.alert_threshold_percent ?? null
+
+  const status = getIrrigationStatus(adcNew, cad, Boolean(actualSpeedPercent && actualSpeedPercent > 0), cta, alertThresholdPct)
+  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew, alertThresholdPct, null)
   const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
   return {
