@@ -6,8 +6,9 @@ import type {
   IrrigationCancelledReason,
 } from '@/types/database'
 
-function table(client = createClient()) {
-  return (client as any).from('irrigation_schedule')
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function table(client: any = createClient()) {
+  return client.from('irrigation_schedule')
 }
 
 /** Busca programações de um pivô em um intervalo de datas */
@@ -42,6 +43,28 @@ export async function listSchedulesByCompany(
 
   if (error) throw new Error(`Falha ao buscar programações: ${error.message}`)
   return (data ?? []) as IrrigationSchedule[]
+}
+
+/**
+ * Busca a lâmina planejada/executada para um pivô em uma data específica.
+ * Retorna null se não houver registro ou se estiver cancelado.
+ * Aceita cliente externo (service role para uso no cron).
+ */
+export async function getScheduledIrrigationForDate(
+  pivotId: string,
+  date: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client?: any,
+): Promise<IrrigationSchedule | null> {
+  const { data, error } = await table(client)
+    .select('*')
+    .eq('pivot_id', pivotId)
+    .eq('date', date)
+    .in('status', ['planned', 'done'])
+    .maybeSingle()
+
+  if (error) throw new Error(`Falha ao buscar programação: ${error.message}`)
+  return data as IrrigationSchedule | null
 }
 
 /** Cria ou atualiza (upsert) um agendamento (pivot_id + date = unique) */

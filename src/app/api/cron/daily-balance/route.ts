@@ -16,6 +16,7 @@ import {
   upsertDailyManagementRecord,
 } from '@/services/management'
 import { createCronJobEvent, createCronJobRun, updateCronJobRun } from '@/services/cron-observability'
+import { getScheduledIrrigationForDate } from '@/services/irrigation-schedule'
 import type { TypedSupabaseClient } from '@/services/base'
 import type { CronJobRunStatus, DailyManagementInsert, Json } from '@/types/database'
 
@@ -255,6 +256,18 @@ export async function GET(req: NextRequest) {
           pivot,
           supabase
         )
+
+        // Busca lâmina aplicada/planejada no Lançamentos para esta data
+        let scheduledIrrigationMm: number | null = null
+        try {
+          const schedule = await getScheduledIrrigationForDate(pivot.id, today, supabase)
+          if (schedule?.lamina_mm != null && schedule.lamina_mm > 0) {
+            scheduledIrrigationMm = schedule.lamina_mm
+          }
+        } catch {
+          // Falha silenciosa — continua sem lâmina agendada
+        }
+
         const climateSnapshot = externalData.weather ?? externalData.geolocationWeather
 
         if (!climateSnapshot) {
@@ -299,7 +312,7 @@ export async function GET(req: NextRequest) {
           wind: climateSnapshot.wind_speed_ms != null ? String(climateSnapshot.wind_speed_ms) : '',
           radiation: climateSnapshot.solar_radiation_wm2 != null ? String(climateSnapshot.solar_radiation_wm2) : '',
           rainfall: '',
-          actualDepth: '',
+          actualDepth: scheduledIrrigationMm != null ? String(scheduledIrrigationMm) : '',
           actualSpeed: '',
           externalData,
         })
@@ -357,6 +370,7 @@ export async function GET(req: NextRequest) {
           field_capacity_percent: result.fieldCapacityPercent,
           needs_irrigation: result.recommendedDepthMm > 0,
           soil_moisture_calculated: result.fieldCapacityPercent,
+          actual_depth_mm: scheduledIrrigationMm ?? null,
           updated_at: new Date().toISOString(),
         }
 
@@ -372,11 +386,13 @@ export async function GET(req: NextRequest) {
         const climateRoute = externalData.climateSource ?? 'manual'
         const das = calcDAS(season.planting_date, today)
 
+        const irrigNote = scheduledIrrigationMm != null ? ` · irrigação ${scheduledIrrigationMm.toFixed(1)}mm (Lançamentos)` : ''
+
         const item: CronSeasonResult = {
           season_id: season.id,
           season_name: seasonLabel,
           status: 'ok',
-          message: `DAS ${das} · ETo ${result.eto.toFixed(1)} mm via ${etoRoute} · ADc ${result.fieldCapacityPercent.toFixed(0)}% · clima ${climateRoute}`,
+          message: `DAS ${das} · ETo ${result.eto.toFixed(1)} mm via ${etoRoute} · ADc ${result.fieldCapacityPercent.toFixed(0)}%${irrigNote} · clima ${climateRoute}`,
         }
         results.push(item)
         await safeCreateEvent(supabase, runId, {
