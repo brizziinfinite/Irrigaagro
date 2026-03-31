@@ -39,7 +39,7 @@ export function CompactKpis({ summary, lastManagementBySeason }: CompactKpisProp
   const kpis = [
     { label: 'Água Hoje', value: aguaHoje > 0 ? aguaHoje.toFixed(1) : '0', unit: 'mm', emoji: '💧', color: '#22d3ee' },
     { label: 'Economia', value: economiaPercent !== null ? `${economiaPercent}` : '—', unit: '%', emoji: '📉', color: economiaPercent !== null && economiaPercent < 0 ? '#ef4444' : '#22c55e' },
-    { label: 'Horas Op.', value: String(summary.handledToday), unit: 'reg', emoji: '⏱', color: '#f59e0b' },
+    { label: 'Manejos Hoje', value: String(summary.handledToday), unit: '', emoji: '⏱', color: '#f59e0b' },
     { label: 'Alertas', value: String(summary.pivotsWithAlerts), unit: '', emoji: '⚠️', color: '#ef4444' },
   ]
 

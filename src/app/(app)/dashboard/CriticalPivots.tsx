@@ -31,10 +31,11 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
     if (!activePivotIds.has(pivot.id)) continue
     const m = lastManagementByPivot[pivot.id]
     const threshold = pivot.alert_threshold_percent ?? 70
+    const warningPct = threshold * 1.15  // ×1,15 alinhado ao getIrrigationStatus
     const pct = m?.field_capacity_percent ?? null
     let status: PivotStatus = 'ok'
-    if (pct !== null && pct < threshold - 10) status = 'critico'
-    else if (pct !== null && pct < threshold) status = 'atencao'
+    if (pct !== null && pct < threshold) status = 'critico'
+    else if (pct !== null && pct < warningPct) status = 'atencao'
     items.push({ pivot, pct, status, diag: diagnosticsByPivot[pivot.id] ?? null })
   }
 

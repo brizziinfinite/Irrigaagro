@@ -46,13 +46,15 @@ const STATUS_CONFIG: Record<IrrigationStatus, {
 }
 
 // threshold: limiar configurado no pivô (padrão 70)
+// Zona amarela: threshold × 1,15 (alinhado ao getIrrigationStatus de water-balance.ts)
 function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, threshold = 70): IrrigationStatus {
   if (!hasActiveSeason) return 'sem_safra'
   if (!lastM) return 'verde'
   const pct = lastM.field_capacity_percent ?? null
   if (pct === null) return 'verde'
-  if (pct >= threshold) return 'verde'
-  if (pct >= threshold - 10) return 'amarelo'
+  const warningPct = threshold * 1.15
+  if (pct >= warningPct) return 'verde'
+  if (pct >= threshold) return 'amarelo'
   return 'vermelho'
 }
 
@@ -119,6 +121,8 @@ interface Props {
   hasPivots: boolean
   lastManagementBySeason: Record<string, DailyManagement>
   historyBySeason: Record<string, DailyManagement[]>
+  /** ADc projetado para hoje (%), descontando ETc dos dias sem registro */
+  currentFieldCapacityBySeasonId: Record<string, number>
   diagnosticsByPivot: Record<string, PivotDiagnostic>
   energyBills: EnergyBill[]
   summary: {
@@ -140,6 +144,7 @@ export function DashboardClient({
   hasPivots,
   lastManagementBySeason,
   historyBySeason,
+  currentFieldCapacityBySeasonId,
   diagnosticsByPivot,
   energyBills,
   summary,
@@ -151,7 +156,11 @@ export function DashboardClient({
   const lastManagementByPivot: Record<string, DailyManagement> = {}
   for (const season of activeSeasons) {
     if (season.pivot_id && lastManagementBySeason[season.id]) {
-      lastManagementByPivot[season.pivot_id] = lastManagementBySeason[season.id]
+      const rawRecord = lastManagementBySeason[season.id]
+      // Substitui o field_capacity_percent pelo valor projetado para hoje
+      // (descontando ETc dos dias sem registro desde o último manejo)
+      const currentPct = currentFieldCapacityBySeasonId[season.id] ?? rawRecord.field_capacity_percent
+      lastManagementByPivot[season.pivot_id] = { ...rawRecord, field_capacity_percent: currentPct }
     }
   }
 
@@ -224,7 +233,7 @@ export function DashboardClient({
       <RecommendationsMatrix
         contexts={contexts}
         lastMgmtBySeasonId={lastManagementBySeason}
-        today={new Date().toISOString().slice(0, 10)}
+        today={(() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}` })()}
       />
 
       {/* ⑤ KPIs compactos (5 colunas) */}

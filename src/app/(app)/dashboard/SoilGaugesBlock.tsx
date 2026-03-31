@@ -9,8 +9,9 @@ interface SoilGaugesBlockProps {
 }
 
 function gaugeColor(pct: number, threshold: number): string {
-  if (pct >= threshold) return '#22c55e'
-  if (pct >= threshold - 10) return '#f59e0b'
+  const warningPct = threshold * 1.15
+  if (pct >= warningPct) return '#22c55e'
+  if (pct >= threshold) return '#f59e0b'
   return '#ef4444'
 }
 
@@ -114,9 +115,9 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
             return (
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                 {[
-                  { color: '#22c55e', label: `>${avgThreshold}%` },
-                  { color: '#f59e0b', label: `${avgThreshold - 10}–${avgThreshold}%` },
-                  { color: '#ef4444', label: `<${avgThreshold - 10}%` },
+                  { color: '#22c55e', label: `>${Math.round(avgThreshold * 1.15)}%` },
+                  { color: '#f59e0b', label: `${avgThreshold}–${Math.round(avgThreshold * 1.15)}%` },
+                  { color: '#ef4444', label: `<${avgThreshold}%` },
                 ].map(({ color, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />

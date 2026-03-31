@@ -214,7 +214,10 @@ export function getFFactorForDas(crop: Crop, das: number): number {
 
 // ─── Etapa 3: CTA e CAD ──────────────────────────────────────
 
-/** CTA = ((CC - PM) / 10) × Ds × profundidade_raiz_cm */
+/**
+ * CTA = ((CC - PM) / 10) × Ds × profundidade_raiz_cm
+ * CC e PM são gravimétricos (%), Ds em g/cm³, profundidade em cm → resultado em mm
+ */
 export function calcCTA(
   fieldCapacity: number,
   wiltingPoint: number,
@@ -225,8 +228,7 @@ export function calcCTA(
 }
 
 /**
- * CAD = CTA × (1 - f)
- * Equivalente a: PM + (CC - PM) × (1 - f) expresso em mm
+ * adCrítica (CAD) = CTA × (1 - f)
  * f = fração de depleção permitida antes do estresse (FAO-56 Tabela 22)
  * Para milho: f = 0.55 → CAD = 45% da CTA → irrigar acima de ~72% do campo
  * Fallback: f=0.5 → CAD = 50% da CTA
@@ -245,8 +247,10 @@ export function calcEtc(eto: number, kc: number, ks = 1): number {
 // ─── Etapa 5: Balanço hídrico diário ─────────────────────────
 
 /**
- * ADc(t) = ADc(t-1) + chuva + irrigação - ETc
- * Limitado ao intervalo [0, CTA]
+ * ADc(t) = ADc(t-1) + chuvaEfetiva + irrigação - ETc
+ * chuvaEfetiva = min(chuva, espaço livre no perfil) — spec seção 9.1
+ * Excesso de chuva que transborda a CTA não é contabilizado.
+ * Resultado limitado ao intervalo [0, CTA].
  */
 export function calcADc(
   adcPrev: number,
@@ -255,7 +259,9 @@ export function calcADc(
   etc: number,
   cta: number
 ): number {
-  const newAdc = adcPrev + rainfall + irrigation - etc
+  const espacoLivre = Math.max(0, cta - adcPrev)
+  const chuvaEfetiva = Math.min(Math.max(0, rainfall), espacoLivre)
+  const newAdc = adcPrev + chuvaEfetiva + Math.max(0, irrigation) - etc
   return clamp(newAdc, 0, cta)
 }
 
@@ -280,17 +286,19 @@ export function getIrrigationStatus(
   if (isIrrigating) return 'azul'
 
   // Se o pivô tem threshold configurado (ex: 70%), usa ele como gatilho
-  // Caso contrário usa CAD como limiar agronomico
+  // Zona amarela: threshold × 1,15 (spec seção 16)
   if (alertThresholdPct != null && cta > 0) {
     const thresholdMm = (alertThresholdPct / 100) * cta
-    const warningMm = ((alertThresholdPct + 10) / 100) * cta  // 10pp acima = atenção
+    const warningMm = thresholdMm * 1.15  // ×1,15 conforme spec seção 16
     if (adc >= warningMm) return 'verde'
     if (adc >= thresholdMm) return 'amarelo'
     return 'vermelho'
   }
 
-  if (adc >= cad) return 'verde'
-  if (adc >= cad * 0.5) return 'amarelo'
+  // Fallback FAO-56: limiar = CAD, zona amarela = CAD até CAD×1,15
+  const warningMm = cad * 1.15
+  if (adc >= warningMm) return 'verde'
+  if (adc >= cad) return 'amarelo'
   return 'vermelho'
 }
 

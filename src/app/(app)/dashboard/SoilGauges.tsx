@@ -9,8 +9,9 @@ interface SoilGaugesProps {
 }
 
 function gaugeColor(pct: number, threshold: number): string {
-  if (pct >= threshold) return '#22c55e'
-  if (pct >= threshold - 10) return '#f59e0b'
+  const warningPct = threshold * 1.15
+  if (pct >= warningPct) return '#22c55e'
+  if (pct >= threshold) return '#f59e0b'
   return '#ef4444'
 }
 

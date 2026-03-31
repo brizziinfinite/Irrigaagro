@@ -36,9 +36,10 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
     const pct = m?.field_capacity_percent ?? null
     const diag = diagnosticsByPivot[pivot.id]
 
-    if (pct !== null && pct < threshold - 10) {
+    const warningPct = threshold * 1.15
+    if (pct !== null && pct < threshold) {
       alerts.push({ tipo: 'urgente', msg: `${pivot.name} — solo a ${pct.toFixed(0)}% — irrigar imediatamente`, pivotId: pivot.id })
-    } else if (pct !== null && pct < threshold) {
+    } else if (pct !== null && pct < warningPct) {
       alerts.push({ tipo: 'aviso', msg: `${pivot.name} — solo a ${pct.toFixed(0)}% — atenção para irrigação`, pivotId: pivot.id })
     } else if (pct !== null) {
       alerts.push({ tipo: 'info', msg: `${pivot.name} — solo a ${pct.toFixed(0)}% — sem necessidade de irrigação`, pivotId: pivot.id })

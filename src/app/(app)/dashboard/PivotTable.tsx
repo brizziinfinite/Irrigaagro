@@ -21,8 +21,9 @@ function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, 
   if (!lastM) return 'verde'
   const pct = lastM.field_capacity_percent ?? null
   if (pct === null) return 'verde'
-  if (pct >= threshold) return 'verde'
-  if (pct >= threshold - 10) return 'amarelo'
+  const warningPct = threshold * 1.15
+  if (pct >= warningPct) return 'verde'
+  if (pct >= threshold) return 'amarelo'
   return 'vermelho'
 }
 
@@ -149,9 +150,10 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
             const cfg = STATUS_CONFIG[status]
             const StatusIcon = cfg.icon
             const pct = m?.field_capacity_percent ?? null
+            const warningPct = threshold * 1.15
             const pctColor = pct === null ? '#556677'
-              : pct >= threshold ? '#22c55e'
-              : pct >= threshold - 10 ? '#f59e0b'
+              : pct >= warningPct ? '#22c55e'
+              : pct >= threshold ? '#f59e0b'
               : '#ef4444'
             const lamina = m?.actual_depth_mm ?? m?.recommended_depth_mm ?? null
 

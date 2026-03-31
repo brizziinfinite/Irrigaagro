@@ -21,6 +21,7 @@ export default async function DashboardPage() {
         hasPivots={false}
         lastManagementBySeason={{}}
         historyBySeason={{}}
+        currentFieldCapacityBySeasonId={{}}
         diagnosticsByPivot={{}}
         energyBills={[]}
         summary={{
@@ -48,6 +49,7 @@ export default async function DashboardPage() {
         hasPivots={dashboard.hasPivots}
         lastManagementBySeason={dashboard.lastManagementBySeason}
         historyBySeason={dashboard.historyBySeason}
+        currentFieldCapacityBySeasonId={dashboard.currentFieldCapacityBySeasonId}
         diagnosticsByPivot={dashboard.diagnosticsByPivot}
         energyBills={dashboard.energyBills}
         summary={dashboard.summary}

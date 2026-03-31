@@ -2,13 +2,18 @@ import { calcProjection, calcCTA, getStageInfoForDas, type ProjectionDay } from 
 import { getUserCompanyOrThrow } from '@/services/companies'
 import { listFarmsByCompany } from '@/services/farms'
 import { getPivotDiagnostic, type PivotDiagnostic } from '@/services/pivot-diagnostics'
-import { listManagementSeasonContexts, listDailyManagementBySeason, type ManagementSeasonContext } from '@/services/management'
+import {
+  listManagementSeasonContexts,
+  listDailyManagementBySeason,
+  getManagementExternalData,
+  type ManagementSeasonContext,
+} from '@/services/management'
 import { listPivotsByFarmIds } from '@/services/pivots'
 import { listEnergyBillsByPivotIds } from '@/services/energy-bills'
 import type { TypedSupabaseClient } from '@/services/base'
 import type { DailyManagement, EnergyBill, Pivot, Season } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
-import { calcDAS } from '@/lib/calculations/management-balance'
+import { calcDAS, computeResolvedManagementBalance } from '@/lib/calculations/management-balance'
 
 export interface DashboardPivot extends Pivot {
   farms: { id: string; name: string } | null
@@ -23,6 +28,8 @@ export interface DashboardData {
   lastManagementBySeason: Record<string, DailyManagement>
   historyBySeason: Record<string, DailyManagement[]>
   projectionBySeason: Record<string, ProjectionDay[]>
+  /** ADc projetado para HOJE (%), descontando ETc dos dias sem registro */
+  currentFieldCapacityBySeasonId: Record<string, number>
   diagnosticsByPivot: Record<string, PivotDiagnostic>
   energyBills: EnergyBill[]
   summary: {
@@ -75,10 +82,15 @@ export async function getDashboardDataForUser(
   const lastManagementBySeason: Record<string, DailyManagement> = {}
   const historyBySeason: Record<string, DailyManagement[]> = {}
   const projectionBySeason: Record<string, ProjectionDay[]> = {}
-  const today = new Date().toISOString().slice(0, 10)
+  // ADc projetado para HOJE usando dados climáticos reais do banco
+  const currentFieldCapacityBySeasonId: Record<string, number> = {}
+  // Usa data local BRT (UTC-3) para evitar avanço de dia à noite
+  const now = new Date()
+  const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000)
+  const today = brt.toISOString().slice(0, 10)
 
   for (let i = 0; i < activeContexts.length; i++) {
-    const { season, crop, pivot } = activeContexts[i]
+    const { season, crop, pivot, farm } = activeContexts[i]
     const history = allHistories[i]
     const lastManagement = history[0] ?? null
     if (lastManagement) lastManagementBySeason[season.id] = lastManagement
@@ -87,12 +99,11 @@ export async function getDashboardDataForUser(
     if (!crop || !season.planting_date) continue
 
     const das = calcDAS(season.planting_date, today)
-    const avgEto = lastManagement?.eto_mm ?? 5
-    let startAdc = 0
+    let currentAdc: number
+    let currentPct: number
 
-    if (lastManagement?.ctda != null) {
-      startAdc = lastManagement.ctda
-    } else {
+    if (!lastManagement?.ctda) {
+      // Sem histórico: parte do ADc inicial da safra
       const stageInfo = getStageInfoForDas(crop, das)
       const cta = calcCTA(
         Number(season.field_capacity ?? 32),
@@ -100,11 +111,92 @@ export async function getDashboardDataForUser(
         Number(season.bulk_density ?? 1.4),
         stageInfo.rootDepthCm
       )
-      startAdc = cta * ((season.initial_adc_percent ?? 100) / 100)
+      currentAdc = cta * ((season.initial_adc_percent ?? 100) / 100)
+      currentPct = (season.initial_adc_percent ?? 100)
+    } else if (lastManagement.date === today) {
+      // Último registro é de hoje — usa diretamente
+      currentAdc = lastManagement.ctda
+      currentPct = lastManagement.field_capacity_percent ?? 100
+    } else {
+      // Último registro é de dias anteriores: avança dia a dia com dados climáticos reais
+      const lastDate = lastManagement.date
+      const daysSinceRecord = Math.max(1, Math.round(
+        (new Date(today + 'T12:00:00').getTime() - new Date(lastDate + 'T12:00:00').getTime()) / 86400000
+      ))
+
+      // Limita a 14 dias para não sobrecarregar o dashboard
+      const daysToProcess = Math.min(daysSinceRecord, 14)
+      let runningAdc = lastManagement.ctda
+      let runningHistory = [...history]
+
+      for (let d = 1; d <= daysToProcess; d++) {
+        const gapDate = new Date(lastDate + 'T12:00:00')
+        gapDate.setDate(gapDate.getDate() + d)
+        const gapDateStr = gapDate.toISOString().split('T')[0]
+
+        try {
+          const externalData = await getManagementExternalData(
+            farm.id, pivot?.id ?? null, gapDateStr, pivot, client
+          )
+          const climateSnapshot = externalData.weather ?? externalData.geolocationWeather
+
+          if (climateSnapshot) {
+            const result = computeResolvedManagementBalance({
+              context: activeContexts[i],
+              history: runningHistory,
+              date: gapDateStr,
+              tmax: climateSnapshot.temp_max != null ? String(climateSnapshot.temp_max) : '',
+              tmin: climateSnapshot.temp_min != null ? String(climateSnapshot.temp_min) : '',
+              humidity: climateSnapshot.humidity_percent != null ? String(climateSnapshot.humidity_percent) : '',
+              wind: climateSnapshot.wind_speed_ms != null ? String(climateSnapshot.wind_speed_ms) : '',
+              radiation: climateSnapshot.solar_radiation_wm2 != null ? String(climateSnapshot.solar_radiation_wm2) : '',
+              rainfall: '',
+              actualDepth: '',
+              actualSpeed: '',
+              externalData,
+            })
+            if (result) {
+              runningAdc = result.adcNew
+              // Adiciona ao histórico simulado para o próximo dia usar como adcPrev
+              runningHistory = [
+                { ...lastManagement, date: gapDateStr, ctda: result.adcNew, field_capacity_percent: result.fieldCapacityPercent },
+                ...runningHistory,
+              ]
+              continue
+            }
+          }
+        } catch {
+          // Falha silenciosa — fallback para ETc média
+        }
+
+        // Fallback: usa ETc média do último registro
+        const avgEtc = lastManagement.etc_mm ?? 3
+        const stageInfo = getStageInfoForDas(crop, calcDAS(season.planting_date, gapDateStr))
+        const cta = calcCTA(
+          Number(season.field_capacity ?? 32),
+          Number(season.wilting_point ?? 14),
+          Number(season.bulk_density ?? 1.4),
+          stageInfo.rootDepthCm
+        )
+        runningAdc = Math.max(0, Math.min(runningAdc - avgEtc, cta))
+      }
+
+      currentAdc = runningAdc
+      const stageInfo = getStageInfoForDas(crop, das)
+      const cta = calcCTA(
+        Number(season.field_capacity ?? 32),
+        Number(season.wilting_point ?? 14),
+        Number(season.bulk_density ?? 1.4),
+        stageInfo.rootDepthCm
+      )
+      currentPct = cta > 0 ? (currentAdc / cta) * 100 : 0
     }
 
+    currentFieldCapacityBySeasonId[season.id] = currentPct
+
+    const avgEto = lastManagement?.eto_mm ?? 5
     projectionBySeason[season.id] = calcProjection({
-      crop, startDate: today, startDas: das, startAdc,
+      crop, startDate: today, startDas: das, startAdc: currentAdc,
       fieldCapacity: Number(season.field_capacity ?? 32),
       wiltingPoint:  Number(season.wilting_point  ?? 14),
       bulkDensity:   Number(season.bulk_density   ?? 1.4),
@@ -144,6 +236,7 @@ export async function getDashboardDataForUser(
     lastManagementBySeason,
     historyBySeason,
     projectionBySeason,
+    currentFieldCapacityBySeasonId,
     diagnosticsByPivot,
     energyBills,
     summary,

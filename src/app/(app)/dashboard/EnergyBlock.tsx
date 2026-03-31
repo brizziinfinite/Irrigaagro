@@ -102,8 +102,8 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
     {
       label: 'Fora Ponta',
       value: horarioPercent !== null ? `${horarioPercent}%` : '—',
-      sub: horarioPercent !== null && horarioPercent <= 80 ? 'Dentro' : horarioPercent !== null ? 'Acima' : '',
-      color: horarioPercent !== null && horarioPercent <= 80 ? '#22c55e' : '#ef4444',
+      sub: horarioPercent !== null && horarioPercent >= 80 ? 'Ideal' : horarioPercent !== null ? 'Baixo' : '',
+      color: horarioPercent !== null && horarioPercent >= 80 ? '#22c55e' : '#ef4444',
     },
     {
       label: 'R$/mm/ha',
