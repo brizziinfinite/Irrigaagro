@@ -27,7 +27,7 @@ import {
 import {
   Loader2, ChevronDown, Droplets, Sun, CloudRain,
   Wind, Thermometer, CheckCircle2, AlertTriangle, AlertCircle,
-  Info, Save, Calendar, FlaskConical, Sprout, Clock,
+  Save, Calendar, FlaskConical, Sprout, Clock,
   Satellite, Sheet, TrendingDown, Zap, BarChart2, Orbit,
   Edit2, Trash2, X,
 } from 'lucide-react'
@@ -144,112 +144,6 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
   )
 }
 
-// ─── Barra de umidade ────────────────────────────────────────
-
-function MoistureBar({ pct, cad, cta, color }: { pct: number; cad: number; cta: number; color: string }) {
-  const cadPct = cta > 0 ? (cad / cta) * 100 : 50
-  return (
-    <div>
-      <div style={{ height: 10, background: '#080e14', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', left: `${cadPct}%`, top: 0, bottom: 0, width: 2, background: '#f59e0b', opacity: 0.8, zIndex: 2 }} />
-        <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: '100%', background: color, borderRadius: 99, transition: 'width 0.4s' }} />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-        <span style={{ fontSize: 9, color: '#334455' }}>0%</span>
-        <span style={{ fontSize: 9, color: '#f59e0b' }}>CAD {fmtNum(cadPct, 0)}%</span>
-        <span style={{ fontSize: 9, color: '#445566' }}>100%</span>
-      </div>
-    </div>
-  )
-}
-
-// ─── StatusBanner ─────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function StatusBanner({ status, fieldCapacityPercent, cad, cta, das, cropStage, recommendedDepthMm, recommendedSpeedPercent, alertThresholdPct }: {
-  status: IrrigationStatus; fieldCapacityPercent: number
-  cad: number; cta: number; das: number; cropStage: number
-  recommendedDepthMm: number; recommendedSpeedPercent: number | null; alertThresholdPct: number | null
-}) {
-  const cfg = STATUS_CONFIG[status]
-  const StatusIcon = cfg.icon
-  const stageLabels = ['', 'Inicial', 'Desenv.', 'Médio', 'Final']
-  // Linha de referência na barra: threshold configurado ou CAD agronomico
-  const refPct = alertThresholdPct ?? (cta > 0 ? (cad / cta) * 100 : 50)
-
-  return (
-    <div style={{ background: '#0f1923', border: `1px solid ${cfg.border}`, borderRadius: 14, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Linha superior: status + DAS/fase */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 38, height: 38, borderRadius: 9, flexShrink: 0, background: cfg.bg, border: `1px solid ${cfg.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <StatusIcon size={18} style={{ color: cfg.color }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 16, fontWeight: 800, color: cfg.color, lineHeight: 1.2 }}>{cfg.label}</p>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 2 }}>{cfg.desc}</p>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 12, fontWeight: 600, color: '#e2e8f0' }}>DAS {das}</p>
-          <p style={{ fontSize: 11, color: '#556677' }}>Fase {cropStage} · {stageLabels[cropStage] ?? ''}</p>
-        </div>
-      </div>
-
-      {/* Barra de umidade */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontSize: 12, color: '#8899aa' }}>Capacidade de Campo</span>
-          <span style={{ fontSize: 16, fontWeight: 800, color: cfg.color, fontFamily: 'var(--font-mono)' }}>{fmtNum(fieldCapacityPercent, 0)}%</span>
-        </div>
-        {/* Barra customizada com threshold correto */}
-        <div>
-          <div style={{ height: 10, background: '#080e14', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
-            <div style={{ position: 'absolute', left: `${refPct}%`, top: 0, bottom: 0, width: 2, background: '#f59e0b', opacity: 0.8, zIndex: 2 }} />
-            <div style={{ width: `${Math.max(0, Math.min(100, fieldCapacityPercent))}%`, height: '100%', background: cfg.color, borderRadius: 99, transition: 'width 0.4s' }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
-            <span style={{ fontSize: 9, color: '#334455' }}>0%</span>
-            <span style={{ fontSize: 9, color: '#f59e0b' }}>
-              {alertThresholdPct != null ? `Irrigar em ${alertThresholdPct}%` : `CAD ${fmtNum(refPct, 0)}%`}
-            </span>
-            <span style={{ fontSize: 9, color: '#445566' }}>100%</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Resultado: NI ou Recomendação */}
-      {recommendedDepthMm <= 0 ? (
-        <div style={{ background: 'rgb(34 197 94/0.08)', border: '1px solid rgb(34 197 94/0.18)', borderRadius: 10, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgb(34 197 94/0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#22c55e' }}>NI</span>
-          </div>
-          <div>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#22c55e' }}>Não Irrigar</p>
-            <p style={{ fontSize: 11, color: '#445566' }}>
-              Solo acima do limiar de irrigação
-              {alertThresholdPct != null ? ` (${alertThresholdPct}%)` : ''}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-          <div>
-            <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Lâmina recomendada</p>
-            <p style={{ fontSize: 22, fontWeight: 800, color: cfg.color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-              {fmtNum(recommendedDepthMm)} <span style={{ fontSize: 12, fontWeight: 400, color: '#8899aa' }}>mm</span>
-            </p>
-          </div>
-          {recommendedSpeedPercent !== null && (
-            <div>
-              <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Velocidade sugerida</p>
-              <p style={{ fontSize: 22, fontWeight: 800, color: '#0093D0', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-                {recommendedSpeedPercent}% <span style={{ fontSize: 12, fontWeight: 400, color: '#8899aa' }}>vel.</span>
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 // ─── Diagrama visual do solo (estilo referência) ─────────────
 
@@ -474,83 +368,89 @@ function SoilDiagram({
   )
 }
 
-// ─── KPIs ETo / ETc / Kc ────────────────────────────────────
 
-function EtoKpiRow({ eto, etc, kc, etoSource, etoConfidence, etoNotes }: {
-  eto: number; etc: number; kc: number
-  etoSource: EToSource; etoConfidence: EToConfidence | null; etoNotes: string | null
-}) {
-  return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-        {[
-          { icon: Sun,      label: 'ETo',  value: fmtNum(eto),    unit: 'mm/dia', color: '#f59e0b' },
-          { icon: Droplets, label: 'ETc',  value: fmtNum(etc),    unit: 'mm/dia', color: '#06b6d4' },
-          { icon: Info,     label: 'Kc',   value: fmtNum(kc, 3),  unit: '',       color: '#0093D0' },
-        ].map(({ icon: Icon, label, value, unit, color }) => (
-          <div key={label} style={{ background: '#0d1520', borderRadius: 9, padding: '10px 12px', textAlign: 'center' }}>
-            <Icon size={12} style={{ color, margin: '0 auto 4px' }} />
-            <p style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0', lineHeight: 1, fontFamily: 'var(--font-mono)' }}>{value}</p>
-            <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{label}{unit ? ` (${unit})` : ''}</p>
-          </div>
-        ))}
-      </div>
-      {/* Fonte ETo — uma linha discreta */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 7, background: '#0d1520' }}>
-        <Satellite size={10} style={{ color: '#445566', flexShrink: 0 }} />
-        <span style={{ fontSize: 11, color: '#556677' }}>
-          ETo via <span style={{ color: '#8899aa' }}>{getEToSourceLabel(etoSource)}</span>
-          {' · '}confiança <span style={{ color: '#8899aa' }}>{getEToConfidenceLabel(etoConfidence)}</span>
-          {etoNotes && <> · <span style={{ color: '#445566' }}>{etoNotes}</span></>}
-        </span>
-      </div>
-    </div>
-  )
+// ─── Projeção 7 dias (simulação interativa) ─────────────────
+
+interface ProjectionForecastProps {
+  days: ProjectionDay[]
+  baseDays: ProjectionDay[]  // projeção sem irrigação (para comparação)
+  avgEto: number | null
+  pivot: Pivot | null
+  simulatedIrrigation: number[]
+  onSimulate: (irrigationByDay: number[]) => void
 }
 
-// ─── Balanço hídrico simplificado ────────────────────────────
+function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation, onSimulate }: ProjectionForecastProps) {
+  const [editingDayIdx, setEditingDayIdx] = useState<number | null>(null)
+  const [selectedSpeed, setSelectedSpeed] = useState<string>('')
+  const [manualDepth, setManualDepth] = useState<string>('')
 
-function WaterBalanceRow({ adcNew, cad, cta, color }: { adcNew: number; cad: number; cta: number; color: string }) {
-  return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 20px' }}>
-      <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#445566', marginBottom: 10 }}>Balanço Hídrico</p>
-      <div style={{ display: 'flex', gap: 16 }}>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 10, color: '#556677', marginBottom: 3 }}>ADc atual</p>
-          <p style={{ fontSize: 18, fontWeight: 700, color, fontFamily: 'var(--font-mono)' }}>{fmtNum(adcNew)} <span style={{ fontSize: 11, color: '#556677' }}>mm</span></p>
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 10, color: '#556677', marginBottom: 3 }}>CAD (limite)</p>
-          <p style={{ fontSize: 18, fontWeight: 700, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtNum(cad)} <span style={{ fontSize: 11, color: '#556677' }}>mm</span></p>
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 10, color: '#556677', marginBottom: 3 }}>CTA (máx)</p>
-          <p style={{ fontSize: 18, fontWeight: 700, color: '#445566', fontFamily: 'var(--font-mono)' }}>{fmtNum(cta)} <span style={{ fontSize: 11, color: '#445566' }}>mm</span></p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Projeção 7 dias ─────────────────────────────────────────
-
-function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: number | null }) {
   if (days.length === 0) return null
 
+  const hasSimulation = simulatedIrrigation.some(v => v > 0)
   const firstIrrigIdx = days.findIndex(d => d.isIrrigationDay)
 
+  const hasMechanicalData = !!(pivot?.time_360_h && pivot?.flow_rate_m3h && pivot?.length_m)
+
+  function handleApply(dayIdx: number) {
+    const depth = manualDepth ? parseFloat(manualDepth) : 0
+    if (depth <= 0) return
+    const newArr = [...simulatedIrrigation]
+    newArr[dayIdx] = depth
+    onSimulate(newArr)
+    setEditingDayIdx(null)
+    setSelectedSpeed('')
+    setManualDepth('')
+  }
+
+  function handleRemove(dayIdx: number) {
+    const newArr = [...simulatedIrrigation]
+    newArr[dayIdx] = 0
+    onSimulate(newArr)
+    setEditingDayIdx(null)
+    setSelectedSpeed('')
+    setManualDepth('')
+  }
+
+  function handleSpeedChange(speedStr: string) {
+    setSelectedSpeed(speedStr)
+    if (!speedStr || !pivot) { setManualDepth(''); return }
+    const depth = calcDepthForSpeed(pivot, parseInt(speedStr))
+    if (depth !== null) setManualDepth(depth.toFixed(1))
+    else setManualDepth('')
+  }
+
+  function handleClearAll() {
+    onSimulate([0, 0, 0, 0, 0, 0, 0])
+    setEditingDayIdx(null)
+    setSelectedSpeed('')
+    setManualDepth('')
+  }
+
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: '#0f1923', border: hasSimulation ? '1px solid rgba(0,147,208,0.25)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <TrendingDown size={14} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>Projeção — próximos 7 dias</span>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <TrendingDown size={14} style={{ color: hasSimulation ? '#0093D0' : '#0093D0' }} />
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>
+          {hasSimulation ? 'Projeção — Simulação Ativa' : 'Projeção — próximos 7 dias'}
+        </span>
         {avgEto !== null && (
           <span style={{ fontSize: 11, color: '#556677', marginLeft: 'auto' }}>
             ETo base: <span style={{ color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{avgEto.toFixed(1)} mm/d</span>
           </span>
         )}
-        <span style={{ fontSize: 10, color: '#445566', padding: '3px 8px', borderRadius: 20, background: '#0d1520' }}>sem chuva prevista</span>
+        {hasSimulation ? (
+          <button onClick={handleClearAll} style={{
+            fontSize: 11, padding: '4px 10px', borderRadius: 20,
+            background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+            color: '#ef4444', cursor: 'pointer',
+          }}>
+            Limpar simulação
+          </button>
+        ) : (
+          <span style={{ fontSize: 10, color: '#445566', padding: '3px 8px', borderRadius: 20, background: '#0d1520' }}>sem chuva prevista</span>
+        )}
       </div>
 
       {/* Alerta */}
@@ -584,37 +484,150 @@ function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: n
           const pct = Math.max(0, Math.min(100, day.fieldCapacityPercent))
           const cadPct = day.cta > 0 ? (day.cad / day.cta) * 100 : 0
           const isAlert = day.isIrrigationDay
+          const hasIrrigHere = simulatedIrrigation[i] > 0
+          const baseDay = baseDays[i]
+          const basePct = baseDay ? Math.max(0, Math.min(100, baseDay.fieldCapacityPercent)) : null
+          const showComparison = hasSimulation && basePct !== null && Math.abs(pct - basePct) > 0.5
 
           return (
-            <div key={day.date} style={{
-              display: 'grid',
-              gridTemplateColumns: '80px 30px 1fr 46px 46px 90px',
-              alignItems: 'center', gap: 8,
-              padding: isAlert ? '8px 10px' : '5px 10px',
-              borderRadius: 9,
-              background: isAlert ? cfg.bg : i % 2 ? '#080e14' : 'transparent',
-              border: isAlert ? `1px solid ${cfg.border}` : '1px solid transparent',
-            }}>
-              <span style={{ fontSize: 11, color: isAlert ? cfg.color : '#8899aa', fontWeight: isAlert ? 700 : 400 }}>
-                {i === 0 ? 'Amanhã' : fmtDate(day.date)}
-              </span>
-              <span style={{ fontSize: 10, color: '#445566' }}>D{day.das}</span>
-              <div style={{ position: 'relative', height: 12, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
-                <div style={{ position: 'absolute', left: `${cadPct}%`, top: -2, bottom: -2, width: 2, background: '#f59e0b', opacity: 0.6, borderRadius: 1, zIndex: 2 }} />
-                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: cfg.color, borderRadius: 99, transition: 'width 0.3s' }} />
+            <div key={day.date}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '80px 30px 1fr 60px 46px 90px 32px',
+                alignItems: 'center', gap: 8,
+                padding: isAlert ? '8px 10px' : '5px 10px',
+                borderRadius: 9,
+                background: hasIrrigHere ? 'rgba(0,147,208,0.08)' : isAlert ? cfg.bg : i % 2 ? '#080e14' : 'transparent',
+                border: hasIrrigHere ? '1px solid rgba(0,147,208,0.25)' : isAlert ? `1px solid ${cfg.border}` : '1px solid transparent',
+              }}>
+                <span style={{ fontSize: 11, color: isAlert ? cfg.color : '#8899aa', fontWeight: isAlert ? 700 : 400 }}>
+                  {i === 0 ? 'Amanhã' : fmtDate(day.date)}
+                </span>
+                <span style={{ fontSize: 10, color: '#445566' }}>D{day.das}</span>
+                <div style={{ position: 'relative', height: 12, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
+                  <div style={{ position: 'absolute', left: `${cadPct}%`, top: -2, bottom: -2, width: 2, background: '#f59e0b', opacity: 0.6, borderRadius: 1, zIndex: 2 }} />
+                  {showComparison && basePct !== null && (
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${basePct}%`, background: cfg.color, borderRadius: 99, opacity: 0.2 }} />
+                  )}
+                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: cfg.color, borderRadius: 99, transition: 'width 0.3s' }} />
+                </div>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
+                  {showComparison && basePct !== null ? (
+                    <>
+                      <span style={{ color: '#556677', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
+                      <span style={{ color: cfg.color, fontWeight: 700 }}> {fmtNum(day.fieldCapacityPercent, 0)}%</span>
+                    </>
+                  ) : (
+                    <span style={{ color: cfg.color, fontWeight: 700 }}>{fmtNum(day.fieldCapacityPercent, 0)}%</span>
+                  )}
+                </span>
+                <span style={{ fontSize: 10, textAlign: 'right' }} title={day.recommendedDepthMm > 0 ? `Déficit previsto D+${i+1}: ${fmtNum(day.recommendedDepthMm)} mm` : `ETc prevista: ${fmtNum(day.etcAvg)} mm/dia`}>
+                  {hasIrrigHere ? (
+                    <span style={{ color: '#0093D0', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10 }}>+{fmtNum(simulatedIrrigation[i])}</span>
+                  ) : day.recommendedDepthMm > 0 ? (
+                    <><span style={{ color: cfg.color, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#556677' }}> mm</span></>
+                  ) : (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#22c55e' }}>NI</span>
+                  )}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                  <StatusIcon size={10} style={{ color: cfg.color }} />
+                  <span style={{ fontSize: 10, color: cfg.color, fontWeight: 600 }}>{cfg.label}</span>
+                </div>
+                {/* Botão + / editar irrigação simulada */}
+                <button
+                  onClick={() => { setEditingDayIdx(editingDayIdx === i ? null : i); setSelectedSpeed(''); setManualDepth(simulatedIrrigation[i] > 0 ? simulatedIrrigation[i].toFixed(1) : '') }}
+                  style={{
+                    width: 24, height: 24, borderRadius: 6, border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: hasIrrigHere ? 'rgba(0,147,208,0.15)' : 'rgba(255,255,255,0.04)',
+                    color: hasIrrigHere ? '#0093D0' : '#556677',
+                    fontSize: 14, fontWeight: 700, lineHeight: 1,
+                  }}
+                  title={hasIrrigHere ? 'Editar irrigação simulada' : 'Simular irrigação neste dia'}
+                >
+                  {hasIrrigHere ? <Droplets size={12} /> : '+'}
+                </button>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: cfg.color, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>{fmtNum(day.fieldCapacityPercent, 0)}%</span>
-              <span style={{ fontSize: 10, textAlign: 'right' }} title={day.recommendedDepthMm > 0 ? `Déficit previsto D+${i+1}: ${fmtNum(day.recommendedDepthMm)} mm (cresce a cada dia sem irrigação)` : `ETc prevista: ${fmtNum(day.etcAvg)} mm/dia`}>
-                {day.recommendedDepthMm > 0 ? (
-                  <><span style={{ color: cfg.color, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#556677' }}> mm</span></>
-                ) : (
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#22c55e' }}>NI</span>
-                )}
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
-                <StatusIcon size={10} style={{ color: cfg.color }} />
-                <span style={{ fontSize: 10, color: cfg.color, fontWeight: 600 }}>{cfg.label}</span>
-              </div>
+
+              {/* Mini-form inline de simulação */}
+              {editingDayIdx === i && (
+                <div style={{
+                  margin: '4px 0 2px 110px', padding: '10px 14px', borderRadius: 9,
+                  background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.15)',
+                  display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                }}>
+                  {hasMechanicalData && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#8899aa' }}>Velocidade:</label>
+                      <select
+                        value={selectedSpeed}
+                        onChange={e => handleSpeedChange(e.target.value)}
+                        style={{
+                          padding: '5px 8px', borderRadius: 6, fontSize: 12,
+                          background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+                          color: '#e2e8f0', cursor: 'pointer',
+                        }}
+                      >
+                        <option value="">—</option>
+                        {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(s => (
+                          <option key={s} value={s}>{s}%</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <label style={{ fontSize: 11, color: '#8899aa' }}>Lâmina:</label>
+                    <input
+                      type="number" step="0.1" min="0"
+                      value={manualDepth}
+                      onChange={e => { setManualDepth(e.target.value); setSelectedSpeed('') }}
+                      placeholder="mm"
+                      style={{
+                        width: 70, padding: '5px 8px', borderRadius: 6, fontSize: 12,
+                        background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+                        color: '#e2e8f0', outline: 'none',
+                      }}
+                      onFocus={e => e.target.style.borderColor = '#0093D0'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                    />
+                    <span style={{ fontSize: 10, color: '#556677' }}>mm</span>
+                  </div>
+                  <button
+                    onClick={() => handleApply(i)}
+                    disabled={!manualDepth || parseFloat(manualDepth) <= 0}
+                    style={{
+                      padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                      background: manualDepth && parseFloat(manualDepth) > 0 ? '#0093D0' : '#0d1520',
+                      border: 'none', color: manualDepth && parseFloat(manualDepth) > 0 ? '#fff' : '#445566',
+                      cursor: manualDepth && parseFloat(manualDepth) > 0 ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    Aplicar
+                  </button>
+                  {hasIrrigHere && (
+                    <button
+                      onClick={() => handleRemove(i)}
+                      style={{
+                        padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                        background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                        color: '#ef4444', cursor: 'pointer',
+                      }}
+                    >
+                      Remover
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setEditingDayIdx(null)}
+                    style={{
+                      padding: '5px 8px', borderRadius: 6, fontSize: 11,
+                      background: 'none', border: 'none', color: '#556677', cursor: 'pointer',
+                    }}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
             </div>
           )
         })}
@@ -626,11 +639,13 @@ function ProjectionForecast({ days, avgEto }: { days: ProjectionDay[]; avgEto: n
             <div style={{ width: 2, height: 10, background: '#f59e0b', opacity: 0.7 }} />
             <span style={{ fontSize: 10, color: '#445566' }}>Limiar irrigação</span>
           </div>
-          <span style={{ fontSize: 10, color: '#445566' }}>· Projeção sem chuva (conservadora)</span>
+          <span style={{ fontSize: 10, color: '#445566' }}>· Clique no <strong>+</strong> para simular irrigação</span>
         </div>
-        <span style={{ fontSize: 10, color: '#445566', fontStyle: 'italic' }}>
-          A lâmina aumenta a cada dia porque a planta continua consumindo água (ETc).
-        </span>
+        {hasSimulation && (
+          <span style={{ fontSize: 10, color: '#0093D0', fontStyle: 'italic' }}>
+            Valores riscados mostram a projeção sem irrigação para comparação.
+          </span>
+        )}
       </div>
     </div>
   )
@@ -860,7 +875,9 @@ export default function ManejoPage() {
   const [weatherLoading, setWeatherLoading] = useState(false)
   const [externalData, setExternalData]     = useState<ManagementExternalData | null>(null)
   const [projection, setProjection]         = useState<ProjectionDay[]>([])
+  const [baseProjection, setBaseProjection] = useState<ProjectionDay[]>([])
   const [avgEto, setAvgEto]                 = useState<number | null>(null)
+  const [simulatedIrrigation, setSimulatedIrrigation] = useState<number[]>([0, 0, 0, 0, 0, 0, 0])
 
   const [date, setDate]           = useState(todayISO())
   const [tmax, setTmax]           = useState('')
@@ -971,10 +988,10 @@ export default function ManejoPage() {
   // ─── Projeção 7 dias ─────────────────────────────────────────
   // ETo base = valor do dia atual calculado (mesmo que aparece no diagrama)
   useEffect(() => {
-    if (!calcResult || !selectedSeason?.crops || !das || !date) { setProjection([]); setAvgEto(null); return }
+    if (!calcResult || !selectedSeason?.crops || !das || !date) { setProjection([]); setBaseProjection([]); setAvgEto(null); return }
     const baseEto = calcResult.eto
     setAvgEto(baseEto)
-    setProjection(calcProjection({
+    const baseParams = {
       crop: selectedSeason.crops!,
       startDate: date, startDas: das,
       startAdc: calcResult.adcNew,
@@ -984,8 +1001,12 @@ export default function ManejoPage() {
       avgEto: baseEto,
       pivot: selectedSeason.pivots ?? null,
       days: 7,
-    }))
-  }, [calcResult, selectedSeason, das, date, history])
+    }
+    const base = calcProjection(baseParams)
+    setBaseProjection(base)
+    const hasIrrig = simulatedIrrigation.some(v => v > 0)
+    setProjection(hasIrrig ? calcProjection({ ...baseParams, irrigationByDay: simulatedIrrigation }) : base)
+  }, [calcResult, selectedSeason, das, date, history, simulatedIrrigation])
 
   // ─── Editar registro do histórico ────────────────────────────
   function loadRecordIntoForm(record: DailyManagement) {
@@ -1061,8 +1082,11 @@ export default function ManejoPage() {
       wind_speed_ms: parseOptionalNumber(wind) ?? cs?.wind_speed_ms ?? null,
       solar_radiation_wm2: parseOptionalNumber(radiation) ?? cs?.solar_radiation_wm2 ?? null,
       eto_mm: calcResult.eto, etc_mm: calcResult.etc,
-      // Chuva só de entrada manual ou rainfall_records — nunca de Open-Meteo
-      rainfall_mm: parseOptionalNumber(rainfall) ?? externalData?.rainfall?.rainfall_mm ?? 0,
+      // Em modo edição, usa só o valor do campo (não sobrescreve com externalData)
+      // Fora de edição, fallback para rainfall_records (nunca Open-Meteo)
+      rainfall_mm: editingRecord
+        ? (parseOptionalNumber(rainfall) ?? 0)
+        : (parseOptionalNumber(rainfall) ?? externalData?.rainfall?.rainfall_mm ?? 0),
       kc: calcResult.kc, ks: calcResult.ks, ctda: calcResult.adcNew, cta: calcResult.cta,
       recommended_depth_mm: calcResult.recommendedDepthMm,
       recommended_speed_percent: calcResult.recommendedSpeedPercent,
@@ -1317,7 +1341,16 @@ export default function ManejoPage() {
       )}
 
       {/* ── Projeção 7 dias ── */}
-      {projection.length > 0 && <ProjectionForecast days={projection} avgEto={avgEto} />}
+      {projection.length > 0 && (
+        <ProjectionForecast
+          days={projection}
+          baseDays={baseProjection}
+          avgEto={avgEto}
+          pivot={selectedSeason?.pivots ?? null}
+          simulatedIrrigation={simulatedIrrigation}
+          onSimulate={setSimulatedIrrigation}
+        />
+      )}
 
       {/* ── Timeline ── */}
       {history.length >= 2 && <TimelineChart records={history} threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70} />}

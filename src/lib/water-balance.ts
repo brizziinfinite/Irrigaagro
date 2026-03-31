@@ -376,6 +376,15 @@ export function findRecommendedSpeed(
   return 10
 }
 
+/** Dado uma % de velocidade, retorna a lâmina bruta que o pivô aplica (mm). */
+export function calcDepthForSpeed(pivot: Pivot, speedPercent: number): number | null {
+  if (speedPercent <= 0 || !pivot.time_360_h || !pivot.flow_rate_m3h || !pivot.length_m) return null
+  const area = Math.PI * Math.pow(pivot.length_m, 2)
+  const durHours = pivot.time_360_h / (speedPercent / 100)
+  const volumeM3 = pivot.flow_rate_m3h * durHours
+  return (volumeM3 / area) * 1000 // mm bruto
+}
+
 // ─── Função principal: calcula tudo de uma vez ────────────────
 
 export interface BalanceInput {
@@ -428,8 +437,9 @@ export function calcProjection(params: {
   days?: number
   etoByDay?: number[]      // ETo real por dia (index 0 = D+1); sobrepõe avgEto
   rainfallByDay?: number[] // chuva prevista por dia (mm); sobrepõe 0
+  irrigationByDay?: number[] // irrigação simulada por dia (mm brutos, index 0 = D+1) — CUC aplicado internamente
 }): ProjectionDay[] {
-  const { crop, startDate, startDas, startAdc, fieldCapacity, wiltingPoint, bulkDensity, avgEto, pivot, days = 7, etoByDay, rainfallByDay } = params
+  const { crop, startDate, startDas, startAdc, fieldCapacity, wiltingPoint, bulkDensity, avgEto, pivot, days = 7, etoByDay, rainfallByDay, irrigationByDay } = params
 
   const results: ProjectionDay[] = []
   let adcPrev = startAdc
@@ -451,7 +461,10 @@ export function calcProjection(params: {
     const rainfallForDay = rainfallByDay?.[i - 1] ?? 0
     const etcAvg = calcEtc(etoForDay, kc)
 
-    const adcProjected = calcADc(adcPrev, rainfallForDay, 0, etcAvg, cta)
+    const irrigBruto = irrigationByDay?.[i - 1] ?? 0
+    const cuc = (pivot?.cuc_percent ?? 85) / 100
+    const irrigLiquido = irrigBruto * cuc
+    const adcProjected = calcADc(adcPrev, rainfallForDay, irrigLiquido, etcAvg, cta)
     const fieldCapacityPercent = cta > 0 ? (adcProjected / cta) * 100 : 0
     const alertThresholdPct = pivot?.alert_threshold_percent ?? null
     const status = getIrrigationStatus(adcProjected, cad, false, cta, alertThresholdPct)

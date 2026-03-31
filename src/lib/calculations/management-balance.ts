@@ -97,11 +97,14 @@ export function computeResolvedManagementBalance(
     date,
   }
 
+  const correctionFactor = parseFloat(process.env.NEXT_PUBLIC_ETO_CORRECTION_FACTOR ?? '1')
+
   const etoResolution = resolveETo({
     weatherCorrectedMm: externalData?.weather?.eto_corrected_mm ?? null,
     weatherRawMm: externalData?.weather?.eto_mm ?? null,
     calculationInput: weatherInput,
     manualEtoMm: null,
+    etoCorrectionFactor: correctionFactor > 0 && correctionFactor < 1 ? correctionFactor : null,
   })
 
   if (etoResolution.etoMm == null) return null

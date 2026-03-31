@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, Mail, LockKeyhole, User, ArrowRight, Droplets, BarChart3, Zap } from 'lucide-react'
+import GotejoLogo from '@/components/branding/GotejoLogo'
 
 // ─── SVG Pivot Animation ──────────────────────────────────────────────────────
 function PivotAnimation() {
@@ -70,41 +71,6 @@ function PivotAnimation() {
         }
       `}</style>
     </svg>
-  )
-}
-
-// ─── Logo inline ───────────────────────────────────────────────────────────────
-function Logo({ size = 36 }: { size?: number }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <svg width={size} height={Math.round(size * 1.15)} viewBox="0 0 200 230" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="loginDropGrad" x1="60" y1="10" x2="160" y2="210" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#38BDF8"/>
-            <stop offset="50%" stopColor="#00D4AA"/>
-            <stop offset="100%" stopColor="#22C55E"/>
-          </linearGradient>
-          <linearGradient id="loginBarGrad" x1="0" y1="190" x2="0" y2="90" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#00D4AA"/>
-            <stop offset="100%" stopColor="#22C55E"/>
-          </linearGradient>
-        </defs>
-        <path d="M100 12 C100 12 38 98 38 140 C38 176 65 202 100 202 C135 202 162 176 162 140 C162 98 100 12 100 12Z" fill="none" stroke="url(#loginDropGrad)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-        <rect x="66" y="150" width="18" height="36" rx="3" fill="url(#loginBarGrad)" opacity="0.9"/>
-        <rect x="91" y="128" width="18" height="58" rx="3" fill="url(#loginBarGrad)"/>
-        <rect x="116" y="106" width="18" height="80" rx="3" fill="url(#loginBarGrad)" opacity="0.9"/>
-        <line x1="60" y1="189" x2="140" y2="189" stroke="rgba(0,212,170,0.4)" strokeWidth="2" strokeLinecap="round"/>
-      </svg>
-      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-        <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: size * 0.56, letterSpacing: 1, lineHeight: 1 }}>
-          <span style={{ background: 'linear-gradient(135deg, #00D4AA, #38BDF8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>G</span>
-          <span style={{ color: '#fff' }}>otejo</span>
-        </span>
-        <span style={{ fontSize: 7, fontWeight: 500, textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', letterSpacing: '2.8px', marginTop: 3 }}>
-          Irrigação Inteligente
-        </span>
-      </div>
-    </div>
   )
 }
 
@@ -229,7 +195,7 @@ export default function LoginPage() {
       }}
         className="hero-panel"
       >
-        <Logo size={38} />
+        <GotejoLogo size={42} showText />
 
         {/* Central visual */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40 }}>
@@ -268,20 +234,8 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
           <span style={{ fontSize: 12, color: '#556677' }}>Gotejo</span>
-          <div style={{ display: 'flex', gap: 16 }}>
-            {[
-              { label: 'Pivôs', value: '∞' },
-              { label: 'Safras', value: '∞' },
-              { label: 'Precisão', value: '±2%' },
-            ].map(s => (
-              <div key={s.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{s.value}</div>
-                <div style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -299,7 +253,7 @@ export default function LoginPage() {
 
         {/* Mobile logo */}
         <div style={{ marginBottom: 40, display: 'flex', justifyContent: 'center' }} className="mobile-logo">
-          <Logo size={40} />
+          <GotejoLogo size={42} showText />
         </div>
 
         {/* Mode toggle */}

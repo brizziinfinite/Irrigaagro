@@ -21,6 +21,7 @@ export interface ResolveEToParams {
   weatherRawMm?: number | null
   calculationInput?: WeatherInput | null
   manualEtoMm?: number | null
+  etoCorrectionFactor?: number | null  // fator empírico (ex: 0.82) aplicado ao cálculo local
 }
 
 export function resolveETo(params: ResolveEToParams): EToResolution {
@@ -29,6 +30,7 @@ export function resolveETo(params: ResolveEToParams): EToResolution {
     weatherRawMm = null,
     calculationInput = null,
     manualEtoMm = null,
+    etoCorrectionFactor = null,
   } = params
 
   if (weatherCorrectedMm != null) {
@@ -52,11 +54,15 @@ export function resolveETo(params: ResolveEToParams): EToResolution {
   if (calculationInput) {
     const calculatedEto = calcETo(calculationInput)
     if (Number.isFinite(calculatedEto)) {
+      const factor = etoCorrectionFactor != null && etoCorrectionFactor > 0 ? etoCorrectionFactor : 1
+      const correctedEto = calculatedEto * factor
       return {
-        etoMm: calculatedEto,
+        etoMm: correctedEto,
         etoSource: 'calculated_penman_monteith',
         etoConfidence: 'medium',
-        etoNotes: 'ETo calculada localmente via Penman-Monteith com os dados meteorológicos disponíveis.',
+        etoNotes: factor < 1
+          ? `ETo calculada localmente via Penman-Monteith (fator correção ${factor}).`
+          : 'ETo calculada localmente via Penman-Monteith com os dados meteorológicos disponíveis.',
       }
     }
 
