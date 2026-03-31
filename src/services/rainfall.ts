@@ -21,7 +21,11 @@ export async function validatePivotOwnership(
 }
 
 const rainfallTable = (client: TypedSupabaseClient) => (client as any).from('rainfall_records')
-const RAINFALL_UPSERT_CONFLICT = 'pivot_id,date'
+// unique index: (pivot_id, COALESCE(sector_id, '00000000-0000-0000-0000-000000000000'), date)
+// Supabase upsert with onConflict requires the full column list matching the unique index.
+// Since sector_id uses COALESCE (partial/expression index), we pass the raw columns and let
+// Postgres resolve the conflict via the expression index automatically.
+const RAINFALL_UPSERT_CONFLICT = 'pivot_id,sector_id,date'
 
 function rainfallServiceError(action: string, error: { message: string }) {
   return new Error(`Falha ao ${action} precipitação: ${error.message}`)
@@ -44,6 +48,27 @@ export async function listRainfallByPivotIds(
     throw rainfallServiceError('listar', error)
   }
 
+  return (data ?? []) as RainfallRecord[]
+}
+
+export async function listRainfallByPivotIdAndSector(
+  pivotId: string,
+  sectorId: string | null,
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+): Promise<RainfallRecord[]> {
+  let q = rainfallTable(client)
+    .select('*')
+    .eq('pivot_id', pivotId)
+    .order('date', { ascending: false })
+
+  if (sectorId === null) {
+    q = q.is('sector_id', null)
+  } else {
+    q = q.eq('sector_id', sectorId)
+  }
+
+  const { data, error } = await q
+  if (error) throw rainfallServiceError('listar', error)
   return (data ?? []) as RainfallRecord[]
 }
 

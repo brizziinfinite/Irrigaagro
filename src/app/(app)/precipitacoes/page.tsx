@@ -4,12 +4,30 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { listFarmsByCompany } from '@/services/farms'
 import { listPivotsByFarmIds } from '@/services/pivots'
+import { listSectorsByPivotId } from '@/services/pivot-sectors'
 import { deleteRainfallRecord, listRainfallByPivotIds, upsertRainfallRecord, upsertRainfallRecords } from '@/services/rainfall'
-import type { RainfallRecord } from '@/types/database'
+import type { PivotSector, RainfallRecord } from '@/types/database'
 import {
   ChevronLeft, ChevronRight, CloudRain, Upload, X,
   Calendar,
 } from 'lucide-react'
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const SECTOR_COLORS: Record<string, string> = {
+  A: '#f59e0b',
+  B: '#3b82f6',
+  C: '#a855f7',
+  D: '#ef4444',
+}
+
+const SECTOR_COLOR_LIST = ['#f59e0b', '#3b82f6', '#a855f7', '#ef4444', '#10b981', '#ec4899']
+
+function getSectorColor(sector: PivotSector, index: number): string {
+  // Single letter name → use color map
+  if (SECTOR_COLORS[sector.name.toUpperCase()]) return SECTOR_COLORS[sector.name.toUpperCase()]
+  return SECTOR_COLOR_LIST[index % SECTOR_COLOR_LIST.length]
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,9 +45,7 @@ function toYMD(d: Date): string {
 
 function parseFlexDate(raw: string): string | null {
   const s = raw.trim()
-  // YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
-  // DD/MM/YYYY or DD/MM/YY
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/)
   if (m) {
     const year = m[3].length === 2 ? `20${m[3]}` : m[3]
@@ -48,25 +64,154 @@ function rainfallColor(mm: number): { text: string; bg: string } {
 const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const DAY_LABELS  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Pivot visual map (sector donut) ─────────────────────────────────────────
+
+function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
+}
+
+function arcPath(cx: number, cy: number, r: number, startDeg: number, endDeg: number): string {
+  // Handle full circle
+  if (Math.abs(endDeg - startDeg) >= 360) {
+    return `M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} Z`
+  }
+  const start = polarToXY(cx, cy, r, startDeg)
+  const end = polarToXY(cx, cy, r, endDeg)
+  const largeArc = (endDeg - startDeg + 360) % 360 > 180 ? 1 : 0
+  return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y} Z`
+}
+
+interface PivotMapProps {
+  sectors: PivotSector[]
+  activeSectorId: string | null
+  onSelectSector: (id: string | null) => void
+}
+
+function PivotCircleMap({ sectors, activeSectorId, onSelectSector }: PivotMapProps) {
+  const cx = 80, cy = 80, r = 64
+  const hasSectors = sectors.length > 0
+
+  return (
+    <svg width={160} height={160} viewBox="0 0 160 160" style={{ flexShrink: 0 }}>
+      {/* Background circle */}
+      <circle cx={cx} cy={cy} r={r} fill="#0d1520" stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
+
+      {hasSectors ? sectors.map((s, i) => {
+        const color = getSectorColor(s, i)
+        const isActive = activeSectorId === s.id
+        const start = s.angle_start ?? 0
+        const end = s.angle_end ?? 360
+        const path = arcPath(cx, cy, r, start, end)
+        // Label position at mid-angle
+        const midAngle = start + ((end - start + 360) % 360) / 2
+        const lp = polarToXY(cx, cy, r * 0.6, midAngle)
+        return (
+          <g key={s.id} style={{ cursor: 'pointer' }} onClick={() => onSelectSector(isActive ? null : s.id)}>
+            <path
+              d={path}
+              fill={isActive ? color : `${color}55`}
+              stroke={isActive ? color : `${color}99`}
+              strokeWidth={isActive ? 1.5 : 0.8}
+              style={{ transition: 'fill 0.15s' }}
+            />
+            <text
+              x={lp.x} y={lp.y}
+              textAnchor="middle" dominantBaseline="middle"
+              fontSize={10} fontWeight={700} fill={isActive ? '#fff' : color}
+              style={{ pointerEvents: 'none' }}
+            >
+              {s.name}
+            </text>
+          </g>
+        )
+      }) : (
+        // No sectors — full circle
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill={activeSectorId === null ? 'rgb(0 147 208 / 0.2)' : 'rgb(0 147 208 / 0.06)'}
+          stroke="#0093D0"
+          strokeWidth={1}
+          style={{ cursor: 'pointer' }}
+          onClick={() => onSelectSector(null)}
+        />
+      )}
+
+      {/* North indicator */}
+      <circle cx={cx} cy={cy - r + 6} r={3} fill="#f59e0b" />
+      <text x={cx} y={cy - r + 17} textAnchor="middle" fontSize={8} fill="#f59e0b" fontWeight={700}>N</text>
+
+      {/* Center hole */}
+      <circle cx={cx} cy={cy} r={18} fill="#080e14" stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
+      <circle cx={cx} cy={cy} r={3} fill="#0093D0" />
+    </svg>
+  )
+}
+
+// ─── Sector tabs ──────────────────────────────────────────────────────────────
+
+interface SectorTabsProps {
+  sectors: PivotSector[]
+  activeSectorId: string | null
+  onSelect: (id: string | null) => void
+}
+
+function SectorTabs({ sectors, activeSectorId, onSelect }: SectorTabsProps) {
+  if (sectors.length === 0) return null
+
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <button
+        onClick={() => onSelect(null)}
+        style={{
+          padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+          background: activeSectorId === null ? '#0093D0' : '#0d1520',
+          color: activeSectorId === null ? '#fff' : '#8899aa',
+          transition: 'background 0.15s',
+        }}
+      >
+        Geral
+      </button>
+      {sectors.map((s, i) => {
+        const color = getSectorColor(s, i)
+        const isActive = activeSectorId === s.id
+        return (
+          <button
+            key={s.id}
+            onClick={() => onSelect(isActive ? null : s.id)}
+            style={{
+              padding: '5px 14px', borderRadius: 20, border: `1px solid ${isActive ? color : 'rgba(255,255,255,0.08)'}`,
+              cursor: 'pointer', fontSize: 12, fontWeight: 600,
+              background: isActive ? `${color}22` : '#0d1520',
+              color: isActive ? color : '#8899aa',
+              transition: 'all 0.15s',
+            }}
+          >
+            {s.name}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Chips ────────────────────────────────────────────────────────────────────
 
 function RainfallChips({
   records,
   selectedDate,
+  sectorLabel,
 }: {
   records: RainfallRecord[]
   selectedDate: string
+  sectorLabel?: string
 }) {
   const chips = useMemo(() => {
     const map: Record<string, number> = {}
     for (const r of records) map[r.date] = (map[r.date] ?? 0) + r.rainfall_mm
 
     const selD = new Date(selectedDate + 'T00:00:00')
-
-    // Day
     const day = map[selectedDate] ?? 0
-
-    // Week (Sun–Sat)
     const dow = selD.getDay()
     const weekDates: string[] = []
     for (let i = 0; i < 7; i++) {
@@ -75,12 +220,8 @@ function RainfallChips({
       weekDates.push(toYMD(d))
     }
     const week = weekDates.reduce((s, k) => s + (map[k] ?? 0), 0)
-
-    // Month
     const prefix = selectedDate.slice(0, 7)
     const month = Object.entries(map).reduce((s, [k, v]) => k.startsWith(prefix) ? s + v : s, 0)
-
-    // Year
     const yearPrefix = selectedDate.slice(0, 4)
     const year = Object.entries(map).reduce((s, [k, v]) => k.startsWith(yearPrefix) ? s + v : s, 0)
 
@@ -93,7 +234,10 @@ function RainfallChips({
   }, [records, selectedDate])
 
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+      {sectorLabel && (
+        <span style={{ fontSize: 11, color: '#556677', marginRight: 4 }}>{sectorLabel}</span>
+      )}
       {chips.map(c => (
         <div
           key={c.label}
@@ -108,6 +252,74 @@ function RainfallChips({
           {c.label}: {c.value.toFixed(1)} mm
         </div>
       ))}
+    </div>
+  )
+}
+
+// ─── Sector comparison bar chart ──────────────────────────────────────────────
+
+interface SectorCompareProps {
+  allRecords: RainfallRecord[]
+  sectors: PivotSector[]
+  year: number
+  month: number
+}
+
+function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareProps) {
+  const [hovered, setHovered] = useState<string | null>(null)
+
+  const data = useMemo(() => {
+    const prefix = `${year}-${String(month + 1).padStart(2, '0')}`
+
+    // Group: null = general (no sector)
+    const groups: { id: string | null; label: string; color: string }[] = [
+      { id: null, label: 'Geral', color: '#0093D0' },
+      ...sectors.map((s, i) => ({ id: s.id, label: s.name, color: getSectorColor(s, i) })),
+    ]
+
+    return groups.map(g => {
+      const total = allRecords
+        .filter(r => r.date.startsWith(prefix) && r.sector_id === g.id)
+        .reduce((s, r) => s + r.rainfall_mm, 0)
+      return { ...g, total }
+    }).filter(g => g.total > 0 || g.id === null)
+  }, [allRecords, sectors, year, month])
+
+  const maxVal = Math.max(...data.map(d => d.total), 1)
+
+  if (sectors.length === 0) return null
+
+  return (
+    <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#8899aa', marginBottom: 12 }}>
+        Comparativo por setor — {MONTH_NAMES[month]}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {data.map(d => (
+          <div
+            key={String(d.id)}
+            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+            onMouseEnter={() => setHovered(String(d.id))}
+            onMouseLeave={() => setHovered(null)}
+          >
+            <div style={{ width: 36, fontSize: 11, fontWeight: 700, color: d.color, textAlign: 'right', flexShrink: 0 }}>
+              {d.label}
+            </div>
+            <div style={{ flex: 1, height: 16, background: '#0f1923', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', width: `${(d.total / maxVal) * 100}%`,
+                background: d.color,
+                borderRadius: 8,
+                opacity: hovered === String(d.id) ? 1 : 0.7,
+                transition: 'width 0.3s, opacity 0.15s',
+              }} />
+            </div>
+            <div style={{ width: 52, fontSize: 11, fontWeight: 600, color: '#e2e8f0', textAlign: 'right', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
+              {d.total.toFixed(1)} mm
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -172,7 +384,6 @@ function RainfallBarChart({ records, year, month }: { records: RainfallRecord[];
           )
         })}
 
-        {/* Average line */}
         {avgMm > 0 && (
           <line
             x1={0} y1={avgY}
@@ -184,7 +395,6 @@ function RainfallBarChart({ records, year, month }: { records: RainfallRecord[];
         )}
       </svg>
 
-      {/* Tooltip */}
       {hovered !== null && (() => {
         const d = data.find(x => x.day === hovered)
         if (!d) return null
@@ -211,13 +421,15 @@ function RainfallBarChart({ records, year, month }: { records: RainfallRecord[];
 interface EditModalProps {
   date: string
   pivotId: string
+  sectorId: string | null
+  sectorName: string | null
   existing: RainfallRecord | null
   onClose: () => void
   onSaved: () => Promise<void>
   onDeleted: () => Promise<void>
 }
 
-function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: EditModalProps) {
+function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onSaved, onDeleted }: EditModalProps) {
   const [value, setValue] = useState(existing ? String(existing.rainfall_mm) : '0')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -256,6 +468,7 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
         date,
         rainfall_mm: mm,
         source: existing?.source ?? 'manual',
+        sector_id: sectorId,
         updated_at: new Date().toISOString(),
       })
       await onSaved()
@@ -294,9 +507,14 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
         borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700 }}>
-            Precipitação — {displayDate}
-          </h3>
+          <div>
+            <h3 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700 }}>
+              Precipitação — {displayDate}
+            </h3>
+            {sectorName && (
+              <p style={{ fontSize: 11, color: '#8899aa', marginTop: 2 }}>Setor {sectorName}</p>
+            )}
+          </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#556677', padding: 4 }}>
             <X size={16} />
           </button>
@@ -314,12 +532,8 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
 
         {error && (
           <div style={{
-            fontSize: 12,
-            padding: '8px 10px',
-            borderRadius: 8,
-            background: 'rgb(239 68 68 / 0.08)',
-            border: '1px solid rgb(239 68 68 / 0.2)',
-            color: '#fca5a5',
+            fontSize: 12, padding: '8px 10px', borderRadius: 8,
+            background: 'rgb(239 68 68 / 0.08)', border: '1px solid rgb(239 68 68 / 0.2)', color: '#fca5a5',
           }}>
             {error}
           </div>
@@ -354,8 +568,7 @@ function EditModal({ date, pivotId, existing, onClose, onSaved, onDeleted }: Edi
             disabled={saving}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: '#0093D0',
-              color: '#fff', fontWeight: 600, fontSize: 13,
+              background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 13,
               opacity: saving ? 0.7 : 1,
             }}
           >
@@ -404,7 +617,6 @@ interface SheetTab {
   gid: string
 }
 
-/** Parseia CSV respeitando campos entre aspas e vírgula decimal */
 function parseCsvLinePrecip(line: string): string[] {
   const cols: string[] = []
   let cur = ''
@@ -419,7 +631,6 @@ function parseCsvLinePrecip(line: string): string[] {
   return cols
 }
 
-/** Detecta índice de coluna pelo nome do cabeçalho (case-insensitive, parcial) */
 function detectCol(headers: string[], keywords: string[]): string {
   for (const kw of keywords) {
     const idx = headers.findIndex(h => h.toLowerCase().includes(kw.toLowerCase()))
@@ -441,7 +652,6 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
   const [importing, setImporting] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError]       = useState('')
-  // Pivôs selecionados para importação (começa com o pivô atual)
   const [selectedPivotIds, setSelectedPivotIds] = useState<string[]>([pivotId])
 
   function extractSpreadsheetId(raw: string): string | null {
@@ -449,13 +659,11 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
     return m ? m[1] : null
   }
 
-  // Extrai GID da URL se presente (ex: #gid=123456)
   function extractGidFromUrl(raw: string): string | null {
     const m = raw.match(/[#&?]gid=(\d+)/)
     return m ? m[1] : null
   }
 
-  // Busca abas da planilha via HTML público
   async function fetchTabs(sid: string) {
     setLoadingTabs(true)
     setTabs([])
@@ -463,8 +671,6 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
       const res = await fetch(`https://docs.google.com/spreadsheets/d/${sid}/edit`)
       if (!res.ok) { setLoadingTabs(false); return }
       const html = await res.text()
-      // Google Sheets embeds sheet metadata as JSON in the HTML
-      // Pattern: "name":"Sheet1","index":0,"sheetId":0
       const matches = [...html.matchAll(/"name":"([^"]+)","index":\d+,"sheetId":(\d+)/g)]
       if (matches.length > 0) {
         const found: SheetTab[] = matches.map(m => ({ name: m[1], gid: m[2] }))
@@ -472,12 +678,11 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
         setGid(found[0].gid)
       }
     } catch {
-      // silently ignore — user can type GID manually
+      // silently ignore
     }
     setLoadingTabs(false)
   }
 
-  // Quando URL muda, tenta extrair GID e buscar abas
   function handleUrlChange(raw: string) {
     setUrl(raw)
     setPreview(null)
@@ -498,14 +703,13 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
     try {
       const csvUrl = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=${gid}`
       const res = await fetch(csvUrl)
-      if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}). Certifique-se de que está pública: Arquivo → Compartilhar → Qualquer pessoa com o link → Leitor.`)
+      if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}). Certifique-se de que está pública.`)
       const text = await res.text()
       const rows = text.trim().split('\n').map(r => parseCsvLinePrecip(r))
       if (rows.length < 2) throw new Error('Planilha vazia ou sem dados.')
       const hdrs = rows[0]
       setHeaders(hdrs)
       setPreview(rows.slice(1, 6))
-      // Auto-detectar colunas pelo cabeçalho
       setDateCol(detectCol(hdrs, ['data', 'date']))
       setMmCol(detectCol(hdrs, ['precipita', 'chuva', 'mm', 'rain']))
     } catch (e) {
@@ -529,19 +733,18 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
     try {
       const csvUrl = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=${gid}`
       const res = await fetch(csvUrl, { signal: controller.signal })
-      if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}). Certifique-se de que está pública: Arquivo → Compartilhar → Qualquer pessoa com o link → Leitor.`)
+      if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}).`)
       const text = await res.text()
       const rows = text.trim().split('\n').map(r => parseCsvLinePrecip(r))
       const dataRows = rows.slice(1).filter(r => r.length > Math.max(Number(dateCol), Number(mmCol)))
 
       if (selectedPivotIds.length === 0) throw new Error('Selecione ao menos um pivô para importar.')
 
-      // Parseia datas e mm uma vez, replica para cada pivô selecionado
       const validRows: { date: string; rainfall_mm: number }[] = []
       let skippedRows = 0
       for (const row of dataRows) {
         const dateStr = parseFlexDate(row[Number(dateCol)])
-        const mmRaw = row[Number(mmCol)].replace(',', '.')  // vírgula decimal → ponto
+        const mmRaw = row[Number(mmCol)].replace(',', '.')
         const mm = parseFloat(mmRaw)
         if (!dateStr || isNaN(mm) || mm < 0) { skippedRows++; continue }
         validRows.push({ date: dateStr, rainfall_mm: mm })
@@ -551,7 +754,6 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
         throw new Error(`Nenhum registro válido encontrado. ${skippedRows} linha(s) com data ou valor inválido.`)
       }
 
-      // Gera registros para todos os pivôs selecionados
       const parsed = validRows.flatMap(r =>
         selectedPivotIds.map(pid => ({ pivot_id: pid, date: r.date, rainfall_mm: r.rainfall_mm, source: 'import' as const }))
       )
@@ -610,61 +812,35 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
             placeholder="https://docs.google.com/spreadsheets/d/..."
             value={url}
             onChange={e => handleUrlChange(e.target.value)}
-            style={{
-              padding: '9px 12px', borderRadius: 8, background: '#0d1520',
-              border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none',
-            }}
+            style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }}
           />
         </div>
 
-        {/* Seletor de aba — auto-detectado ou manual */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <label style={{ fontSize: 12, color: '#8899aa' }}>Aba</label>
             {loadingTabs && <span style={{ fontSize: 11, color: '#556677' }}>detectando abas…</span>}
-            {tabs.length > 0 && <span style={{ fontSize: 11, color: '#0093D0' }}>{tabs.length} aba{tabs.length > 1 ? 's' : ''} encontrada{tabs.length > 1 ? 's' : ''}</span>}
+            {tabs.length > 0 && <span style={{ fontSize: 11, color: '#0093D0' }}>{tabs.length} aba{tabs.length > 1 ? 's' : ''}</span>}
           </div>
           {tabs.length > 0 ? (
-            <select
-              value={gid}
-              onChange={e => { setGid(e.target.value); setPreview(null); setHeaders([]) }}
-              style={{
-                padding: '9px 12px', borderRadius: 8, background: '#0d1520',
-                border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer',
-              }}
-            >
-              {tabs.map(t => (
-                <option key={t.gid} value={t.gid}>{t.name}</option>
-              ))}
+            <select value={gid} onChange={e => { setGid(e.target.value); setPreview(null); setHeaders([]) }}
+              style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
+              {tabs.map(t => <option key={t.gid} value={t.gid}>{t.name}</option>)}
             </select>
           ) : (
-            <input
-              type="text"
-              placeholder="GID da aba (padrão: 0)"
-              value={gid}
-              onChange={e => setGid(e.target.value)}
-              style={{
-                padding: '9px 12px', borderRadius: 8, background: '#0d1520',
-                border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none',
-              }}
-            />
+            <input type="text" placeholder="GID da aba (padrão: 0)" value={gid} onChange={e => setGid(e.target.value)}
+              style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }} />
           )}
         </div>
 
-        {/* Seletor de pivôs — múltipla seleção */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <label style={{ fontSize: 12, color: '#8899aa' }}>Importar para os pivôs</label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {allPivots.map(p => (
               <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#e2e8f0' }}>
-                <input
-                  type="checkbox"
-                  checked={selectedPivotIds.includes(p.id)}
-                  onChange={e => setSelectedPivotIds(prev =>
-                    e.target.checked ? [...prev, p.id] : prev.filter(id => id !== p.id)
-                  )}
-                  style={{ accentColor: '#0093D0', width: 14, height: 14 }}
-                />
+                <input type="checkbox" checked={selectedPivotIds.includes(p.id)}
+                  onChange={e => setSelectedPivotIds(prev => e.target.checked ? [...prev, p.id] : prev.filter(id => id !== p.id))}
+                  style={{ accentColor: '#0093D0', width: 14, height: 14 }} />
                 {p.farm_name} · {p.name}
               </label>
             ))}
@@ -673,35 +849,21 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
 
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 12, color: '#8899aa' }}>Coluna da Data (índice)</label>
-            <select
-              value={dateCol}
-              onChange={e => setDateCol(e.target.value)}
-              style={{
-                padding: '9px 12px', borderRadius: 8, background: '#0d1520',
-                border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none',
-              }}
-            >
+            <label style={{ fontSize: 12, color: '#8899aa' }}>Coluna da Data</label>
+            <select value={dateCol} onChange={e => setDateCol(e.target.value)}
+              style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }}>
               {headers.length > 0
                 ? headers.map((h, i) => <option key={i} value={i}>{h || `Coluna ${i}`}</option>)
-                : [0,1,2,3,4].map(i => <option key={i} value={i}>Coluna {i}</option>)
-              }
+                : [0,1,2,3,4].map(i => <option key={i} value={i}>Coluna {i}</option>)}
             </select>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 12, color: '#8899aa' }}>Coluna de mm (índice)</label>
-            <select
-              value={mmCol}
-              onChange={e => setMmCol(e.target.value)}
-              style={{
-                padding: '9px 12px', borderRadius: 8, background: '#0d1520',
-                border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none',
-              }}
-            >
+            <label style={{ fontSize: 12, color: '#8899aa' }}>Coluna de mm</label>
+            <select value={mmCol} onChange={e => setMmCol(e.target.value)}
+              style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }}>
               {headers.length > 0
                 ? headers.map((h, i) => <option key={i} value={i}>{h || `Coluna ${i}`}</option>)
-                : [0,1,2,3,4].map(i => <option key={i} value={i}>Coluna {i}</option>)
-              }
+                : [0,1,2,3,4].map(i => <option key={i} value={i}>Coluna {i}</option>)}
             </select>
           </div>
         </div>
@@ -712,16 +874,8 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
           </p>
         )}
 
-        <button
-          onClick={handleFetch}
-          disabled={loading || !url}
-          style={{
-            padding: '10px', borderRadius: 8, cursor: 'pointer',
-            background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
-            color: '#e2e8f0', fontWeight: 600, fontSize: 13,
-            opacity: loading || !url ? 0.5 : 1,
-          }}
-        >
+        <button onClick={handleFetch} disabled={loading || !url}
+          style={{ padding: '10px', borderRadius: 8, cursor: 'pointer', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontWeight: 600, fontSize: 13, opacity: loading || !url ? 0.5 : 1 }}>
           {loading ? 'Buscando…' : 'Pré-visualizar'}
         </button>
 
@@ -742,9 +896,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
                   {preview.map((row, ri) => (
                     <tr key={ri}>
                       {row.map((cell, ci) => (
-                        <td key={ci} style={{ padding: '5px 10px', color: '#e2e8f0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          {cell}
-                        </td>
+                        <td key={ci} style={{ padding: '5px 10px', color: '#e2e8f0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{cell}</td>
                       ))}
                     </tr>
                   ))}
@@ -761,28 +913,13 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
               </div>
             )}
 
-            <button
-              onClick={handleImport}
-              disabled={importing}
-              style={{
-                padding: '11px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: '#0093D0',
-                color: '#fff', fontWeight: 600, fontSize: 13,
-                opacity: importing ? 0.7 : 1,
-              }}
-            >
+            <button onClick={handleImport} disabled={importing}
+              style={{ padding: '11px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 13, opacity: importing ? 0.7 : 1 }}>
               {importing ? `Importando… ${progress}%` : `Importar registros`}
             </button>
             {importing && (
-              <button
-                type="button"
-                onClick={handleCancel}
-                style={{
-                  padding: '10px 0', borderRadius: 10, cursor: 'pointer',
-                  background: 'transparent', border: '1px solid rgb(239 68 68 / 0.3)',
-                  color: '#ef4444', fontWeight: 600, fontSize: 13,
-                }}
-              >
+              <button type="button" onClick={handleCancel}
+                style={{ padding: '10px 0', borderRadius: 10, cursor: 'pointer', background: 'transparent', border: '1px solid rgb(239 68 68 / 0.3)', color: '#ef4444', fontWeight: 600, fontSize: 13 }}>
                 Cancelar
               </button>
             )}
@@ -811,8 +948,8 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
   const today = toYMD(new Date())
 
   const recordMap = useMemo(() => {
-    const m: Record<string, RainfallRecord> = {}
-    for (const r of records) m[r.date] = r
+    const m: Record<string, number> = {}
+    for (const r of records) m[r.date] = (m[r.date] ?? 0) + r.rainfall_mm
     return m
   }, [records])
 
@@ -821,18 +958,15 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const prevDays = new Date(year, month, 0).getDate()
     const result: { date: string; day: number; inMonth: boolean }[] = []
-    // prev month padding
     for (let i = firstDay - 1; i >= 0; i--) {
       const d = prevDays - i
       const mo = month === 0 ? 12 : month
       const y2 = month === 0 ? year - 1 : year
       result.push({ date: `${y2}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`, day: d, inMonth: false })
     }
-    // current month
     for (let d = 1; d <= daysInMonth; d++) {
       result.push({ date: `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`, day: d, inMonth: true })
     }
-    // next month padding to complete grid
     const rem = 7 - (result.length % 7)
     if (rem < 7) {
       const nextMo = month === 11 ? 1 : month + 2
@@ -846,20 +980,15 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
 
   return (
     <div>
-      {/* Header */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
         {DAY_LABELS.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#556677', padding: '4px 0' }}>
-            {d}
-          </div>
+          <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#556677', padding: '4px 0' }}>{d}</div>
         ))}
       </div>
 
-      {/* Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
         {cells.map(cell => {
-          const rec = recordMap[cell.date]
-          const mm = rec?.rainfall_mm ?? 0
+          const mm = recordMap[cell.date] ?? 0
           const col = rainfallColor(mm)
           const isToday = cell.date === today
           const isSelected = cell.date === selectedDate
@@ -869,23 +998,17 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
               key={cell.date}
               onClick={() => cell.inMonth && onSelectDate(cell.date)}
               style={{
-                minHeight: 64,
-                borderRadius: 8,
-                padding: '6px 8px',
+                minHeight: 64, borderRadius: 8, padding: '6px 8px',
                 background: isSelected ? 'rgb(0 147 208 / 0.10)' : col.bg,
                 border: `1px solid ${isToday ? '#0093D0' : isSelected ? 'rgb(0 147 208 / 0.35)' : 'rgba(255,255,255,0.06)'}`,
                 cursor: cell.inMonth ? 'pointer' : 'default',
                 opacity: cell.inMonth ? 1 : 0.25,
                 display: 'flex', flexDirection: 'column', gap: 2,
-                transition: 'background 0.1s',
-                position: 'relative',
+                transition: 'background 0.1s', position: 'relative',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <span style={{
-                  fontSize: 11, fontWeight: isToday ? 700 : 500,
-                  color: isToday ? '#0093D0' : '#8899aa',
-                }}>
+                <span style={{ fontSize: 11, fontWeight: isToday ? 700 : 500, color: isToday ? '#0093D0' : '#8899aa' }}>
                   {cell.day}
                 </span>
                 {mm > 0 && <CloudRain size={10} color={col.text} />}
@@ -901,11 +1024,7 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
               )}
 
               {mm >= 30 && (
-                <div style={{
-                  fontSize: 9, padding: '1px 5px', borderRadius: 10,
-                  background: 'rgb(29 78 216 / 0.2)', color: '#3b82f6',
-                  alignSelf: 'center', fontWeight: 600,
-                }}>
+                <div style={{ fontSize: 9, padding: '1px 5px', borderRadius: 10, background: 'rgb(29 78 216 / 0.2)', color: '#3b82f6', alignSelf: 'center', fontWeight: 600 }}>
                   forte
                 </div>
               )}
@@ -921,13 +1040,16 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
 
 export default function PrecipitacoesPage() {
   const { company, loading: authLoading } = useAuth()
-  const today = new Date()
+  const today = useMemo(() => new Date(), [])
+
   const [pivots, setPivots] = useState<PivotOption[]>([])
   const [pivotId, setPivotId] = useState<string>('')
+  const [sectors, setSectors] = useState<PivotSector[]>([])
+  const [activeSectorId, setActiveSectorId] = useState<string | null>(null)
   const [year, setYear]   = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
-  const [records, setRecords] = useState<RainfallRecord[]>([])
-  const [selectedDate, setSelectedDate] = useState(toYMD(today))
+  const [allRecords, setAllRecords] = useState<RainfallRecord[]>([])
+  const [selectedDate, setSelectedDate] = useState(() => toYMD(today))
   const [editModal, setEditModal] = useState<{ date: string } | null>(null)
   const [showImport, setShowImport] = useState(false)
   const [loadingRecords, setLoadingRecords] = useState(false)
@@ -942,7 +1064,7 @@ export default function PrecipitacoesPage() {
     if (!company?.id) {
       setPivots([])
       setPivotId('')
-      setRecords([])
+      setAllRecords([])
       setEditModal(null)
       setShowImport(false)
       setLoadingPivots(false)
@@ -957,19 +1079,17 @@ export default function PrecipitacoesPage() {
         setLoadingPivots(true)
         setLoadError('')
         const farms = await listFarmsByCompany(company.id)
-        const pivotRows = await listPivotsByFarmIds(farms.map((farm) => farm.id))
-        const farmMap = new Map(farms.map((farm) => [farm.id, farm.name]))
-        const options: PivotOption[] = pivotRows.map((pivot) => ({
-          id: pivot.id,
-          name: pivot.name,
-          farm_name: pivot.farms?.name ?? farmMap.get(pivot.farm_id) ?? '',
+        const pivotRows = await listPivotsByFarmIds(farms.map(f => f.id))
+        const farmMap = new Map(farms.map(f => [f.id, f.name]))
+        const options: PivotOption[] = pivotRows.map(p => ({
+          id: p.id, name: p.name,
+          farm_name: p.farms?.name ?? farmMap.get(p.farm_id) ?? '',
         }))
 
         if (cancelled) return
-
         setPivots(options)
-        setPivotId((current) => {
-          if (current && options.some((pivot) => pivot.id === current)) return current
+        setPivotId(current => {
+          if (current && options.some(p => p.id === current)) return current
           return options[0]?.id ?? ''
         })
       } catch (error) {
@@ -977,43 +1097,45 @@ export default function PrecipitacoesPage() {
           setLoadError(error instanceof Error ? error.message : 'Falha ao carregar pivôs')
           setPivots([])
           setPivotId('')
-          setRecords([])
-          setEditModal(null)
-          setShowImport(false)
         }
       } finally {
-        if (!cancelled) {
-          setLoadingPivots(false)
-        }
+        if (!cancelled) setLoadingPivots(false)
       }
     }
 
     loadPivots()
-
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [authLoading, company?.id])
 
-  // Load records for visible range (year)
+  // Load sectors when pivot changes
+  useEffect(() => {
+    if (!pivotId) { setSectors([]); setActiveSectorId(null); return }
+    let cancelled = false
+    listSectorsByPivotId(pivotId)
+      .then(data => { if (!cancelled) setSectors(data) })
+      .catch(() => { if (!cancelled) setSectors([]) })
+    return () => { cancelled = true }
+  }, [pivotId])
+
+  // Reset activeSectorId when pivot changes
+  useEffect(() => { setActiveSectorId(null) }, [pivotId])
+
+  // Load all records for pivot+year (all sectors at once for comparison chart)
   const loadRecords = useCallback(async (pid: string, y: number) => {
-    if (!pid) {
-      setRecords([])
-      return
-    }
+    if (!pid) { setAllRecords([]); return }
     try {
       setLoadingRecords(true)
       setLoadError('')
       setActionError('')
       const data = await listRainfallByPivotIds([pid])
-      setRecords(
+      setAllRecords(
         data
-          .filter((record) => record.date >= `${y}-01-01` && record.date <= `${y}-12-31`)
+          .filter(r => r.date >= `${y}-01-01` && r.date <= `${y}-12-31`)
           .sort((a, b) => a.date.localeCompare(b.date))
       )
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Falha ao carregar precipitações')
-      setRecords([])
+      setAllRecords([])
     } finally {
       setLoadingRecords(false)
     }
@@ -1022,18 +1144,33 @@ export default function PrecipitacoesPage() {
   useEffect(() => {
     if (pivotId) {
       loadRecords(pivotId, year)
-      return
+    } else {
+      setAllRecords([])
+      setEditModal(null)
+      setShowImport(false)
     }
-
-    setRecords([])
-    setEditModal(null)
-    setShowImport(false)
   }, [pivotId, year, loadRecords])
+
+  // Records filtered by active sector (for calendar + chips)
+  const records = useMemo(() => {
+    if (activeSectorId === null) {
+      // "Geral" tab: show records with no sector
+      return allRecords.filter(r => r.sector_id === null)
+    }
+    return allRecords.filter(r => r.sector_id === activeSectorId)
+  }, [allRecords, activeSectorId])
+
+  const monthRecords = useMemo(
+    () => records.filter(r => r.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)),
+    [records, year, month]
+  )
 
   const editingRecord = useMemo(() => {
     if (!editModal) return null
     return records.find(r => r.date === editModal.date) ?? null
   }, [editModal, records])
+
+  const activeSector = useMemo(() => sectors.find(s => s.id === activeSectorId) ?? null, [sectors, activeSectorId])
 
   async function handleSaved() {
     if (!pivotId) return
@@ -1074,15 +1211,11 @@ export default function PrecipitacoesPage() {
     else setMonth(m => m + 1)
   }
   function goToday() {
-    setYear(today.getFullYear())
-    setMonth(today.getMonth())
-    setSelectedDate(toYMD(today))
+    const t = new Date()
+    setYear(t.getFullYear())
+    setMonth(t.getMonth())
+    setSelectedDate(toYMD(t))
   }
-
-  const monthRecords = useMemo(
-    () => records.filter(r => r.date.startsWith(`${year}-${String(month + 1).padStart(2,'0')}`)),
-    [records, year, month]
-  )
 
   const selectedPivot = pivots.find(p => p.id === pivotId)
 
@@ -1109,7 +1242,6 @@ export default function PrecipitacoesPage() {
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {/* Pivot selector */}
           <select
             value={pivotId}
             onChange={e => setPivotId(e.target.value)}
@@ -1120,12 +1252,9 @@ export default function PrecipitacoesPage() {
               color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer',
             }}
           >
-            {pivots.map(p => (
-              <option key={p.id} value={p.id}>{p.farm_name} · {p.name}</option>
-            ))}
+            {pivots.map(p => <option key={p.id} value={p.id}>{p.farm_name} · {p.name}</option>)}
           </select>
 
-          {/* Import button */}
           <button
             onClick={() => setShowImport(true)}
             disabled={!pivotId}
@@ -1140,40 +1269,22 @@ export default function PrecipitacoesPage() {
             Importar
           </button>
         </div>
-        </div>
+      </div>
 
       {loadError && (
-        <div style={{
-          padding: '14px 16px',
-          background: 'rgb(239 68 68 / 0.08)',
-          border: '1px solid rgb(239 68 68 / 0.2)',
-          borderRadius: 12,
-          color: '#fca5a5',
-          fontSize: 13,
-        }}>
+        <div style={{ padding: '14px 16px', background: 'rgb(239 68 68 / 0.08)', border: '1px solid rgb(239 68 68 / 0.2)', borderRadius: 12, color: '#fca5a5', fontSize: 13 }}>
           {loadError}
         </div>
       )}
 
       {actionError && (
-        <div style={{
-          padding: '14px 16px',
-          background: 'rgb(245 158 11 / 0.08)',
-          border: '1px solid rgb(245 158 11 / 0.2)',
-          borderRadius: 12,
-          color: '#fcd34d',
-          fontSize: 13,
-        }}>
+        <div style={{ padding: '14px 16px', background: 'rgb(245 158 11 / 0.08)', border: '1px solid rgb(245 158 11 / 0.2)', borderRadius: 12, color: '#fcd34d', fontSize: 13 }}>
           {actionError}
         </div>
       )}
 
       {!loadingPivots && pivots.length === 0 && (
-        <div style={{
-          padding: '40px 24px', textAlign: 'center',
-          background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12,
-          color: '#556677', fontSize: 14,
-        }}>
+        <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, color: '#556677', fontSize: 14 }}>
           <Calendar size={32} color="rgba(255,255,255,0.06)" style={{ margin: '0 auto 12px' }} />
           Nenhum pivô cadastrado. Cadastre um pivô para registrar precipitações.
         </div>
@@ -1181,18 +1292,47 @@ export default function PrecipitacoesPage() {
 
       {pivotId && (
         <>
-          {/* Totals chips */}
-          <RainfallChips records={records} selectedDate={selectedDate} />
+          {/* Sector panel: map + tabs */}
+          {sectors.length > 0 && (
+            <div style={{
+              background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16,
+              display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap',
+            }}>
+              <PivotCircleMap
+                sectors={sectors}
+                activeSectorId={activeSectorId}
+                onSelectSector={setActiveSectorId}
+              />
+              <div style={{ flex: 1, minWidth: 180, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#556677' }}>
+                  Setor de Precipitação
+                </p>
+                <SectorTabs
+                  sectors={sectors}
+                  activeSectorId={activeSectorId}
+                  onSelect={setActiveSectorId}
+                />
+                <p style={{ fontSize: 11, color: '#556677', marginTop: 4, lineHeight: 1.5 }}>
+                  {activeSectorId === null
+                    ? 'Mostrando precipitações gerais (sem setor específico). Clique num setor para filtrar.'
+                    : `Setor ${activeSector?.name ?? ''} selecionado. Dados exclusivos deste setor.`}
+                </p>
+              </div>
+            </div>
+          )}
 
-          {/* Month navigation */}
-          <div style={{
-            background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 16px',
-          }}>
+          {/* Chips */}
+          <RainfallChips
+            records={records}
+            selectedDate={selectedDate}
+            sectorLabel={activeSector ? `Setor ${activeSector.name}` : undefined}
+          />
+
+          {/* Month navigation + calendar */}
+          <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <button
-                onClick={prevMonth}
-                style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}
-              >
+              <button onClick={prevMonth}
+                style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}>
                 <ChevronLeft size={16} />
               </button>
 
@@ -1204,19 +1344,12 @@ export default function PrecipitacoesPage() {
               </div>
 
               <div style={{ display: 'flex', gap: 6 }}>
-                <button
-                  onClick={goToday}
-                  style={{
-                    background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8,
-                    padding: '6px 12px', cursor: 'pointer', color: '#8899aa', fontSize: 12,
-                  }}
-                >
+                <button onClick={goToday}
+                  style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: '#8899aa', fontSize: 12 }}>
                   Hoje
                 </button>
-                <button
-                  onClick={nextMonth}
-                  style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}
-                >
+                <button onClick={nextMonth}
+                  style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}>
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -1235,11 +1368,12 @@ export default function PrecipitacoesPage() {
           </div>
 
           {/* Bar chart */}
-          <div style={{
-            background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px',
-          }}>
+          <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>Distribuição diária — {MONTH_NAMES[month]}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>
+                Distribuição diária — {MONTH_NAMES[month]}
+                {activeSector && <span style={{ color: '#556677' }}> · Setor {activeSector.name}</span>}
+              </span>
               <div style={{ width: 10, height: 2, background: '#f59e0b', borderRadius: 1 }} />
               <span style={{ fontSize: 10, color: '#556677' }}>média mensal</span>
             </div>
@@ -1249,14 +1383,23 @@ export default function PrecipitacoesPage() {
               <span style={{ fontSize: 10, color: '#556677' }}>{new Date(year, month + 1, 0).getDate()}</span>
             </div>
           </div>
+
+          {/* Sector comparison chart */}
+          <SectorCompareChart
+            allRecords={allRecords}
+            sectors={sectors}
+            year={year}
+            month={month}
+          />
         </>
       )}
 
-      {/* Edit modal — only render if pivotId belongs to loaded (company-filtered) pivots */}
       {editModal && pivotId && pivots.some(p => p.id === pivotId) && (
         <EditModal
           date={editModal.date}
           pivotId={pivotId}
+          sectorId={activeSectorId}
+          sectorName={activeSector?.name ?? null}
           existing={editingRecord}
           onClose={() => setEditModal(null)}
           onSaved={handleSaved}
@@ -1264,7 +1407,6 @@ export default function PrecipitacoesPage() {
         />
       )}
 
-      {/* Import modal — only render if pivotId belongs to loaded (company-filtered) pivots */}
       {showImport && pivotId && pivots.some(p => p.id === pivotId) && (
         <ImportModal
           pivotId={pivotId}
