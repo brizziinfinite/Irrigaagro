@@ -438,6 +438,7 @@ export interface DailyManagement {
   cost_per_mm_alq: number | null
   cost_per_mm_ha: number | null
   energy_kwh: number | null
+  sector_id: string | null
   created_at: string
   updated_at: string
 }
@@ -475,10 +476,38 @@ export interface DailyManagementInsert {
   cost_per_mm_alq?: number | null
   cost_per_mm_ha?: number | null
   energy_kwh?: number | null
+  sector_id?: string | null
   updated_at?: string
 }
 
 export type DailyManagementUpdate = Partial<DailyManagementInsert>
+
+export interface PivotSector {
+  id: string
+  pivot_id: string
+  name: string
+  angle_start: number | null
+  angle_end: number | null
+  area_ha: number | null
+  soil_type: string | null
+  notes: string | null
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PivotSectorInsert {
+  pivot_id: string
+  name: string
+  angle_start?: number | null
+  angle_end?: number | null
+  area_ha?: number | null
+  soil_type?: string | null
+  notes?: string | null
+  sort_order?: number
+}
+
+export type PivotSectorUpdate = Partial<PivotSectorInsert>
 
 export interface RainfallRecord {
   id: string
@@ -487,6 +516,7 @@ export interface RainfallRecord {
   rainfall_mm: number
   source: RainfallSource
   notes: string | null
+  sector_id: string | null
   created_at: string
   updated_at: string
 }
@@ -497,6 +527,7 @@ export interface RainfallRecordInsert {
   rainfall_mm?: number
   source?: RainfallSource
   notes?: string | null
+  sector_id?: string | null
   updated_at?: string
 }
 
@@ -658,6 +689,11 @@ export type Database = {
         Row: PivotSpeedEntry
         Insert: PivotSpeedEntryInsert
         Update: PivotSpeedEntryUpdate
+      }
+      pivot_sectors: {
+        Row: PivotSector
+        Insert: PivotSectorInsert
+        Update: PivotSectorUpdate
       }
       seasons: {
         Row: Season
