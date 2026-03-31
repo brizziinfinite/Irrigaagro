@@ -53,61 +53,74 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
   const mainColor = noPivots ? '#556677' : needsIrrigation ? '#ef4444' : '#22c55e'
   const Icon = needsIrrigation ? AlertCircle : CheckCircle2
 
+  const textShadowGlow = needsIrrigation 
+    ? '0 0 20px rgba(255, 51, 102, 0.4)' 
+    : noPivots ? 'none' : '0 0 20px rgba(0, 229, 255, 0.4)'
+
   return (
     <div style={{
-      background: bg,
-      border: `1px solid ${borderColor}`,
-      borderRadius: 16,
-      padding: '22px 28px',
+      background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+      border: `1px solid rgba(255,255,255,0.03)`,
+      borderTop: `1px solid ${mainColor}40`,
+      borderRadius: 20,
+      padding: '24px 30px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 20,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+      backdropFilter: 'blur(12px)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, minWidth: 0 }}>
-        {/* Icon */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: 1, minWidth: 0 }}>
+        {/* Glow Icon Container */}
         <div style={{
-          width: 48, height: 48, borderRadius: 14, flexShrink: 0,
-          background: `${mainColor}18`,
-          border: `1px solid ${mainColor}30`,
+          width: 56, height: 56, borderRadius: 16, flexShrink: 0,
+          background: `${mainColor}1A`,
+          border: `1px solid ${mainColor}40`,
+          boxShadow: `inset 0 0 16px ${mainColor}20, 0 0 16px ${mainColor}20`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <Icon size={24} style={{ color: mainColor }} />
+          <Icon size={28} style={{ color: mainColor, filter: `drop-shadow(0 0 6px ${mainColor})` }} />
         </div>
 
-        {/* Text */}
+        {/* Deep Typography */}
         <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span style={{
-              fontSize: 22, fontWeight: 800, color: mainColor,
-              letterSpacing: '-0.01em', lineHeight: 1.2,
+              fontSize: 26, fontWeight: 900, color: mainColor,
+              letterSpacing: '-0.02em', lineHeight: 1.2,
+              textShadow: textShadowGlow,
             }}>
               {noPivots ? 'SEM SAFRA ATIVA' : needsIrrigation ? 'IRRIGAR HOJE: SIM' : 'IRRIGAR HOJE: NÃO'}
             </span>
             {criticos > 0 && (
               <span style={{
-                fontSize: 11, fontWeight: 700,
-                background: 'rgba(239,68,68,0.12)', color: '#ef4444',
-                border: '1px solid rgba(239,68,68,0.25)',
-                borderRadius: 99, padding: '3px 10px',
+                fontSize: 12, fontWeight: 800,
+                background: 'rgba(255,51,102,0.15)', color: '#FF3366',
+                border: '1px solid rgba(255,51,102,0.3)',
+                boxShadow: '0 0 12px rgba(255,51,102,0.3)',
+                borderRadius: 99, padding: '4px 12px',
+                letterSpacing: '0.04em', textTransform: 'uppercase'
               }}>
                 {criticos} crítico{criticos > 1 ? 's' : ''}
               </span>
             )}
             {atencao > 0 && (
               <span style={{
-                fontSize: 11, fontWeight: 700,
-                background: 'rgba(245,158,11,0.12)', color: '#f59e0b',
-                border: '1px solid rgba(245,158,11,0.25)',
-                borderRadius: 99, padding: '3px 10px',
+                fontSize: 12, fontWeight: 800,
+                background: 'rgba(255,234,0,0.15)', color: '#FFEA00',
+                border: '1px solid rgba(255,234,0,0.3)',
+                boxShadow: '0 0 12px rgba(255,234,0,0.3)',
+                borderRadius: 99, padding: '4px 12px',
+                letterSpacing: '0.04em', textTransform: 'uppercase'
               }}>
                 {atencao} atenção
               </span>
             )}
           </div>
-          <p style={{ fontSize: 13, color: '#8899aa', marginTop: 4 }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#687b8d', marginTop: 8 }}>
             {noPivots
-              ? 'Configure uma safra para iniciar o monitoramento.'
+              ? 'Configure uma safra para iniciar o monitoramento hídrico.'
               : needsIrrigation
                 ? `${criticos + atencao} de ${summary.activePivots} pivô${summary.activePivots > 1 ? 's' : ''} precisa${criticos + atencao > 1 ? 'm' : ''} de irrigação`
                 : `${ok} pivô${ok > 1 ? 's' : ''} com umidade adequada · ${summary.handledToday} manejo(s) hoje`}
@@ -115,21 +128,24 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
         </div>
       </div>
 
-      {/* CTA */}
+      {/* Cyberpunk Glow CTA */}
       <Link href="/manejo" style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+        padding: '12px 24px', borderRadius: 14, fontSize: 14, fontWeight: 800,
+        textTransform: 'uppercase', letterSpacing: '0.04em',
         background: needsIrrigation
-          ? 'linear-gradient(135deg, #b91c1c, #ef4444)'
-          : 'linear-gradient(135deg, #005A8C, #0093D0)',
-        color: '#fff', textDecoration: 'none', flexShrink: 0,
+          ? 'linear-gradient(135deg, #FF3366, #E60039)'
+          : 'linear-gradient(135deg, #00B4D8, #00E5FF)',
+        color: needsIrrigation ? '#FFFFFF' : '#0F1923', // Dark text on cyan for supreme contrast
+        textDecoration: 'none', flexShrink: 0,
         boxShadow: needsIrrigation
-          ? '0 4px 16px rgba(239,68,68,0.3)'
-          : '0 4px 16px rgba(0,147,208,0.3)',
+          ? '0 6px 24px rgba(255,51,102,0.5)'
+          : '0 6px 24px rgba(0,229,255,0.4)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}>
-        <Droplets size={14} />
+        <Droplets size={16} strokeWidth={2.5} />
         Manejo Diário
-        <ArrowRight size={14} />
+        <ArrowRight size={16} strokeWidth={2.5} />
       </Link>
     </div>
   )

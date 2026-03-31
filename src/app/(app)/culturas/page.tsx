@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import type { Crop } from '@/types/database'
 import { useAuth } from '@/hooks/useAuth'
 import { createCrop, deleteCrop, listCropsByCompany, updateCrop } from '@/services/crops'
-import { Wheat, Plus, Pencil, Trash2, X, Loader2, Lock, ChevronRight, Copy } from 'lucide-react'
+import { Wheat, Plus, Pencil, Trash2, X, Loader2, Lock, ChevronRight, Copy, BookOpen } from 'lucide-react'
+import { CROP_PRESETS, type CropPreset } from '@/lib/crop-presets'
 
 // ─── Fases FAO-56 ────────────────────────────────────────────
 const STAGES = [
@@ -68,6 +69,27 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
   const [f4, setF4] = useState(crop?.f_factor_stage4?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPresets, setShowPresets] = useState(false)
+
+  function applyPreset(preset: CropPreset) {
+    setName(preset.name)
+    setKcIni(preset.kc_ini.toString())
+    setKcMid(preset.kc_mid.toString())
+    setKcFinal(preset.kc_final.toString())
+    setS1days(preset.stage1_days.toString())
+    setS2days(preset.stage2_days.toString())
+    setS3days(preset.stage3_days.toString())
+    setS4days(preset.stage4_days.toString())
+    setR1(preset.root_depth_stage1_cm.toString())
+    setR2(preset.root_depth_stage2_cm.toString())
+    setR3(preset.root_depth_stage3_cm.toString())
+    setR4(preset.root_depth_stage4_cm.toString())
+    setF1(preset.f_factor_stage1.toString())
+    setF2(preset.f_factor_stage2.toString())
+    setF3(preset.f_factor_stage3.toString())
+    setF4(preset.f_factor_stage4.toString())
+    setShowPresets(false)
+  }
 
   const totalDays = useMemo(() => {
     const vals = [s1days, s2days, s3days, s4days].map(v => parseInt(v) || 0)
@@ -157,6 +179,50 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
               onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
           </div>
+
+          {/* Preset FAO-56 */}
+          {!isEdit && (
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setShowPresets(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+                  borderRadius: 10, fontSize: 12, fontWeight: 600,
+                  background: 'rgb(0 147 208 / 0.08)', border: '1px solid rgb(0 147 208 / 0.2)',
+                  color: '#0093D0', cursor: 'pointer',
+                }}
+              >
+                <BookOpen size={13} />
+                Usar preset FAO-56
+                <ChevronRight size={12} style={{ transform: showPresets ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
+              </button>
+              {showPresets && (
+                <div style={{
+                  marginTop: 6, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 10, overflow: 'hidden', maxHeight: 240, overflowY: 'auto',
+                }}>
+                  {CROP_PRESETS.map(preset => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => applyPreset(preset)}
+                      style={{
+                        width: '100%', padding: '8px 14px', textAlign: 'left', cursor: 'pointer',
+                        background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      }}
+                    >
+                      <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{preset.name}</span>
+                      <span style={{ fontSize: 11, color: '#556677' }}>
+                        Kc {preset.kc_ini}/{preset.kc_mid}/{preset.kc_final} · {preset.stage1_days + preset.stage2_days + preset.stage3_days + preset.stage4_days}d
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 4 Fases */}
           <div>

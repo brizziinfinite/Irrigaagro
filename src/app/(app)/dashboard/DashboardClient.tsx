@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { useState } from 'react'
 import type { PivotDiagnostic } from '@/services/pivot-diagnostics'
 import type { ManagementSeasonContext } from '@/services/management'
 import type { Pivot, Season, DailyManagement, EnergyBill } from '@/types/database'
@@ -151,14 +152,14 @@ export function DashboardClient({
 }: Props) {
   if (!hasPivots) return <Onboarding />
 
+  const [activeTab, setActiveTab] = useState<'geral' | 'mapa' | 'metricas'>('geral')
+
   const activePivotIds = new Set(activeSeasons.map(s => s.pivot_id).filter((id): id is string => id !== null))
 
   const lastManagementByPivot: Record<string, DailyManagement> = {}
   for (const season of activeSeasons) {
     if (season.pivot_id && lastManagementBySeason[season.id]) {
       const rawRecord = lastManagementBySeason[season.id]
-      // Substitui o field_capacity_percent pelo valor projetado para hoje
-      // (descontando ETc dos dias sem registro desde o último manejo)
       const currentPct = currentFieldCapacityBySeasonId[season.id] ?? rawRecord.field_capacity_percent
       lastManagementByPivot[season.pivot_id] = { ...rawRecord, field_capacity_percent: currentPct }
     }
@@ -168,19 +169,18 @@ export function DashboardClient({
   const activePivots = summary.activePivots
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-      {/* ① Título simples */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 60 }}>
+      {/* ① Título simples e Ação Primária */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.01em', margin: 0 }}>Dashboard</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.02em', margin: 0 }}>Dashboard</h1>
           <p style={{ fontSize: 13, color: '#8899aa', marginTop: 4 }}>
             {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
           </p>
         </div>
         <Link href="/manejo" style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          padding: '10px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+          padding: '10px 18px', borderRadius: 12, fontSize: 13, fontWeight: 700,
           background: 'linear-gradient(135deg, #005A8C, #0093D0)',
           color: '#fff', textDecoration: 'none', flexShrink: 0,
           boxShadow: '0 4px 16px rgba(0,147,208,0.4)',
@@ -189,135 +189,196 @@ export function DashboardClient({
         </Link>
       </div>
 
-      {/* ② DecisionCard — resposta em 1 segundo */}
-      <DecisionCard
-        pivots={pivots}
-        activeSeasons={activeSeasons}
-        lastManagementByPivot={lastManagementByPivot}
-        summary={summary}
-      />
-
-      {/* ③ Mapa */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <span style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#556677',
-          }}>
-            Mapa dos Pivôs
-          </span>
-        </div>
-        <PivotMap pivots={pivots.map(p => ({
-          id:               p.id,
-          name:             p.name,
-          farm_name:        p.farms?.name ?? '',
-          latitude:         p.latitude,
-          longitude:        p.longitude,
-          status:           resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id), p.alert_threshold_percent ?? 70),
-          lastManagement:   lastManagementByPivot[p.id] ?? null,
-          length_m:         p.length_m,
-          sector_start_deg: p.sector_start_deg,
-          sector_end_deg:   p.sector_end_deg,
-        }))} />
+      {/* ② Navegação em Abas (SaaS Premium) */}
+      <div style={{
+        display: 'flex', gap: 6, padding: '4px',
+        background: 'rgba(15, 25, 35, 0.7)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 14,
+        backdropFilter: 'blur(10px)',
+        width: 'fit-content'
+      }}>
+        <button
+          onClick={() => setActiveTab('geral')}
+          style={{
+            padding: '8px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+            cursor: 'pointer', outline: 'none', border: 'none', transition: 'all 0.2s',
+            background: activeTab === 'geral' ? 'rgba(255,255,255,0.08)' : 'transparent',
+            color: activeTab === 'geral' ? '#fff' : '#8899aa',
+            boxShadow: activeTab === 'geral' ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
+          }}
+        >
+          Visão Geral
+        </button>
+        <button
+          onClick={() => setActiveTab('mapa')}
+          style={{
+            padding: '8px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+            cursor: 'pointer', outline: 'none', border: 'none', transition: 'all 0.2s',
+            background: activeTab === 'mapa' ? 'rgba(255,255,255,0.08)' : 'transparent',
+            color: activeTab === 'mapa' ? '#fff' : '#8899aa',
+            boxShadow: activeTab === 'mapa' ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
+          }}
+        >
+          Mapas e Status
+        </button>
+        <button
+          onClick={() => setActiveTab('metricas')}
+          style={{
+            padding: '8px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+            cursor: 'pointer', outline: 'none', border: 'none', transition: 'all 0.2s',
+            background: activeTab === 'metricas' ? 'rgba(255,255,255,0.08)' : 'transparent',
+            color: activeTab === 'metricas' ? '#fff' : '#8899aa',
+            boxShadow: activeTab === 'metricas' ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
+          }}
+        >
+          Histórico e Custos
+        </button>
       </div>
 
-      {/* ④ Pivôs Críticos */}
-      <CriticalPivots
-        pivots={pivots}
-        lastManagementByPivot={lastManagementByPivot}
-        activePivotIds={activePivotIds}
-        diagnosticsByPivot={diagnosticsByPivot}
-      />
+      <div style={{ animation: 'fadeIn 0.4s ease-in-out' }}>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        `}} />
 
-      {/* ④b Matriz de Recomendações 7 dias */}
-      <RecommendationsMatrix
-        contexts={contexts}
-        lastMgmtBySeasonId={lastManagementBySeason}
-        today={(() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}` })()}
-      />
+        {/* ─── ABA 1: VISÃO GERAL ─── */}
+        {activeTab === 'geral' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* O "Canivete Suíço" direto ao ponto */}
+            <DecisionCard
+              pivots={pivots}
+              activeSeasons={activeSeasons}
+              lastManagementByPivot={lastManagementByPivot}
+              summary={summary}
+            />
 
-      {/* ⑤ KPIs compactos (5 colunas) */}
-      <CompactKpis
-        summary={summary}
-        lastManagementBySeason={lastManagementBySeason}
-      />
+            {(summary.pivotsWithAlerts > 0 || summary.pivotsWithClimateFallback > 0) && (
+              <div style={{
+                background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
+                padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                  background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Info size={16} style={{ color: '#f59e0b' }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 260 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Resumo operacional do parque</p>
+                  <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
+                    {summary.pivotsWithAlerts} pivô(s) com alertas operacionais · {summary.pivotsWithClimateFallback} usando fallback climático
+                  </p>
+                </div>
+                <Link href="/diagnostico-pivo" style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+                  borderRadius: 10, fontSize: 12, fontWeight: 600, flexShrink: 0,
+                  background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
+                  color: '#f59e0b', textDecoration: 'none',
+                }}>
+                  Diagnóstico <ArrowRight size={13} />
+                </Link>
+              </div>
+            )}
 
-      {/* ⑥ Gauges + Histórico (1fr / 2fr) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
-        <SoilGaugesBlock
-          pivots={pivots}
-          lastManagementByPivot={lastManagementByPivot}
-          activePivotIds={activePivotIds}
-        />
-        <HistoryBlock
-          historyBySeason={historyBySeason}
-          activeSeasons={activeSeasons}
-        />
+            {Object.keys(lastManagementBySeason).length === 0 && activePivots > 0 && (
+              <div style={{
+                background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
+                padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12,
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                  background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Info size={16} style={{ color: '#f59e0b' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Aguardando primeiro registro</p>
+                  <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
+                    O cron automático registra o balanço às 02h BRT. Você também pode registrar manualmente.
+                  </p>
+                </div>
+                <Link href="/manejo" style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+                  borderRadius: 10, fontSize: 12, fontWeight: 600, flexShrink: 0,
+                  background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
+                  color: '#f59e0b', textDecoration: 'none',
+                }}>
+                  Registrar <ArrowRight size={13} />
+                </Link>
+              </div>
+            )}
+
+            <CompactKpis
+              summary={summary}
+              lastManagementBySeason={lastManagementBySeason}
+            />
+          </div>
+        )}
+
+        {/* ─── ABA 2: MAPAS E STATUS GERAL ─── */}
+        {activeTab === 'mapa' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <CriticalPivots
+              pivots={pivots}
+              lastManagementByPivot={lastManagementByPivot}
+              activePivotIds={activePivotIds}
+              diagnosticsByPivot={diagnosticsByPivot}
+            />
+            
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.06em', color: '#556677',
+                }}>
+                  Representação Espacial
+                </span>
+              </div>
+              <PivotMap pivots={pivots.map(p => ({
+                id:               p.id,
+                name:             p.name,
+                farm_name:        p.farms?.name ?? '',
+                latitude:         p.latitude,
+                longitude:        p.longitude,
+                status:           resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id), p.alert_threshold_percent ?? 70),
+                lastManagement:   lastManagementByPivot[p.id] ?? null,
+                length_m:         p.length_m,
+                sector_start_deg: p.sector_start_deg,
+                sector_end_deg:   p.sector_end_deg,
+              }))} />
+            </div>
+
+            <RecommendationsMatrix
+              contexts={contexts}
+              lastMgmtBySeasonId={lastManagementBySeason}
+              today={(() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}` })()}
+            />
+          </div>
+        )}
+
+        {/* ─── ABA 3: HISTÓRICO E CUSTOS ─── */}
+        {activeTab === 'metricas' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Gauges e Gráficos de Evolução */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(400px, 2fr)', gap: 16 }}>
+              <SoilGaugesBlock
+                pivots={pivots}
+                lastManagementByPivot={lastManagementByPivot}
+                activePivotIds={activePivotIds}
+              />
+              <HistoryBlock
+                historyBySeason={historyBySeason}
+                activeSeasons={activeSeasons}
+              />
+            </div>
+
+            <EnergyBlock energyBills={energyBills} />
+          </div>
+        )}
+
       </div>
-
-      {/* ⑦ Energia & Custos */}
-      <EnergyBlock energyBills={energyBills} />
-
-      {/* ⑧ Resumo operacional */}
-      {(summary.pivotsWithAlerts > 0 || summary.pivotsWithClimateFallback > 0) && (
-        <div style={{
-          background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
-          padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Info size={16} style={{ color: '#f59e0b' }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 260 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Resumo operacional do parque</p>
-            <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
-              {summary.pivotsWithAlerts} pivô(s) com alertas operacionais · {summary.pivotsWithClimateFallback} usando fallback climático
-            </p>
-          </div>
-          <Link href="/diagnostico-pivo" style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-            borderRadius: 10, fontSize: 12, fontWeight: 600, flexShrink: 0,
-            background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
-            color: '#f59e0b', textDecoration: 'none',
-          }}>
-            Diagnóstico <ArrowRight size={13} />
-          </Link>
-        </div>
-      )}
-
-      {/* ⑨ Aviso sem dados */}
-      {Object.keys(lastManagementBySeason).length === 0 && activePivots > 0 && (
-        <div style={{
-          background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
-          padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12,
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Info size={16} style={{ color: '#f59e0b' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Aguardando primeiro registro</p>
-            <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
-              O cron automático registra o balanço às 02h BRT. Você também pode registrar manualmente em{' '}
-              <strong style={{ color: '#8899aa' }}>Manejo Diário</strong>.
-            </p>
-          </div>
-          <Link href="/manejo" style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-            borderRadius: 10, fontSize: 12, fontWeight: 600, flexShrink: 0,
-            background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
-            color: '#f59e0b', textDecoration: 'none',
-          }}>
-            Registrar <ArrowRight size={13} />
-          </Link>
-        </div>
-      )}
     </div>
   )
 }

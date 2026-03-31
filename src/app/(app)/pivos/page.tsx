@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
-import type { Farm, Pivot, SpeedTableRow, WeatherSource } from '@/types/database'
+import type { Farm, OperationMode, Pivot, SpeedTableRow, WeatherSource } from '@/types/database'
 import { useAuth } from '@/hooks/useAuth'
 import { listFarmsByCompany } from '@/services/farms'
 import {
@@ -12,7 +12,7 @@ import {
   updatePivot,
   type PivotWithFarmName,
 } from '@/services/pivots'
-import { CircleDot, Plus, Pencil, Trash2, X, Loader2, ChevronDown, Table2, ChevronRight, MapPin, Satellite, Sheet, Hand, Radio, Layers } from 'lucide-react'
+import { CircleDot, Plus, Pencil, Trash2, X, Loader2, ChevronDown, Table2, ChevronRight, MapPin, Satellite, Sheet, Hand, Radio, Layers, Link2 } from 'lucide-react'
 import type { PivotSector } from '@/types/database'
 import { listSectorsByPivotId, createSector, updateSector, deleteSector } from '@/services/pivot-sectors'
 
@@ -210,6 +210,10 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
   const [plugfieldApiKey, setPlugfieldApiKey] = useState(pivot?.weather_config?.plugfield_api_key ?? '')
   const [sectorStart, setSectorStart] = useState<string>(pivot?.sector_start_deg?.toString() ?? '')
   const [sectorEnd, setSectorEnd] = useState<string>(pivot?.sector_end_deg?.toString() ?? '')
+  const [operationMode, setOperationMode] = useState<OperationMode>(pivot?.operation_mode ?? 'individual')
+  const [returnIntervalDays, setReturnIntervalDays] = useState(pivot?.return_interval_days?.toString() ?? '1')
+  const [preferredSpeed, setPreferredSpeed] = useState(pivot?.preferred_speed_percent?.toString() ?? '')
+  const [minSpeedPct, setMinSpeedPct] = useState(pivot?.min_speed_percent?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -359,6 +363,10 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
           : null,
       sector_start_deg: sectorStart ? Number(sectorStart) : null,
       sector_end_deg: sectorEnd ? Number(sectorEnd) : null,
+      operation_mode: operationMode,
+      return_interval_days: returnIntervalDays ? Number(returnIntervalDays) : 1,
+      preferred_speed_percent: preferredSpeed ? Number(preferredSpeed) : null,
+      min_speed_percent: minSpeedPct ? Number(minSpeedPct) : null,
     }
 
     try {
@@ -632,6 +640,102 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
               Padrão: 70%.
             </p>
           </div>
+
+          {/* Separador operação */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
+            <Link2 size={11} style={{ color: '#556677' }} />
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Modo de Operação</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+          </div>
+
+          {/* Toggle Individual / Conjugado */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {([
+              { value: 'individual' as OperationMode, label: 'Individual', desc: 'Pivô opera sozinho' },
+              { value: 'conjugated' as OperationMode, label: 'Conjugado', desc: 'Divide bomba com outro pivô' },
+            ]).map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setOperationMode(opt.value)}
+                style={{
+                  padding: '10px 12px', borderRadius: 10, textAlign: 'center', cursor: 'pointer',
+                  border: `1px solid ${operationMode === opt.value ? 'rgb(0 147 208 / 0.35)' : 'rgba(255,255,255,0.08)'}`,
+                  background: operationMode === opt.value ? 'rgb(0 147 208 / 0.10)' : '#0d1520',
+                }}
+              >
+                <p style={{ fontSize: 13, fontWeight: 700, color: operationMode === opt.value ? '#0093D0' : '#8899aa' }}>{opt.label}</p>
+                <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+
+          {/* Campos conjugado */}
+          {operationMode === 'conjugated' && (
+            <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ fontSize: 11, color: '#8899aa' }}>
+                Configure como o pivô opera no dia a dia. O sistema projeta o déficit até a próxima volta.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Intervalo de Retorno</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="number" step="0.5" min="1" value={returnIntervalDays}
+                      onChange={e => setReturnIntervalDays(e.target.value)}
+                      style={{ width: '100%', padding: '8px 40px 8px 10px', borderRadius: 8, fontSize: 13, background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+                      onFocus={e => e.target.style.borderColor = '#0093D0'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                    />
+                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: '#556677', pointerEvents: 'none' }}>dias</span>
+                  </div>
+                  <p style={{ fontSize: 10, color: '#556677', marginTop: 3 }}>A cada quantos dias o pivô retorna</p>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Velocidade Preferida</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="number" step="1" min="5" max="100" value={preferredSpeed}
+                      onChange={e => setPreferredSpeed(e.target.value)}
+                      placeholder="ex: 50"
+                      style={{ width: '100%', padding: '8px 28px 8px 10px', borderRadius: 8, fontSize: 13, background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+                      onFocus={e => e.target.style.borderColor = '#0093D0'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                    />
+                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: '#556677', pointerEvents: 'none' }}>%</span>
+                  </div>
+                  <p style={{ fontSize: 10, color: '#556677', marginTop: 3 }}>
+                    Velocidade do dia a dia
+                    {preferredSpeed && lengthM && flowRate && time360 && (() => {
+                      const d = calcDepth100(Number(flowRate), Number(time360), Number(lengthM)) * (100 / Number(preferredSpeed))
+                      return d > 0 ? ` → ${d.toFixed(1)}mm` : ''
+                    })()}
+                  </p>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Velocidade Mínima</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="number" step="1" min="5" max="100" value={minSpeedPct}
+                      onChange={e => setMinSpeedPct(e.target.value)}
+                      placeholder="ex: 42"
+                      style={{ width: '100%', padding: '8px 28px 8px 10px', borderRadius: 8, fontSize: 13, background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+                      onFocus={e => e.target.style.borderColor = '#0093D0'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                    />
+                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: '#556677', pointerEvents: 'none' }}>%</span>
+                  </div>
+                  <p style={{ fontSize: 10, color: '#556677', marginTop: 3 }}>
+                    Máximo que o pivô aguenta
+                    {minSpeedPct && lengthM && flowRate && time360 && (() => {
+                      const d = calcDepth100(Number(flowRate), Number(time360), Number(lengthM)) * (100 / Number(minSpeedPct))
+                      return d > 0 ? ` → ${d.toFixed(1)}mm` : ''
+                    })()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Separador fonte climática */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
@@ -934,6 +1038,12 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             {pivot.sector_start_deg != null && (
               <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'rgb(0 147 208 / 0.08)', border: '1px solid rgb(0 147 208 / 0.2)', color: '#0093D0' }}>
                 Setor {pivot.sector_start_deg}°–{pivot.sector_end_deg}°
+              </span>
+            )}
+            {pivot.operation_mode === 'conjugated' && (
+              <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'rgb(245 158 11 / 0.08)', border: '1px solid rgb(245 158 11 / 0.2)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Link2 size={9} />
+                Conjugado · {pivot.return_interval_days}d
               </span>
             )}
             {!pivot.length_m && !pivot.flow_rate_m3h && (

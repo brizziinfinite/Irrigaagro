@@ -37,44 +37,49 @@ export function CompactKpis({ summary, lastManagementBySeason }: CompactKpisProp
   }, 0)
 
   const kpis = [
-    { label: 'Água Hoje', value: aguaHoje > 0 ? aguaHoje.toFixed(1) : '0', unit: 'mm', emoji: '💧', color: '#22d3ee' },
-    { label: 'Economia', value: economiaPercent !== null ? `${economiaPercent}` : '—', unit: '%', emoji: '📉', color: economiaPercent !== null && economiaPercent < 0 ? '#ef4444' : '#22c55e' },
-    { label: 'Manejos Hoje', value: String(summary.handledToday), unit: '', emoji: '⏱', color: '#f59e0b' },
-    { label: 'Alertas', value: String(summary.pivotsWithAlerts), unit: '', emoji: '⚠️', color: '#ef4444' },
+    { label: 'Água Hoje', value: aguaHoje > 0 ? aguaHoje.toFixed(1) : '0', unit: 'mm', emoji: '💧', color: '#00E5FF' }, // Ciano Neon
+    { label: 'Economia', value: economiaPercent !== null ? `${economiaPercent}` : '—', unit: '%', emoji: '📉', color: economiaPercent !== null && economiaPercent < 0 ? '#FF3366' : '#39FF14' }, // Limão Neon / Rosa Neon
+    { label: 'Manejos', value: String(summary.handledToday), unit: '', emoji: '⏱', color: '#FFEA00' }, // Amarelo Elétrico
+    { label: 'Alertas', value: String(summary.pivotsWithAlerts), unit: '', emoji: '⚠️', color: '#FF3366' }, // Rosa Neon
   ]
 
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr 1fr 1fr 1.5fr',
-      gap: 12,
+      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+      gap: 16,
     }}>
       {/* 4 KPI cards */}
       {kpis.map(({ label, value, unit, emoji, color }) => (
         <div key={label} style={{
-          background: '#0f1923',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 14,
-          padding: '16px 18px',
+          background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+          border: `1px solid rgba(255,255,255,0.03)`,
+          borderTop: `1px solid ${color}30`, // Subtle top glowing border
+          borderRadius: 20,
+          padding: '20px 24px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(12px)',
+          display: 'flex', flexDirection: 'column', gap: 12,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{
-              fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: '#556677',
+              fontSize: 11, fontWeight: 800, textTransform: 'uppercase',
+              letterSpacing: '0.08em', color: '#687b8d',
             }}>
               {label}
             </span>
-            <span style={{ fontSize: 14 }}>{emoji}</span>
+            <span style={{ fontSize: 16, opacity: 0.8 }}>{emoji}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
             <span style={{
-              fontSize: 24, fontWeight: 800, fontFamily: 'var(--font-mono)',
-              color, lineHeight: 1,
+              fontSize: 34, fontWeight: 900, fontFamily: 'var(--font-mono)',
+              color, lineHeight: 1, letterSpacing: '-0.03em',
+              textShadow: `0 0 20px ${color}66`, // Mega Glow
             }}>
               {value}
             </span>
             {unit && (
-              <span style={{ fontSize: 12, color: '#556677' }}>{unit}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#687b8d' }}>{unit}</span>
             )}
           </div>
         </div>
@@ -82,55 +87,57 @@ export function CompactKpis({ summary, lastManagementBySeason }: CompactKpisProp
 
       {/* Clima card */}
       <div style={{
-        background: '#0f1923',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 14,
-        padding: '16px 18px',
+        background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+        border: '1px solid rgba(255,255,255,0.03)',
+        borderRadius: 20,
+        padding: '20px 24px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1fr',
-        gap: 8,
+        gap: 16,
+        gridColumn: '1 / -1', // span as full row on mobile and large setups
       }}>
         {/* Temp */}
         <div>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Temp
           </span>
-          <div style={{ marginTop: 6 }}>
-            <span style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#f59e0b', lineHeight: 1 }}>
+          <div style={{ marginTop: 8 }}>
+            <span style={{ fontSize: 32, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#FFEA00', lineHeight: 1, textShadow: '0 0 16px rgba(255,234,0,0.4)' }}>
               {latest?.temp_max != null ? `${Math.round(latest.temp_max)}°` : '—'}
             </span>
           </div>
-          <span style={{ fontSize: 10, color: '#556677' }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#556677', marginTop: 4, display: 'block' }}>
             min {latest?.temp_min != null ? `${Math.round(latest.temp_min)}°` : '—'}
           </span>
         </div>
 
         {/* Umid Ar */}
         <div>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Umid. Ar
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Umidade
           </span>
-          <div style={{ marginTop: 6 }}>
-            <span style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#22d3ee', lineHeight: 1 }}>
+          <div style={{ marginTop: 8 }}>
+            <span style={{ fontSize: 32, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#00E5FF', lineHeight: 1, textShadow: '0 0 16px rgba(0,229,255,0.4)' }}>
               {latest?.humidity_percent != null ? `${Math.round(latest.humidity_percent)}%` : '—'}
             </span>
           </div>
-          <span style={{ fontSize: 10, color: '#556677' }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#556677', marginTop: 4, display: 'block' }}>
             vento {latest?.wind_speed_ms != null ? fmtVal(latest.wind_speed_ms, 0) : '—'}
           </span>
         </div>
 
         {/* ETo */}
         <div>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            ETo
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            ETo Total
           </span>
-          <div style={{ marginTop: 6 }}>
-            <span style={{ fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#a78bfa', lineHeight: 1 }}>
+          <div style={{ marginTop: 8 }}>
+            <span style={{ fontSize: 32, fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#B542FF', lineHeight: 1, textShadow: '0 0 16px rgba(181,66,255,0.4)' }}>
               {latest?.eto_mm != null ? fmtVal(latest.eto_mm) : '—'}
             </span>
           </div>
-          <span style={{ fontSize: 10, color: '#556677' }}>mm/dia</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#556677', marginTop: 4, display: 'block' }}>mm/dia</span>
         </div>
       </div>
     </div>

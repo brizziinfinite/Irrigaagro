@@ -6,6 +6,7 @@ import type { Season, Crop, Pivot, DailyManagement, Farm, DailyManagementInsert 
 import {
   getStageInfoForDas, calcCTA, calcProjection, calcRa, calcDepthForSpeed,
   type ProjectionDay,
+  type RecommendationStatus,
 } from '@/lib/water-balance'
 import {
   calcDAS,
@@ -29,7 +30,7 @@ import {
   Wind, Thermometer, CheckCircle2, AlertTriangle, AlertCircle,
   Save, Calendar, FlaskConical, Sprout, Clock,
   Satellite, Sheet, TrendingDown, Zap, BarChart2, Orbit,
-  Edit2, Trash2, X,
+  Edit2, Trash2, X, Plus
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -145,7 +146,7 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
 }
 
 
-// ─── Diagrama visual do solo (estilo referência) ─────────────
+// ─── Diagrama visual do solo (Estilo Tablet Radial Gauge) ─────────────
 
 interface SoilDiagramProps {
   status: IrrigationStatus
@@ -178,195 +179,146 @@ function SoilDiagram({
   cropName, farmName, pivotName, seasonName, date, pivotAreaHa,
 }: SoilDiagramProps) {
   const cfg = STATUS_CONFIG[status]
-  const stageLabels = ['', 'Inicial', 'Desenv.', 'Médio', 'Final']
-  const cropEmojis: Record<string, string> = {
-    milho: '🌽', soja: '🌱', trigo: '🌾', algodao: '🪴', algodão: '🪴', feijao: '🫘', feijão: '🫘',
+  
+  // Radial Gauge Calculations
+  const radius = 100
+  const strokeWidth = 14
+  const circumference = 2 * Math.PI * radius
+  
+  // Clamping progress and calculating dash offset
+  const progressPercent = Math.max(0, Math.min(100, fieldCapacityPercent))
+  const offset = circumference - (progressPercent / 100) * circumference
+  
+  // Dynamic glow and colors
+  const trackColor = '#1A2433'
+  let gaugeColorPrimary = '#00E5FF' // Cyan
+  let gaugeColorSecondary = '#39FF14' // Neon Green
+  if (status === 'amarelo') {
+    gaugeColorPrimary = '#FFEA00'
+    gaugeColorSecondary = '#FF9900'
+  } else if (status === 'vermelho') {
+    gaugeColorPrimary = '#FF3366'
+    gaugeColorSecondary = '#E60039'
   }
-  const cropEmoji = Object.entries(cropEmojis).find(([k]) => cropName?.toLowerCase().includes(k))?.[1] ?? '🌱'
-
-  // Geometria do diagrama
-  // Diagrama representa 0..CTA verticalmente (bottom=0mm, top=CTA mm)
-  // Cada mm ocupa (100/cta)% da altura útil (75% do H)
-  const USABLE = 75  // % da altura H usada para a escala CTA
-  const mmToPct = cta > 0 ? USABLE / cta : 1
-
-  // Posições em % do container (medidas a partir do bottom)
-  const adcBottomPct  = 0
-  const adcTopPct     = adcNew * mmToPct                    // topo da água disponível
-  const cadLinePct    = cad * mmToPct                       // linha CAD (amarela)
-  const ctaTopPct     = USABLE                              // linha verde (superfície = CTA)
-  const deficitMm     = Math.max(0, cta - adcNew)          // espaço vazio até CTA
-  const deficitTopPct = ctaTopPct
-  const deficitBotPct = adcTopPct
-
-  // Altura total do diagrama
-  const H = 240
 
   return (
-    <div style={{ background: '#0f1923', border: `1px solid ${cfg.border}`, borderRadius: 14, overflow: 'hidden' }}>
-
-      {/* ── Header: info da safra ── */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
-        <div>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#e2e8f0', lineHeight: 1.3 }}>{pivotName ?? seasonName}</p>
-          <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
-            <span style={{ color: '#8899aa' }}>{farmName}</span>
-            {cropName && <> · <span style={{ color: '#0093D0' }}>{cropName}</span></>}
-          </p>
+    <div style={{
+      background: 'linear-gradient(160deg, #10151C, #18202A)',
+      border: `1px solid rgba(255,255,255,0.04)`,
+      borderRadius: 24,
+      padding: '30px',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+      height: '100%',
+    }}>
+      {/* ── Header: Info Principal da Célula ── */}
+      <div style={{ zIndex: 2, marginBottom: 20 }}>
+        <p style={{ fontSize: 24, fontWeight: 900, color: '#F1F5F9', letterSpacing: '-0.02em', textShadow: '0 0 10px rgba(255,255,255,0.1)' }}>
+          {pivotName ?? seasonName}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+          <span style={{ fontSize: 13, color: '#8899aa' }}>Status:</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color, display: 'flex', alignItems: 'center', gap: 4 }}>
+            {status === 'verde' || status === 'azul' ? 'Active' : status === 'amarelo' ? 'Warning' : 'Critical'} 
+            ({fieldCapacityPercent.toFixed(0)}% Moisture)
+          </span>
         </div>
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          {recommendedDepthMm > 0 && (
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Irrigar Hoje</p>
-              <p style={{ fontSize: 18, fontWeight: 800, color: cfg.color, fontFamily: 'var(--font-mono)' }}>{fmtNum(recommendedDepthMm)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
-            </div>
+      </div>
+
+      {/* ── Center: O Gauge Radial SVG ── */}
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '20px 0'
+      }}>
+        <svg width="260" height="260" viewBox="0 0 240 240" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
+          <defs>
+            <linearGradient id="gaugeGradient" x1="1" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={gaugeColorPrimary} />
+              <stop offset="100%" stopColor={gaugeColorSecondary} />
+            </linearGradient>
+            <filter id="gaugeGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="8" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          {/* Background Track */}
+          <circle
+            cx="120" cy="120" r={radius}
+            fill="none"
+            stroke={trackColor}
+            strokeWidth={strokeWidth}
+          />
+          
+          {/* Progress Arc */}
+          <circle
+            cx="120" cy="120" r={radius}
+            fill="none"
+            stroke="url(#gaugeGradient)"
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            filter="url(#gaugeGlow)"
+            style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+          />
+
+          {/* Limit Threshold Mark (ex: 70%) */}
+          {alertThresholdPct && (
+            <circle
+              cx="120" cy="120" r={radius - strokeWidth/2 + 2}
+              fill="none"
+              stroke="rgba(255,255,255,0.4)"
+              strokeWidth="2"
+              strokeDasharray={'2 6'}
+              style={{ opacity: 0.5 }}
+            />
           )}
-          {pivotAreaHa != null && (
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Área</p>
-              <p style={{ fontSize: 18, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{pivotAreaHa.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>ha</span></p>
-            </div>
-          )}
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETo</p>
-            <p style={{ fontSize: 18, fontWeight: 800, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtNum(eto)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETc</p>
-            <p style={{ fontSize: 18, fontWeight: 800, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(etc)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
-          </div>
-        </div>
-      </div>
+        </svg>
 
-      {/* ── Linha secundária: Cultura / Fase / Data ── */}
-      <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-        {[
-          { label: 'Cultura', value: cropName ?? '—' },
-          { label: 'Fase', value: `${cropStage}ª (${das} dias)` },
-          { label: 'Data', value: fmtDate(date) },
-          { label: 'DAS', value: `${das}` },
-          { label: 'Kc', value: fmtNum(kc, 3) },
-        ].map(({ label, value }) => (
-          <div key={label}>
-            <p style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
-            <p style={{ fontSize: 13, color: '#e2e8f0', marginTop: 1 }}>{value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Bloco cinza ETc + emoji ── */}
-      <div style={{ margin: '14px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#8899aa' }}>ETc</p>
-            <p style={{ fontSize: 22, fontWeight: 800, color: '#06b6d4', fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>{fmtNum(etc)} <span style={{ fontSize: 13, fontWeight: 400 }}>mm</span></p>
-          </div>
-          <span style={{ fontSize: 28 }}>〰️</span>
-          <span style={{ fontSize: 10, color: '#556677' }}>↑↑↑</span>
-        </div>
-        <span style={{ fontSize: 36 }}>{cropEmoji}</span>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#8899aa' }}>{stageLabels[cropStage] ?? `Fase ${cropStage}`}</p>
-          <p style={{ fontSize: 18, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>{das} <span style={{ fontSize: 12, fontWeight: 400, color: '#556677' }}>dias</span></p>
-        </div>
-      </div>
-
-      {/* ── Diagrama de solo ── */}
-      <div style={{ margin: '0 20px 20px', position: 'relative', borderRadius: 12, overflow: 'hidden', height: H }}>
-
-        {/* Fundo total — solo abaixo da linha de murcha (ciano escuro) */}
-        <div style={{ position: 'absolute', inset: 0, background: '#0e7490' }} />
-
-        {/* Camada de água disponível — ciano claro, cresce de baixo */}
+        {/* Text inside Gauge */}
         <div style={{
-          position: 'absolute', left: 0, right: 0, bottom: 0,
-          height: `${adcTopPct}%`,
-          background: '#06b6d4', transition: 'height 0.5s ease',
-        }} />
-
-        {/* Área de déficit — cinza escuro entre topo da água e linha verde */}
-        {deficitMm > 0 && (
-          <div style={{
-            position: 'absolute', left: 0, right: 0,
-            bottom: `${deficitBotPct}%`,
-            height: `${Math.max(0, deficitTopPct - deficitBotPct)}%`,
-            background: 'rgba(20,30,45,0.88)',
-          }} />
-        )}
-
-        {/* Linha verde — superfície / topo da CTA */}
-        <div style={{ position: 'absolute', bottom: `${ctaTopPct}%`, left: 0, right: 0, height: 3, background: '#22c55e', zIndex: 3 }} />
-
-        {/* Linha amarela — limite CAD */}
-        <div style={{ position: 'absolute', bottom: `${cadLinePct}%`, left: 0, right: 0, height: 3, background: '#facc15', zIndex: 3 }} />
-
-        {/* Linha vermelha — ponto de murcha (fundo) */}
-        <div style={{ position: 'absolute', bottom: '1%', left: 0, right: 0, height: 3, background: '#ef4444', zIndex: 3 }} />
-
-        {/* Label déficit/espaço livre — canto superior direito dentro do cinza */}
-        {deficitMm > 0 && (
-          <div style={{ position: 'absolute', top: `${100 - ctaTopPct + 4}%`, right: 12, zIndex: 5 }}>
-            <div style={{ background: 'rgba(30,41,59,0.92)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '5px 10px' }}>
-              <p style={{ fontSize: 10, color: '#94a3b8' }}>{recommendedDepthMm > 0 ? 'Déficit Hoje' : 'Espaço Livre'}</p>
-              <p style={{ fontSize: 14, fontWeight: 800, color: recommendedDepthMm > 0 ? cfg.color : '#556677', fontFamily: 'var(--font-mono)' }}>{fmtNum(deficitMm)} mm</p>
-            </div>
-          </div>
-        )}
-
-        {/* Label "Disponível" — dentro da área ciano, lado esquerdo */}
-        <div style={{ position: 'absolute', bottom: `${Math.max(2, adcTopPct * 0.4)}%`, left: 12, zIndex: 5 }}>
-          <div style={{ background: 'rgba(15,25,35,0.85)', borderRadius: 6, padding: '4px 10px' }}>
-            <p style={{ fontSize: 10, color: '#94a3b8' }}>Disponível</p>
-            <p style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcNew)} mm</p>
-          </div>
-        </div>
-
-        {/* Sonda vertical */}
-        <div style={{
-          position: 'absolute', left: '50%', top: `${100 - ctaTopPct}%`, bottom: '4%',
-          width: 8, background: 'linear-gradient(to bottom, #94a3b8, #64748b)',
-          borderRadius: 4, transform: 'translateX(-50%)', zIndex: 4,
+          position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          pointerEvents: 'none'
         }}>
-          <div style={{ position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)', width: 14, height: 14, borderRadius: '50%', background: '#475569' }} />
-        </div>
-
-        {/* Label profundidade de manejo — centro */}
-        <div style={{ position: 'absolute', left: '50%', bottom: `${Math.max(8, adcTopPct * 0.35)}%`, transform: 'translateX(-40%)', zIndex: 5 }}>
-          <div style={{ background: 'rgba(15,25,35,0.9)', borderRadius: 6, padding: '4px 10px', whiteSpace: 'nowrap' }}>
-            <p style={{ fontSize: 10, color: '#94a3b8' }}>Prof. de Manejo</p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(rootDepthCm, 0)} cm</p>
-          </div>
-        </div>
-
-        {/* CC% e status no canto superior */}
-        <div style={{ position: 'absolute', top: `${100 - ctaTopPct + 6}%`, left: 8, zIndex: 5 }}>
-          <div style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 8, padding: '3px 8px' }}>
-            <p style={{ fontSize: 11, fontWeight: 800, color: cfg.color }}>{fmtNum(fieldCapacityPercent, 0)}% · {cfg.label}</p>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#8899aa', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Soil Moisture
+          </span>
+          <span style={{ 
+            fontSize: 54, fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1,
+            textShadow: `0 0 20px ${gaugeColorPrimary}60`, fontFamily: 'var(--font-mono)'
+          }}>
+            {fieldCapacityPercent.toFixed(0)}<span style={{ fontSize: 30 }}>%</span>
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: cfg.color }}>
+               {cfg.label}
+            </span>
+            <span style={{ fontSize: 11, color: '#556677' }}>
+              · {fmtNum(adcNew, 1)}mm
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ── Legenda ── */}
-      <div style={{ padding: '0 20px 14px', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        {[
-          { color: '#22c55e', label: 'Superfície' },
-          { color: '#06b6d4', label: 'Água disponível' },
-          { color: '#facc15', label: 'Limite CAD' },
-          { color: '#ef4444', label: 'Ponto de murcha' },
-        ].map(({ color, label }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 18, height: 3, background: color, borderRadius: 2 }} />
-            <span style={{ fontSize: 10, color: '#445566' }}>{label}</span>
-          </div>
-        ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <Satellite size={9} style={{ color: '#445566' }} />
-          <span style={{ fontSize: 10, color: '#334455' }}>ETo via {getEToSourceLabel(etoSource)}{etoConfidence ? ` · ${getEToConfidenceLabel(etoConfidence)}` : ''}</span>
+      {/* ── Footer: Metadados da Lavoura ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', background: 'rgba(0,0,0,0.2)', borderRadius: 16, marginTop: 10 }}>
+        <div>
+          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Crop / Phase</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>{cropName ?? '—'} <span style={{ color: '#00E5FF' }}>D{das}</span></p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Root Depth</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9' }}>{Math.round(rootDepthCm)} cm</p>
         </div>
       </div>
     </div>
   )
 }
+
 
 
 // ─── Projeção 7 dias (simulação interativa) ─────────────────
@@ -882,6 +834,10 @@ export default function ManejoPage() {
   const [date, setDate]           = useState(todayISO())
   const [tmax, setTmax]           = useState('')
   const [tmin, setTmin]           = useState('')
+  
+  // ── UI States para Modo Premium (Clean) ──
+  const [showForm, setShowForm]   = useState(false)
+  const [showHistoryTab, setShowHistoryTab] = useState(false)
   const [humidity, setHumidity]   = useState('')
   const [wind, setWind]           = useState('')
   const [radiation, setRadiation] = useState('')
@@ -1206,164 +1162,311 @@ export default function ManejoPage() {
         </div>
       )}
 
-      {/* ── Diagrama visual do solo ── */}
-      {calcResult && selectedSeason && (
-        <SoilDiagram
-          status={calcResult.status as IrrigationStatus}
-          fieldCapacityPercent={calcResult.fieldCapacityPercent}
-          adcNew={calcResult.adcNew}
-          cad={calcResult.cad}
-          cta={calcResult.cta}
-          recommendedDepthMm={calcResult.recommendedDepthMm}
-          das={calcResult.das}
-          cropStage={calcResult.cropStage}
-          eto={calcResult.eto}
-          etc={calcResult.etc}
-          kc={calcResult.kc}
-          rootDepthCm={calcResult.rootDepthCm}
-          etoSource={calcResult.etoSource as EToSource}
-          etoConfidence={calcResult.etoConfidence as EToConfidence | null}
-          alertThresholdPct={selectedSeason.pivots?.alert_threshold_percent ?? null}
-          cropName={selectedSeason.crops?.name ?? null}
-          farmName={selectedSeason.farms.name}
-          pivotName={selectedSeason.pivots?.name ?? null}
-          seasonName={selectedSeason.name}
-          date={date}
-          pivotAreaHa={
-            selectedSeason.pivots?.length_m
-              ? Math.PI * Math.pow(selectedSeason.pivots.length_m, 2) / 10000
-              : null
-          }
-        />
-      )}
-
-      {/* ── Formulário de entrada ── */}
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* Fonte climática + data — linha única */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: 16, alignItems: 'start' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Dados Climáticos</label>
-            {weatherLoading && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <Loader2 size={12} className="animate-spin" style={{ color: '#0093D0' }} />
-                <span style={{ fontSize: 13, color: '#445566' }}>Buscando dados climáticos...</span>
+      {/* ── MANEJO MAIN LAYOUT: GAUGE + TRENDS (TABLET VIEW) ── */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'minmax(400px, 1.1fr) 1fr', gap: 24, alignItems: 'stretch'
+      }}>
+        
+        {/* Lado Esquerdo - Gauge Radial */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+          {calcResult && selectedSeason ? (
+            <SoilDiagram
+              status={calcResult.status as IrrigationStatus}
+              fieldCapacityPercent={calcResult.fieldCapacityPercent}
+              adcNew={calcResult.adcNew}
+              cad={calcResult.cad}
+              cta={calcResult.cta}
+              recommendedDepthMm={calcResult.recommendedDepthMm}
+              das={calcResult.das}
+              cropStage={calcResult.cropStage}
+              eto={calcResult.eto}
+              etc={calcResult.etc}
+              kc={calcResult.kc}
+              rootDepthCm={calcResult.rootDepthCm}
+              etoSource={calcResult.etoSource as EToSource}
+              etoConfidence={calcResult.etoConfidence as EToConfidence | null}
+              alertThresholdPct={selectedSeason.pivots?.alert_threshold_percent ?? null}
+              cropName={selectedSeason.crops?.name ?? null}
+              farmName={selectedSeason.farms.name}
+              pivotName={selectedSeason.pivots?.name ?? null}
+              seasonName={selectedSeason.name}
+              date={date}
+              pivotAreaHa={
+                selectedSeason.pivots?.length_m
+                  ? Math.PI * Math.pow(selectedSeason.pivots.length_m, 2) / 10000
+                  : null
+              }
+            />
+          ) : (
+            !loading && (
+              <div style={{ background: '#0f1923', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 24, padding: '32px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
+                <Thermometer size={34} style={{ color: '#556677' }} />
+                <p style={{ fontSize: 13, color: '#556677' }}>Preencha Tmax e Tmin para projetar o solo</p>
               </div>
-            )}
-            {!weatherLoading && climateInfo && (() => {
-              const Icon = climateInfo.icon
+            )
+          )}
+        </div>
+
+        {/* Lado Direito - Gráfico de Ondas e Recomendações */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
+          {/* Projeção 7 dias (Irrigation Schedule Trend) */}
+          {projection.length > 0 && (
+            <ProjectionForecast
+              days={projection}
+              baseDays={baseProjection}
+              avgEto={avgEto}
+              pivot={selectedSeason?.pivots ?? null}
+              simulatedIrrigation={simulatedIrrigation}
+              onSimulate={setSimulatedIrrigation}
+            />
+          )}
+
+          {/* Painel de Recomendação (Schedule Data) */}
+          {calcResult?.recommendation && (
+            (() => {
+              const rec = calcResult.recommendation
+              const statusStyles: Record<RecommendationStatus, { color: string; bg: string; border: string; label: string }> = {
+                ok:               { color: '#39FF14', bg: 'rgba(57, 255, 20, 0.08)', border: 'rgba(57, 255, 20, 0.2)',   label: 'Sem necessidade' },
+                queue:            { color: '#FFEA00', bg: 'rgba(255, 234, 0, 0.08)', border: 'rgba(255, 234, 0, 0.2)',  label: 'Fila de irrigação' },
+                irrigate_today:   { color: '#FF3366', bg: 'rgba(255, 51, 102, 0.08)', border: 'rgba(255, 51, 102, 0.2)', label: 'Irrigar hoje' },
+                operational_risk: { color: '#E60039', bg: 'rgba(230, 0, 57, 0.08)',  border: 'rgba(230, 0, 57, 0.2)',   label: 'Risco operacional' },
+              }
+              const st = statusStyles[rec.status]
+              const isConjugated = (selectedSeason?.pivots?.operation_mode === 'conjugated')
+              const fmtMm = (v: number) => v.toFixed(1)
+              const fmtPct = (v: number, total: number) => total > 0 ? `${((v / total) * 100).toFixed(0)}%` : '—'
+
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: climateInfo.bg, border: climateInfo.border }}>
-                  <Icon size={13} style={{ color: climateInfo.color }} />
-                  <span style={{ fontSize: 13, color: climateInfo.color }}>{climateInfo.label}</span>
+                <div style={{ background: '#0f1923', border: `1px solid ${st.border}`, borderRadius: 14, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14, flex: 1, boxShadow: 'inset 0 0 20px rgba(0,0,0,0.2)' }}>
+                  
+                  {/* Action Buttons Inspirados no Mockup */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
+                    <button style={{
+                      background: 'linear-gradient(135deg, #CCFF00, #39FF14)', padding: '14px',
+                      borderRadius: 8, border: 'none', color: '#0F1923', fontWeight: 900, 
+                      fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.04em',
+                      boxShadow: '0 4px 16px rgba(57,255,20,0.3)', cursor: 'pointer'
+                    }}>
+                      Ajustar Manejo
+                    </button>
+                    <button style={{
+                      background: 'linear-gradient(135deg, #00B4D8, #00E5FF)', padding: '14px',
+                      borderRadius: 8, border: 'none', color: '#0F1923', fontWeight: 900, 
+                      fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.04em',
+                      boxShadow: '0 4px 16px rgba(0,229,255,0.3)', cursor: 'pointer'
+                    }}>
+                      Emergência
+                    </button>
+                  </div>
+
+                  {/* Status badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{
+                      padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+                      background: st.bg, border: `1px solid ${st.border}`, color: st.color,
+                    }}>
+                      {st.label}
+                    </span>
+                    {rec.suggestedSpeedPercent != null && rec.shouldIrrigateToday && (
+                      <span style={{
+                        padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+                        background: 'rgba(0,229,255,0.1)', border: '1px solid rgba(0,229,255,0.2)', color: '#00E5FF',
+                      }}>
+                        Sugestão: {rec.suggestedSpeedPercent}%
+                      </span>
+                    )}
+                    <span style={{ fontSize: 13, color: '#8899aa', flex: 1, fontStyle: 'italic' }}>{rec.reason}</span>
+                  </div>
+
+                  {/* Numeros Operacionais Completos */}
+                  <div style={{ display: 'grid', gridTemplateColumns: isConjugated ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginTop: 'auto' }}>
+                    <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                      <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>CAD</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: '#00E5FF', fontFamily: 'var(--font-mono)' }}>{fmtMm(rec.cadTotalMm)}</span>
+                      <span style={{ fontSize: 10, color: '#556677' }}> mm</span>
+                    </div>
+                    {isConjugated && rec.maxDepthMm != null && (
+                      <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                        <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>Lâmina Máx</span>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtMm(rec.maxDepthMm)}</span>
+                        <span style={{ fontSize: 10, color: '#556677' }}> mm</span>
+                      </div>
+                    )}
+                    <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                      <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>Depleção</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtMm(rec.deficitCurrentMm)}</span>
+                      <span style={{ fontSize: 10, color: '#556677' }}> mm · {fmtPct(rec.deficitCurrentMm, calcResult.cta)}</span>
+                    </div>
+                    {isConjugated && (
+                      <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                        <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>ETc Retorno</span>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtMm(rec.etcForecastUntilReturnMm)}</span>
+                        <span style={{ fontSize: 10, color: '#556677' }}> mm</span>
+                      </div>
+                    )}
+                    <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                      <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>Déficit Prev.</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: rec.deficitProjectedMm >= rec.cadTotalMm ? '#FF3366' : '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
+                        {fmtMm(rec.deficitProjectedMm)}
+                      </span>
+                      <span style={{ fontSize: 10, color: '#556677' }}> mm · {fmtPct(rec.deficitProjectedMm, calcResult.cta)}</span>
+                    </div>
+                    {!isConjugated && (
+                      <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
+                        <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>Decisão</span>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: st.color, fontFamily: 'var(--font-mono)' }}>
+                          {rec.shouldIrrigateToday ? 'IRRIGAR' : 'OK'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )
-            })()}
-            {!weatherLoading && !climateInfo && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <Thermometer size={13} style={{ color: '#445566' }} />
-                <span style={{ fontSize: 13, color: '#445566' }}>Preencha os dados manualmente</span>
-              </div>
-            )}
-          </div>
-          <InputField label="Data do registro" type="date" value={date} onChange={setDate} />
+            })()
+          )}
         </div>
-
-        {/* Campos climáticos — grid 3 colunas */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-          <InputField label="Tmax" value={tmax} onChange={setTmax} unit="°C" placeholder="35" />
-          <InputField label="Tmin" value={tmin} onChange={setTmin} unit="°C" placeholder="18" />
-          <InputField label="UR Média" value={humidity} onChange={setHumidity} unit="%" placeholder="65" />
-          <InputField label="Vento" value={wind} onChange={setWind} unit="m/s" placeholder="2.5" />
-          <InputField label="Radiação Solar" value={radiation} onChange={setRadiation} unit="W/m²" placeholder="220" />
-          <InputField label="Chuva (registrar em Precipitações)" value={rainfall} onChange={setRainfall} unit="mm" placeholder="0" />
-        </div>
-
-        {/* ADc anterior — compacto */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <Droplets size={14} style={{ color: '#0093D0', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: '#445566' }}>ADc anterior:</span>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcPrev)} mm</span>
-          <span style={{ fontSize: 12, color: '#334455', marginLeft: 2 }}>{history.length > 0 ? '(último registro)' : '(ADc inicial da safra)'}</span>
-        </div>
-
-        {/* Irrigação realizada */}
-        <div>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Irrigação Realizada <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-            <InputField label="Velocidade real" value={actualSpeed} onChange={setActualSpeed} unit="%" placeholder="60" />
-            <InputField label="Lâmina real" value={actualDepth} onChange={v => { setActualDepth(v); setDepthAutoFilled(false) }} unit="mm" placeholder="12" />
-            <InputField label="Início" type="time" value={irrigStart} onChange={setIrrigStart} />
-            <InputField label="Fim" type="time" value={irrigEnd} onChange={setIrrigEnd} />
-          </div>
-        </div>
-
-        {/* Erros / sucesso */}
-        {error && (
-          <div style={{ padding: '11px 16px', borderRadius: 8, background: 'rgb(239 68 68/0.1)', border: '1px solid rgb(239 68 68/0.25)', color: '#ef4444', fontSize: 13 }}>
-            {error}
-          </div>
-        )}
-        {saveMsg && (
-          <div style={{ padding: '11px 16px', borderRadius: 8, background: 'rgb(34 197 94/0.1)', border: '1px solid rgb(34 197 94/0.25)', color: '#22c55e', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CheckCircle2 size={14} /> {saveMsg}
-          </div>
-        )}
-
-        {/* Botão salvar */}
-        <button onClick={handleSave} disabled={saving || !calcResult}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            padding: '14px 0', borderRadius: 10, fontSize: 15, fontWeight: 700,
-            background: calcResult ? '#0093D0' : '#0d1520',
-            border: 'none', color: calcResult ? '#fff' : '#445566',
-            cursor: calcResult ? 'pointer' : 'not-allowed',
-            opacity: saving ? 0.7 : 1,
-            boxShadow: calcResult ? '0 2px 12px rgb(0 147 208/0.30)' : 'none',
-          }}>
-          {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-          {saving ? 'Salvando...' : 'Salvar Registro'}
-        </button>
       </div>
 
-      {/* ── Placeholder quando sem dados climáticos ── */}
-      {!calcResult && !loading && (
-        <div style={{ background: '#0f1923', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 14, padding: '32px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 14, marginBottom: 4, opacity: 0.4 }}>
-            <Thermometer size={26} style={{ color: '#556677' }} />
-            <Sun size={26} style={{ color: '#556677' }} />
-            <CloudRain size={26} style={{ color: '#556677' }} />
-            <Wind size={26} style={{ color: '#556677' }} />
+      {/* ── Formulário de entrada (Oculto em Accordion Premium) ── */}
+      <div style={{ marginTop: 12 }}>
+        <button 
+          onClick={() => setShowForm(!showForm)}
+          style={{
+            width: '100%', padding: '16px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: showForm ? '#0d1520' : 'linear-gradient(90deg, #10151C, #161e27)', border: '1px solid rgba(255,255,255,0.06)',
+            color: '#00E5FF', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
+            transition: 'all 0.2s', boxShadow: showForm ? 'none' : '0 4px 12px rgba(0,0,0,0.1)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {showForm ? <ChevronDown size={18} /> : <Plus size={18} />}
+            {showForm ? 'Ocultar Lançamento Manual' : 'Lançar Dados Manuais (Clima / Irrigação)'}
           </div>
-          <p style={{ fontSize: 13, color: '#556677' }}>Preencha Tmax e Tmin para calcular</p>
-          <p style={{ fontSize: 11, color: '#334455' }}>Os demais campos têm valores padrão</p>
-        </div>
-      )}
+          {!showForm && <div style={{ fontSize: 11, color: '#445566', fontWeight: 500, textTransform: 'none' }}>Opcional se auto-integrado</div>}
+        </button>
 
-      {/* ── Projeção 7 dias ── */}
-      {projection.length > 0 && (
-        <ProjectionForecast
-          days={projection}
-          baseDays={baseProjection}
-          avgEto={avgEto}
-          pivot={selectedSeason?.pivots ?? null}
-          simulatedIrrigation={simulatedIrrigation}
-          onSimulate={setSimulatedIrrigation}
-        />
-      )}
+        {showForm && (
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      {/* ── Timeline ── */}
-      {history.length >= 2 && <TimelineChart records={history} threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70} />}
+            {/* Fonte climática + data — linha única */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 200px', gap: 16, alignItems: 'start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Dados Climáticos</label>
+                {weatherLoading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <Loader2 size={12} className="animate-spin" style={{ color: '#00E5FF' }} />
+                    <span style={{ fontSize: 13, color: '#445566' }}>Buscando dados climáticos...</span>
+                  </div>
+                )}
+                {!weatherLoading && climateInfo && (() => {
+                  const Icon = climateInfo.icon
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: climateInfo.bg, border: climateInfo.border }}>
+                      <Icon size={13} style={{ color: climateInfo.color }} />
+                      <span style={{ fontSize: 13, color: climateInfo.color }}>{climateInfo.label}</span>
+                    </div>
+                  )
+                })()}
+                {!weatherLoading && !climateInfo && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <Thermometer size={13} style={{ color: '#445566' }} />
+                    <span style={{ fontSize: 13, color: '#445566' }}>Preencha os dados manualmente</span>
+                  </div>
+                )}
+              </div>
+              <InputField label="Data do registro" type="date" value={date} onChange={setDate} />
+            </div>
 
-      {/* ── Histórico tabela ── */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <Clock size={12} style={{ color: '#445566' }} />
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#445566' }}>Histórico — últimos 30 dias</span>
-          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-          <span style={{ fontSize: 11, color: '#445566' }}>{history.length} registros</span>
-        </div>
-        <HistoryTable records={history} onEdit={loadRecordIntoForm} onDelete={handleDelete} threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70} />
+            {/* Campos climáticos — grid 3 colunas */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
+              <InputField label="Tmax" value={tmax} onChange={setTmax} unit="°C" placeholder="35" />
+              <InputField label="Tmin" value={tmin} onChange={setTmin} unit="°C" placeholder="18" />
+              <InputField label="UR Média" value={humidity} onChange={setHumidity} unit="%" placeholder="65" />
+              <InputField label="Vento" value={wind} onChange={setWind} unit="m/s" placeholder="2.5" />
+              <InputField label="Radiação Solar" value={radiation} onChange={setRadiation} unit="W/m²" placeholder="220" />
+              <InputField label="Chuva (fazenda)" value={rainfall} onChange={setRainfall} unit="mm" placeholder="0" />
+            </div>
+
+            {/* ADc anterior — compacto */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <Droplets size={14} style={{ color: '#00E5FF', flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: '#445566' }}>ADc anterior:</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#00E5FF', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcPrev)} mm</span>
+              <span style={{ fontSize: 12, color: '#334455', marginLeft: 2 }}>{history.length > 0 ? '(último registro)' : '(ADc inicial da safra)'}</span>
+            </div>
+
+            {/* Irrigação realizada */}
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Irrigação Realizada <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14 }}>
+                <InputField label="Velocidade real" value={actualSpeed} onChange={setActualSpeed} unit="%" placeholder="60" />
+                <InputField label="Lâmina real" value={actualDepth} onChange={v => { setActualDepth(v); setDepthAutoFilled(false) }} unit="mm" placeholder="12" />
+                <InputField label="Início" type="time" value={irrigStart} onChange={setIrrigStart} />
+                <InputField label="Fim" type="time" value={irrigEnd} onChange={setIrrigEnd} />
+              </div>
+            </div>
+
+            {/* Erros / sucesso */}
+            {error && (
+              <div style={{ padding: '11px 16px', borderRadius: 8, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)', color: '#FF3366', fontSize: 13 }}>
+                {error}
+              </div>
+            )}
+            {saveMsg && (
+              <div style={{ padding: '11px 16px', borderRadius: 8, background: 'rgba(57, 255, 20, 0.1)', border: '1px solid rgba(57, 255, 20, 0.25)', color: '#39FF14', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CheckCircle2 size={14} /> {saveMsg}
+              </div>
+            )}
+
+            {/* Botão salvar */}
+            <button onClick={handleSave} disabled={saving || !calcResult}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '16px 0', borderRadius: 10, fontSize: 15, fontWeight: 800,
+                textTransform: 'uppercase', letterSpacing: '0.04em',
+                background: calcResult ? 'linear-gradient(135deg, #00B4D8, #00E5FF)' : '#0d1520',
+                border: 'none', color: calcResult ? '#0F1923' : '#445566',
+                cursor: calcResult ? 'pointer' : 'not-allowed',
+                opacity: saving ? 0.7 : 1,
+                boxShadow: calcResult ? '0 6px 20px rgba(0, 229, 255, 0.3)' : 'none',
+              }}>
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {saving ? 'Registrando...' : 'Confirmar Lançamento'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Seção de Histórico e Timeline (Oculta em Accordion Premium) ── */}
+      <div style={{ marginTop: 8 }}>
+        <button 
+          onClick={() => setShowHistoryTab(!showHistoryTab)}
+          style={{
+            width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
+            color: '#8899aa', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Clock size={16} /> Data Explorer — Histórico & Timeline
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 10, color: '#556677', background: '#0d1520', padding: '2px 8px', borderRadius: 10 }}>
+              {history.length} Registros Salvos
+            </span>
+            {showHistoryTab ? <ChevronDown size={14} /> : <TrendingDown size={14} />}
+          </div>
+        </button>
+
+        {showHistoryTab && (
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {history.length >= 2 && <TimelineChart records={history} threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70} />}
+            <HistoryTable records={history} onEdit={loadRecordIntoForm} onDelete={handleDelete} threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70} />
+          </div>
+        )}
       </div>
 
     </div>
