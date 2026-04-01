@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Manejo Unificado</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a1118; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+  /* Layout */
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: #0d1520; border-right: 1px solid rgba(255,255,255,0.06); padding: 20px 0; display: flex; flex-direction: column; }
+  .main { margin-left: 220px; padding: 28px 32px; min-height: 100vh; }
+
+  /* Sidebar */
+  .logo { padding: 0 20px 24px; display: flex; align-items: center; gap: 8px; }
+  .logo-irriga { font-size: 18px; font-weight: 800; color: #0093D0; }
+  .logo-agro { font-size: 18px; font-weight: 300; color: #22c55e; }
+  .nav-section { padding: 0 12px; margin-bottom: 20px; }
+  .nav-section-title { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #445566; padding: 0 8px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 13px; color: #8899aa; cursor: pointer; transition: all 0.15s; text-decoration: none; }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: #e2e8f0; }
+  .nav-item.active { background: rgb(0 147 208 / 0.10); color: #0093D0; font-weight: 600; }
+  .nav-item.removed { opacity: 0.3; text-decoration: line-through; pointer-events: none; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-new { font-size: 9px; padding: 2px 6px; border-radius: 10px; background: rgb(34 197 94 / 0.12); color: #22c55e; font-weight: 700; margin-left: auto; }
+  .badge-removed { font-size: 9px; padding: 2px 6px; border-radius: 10px; background: rgb(239 68 68 / 0.12); color: #ef4444; font-weight: 700; margin-left: auto; }
+
+  /* Page header */
+  .page-header { margin-bottom: 20px; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-subtitle { font-size: 13px; color: #8899aa; margin-top: 4px; }
+
+  /* Season selector */
+  .season-selector { background: #0f1923; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .season-select { background: #0d1520; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px 12px; color: #e2e8f0; font-size: 13px; flex: 1; max-width: 360px; }
+  .season-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; background: #0d1520; border-radius: 12px; padding: 4px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.06); }
+  .tab { flex: 1; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #556677; cursor: pointer; text-align: center; transition: all 0.15s; border: none; background: transparent; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .tab:hover { color: #8899aa; background: rgba(255,255,255,0.03); }
+  .tab.active { background: rgb(0 147 208 / 0.10); color: #0093D0; }
+  .tab-icon { width: 16px; height: 16px; opacity: 0.7; }
+
+  /* Cards */
+  .card { background: #0f1923; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; }
+  .card-title { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #556677; margin-bottom: 12px; }
+
+  /* Recommendation panel */
+  .rec-panel { border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; }
+  .rec-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+  .rec-speed { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; background: rgb(0 147 208 / 0.08); border: 1px solid rgb(0 147 208 / 0.2); color: #0093D0; }
+  .rec-reason { font-size: 13px; color: #8899aa; margin-left: 10px; }
+  .rec-grid { display: grid; gap: 10px; margin-top: 14px; }
+  .rec-cell { background: #0d1520; border-radius: 10px; padding: 10px 12px; text-align: center; }
+  .rec-cell-label { font-size: 10px; color: #556677; display: block; margin-bottom: 3px; }
+  .rec-cell-value { font-size: 16px; font-weight: 700; font-family: 'SF Mono', 'Cascadia Code', monospace; }
+  .rec-cell-unit { font-size: 10px; color: #556677; }
+
+  /* Soil diagram placeholder */
+  .soil-diagram { background: #0f1923; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 24px; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .soil-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .soil-info { display: flex; gap: 16px; }
+  .soil-info-item { text-align: center; }
+  .soil-info-label { font-size: 10px; color: #556677; display: block; }
+  .soil-info-value { font-size: 18px; font-weight: 700; font-family: monospace; color: #0093D0; }
+  .soil-visual { display: flex; gap: 20px; align-items: stretch; height: 200px; }
+  .soil-bar-container { width: 80px; position: relative; background: #1a1a2e; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+  .soil-water { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, #0891b2, #06b6d4); border-radius: 0 0 9px 9px; transition: height 0.5s; }
+  .soil-cad-line { position: absolute; left: 0; right: 0; height: 2px; background: #f59e0b; }
+  .soil-pct { position: absolute; width: 100%; text-align: center; font-size: 22px; font-weight: 800; font-family: monospace; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+  .soil-labels { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: #556677; }
+  .soil-status { display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+
+  /* Climate form */
+  .climate-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .climate-field label { display: block; font-size: 11px; font-weight: 500; color: #8899aa; margin-bottom: 5px; }
+  .climate-field input { width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 13px; background: #0d1520; border: 1px solid rgba(255,255,255,0.08); color: #e2e8f0; outline: none; }
+  .climate-field .unit { font-size: 10px; color: #556677; margin-top: 3px; }
+
+  /* Projection table */
+  .proj-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .proj-table th { font-size: 10px; font-weight: 700; color: #556677; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .proj-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .proj-bar { height: 8px; border-radius: 4px; background: #1a2332; overflow: hidden; position: relative; min-width: 120px; }
+  .proj-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .proj-pct { font-family: monospace; font-weight: 700; font-size: 13px; }
+  .proj-action { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: none; }
+
+  /* Calendar (Chuvas tab) */
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-month { font-size: 16px; font-weight: 700; }
+  .cal-nav { display: flex; gap: 6px; }
+  .cal-nav button { padding: 6px 12px; border-radius: 8px; background: #0d1520; border: 1px solid rgba(255,255,255,0.08); color: #8899aa; cursor: pointer; font-size: 12px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-header { font-size: 10px; font-weight: 700; color: #556677; text-align: center; padding: 6px; text-transform: uppercase; }
+  .cal-cell { background: #0d1520; border-radius: 8px; padding: 8px; min-height: 56px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; }
+  .cal-cell:hover { border-color: rgba(0,147,208,0.3); }
+  .cal-cell.has-rain { background: rgb(6 182 212 / 0.06); border-color: rgb(6 182 212 / 0.15); }
+  .cal-cell.heavy-rain { background: rgb(6 182 212 / 0.12); border-color: rgb(6 182 212 / 0.25); }
+  .cal-cell-day { font-size: 11px; color: #556677; margin-bottom: 4px; }
+  .cal-cell-rain { font-size: 14px; font-weight: 700; font-family: monospace; color: #06b6d4; }
+  .cal-cell.empty { background: transparent; cursor: default; }
+  .cal-chips { display: flex; gap: 10px; margin-bottom: 16px; }
+  .cal-chip { background: #0d1520; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 16px; text-align: center; }
+  .cal-chip-label { font-size: 10px; color: #556677; display: block; }
+  .cal-chip-value { font-size: 18px; font-weight: 700; font-family: monospace; color: #06b6d4; }
+
+  /* Save button */
+  .save-btn { padding: 12px 32px; border-radius: 10px; font-size: 14px; font-weight: 600; background: #0093D0; border: none; color: #fff; cursor: pointer; box-shadow: 0 2px 12px rgb(0 147 208 / 0.30); display: flex; align-items: center; gap: 8px; }
+
+  /* Tab content */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Annotation */
+  .annotation { position: relative; margin: 24px 0; padding: 16px 20px; background: rgb(245 158 11 / 0.06); border: 1px dashed rgb(245 158 11 / 0.3); border-radius: 10px; font-size: 13px; color: #f59e0b; line-height: 1.5; }
+  .annotation strong { color: #fbbf24; }
+  .annotation-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; display: block; }
+
+  .removed-overlay { position: relative; }
+  .removed-overlay::after { content: 'REMOVIDO'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-15deg); font-size: 32px; font-weight: 900; color: rgb(239 68 68 / 0.15); letter-spacing: 0.1em; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="logo">
+    <span class="logo-irriga">Gotejo</span>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Operacional</div>
+    <a class="nav-item" href="#">
+      <div class="nav-dot" style="background:#0093D0"></div>
+      Dashboard
+    </a>
+    <a class="nav-item active" href="#">
+      <div class="nav-dot" style="background:#22c55e"></div>
+      Manejo Diario
+      <span class="badge-new">unificado</span>
+    </a>
+    <a class="nav-item removed" href="#">
+      <div class="nav-dot" style="background:#556677"></div>
+      Lancamentos
+      <span class="badge-removed">removido</span>
+    </a>
+    <a class="nav-item removed" href="#">
+      <div class="nav-dot" style="background:#556677"></div>
+      Precipitacoes
+      <span class="badge-removed">removido</span>
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot" style="background:#556677"></div>
+      Relatorios
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Configuracao</div>
+    <a class="nav-item" href="#">
+      <div class="nav-dot" style="background:#556677"></div>
+      Fazendas
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot" style="background:#556677"></div>
+      Pivos
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot" style="background:#556677"></div>
+      Safras
+    </a>
+    <a class="nav-item" href="#">
+      <div class="nav-dot" style="background:#556677"></div>
+      Culturas
+    </a>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title">Manejo Diario</div>
+    <div class="page-subtitle">Balanco Hidrico FAO-56 &middot; Precipitacoes &middot; Programacao de irrigacao</div>
+  </div>
+
+  <!-- Season selector -->
+  <div class="season-selector">
+    <select class="season-select">
+      <option>Safra Milho 24/25 — Faz. Santa Ines / Valley</option>
+    </select>
+    <span class="season-badge" style="background:rgb(0 147 208/0.08); border:1px solid rgb(0 147 208/0.2); color:#0093D0">Milho</span>
+    <span class="season-badge" style="background:rgb(34 197 94/0.08); border:1px solid rgb(34 197 94/0.2); color:#22c55e">DAS 34 &middot; Fase 2</span>
+    <span class="season-badge" style="background:rgb(245 158 11/0.08); border:1px solid rgb(245 158 11/0.2); color:#f59e0b">Kc 0.56</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('balanco')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+      Balanco Hidrico
+    </button>
+    <button class="tab" onclick="switchTab('chuvas')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 17.58A5 5 0 0018 8h-1.26A8 8 0 104 16.25"/><path d="M8 16l-2 3M12 18l-2 3M16 16l-2 3"/></svg>
+      Chuvas
+    </button>
+    <button class="tab" onclick="switchTab('projecao')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Projecao 7 Dias
+    </button>
+    <button class="tab" onclick="switchTab('historico')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-10"/></svg>
+      Historico
+    </button>
+  </div>
+
+  <!-- ==================== ABA 1: BALANCO ==================== -->
+  <div id="tab-balanco" class="tab-content active">
+
+    <div class="annotation">
+      <span class="annotation-title">Mockup — Aba Balanco Hidrico</span>
+      Tudo que ja existe hoje na pagina Manejo. Diagrama do solo, recomendacao v2, formulario climatico, registro de irrigacao e chuva do dia.
+    </div>
+
+    <!-- Soil Diagram -->
+    <div class="soil-diagram">
+      <div class="soil-header">
+        <div>
+          <div style="font-size:14px; font-weight:600; margin-bottom:4px">Valley &middot; Faz. Santa Ines</div>
+          <div style="font-size:12px; color:#556677">Milho &middot; DAS 34 &middot; Fase 2 &middot; Raiz 26cm</div>
+        </div>
+        <div class="soil-info">
+          <div class="soil-info-item">
+            <span class="soil-info-label">ETo</span>
+            <span class="soil-info-value">3.9</span>
+            <span style="font-size:10px;color:#556677">mm</span>
+          </div>
+          <div class="soil-info-item">
+            <span class="soil-info-label">ETc</span>
+            <span class="soil-info-value">2.2</span>
+            <span style="font-size:10px;color:#556677">mm</span>
+          </div>
+          <div class="soil-info-item">
+            <span class="soil-info-label">Recomendado</span>
+            <span class="soil-info-value" style="color:#22c55e">0.0</span>
+            <span style="font-size:10px;color:#556677">mm</span>
+          </div>
+        </div>
+      </div>
+      <div class="soil-visual">
+        <div class="soil-bar-container">
+          <div class="soil-water" style="height:87%"></div>
+          <div class="soil-cad-line" style="bottom:45%"></div>
+          <div class="soil-pct" style="top:20%">87%</div>
+        </div>
+        <div class="soil-labels">
+          <div>CTA 70.5mm <span style="color:#22c55e">&mdash;</span></div>
+          <div style="color:#f59e0b">CAD 31.7mm &mdash;</div>
+          <div>ADc 61.3mm</div>
+          <div style="color:#ef4444">PMP &mdash;</div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px; padding-left:20px">
+          <div class="soil-status" style="background:rgb(34 197 94/0.12); border:1px solid rgb(34 197 94/0.25); color:#22c55e">OK — Sem necessidade de irrigacao</div>
+          <div style="font-size:12px; color:#556677">Capacidade de campo: 87% &middot; Deficit: 9.2mm (13%)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendation panel -->
+    <div class="rec-panel" style="background:#0f1923; border:1px solid rgb(34 197 94 / 0.2);">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+        <span class="rec-badge" style="background:rgb(34 197 94/0.08); border:1px solid rgb(34 197 94/0.2); color:#22c55e">Sem necessidade</span>
+        <span class="rec-reason">Sem necessidade de irrigacao</span>
+      </div>
+      <div class="rec-grid" style="grid-template-columns: repeat(4, 1fr)">
+        <div class="rec-cell">
+          <span class="rec-cell-label">CAD</span>
+          <span class="rec-cell-value" style="color:#0093D0">31.7</span>
+          <span class="rec-cell-unit"> mm</span>
+        </div>
+        <div class="rec-cell">
+          <span class="rec-cell-label">Deplecao Atual</span>
+          <span class="rec-cell-value">9.2</span>
+          <span class="rec-cell-unit"> mm &middot; 13%</span>
+        </div>
+        <div class="rec-cell">
+          <span class="rec-cell-label">Deplecao Projetada</span>
+          <span class="rec-cell-value">11.4</span>
+          <span class="rec-cell-unit"> mm &middot; 16%</span>
+        </div>
+        <div class="rec-cell">
+          <span class="rec-cell-label">Irrigacao?</span>
+          <span class="rec-cell-value" style="color:#22c55e">NAO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Climate form -->
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
+        <div class="card-title" style="margin:0">Dados Climaticos</div>
+        <div style="display:flex; align-items:center; gap:6px">
+          <div style="width:8px; height:8px; border-radius:50%; background:#0093D0"></div>
+          <span style="font-size:11px; color:#0093D0; font-weight:600">Plugfield</span>
+          <span style="font-size:11px; color:#556677">&middot; 31/03/2026</span>
+        </div>
+      </div>
+      <div class="climate-grid">
+        <div class="climate-field">
+          <label>Tmax</label>
+          <input value="32.4" />
+          <div class="unit">C</div>
+        </div>
+        <div class="climate-field">
+          <label>Tmin</label>
+          <input value="19.8" />
+          <div class="unit">C</div>
+        </div>
+        <div class="climate-field">
+          <label>UR Media</label>
+          <input value="58" />
+          <div class="unit">%</div>
+        </div>
+        <div class="climate-field">
+          <label>Vento</label>
+          <input value="1.8" />
+          <div class="unit">m/s</div>
+        </div>
+        <div class="climate-field">
+          <label>Radiacao</label>
+          <input value="245" />
+          <div class="unit">W/m2</div>
+        </div>
+        <div class="climate-field">
+          <label>Chuva</label>
+          <input value="0" style="border-color: rgb(6 182 212 / 0.3)" />
+          <div class="unit">mm &middot; salva em precipitacoes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Irrigation section -->
+    <div class="card">
+      <div class="card-title">Irrigacao Realizada</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px">
+        <div class="climate-field">
+          <label>Velocidade</label>
+          <input placeholder="%" />
+        </div>
+        <div class="climate-field">
+          <label>Lamina</label>
+          <input placeholder="mm" />
+        </div>
+        <div class="climate-field">
+          <label>Inicio</label>
+          <input type="time" />
+        </div>
+        <div class="climate-field">
+          <label>Fim</label>
+          <input type="time" />
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; margin-top:16px">
+      <button class="save-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+        Salvar Registro
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== ABA 2: CHUVAS ==================== -->
+  <div id="tab-chuvas" class="tab-content">
+
+    <div class="annotation">
+      <span class="annotation-title">Mockup — Aba Chuvas</span>
+      Absorve a pagina Precipitacoes inteira. Calendario mensal, chips de totais, botao importar planilha. Tudo aqui dentro, sem sair do Manejo.
+    </div>
+
+    <!-- Chips -->
+    <div class="cal-chips">
+      <div class="cal-chip">
+        <span class="cal-chip-label">Hoje</span>
+        <span class="cal-chip-value">0.0</span>
+      </div>
+      <div class="cal-chip">
+        <span class="cal-chip-label">Semana</span>
+        <span class="cal-chip-value">12.4</span>
+      </div>
+      <div class="cal-chip">
+        <span class="cal-chip-label">Marco</span>
+        <span class="cal-chip-value">187.2</span>
+      </div>
+      <div class="cal-chip">
+        <span class="cal-chip-label">2026</span>
+        <span class="cal-chip-value">842.6</span>
+      </div>
+      <div style="flex:1"></div>
+      <button style="padding:8px 16px; border-radius:8px; background:rgb(0 147 208/0.08); border:1px solid rgb(0 147 208/0.2); color:#0093D0; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        Importar Planilha
+      </button>
+    </div>
+
+    <!-- Calendar -->
+    <div class="card">
+      <div class="cal-header">
+        <div class="cal-nav">
+          <button>&larr;</button>
+          <button>Hoje</button>
+          <button>&rarr;</button>
+        </div>
+        <div class="cal-month">Marco 2026</div>
+        <div style="width:100px"></div>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-day-header">Dom</div>
+        <div class="cal-day-header">Seg</div>
+        <div class="cal-day-header">Ter</div>
+        <div class="cal-day-header">Qua</div>
+        <div class="cal-day-header">Qui</div>
+        <div class="cal-day-header">Sex</div>
+        <div class="cal-day-header">Sab</div>
+
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">1</div><div class="cal-cell-rain">8.2</div></div>
+
+        <div class="cal-cell"><div class="cal-cell-day">2</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">3</div><div class="cal-cell-rain">2.4</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">4</div><div class="cal-cell-rain">15.6</div></div>
+        <div class="cal-cell heavy-rain"><div class="cal-cell-day">5</div><div class="cal-cell-rain">32.1</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">6</div><div class="cal-cell-rain">4.8</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">7</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">8</div></div>
+
+        <div class="cal-cell"><div class="cal-cell-day">9</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">10</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">11</div><div class="cal-cell-rain">6.2</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">12</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">13</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">14</div><div class="cal-cell-rain">18.4</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">15</div><div class="cal-cell-rain">12.0</div></div>
+
+        <div class="cal-cell"><div class="cal-cell-day">16</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">17</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">18</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">19</div><div class="cal-cell-rain">3.6</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">20</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">21</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">22</div></div>
+
+        <div class="cal-cell"><div class="cal-cell-day">23</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">24</div><div class="cal-cell-rain">22.8</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">25</div><div class="cal-cell-rain">9.4</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">26</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">27</div><div class="cal-cell-rain">14.6</div></div>
+        <div class="cal-cell has-rain"><div class="cal-cell-day">28</div><div class="cal-cell-rain">5.2</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">29</div></div>
+
+        <div class="cal-cell has-rain"><div class="cal-cell-day">30</div><div class="cal-cell-rain">12.4</div></div>
+        <div class="cal-cell"><div class="cal-cell-day">31</div></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+        <div class="cal-cell empty"></div>
+      </div>
+    </div>
+
+    <!-- Bar chart placeholder -->
+    <div class="card" style="height:140px; display:flex; align-items:center; justify-content:center">
+      <span style="font-size:13px; color:#556677">Grafico de barras distribuicao diaria (igual ao atual)</span>
+    </div>
+  </div>
+
+  <!-- ==================== ABA 3: PROJECAO ==================== -->
+  <div id="tab-projecao" class="tab-content">
+
+    <div class="annotation">
+      <span class="annotation-title">Mockup — Aba Projecao 7 Dias</span>
+      Combina a projecao do Manejo (simulacao) com o planejamento do Lancamentos (salvar no irrigation_schedule). O agricultor ve a projecao E programa irrigacao no mesmo lugar.
+    </div>
+
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
+        <div class="card-title" style="margin:0">Projecao de Umidade &middot; D+1 a D+7</div>
+        <div style="display:flex; gap:8px">
+          <button style="padding:6px 12px; border-radius:8px; background:#0d1520; border:1px solid rgba(255,255,255,0.08); color:#8899aa; font-size:11px; cursor:pointer">Limpar simulacao</button>
+          <button style="padding:6px 12px; border-radius:8px; background:rgb(0 147 208/0.08); border:1px solid rgb(0 147 208/0.2); color:#0093D0; font-size:11px; font-weight:600; cursor:pointer">Salvar programacao</button>
+        </div>
+      </div>
+
+      <table class="proj-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>DAS</th>
+            <th>Umidade do Solo</th>
+            <th>CC%</th>
+            <th>ETo</th>
+            <th>ETc</th>
+            <th>Chuva</th>
+            <th>Irrigacao</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color:#e2e8f0">Ter 01/04</strong></td>
+            <td style="color:#556677">35</td>
+            <td><div class="proj-bar"><div class="proj-bar-fill" style="width:84%; background:#22c55e"></div></div></td>
+            <td><span class="proj-pct" style="color:#22c55e">84%</span></td>
+            <td style="color:#556677">4.1</td>
+            <td style="color:#556677">2.3</td>
+            <td style="color:#556677">—</td>
+            <td style="color:#556677">—</td>
+            <td><button class="proj-action" style="background:rgb(0 147 208/0.08); color:#0093D0">+ Irrigar</button></td>
+          </tr>
+          <tr>
+            <td>Qua 02/04</td>
+            <td style="color:#556677">36</td>
+            <td><div class="proj-bar"><div class="proj-bar-fill" style="width:81%; background:#22c55e"></div></div></td>
+            <td><span class="proj-pct" style="color:#22c55e">81%</span></td>
+            <td style="color:#556677">3.8</td>
+            <td style="color:#556677">2.2</td>
+            <td style="color:#556677">—</td>
+            <td style="color:#556677">—</td>
+            <td><button class="proj-action" style="background:rgb(0 147 208/0.08); color:#0093D0">+ Irrigar</button></td>
+          </tr>
+          <tr>
+            <td>Qui 03/04</td>
+            <td style="color:#556677">37</td>
+            <td><div class="proj-bar"><div class="proj-bar-fill" style="width:78%; background:#22c55e"></div></div></td>
+            <td><span class="proj-pct" style="color:#22c55e">78%</span></td>
+            <td style="color:#556677">4.2</td>
+            <td style="color:#556677">2.4</td>
+            <td style="color:#556677">—</td>
+            <td style="color:#556677">—</td>
+            <td><button class="proj-action" style="background:rgb(0 147 208/0.08); color:#0093D0">+ Irrigar</button></td>
+          </tr>
+          <tr style="background:rgb(245 158 11/0.04)">
+            <td><span style="color:#f59e0b">Sex 04/04</span></td>
+            <td style="color:#556677">38</td>
+            <td><div class="proj-bar"><div class="proj-bar-fill" style="width:74%; background:#f59e0b"></div></div></td>
+            <td><span class="proj-pct" style="color:#f59e0b">74%</span></td>
+            <td style="color:#556677">4.5</td>
+            <td style="color:#556677">2.6</td>
+            <td style="color:#556677">—</td>
+            <td style="color:#556677">—</td>
+            <td><button class="proj-action" style="background:rgb(245 158 11/0.12); color:#f59e0b; font-weight:700">+ Irrigar</button></td>
+          </tr>
+          <tr style="background:rgb(239 68 68/0.04)">
+            <td><span style="color:#ef4444">Sab 05/04</span></td>
+            <td style="color:#556677">39</td>
+            <td><div class="proj-bar"><div class="proj-bar-fill" style="width:69%; background:#ef4444"></div></div></td>
+            <td><span class="proj-pct" style="color:#ef4444">69%</span></td>
+            <td style="color:#556677">3.9</td>
+            <td style="color:#556677">2.3</td>
+            <td style="color:#556677">—</td>
+            <td>
+              <div style="display:flex; align-items:center; gap:6px">
+                <span style="background:rgb(0 147 208/0.08); border:1px solid rgb(0 147 208/0.2); color:#0093D0; font-size:11px; padding:3px 8px; border-radius:6px; font-weight:700">50% &middot; 8.1mm</span>
+                <button style="background:none; border:none; color:#556677; cursor:pointer; font-size:10px">&times;</button>
+              </div>
+            </td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Dom 06/04</td>
+            <td style="color:#556677">40</td>
+            <td><div class="proj-bar"><div class="proj-bar-fill" style="width:79%; background:#22c55e"></div></div></td>
+            <td><span class="proj-pct" style="color:#22c55e">79%</span></td>
+            <td style="color:#556677">3.5</td>
+            <td style="color:#556677">2.0</td>
+            <td style="color:#556677">—</td>
+            <td style="color:#556677">—</td>
+            <td><button class="proj-action" style="background:rgb(0 147 208/0.08); color:#0093D0">+ Irrigar</button></td>
+          </tr>
+          <tr>
+            <td>Seg 07/04</td>
+            <td style="color:#556677">41</td>
+            <td><div class="proj-bar"><div class="proj-bar-fill" style="width:76%; background:#22c55e"></div></div></td>
+            <td><span class="proj-pct" style="color:#22c55e">76%</span></td>
+            <td style="color:#556677">4.0</td>
+            <td style="color:#556677">2.3</td>
+            <td style="color:#556677">—</td>
+            <td style="color:#556677">—</td>
+            <td><button class="proj-action" style="background:rgb(0 147 208/0.08); color:#0093D0">+ Irrigar</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Alert -->
+    <div style="background:rgb(245 158 11/0.06); border:1px solid rgb(245 158 11/0.2); border-radius:10px; padding:12px 18px; display:flex; align-items:center; gap:10px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+      <span style="font-size:13px; color:#f59e0b; font-weight:600">Irrigacao recomendada em 05/04 (Sabado)</span>
+      <span style="font-size:12px; color:#8899aa; margin-left:4px">— CC% projetada 69%, abaixo do limiar 70%. Simulacao: 50% (8.1mm) adicionada.</span>
+    </div>
+  </div>
+
+  <!-- ==================== ABA 4: HISTORICO ==================== -->
+  <div id="tab-historico" class="tab-content">
+
+    <div class="annotation">
+      <span class="annotation-title">Mockup — Aba Historico</span>
+      Timeline chart + tabela dos ultimos 30 registros. Igual ao que ja existe no Manejo atual — sem mudanca.
+    </div>
+
+    <!-- Timeline chart placeholder -->
+    <div class="card" style="height:180px; display:flex; align-items:center; justify-content:center">
+      <span style="font-size:13px; color:#556677">Grafico timeline: ETo (amber) &middot; ETc (cyan) &middot; ADc% (blue) &middot; Chuva (barras)</span>
+    </div>
+
+    <!-- History table -->
+    <div class="card">
+      <div class="card-title">Ultimos 30 Registros</div>
+      <table class="proj-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>DAS</th>
+            <th>ETo</th>
+            <th>ETc</th>
+            <th>Kc</th>
+            <th>Chuva</th>
+            <th>ADc</th>
+            <th>CC%</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>31/03</strong></td>
+            <td>34</td>
+            <td>3.9</td>
+            <td>2.2</td>
+            <td>0.56</td>
+            <td>0.0</td>
+            <td>61.3</td>
+            <td><span class="proj-pct" style="color:#22c55e">87%</span></td>
+            <td><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e"></span></td>
+            <td style="display:flex; gap:4px">
+              <button style="padding:4px 8px; border-radius:6px; background:#0d1520; border:none; color:#8899aa; font-size:11px; cursor:pointer">Editar</button>
+            </td>
+          </tr>
+          <tr>
+            <td>30/03</td>
+            <td>33</td>
+            <td>4.1</td>
+            <td>2.3</td>
+            <td>0.55</td>
+            <td>12.4</td>
+            <td>63.5</td>
+            <td><span class="proj-pct" style="color:#22c55e">90%</span></td>
+            <td><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e"></span></td>
+            <td><button style="padding:4px 8px; border-radius:6px; background:#0d1520; border:none; color:#8899aa; font-size:11px; cursor:pointer">Editar</button></td>
+          </tr>
+          <tr>
+            <td>29/03</td>
+            <td>32</td>
+            <td>3.6</td>
+            <td>2.0</td>
+            <td>0.54</td>
+            <td>0.0</td>
+            <td>53.4</td>
+            <td><span class="proj-pct" style="color:#22c55e">76%</span></td>
+            <td><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e"></span></td>
+            <td><button style="padding:4px 8px; border-radius:6px; background:#0d1520; border:none; color:#8899aa; font-size:11px; cursor:pointer">Editar</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.closest('.tab').classList.add('active');
+}
+</script>
+
+</body>
+</html>
