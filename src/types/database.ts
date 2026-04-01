@@ -9,6 +9,7 @@ export type Json =
 export type CompanyPlan = 'free' | 'pro' | 'enterprise'
 export type CompanyRole = 'owner' | 'admin' | 'operator' | 'viewer'
 export type WeatherSource = 'nasa' | 'google_sheets' | 'manual' | 'plugfield'
+export type OperationMode = 'individual' | 'conjugated'
 export type WeatherStationProvider = 'manual' | 'fieldclimate' | 'davis' | 'inmet'
 export type RainfallSource = 'manual' | 'import' | 'station'
 export type EnergyBillSource = 'upload' | 'whatsapp' | 'manual'
@@ -142,6 +143,11 @@ export interface Pivot {
   alert_threshold_percent: number | null
   sector_start_deg: number | null
   sector_end_deg: number | null
+  operation_mode: OperationMode
+  paired_pivot_id: string | null
+  return_interval_days: number
+  preferred_speed_percent: number | null
+  min_speed_percent: number | null
 }
 
 export interface PivotInsert {
@@ -163,6 +169,11 @@ export interface PivotInsert {
   alert_threshold_percent?: number | null
   sector_start_deg?: number | null
   sector_end_deg?: number | null
+  operation_mode?: OperationMode
+  paired_pivot_id?: string | null
+  return_interval_days?: number
+  preferred_speed_percent?: number | null
+  min_speed_percent?: number | null
 }
 
 export type PivotUpdate = Partial<PivotInsert>

@@ -489,6 +489,131 @@ export function calcProjection(params: {
   return results
 }
 
+// ─── Motor de Recomendação v2 — Individual + Conjugado ──────
+
+export type RecommendationStatus = 'ok' | 'queue' | 'irrigate_today' | 'operational_risk'
+
+export interface IrrigationRecommendation {
+  cadTotalMm: number
+  preferredDepthMm: number | null  // lâmina na velocidade preferida do operador
+  maxDepthMm: number | null        // lâmina na velocidade mínima (máx do pivô)
+  deficitCurrentMm: number         // CTA - ADc (depleção atual)
+  etcForecastUntilReturnMm: number
+  deficitProjectedMm: number       // depleção + ETc*dias (sem chuva prevista)
+  shouldIrrigateToday: boolean
+  suggestedSpeedPercent: number | null  // velocidade sugerida
+  status: RecommendationStatus
+  reason: string                   // mensagem clara em pt-BR
+}
+
+/**
+ * Recomendação de irrigação para pivô individual ou conjugado.
+ *
+ * REGRA: chuva prevista NÃO entra na decisão. Só conta chuva que de fato ocorreu.
+ * O déficit projetado = depleção atual + ETc × dias de retorno.
+ *
+ * Usa as velocidades reais do pivô:
+ * - preferredSpeedPercent: velocidade que o agricultor costuma usar (ex: 50%)
+ * - minSpeedPercent: velocidade mínima = máxima lâmina possível (ex: 42%)
+ *
+ * Para individual: returnIntervalDays=1, sem limite → comporta como hoje.
+ * Para conjugado: projeta N dias e compara com a capacidade real do pivô.
+ */
+export function getConjugatedRecommendation(input: {
+  cta: number
+  cad: number
+  adcCurrent: number
+  etcMmPerDay: number
+  returnIntervalDays: number
+  pivot: Pivot | null
+}): IrrigationRecommendation {
+  const { cta, cad, adcCurrent, etcMmPerDay, returnIntervalDays, pivot } = input
+
+  const deficitCurrentMm = Math.max(0, cta - adcCurrent)
+  const etcForecast = etcMmPerDay * returnIntervalDays
+  const deficitProjected = deficitCurrentMm + etcForecast
+
+  // Calcular lâminas reais a partir das velocidades do pivô
+  const preferredSpeed = pivot?.preferred_speed_percent ?? null
+  const minSpeed = pivot?.min_speed_percent ?? null
+  const preferredDepthMm = (pivot && preferredSpeed) ? calcDepthForSpeed(pivot, preferredSpeed) : null
+  const maxDepthMm = (pivot && minSpeed) ? calcDepthForSpeed(pivot, minSpeed) : null
+
+  // Limite operacional: lâmina máxima que o pivô aguenta (velocidade mínima)
+  // Se não configurado, usa CAD como limite (comportamento padrão)
+  const operationalLimit = maxDepthMm != null ? Math.min(cad, maxDepthMm) : cad
+
+  // Risco operacional: ETc por ciclo > lâmina máxima do pivô
+  // Se em N dias a planta consome mais do que o pivô aplica no máximo, não tem como repor
+  if (maxDepthMm != null && etcForecast > maxDepthMm) {
+    return {
+      cadTotalMm: cad,
+      preferredDepthMm,
+      maxDepthMm,
+      deficitCurrentMm,
+      etcForecastUntilReturnMm: etcForecast,
+      deficitProjectedMm: deficitProjected,
+      shouldIrrigateToday: true,
+      suggestedSpeedPercent: minSpeed,
+      status: 'operational_risk',
+      reason: `Risco: ETc até retorno (${etcForecast.toFixed(1)}mm em ${returnIntervalDays}d) > lâmina máxima do pivô (${maxDepthMm.toFixed(1)}mm a ${minSpeed}%)`,
+    }
+  }
+
+  // Limiares: 70% e 100% do limite operacional
+  const queueThreshold = operationalLimit * 0.70
+  const irrigateThreshold = operationalLimit
+
+  let status: RecommendationStatus
+  let reason: string
+  let shouldIrrigateToday: boolean
+  let suggestedSpeedPercent: number | null = null
+
+  if (deficitProjected >= irrigateThreshold) {
+    status = 'irrigate_today'
+    shouldIrrigateToday = true
+
+    // Sugerir velocidade: preferida se cabe, senão mínima
+    if (preferredDepthMm != null && preferredDepthMm >= deficitProjected) {
+      suggestedSpeedPercent = preferredSpeed
+      reason = `Irrigar a ${preferredSpeed}% (${preferredDepthMm.toFixed(1)}mm) — déficit projetado ${deficitProjected.toFixed(1)}mm`
+    } else if (maxDepthMm != null) {
+      suggestedSpeedPercent = minSpeed
+      reason = `Irrigar a ${minSpeed}% (${maxDepthMm.toFixed(1)}mm) — déficit projetado ${deficitProjected.toFixed(1)}mm excede a preferida`
+    } else {
+      // Sem velocidades configuradas, usa lógica padrão
+      suggestedSpeedPercent = pivot ? findRecommendedSpeed(pivot, deficitProjected) : null
+      reason = returnIntervalDays > 1
+        ? `Irrigar hoje — déficit projetado (${deficitProjected.toFixed(1)}mm) antes da próxima volta em ${returnIntervalDays}d`
+        : `Irrigar hoje — déficit (${deficitProjected.toFixed(1)}mm) atingiu o limite (${irrigateThreshold.toFixed(1)}mm)`
+    }
+  } else if (deficitProjected >= queueThreshold) {
+    status = 'queue'
+    shouldIrrigateToday = false
+    suggestedSpeedPercent = preferredSpeed
+    reason = `Fila — déficit projetado (${deficitProjected.toFixed(1)}mm) se aproxima do limite (${irrigateThreshold.toFixed(1)}mm)`
+  } else {
+    status = 'ok'
+    shouldIrrigateToday = false
+    reason = 'Sem necessidade de irrigação'
+  }
+
+  return {
+    cadTotalMm: cad,
+    preferredDepthMm,
+    maxDepthMm,
+    deficitCurrentMm,
+    etcForecastUntilReturnMm: etcForecast,
+    deficitProjectedMm: deficitProjected,
+    shouldIrrigateToday,
+    suggestedSpeedPercent,
+    status,
+    reason,
+  }
+}
+
+// ─── Função principal: calcula tudo de uma vez ────────────────
+
 export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
   const { weather, crop, das, fieldCapacity, wiltingPoint, bulkDensity, adcPrev, rainfall, irrigation, pivot, isIrrigating } = input
 

@@ -7,8 +7,10 @@ import {
   calcKs,
   calcRecommendedIrrigation,
   findRecommendedSpeed,
+  getConjugatedRecommendation,
   getIrrigationStatus,
   getStageInfoForDas,
+  type IrrigationRecommendation,
   type WaterBalanceResult,
   type WeatherInput,
 } from '@/lib/water-balance'
@@ -30,6 +32,7 @@ export interface ResolvedManagementBalance extends WaterBalanceResult {
   etoSource: EToSource
   etoConfidence: EToConfidence | null
   etoNotes: string | null
+  recommendation: IrrigationRecommendation | null
 }
 
 export interface ComputeManagementBalanceParams {
@@ -130,6 +133,16 @@ export function computeResolvedManagementBalance(
   const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew, alertThresholdPct, null)
   const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
+  // Motor de recomendação v2 — individual ou conjugado
+  const recommendation = getConjugatedRecommendation({
+    cta,
+    cad,
+    adcCurrent: adcNew,
+    etcMmPerDay: etc,
+    returnIntervalDays: pivot?.return_interval_days ?? 1,
+    pivot: pivot ?? null,
+  })
+
   return {
     das,
     cropStage: stageInfo.stage,
@@ -149,5 +162,6 @@ export function computeResolvedManagementBalance(
     etoSource: etoResolution.etoSource,
     etoConfidence: etoResolution.etoConfidence,
     etoNotes: etoResolution.etoNotes,
+    recommendation,
   }
 }
