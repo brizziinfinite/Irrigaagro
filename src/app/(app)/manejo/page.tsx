@@ -33,6 +33,7 @@ import {
   Edit2, Trash2, X, Plus
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell } from 'recharts'
 
 // ─── Status semáforo ─────────────────────────────────────────
@@ -1325,7 +1326,7 @@ export default function ManejoPage() {
                     
                     {/* Bloco Schedule */}
                     <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', minWidth: 0 }}>
-                      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Irrigation Schedule</h3>
+                      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Agenda de Irrigação</h3>
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: '#A0AAB4' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1355,10 +1356,11 @@ export default function ManejoPage() {
                           boxShadow: '0 4px 20px rgba(204,255,0,0.25)', cursor: 'pointer', transition: 'all 0.2s',
                           whiteSpace: 'nowrap'
                         }}
+                        onClick={() => { setShowForm(true); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }) }}
                         onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'none'}
                         >
-                          MANAGE
+                          LANÇAR<br/>ESFORÇO
                         </button>
                         <button style={{
                           flex: 1, background: '#00E5FF', padding: '16px',
@@ -1367,10 +1369,11 @@ export default function ManejoPage() {
                           boxShadow: '0 4px 20px rgba(0,229,255,0.25)', cursor: 'pointer', transition: 'all 0.2s',
                           textAlign: 'center', lineHeight: 1.2
                         }}
+                        onClick={() => { setShowForm(true); setActualDepth('10'); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }) }}
                         onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'none'}
                         >
-                          EMERGENCY<br/>IRRIGATION
+                          REGISTRAR<br/>IRRIGAÇÃO
                         </button>
                       </div>
                     </div>
@@ -1378,7 +1381,7 @@ export default function ManejoPage() {
                     {/* Bloco Water Usage */}
                     <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Water Usage (7D)</h3>
+                        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Consumo de Água (7D)</h3>
                         <div style={{ fontSize: 11, color: '#A0AAB4', textTransform: 'uppercase', textAlign: 'right' }}>
                           <div>Total Aplicado: <strong style={{ color: '#fff' }}>{totalWater7d.toFixed(1)} mm</strong></div>
                           <div style={{ marginTop: 2 }}>Alvo: <span style={{ color: '#8899aa'}}>{tgtWater.toFixed(1)} mm</span></div>
@@ -1413,24 +1416,30 @@ export default function ManejoPage() {
                       </div>
 
                       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) 1fr', gap: 12, marginTop: 'auto' }}>
-                        <button style={{
-                          background: '#323236', color: '#D0D0D4', border: '1px solid #444448', padding: '14px 4px', 
-                          borderRadius: 12, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center', transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#323236'}
-                        >
-                           ADJUST TARGET<br/>MOISTURE
-                        </button>
-                        <button style={{
-                          background: '#323236', color: '#D0D0D4', border: '1px solid #444448', padding: '14px 4px', 
-                          borderRadius: 12, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center', transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#323236'}
-                        >
-                           VIEW WEATHER<br/>FORECAST
-                        </button>
+                        <Link href="/pivos" style={{ textDecoration: 'none' }}>
+                          <button style={{
+                            width: '100%', background: '#323236', color: '#D0D0D4', border: '1px solid #444448', padding: '14px 4px', 
+                            borderRadius: 12, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center', transition: 'all 0.2s',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '56px'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#323236'}
+                          >
+                             AJUSTAR ALVO<br/>PONTO C.C.
+                          </button>
+                        </Link>
+                        <Link href="/precipitacoes" style={{ textDecoration: 'none' }}>
+                          <button style={{
+                            width: '100%', background: '#323236', color: '#D0D0D4', border: '1px solid #444448', padding: '14px 4px', 
+                            borderRadius: 12, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center', transition: 'all 0.2s',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '56px'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
+                          onMouseLeave={e => e.currentTarget.style.background = '#323236'}
+                          >
+                             CALENDÁRIO<br/>DE CHUVAS
+                          </button>
+                        </Link>
                       </div>
                     </div>
 

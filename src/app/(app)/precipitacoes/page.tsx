@@ -11,6 +11,7 @@ import {
   ChevronLeft, ChevronRight, CloudRain, Upload, X,
   Calendar,
 } from 'lucide-react'
+import Link from 'next/link'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1242,6 +1243,22 @@ export default function PrecipitacoesPage() {
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <Link href="/manejo" style={{ textDecoration: 'none' }}>
+            <button
+              disabled={loadingPivots}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 12px', borderRadius: 8, border: '1px solid rgb(245 158 11 / 0.25)', cursor: 'pointer',
+                background: 'rgb(245 158 11 / 0.10)', color: '#f59e0b', fontSize: 12, fontWeight: 700,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgb(245 158 11 / 0.20)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgb(245 158 11 / 0.10)'}
+            >
+              MANEJO DIÁRIO
+            </button>
+          </Link>
+
           <select
             value={pivotId}
             onChange={e => setPivotId(e.target.value)}
