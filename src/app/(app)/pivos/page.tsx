@@ -182,11 +182,12 @@ function Field({ label, value, onChange, placeholder, unit, hint, min, max }: {
 interface PivotModalProps {
   pivot: Pivot | null
   farms: Farm[]
+  allPivots: PivotWithFarmName[]
   onClose: () => void
   onSaved: () => Promise<void>
 }
 
-function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
+function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalProps) {
   const isEdit = !!pivot
   const [farmId, setFarmId] = useState(pivot?.farm_id ?? farms[0]?.id ?? '')
   const [name, setName] = useState(pivot?.name ?? '')
@@ -211,6 +212,7 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
   const [sectorStart, setSectorStart] = useState<string>(pivot?.sector_start_deg?.toString() ?? '')
   const [sectorEnd, setSectorEnd] = useState<string>(pivot?.sector_end_deg?.toString() ?? '')
   const [operationMode, setOperationMode] = useState<OperationMode>(pivot?.operation_mode ?? 'individual')
+  const [pairedPivotId, setPairedPivotId] = useState(pivot?.paired_pivot_id ?? '')
   const [returnIntervalDays, setReturnIntervalDays] = useState(pivot?.return_interval_days?.toString() ?? '1')
   const [preferredSpeed, setPreferredSpeed] = useState(pivot?.preferred_speed_percent?.toString() ?? '')
   const [minSpeedPct, setMinSpeedPct] = useState(pivot?.min_speed_percent?.toString() ?? '')
@@ -364,6 +366,7 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
       sector_start_deg: sectorStart ? Number(sectorStart) : null,
       sector_end_deg: sectorEnd ? Number(sectorEnd) : null,
       operation_mode: operationMode,
+      paired_pivot_id: operationMode === 'conjugated' && pairedPivotId ? pairedPivotId : null,
       return_interval_days: returnIntervalDays ? Number(returnIntervalDays) : 1,
       preferred_speed_percent: preferredSpeed ? Number(preferredSpeed) : null,
       min_speed_percent: minSpeedPct ? Number(minSpeedPct) : null,
@@ -677,6 +680,28 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
               <p style={{ fontSize: 11, color: '#8899aa' }}>
                 Configure como o pivô opera no dia a dia. O sistema projeta o déficit até a próxima volta.
               </p>
+
+              <div style={{ marginBottom: 4 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Pivô Pareado (Divide a mesma bomba)</label>
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={pairedPivotId}
+                    onChange={e => setPairedPivotId(e.target.value)}
+                    style={{
+                      width: '100%', padding: '8px 36px 8px 10px', borderRadius: 8, fontSize: 13,
+                      background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0',
+                      outline: 'none', appearance: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <option value="">-- Nenhum selecionado --</option>
+                    {allPivots.filter(p => p.farm_id === farmId && p.id !== pivot?.id).map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Intervalo de Retorno</label>
@@ -1288,6 +1313,7 @@ export default function PivosPage() {
         <PivotModal
           pivot={editingPivot}
           farms={farms}
+          allPivots={pivots}
           onClose={() => setModalOpen(false)}
           onSaved={loadData}
         />
