@@ -24,6 +24,7 @@ interface MapPivot {
 
 interface PivotMapProps {
   pivots: MapPivot[]
+  onPivotClick?: (pivotId: string) => void
 }
 
 // ─── Status colors ────────────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ const STATUS_COLORS: Record<IrrigationStatus, { fill: string; stroke: string; la
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function PivotMap({ pivots }: PivotMapProps) {
+export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstanceRef = useRef<any>(null)
@@ -242,9 +243,14 @@ export function PivotMap({ pivots }: PivotMapProps) {
           zIndexOffset: pivot.status === 'vermelho' ? 100 : 0,
         })
 
-        marker.bindPopup(popupHtml, {
-          maxWidth: 260,
+        marker.bindTooltip(popupHtml, {
+          direction: 'top',
           className: 'gotejo-popup',
+          opacity: 1
+        })
+        
+        marker.on('click', () => {
+          if (onPivotClick) onPivotClick(pivot.id)
         })
 
         marker.addTo(map)

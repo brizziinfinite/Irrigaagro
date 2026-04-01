@@ -161,11 +161,11 @@ function Field({ label, value, onChange, placeholder, unit, hint, min, max }: {
           max={max}
           style={{
             width: '100%', padding: unit ? '10px 44px 10px 14px' : '10px 14px',
-            borderRadius: 10, fontSize: 14,
-            background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
+            borderRadius: 10, fontSize: 14, transition: 'all 0.2s',
+            background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
           }}
-          onFocus={e => e.target.style.borderColor = '#0093D0'}
-          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+          onFocus={e => { e.target.style.borderColor = '#00E5FF'; e.target.style.boxShadow = '0 0 0 3px rgba(0, 229, 255, 0.15)' }}
+          onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none' }}
         />
         {unit && (
           <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#556677', pointerEvents: 'none' }}>
@@ -386,10 +386,11 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)' }}>
       <div style={{
-        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28,
-        width: '100%', maxWidth: 600, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)',
+        background: 'linear-gradient(145deg, rgba(15, 25, 35, 0.95), rgba(10, 15, 20, 0.98))', 
+        border: '1px solid rgba(0, 229, 255, 0.15)', borderRadius: 24, padding: 32,
+        width: '100%', maxWidth: 650, boxShadow: '0 30px 60px -10px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 229, 255, 0.05)',
         maxHeight: '90vh', overflowY: 'auto',
       }}>
         {/* Header */}
@@ -439,18 +440,18 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
               required
               placeholder="Ex: Pivô Central, P1, Setor A..."
               style={{
-                width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
+                width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, transition: 'all 0.2s',
+                background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
               }}
-              onFocus={e => e.target.style.borderColor = '#0093D0'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              onFocus={e => { e.target.style.borderColor = '#00E5FF'; e.target.style.boxShadow = '0 0 0 3px rgba(0, 229, 255, 0.15)' }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none' }}
             />
           </div>
 
           {/* Separador */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Dados Técnicos</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
           {/* Comprimento + Vazão */}
@@ -500,7 +501,7 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <MapPin size={11} style={{ color: '#556677' }} />
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Localização do Pivô</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
           {/* Mini-map — click to position */}
@@ -552,7 +553,7 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
           {/* Separador setor */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Setor de Irrigação</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
             <span style={{ fontSize: 10, color: '#556677' }}>opcional</span>
           </div>
           <p style={{ fontSize: 11, color: '#556677', margin: '-8px 0 0' }}>
@@ -645,7 +646,7 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <Link2 size={11} style={{ color: '#556677' }} />
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Modo de Operação</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
           {/* Toggle Individual / Conjugado */}
@@ -741,7 +742,7 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <Satellite size={11} style={{ color: '#556677' }} />
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Fonte de Dados Climáticos</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
           {/* Seletor de fonte */}
@@ -864,7 +865,7 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
                 <Layers size={11} style={{ color: '#556677' }} />
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Setores de Precipitação</span>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+                <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
                 <span style={{ fontSize: 10, color: '#556677' }}>opcional</span>
               </div>
               <p style={{ fontSize: 11, color: '#556677', margin: '-8px 0 0' }}>
@@ -963,8 +964,10 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
               onClick={onClose}
               style={{
                 flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500,
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer',
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer', transition: 'all 0.2s'
               }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#e2e8f0' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#8899aa' }}
             >
               Cancelar
             </button>
@@ -972,13 +975,16 @@ function PivotModal({ pivot, farms, onClose, onSaved }: PivotModalProps) {
               type="submit"
               disabled={loading}
               style={{
-                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600,
-                background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
+                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 700, letterSpacing: '0.05em',
+                background: 'linear-gradient(135deg, #00E5FF 0%, #0077B6 100%)', border: 'none', color: '#fff', cursor: 'pointer',
                 opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                boxShadow: '0 4px 15px rgba(0, 229, 255, 0.3)', transition: 'all 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)'
               }}
+              onMouseEnter={e => { if(!loading) e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 229, 255, 0.5)' }}
+              onMouseLeave={e => { if(!loading) e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 229, 255, 0.3)' }}
             >
               {loading && <Loader2 size={14} className="animate-spin" />}
-              {isEdit ? 'Salvar' : 'Criar'}
+              {isEdit ? 'SALVAR PIVÔ' : 'CRIAR PIVÔ'}
             </button>
           </div>
         </form>
@@ -1004,15 +1010,36 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
     : null
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
+    <div 
+      style={{ 
+        background: 'rgba(15, 25, 35, 0.65)', 
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255,255,255,0.06)', 
+        borderRadius: 14,
+        transition: 'all 0.3s ease',
+        cursor: 'default',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-2px)'
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 229, 255, 0.08)'
+        e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.2)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)'
+        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+      }}
+    >
       {/* Linha principal */}
       <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style={{
-          width: 42, height: 42, borderRadius: 10, flexShrink: 0,
-          background: 'rgb(0 147 208 / 0.10)', border: '1px solid rgb(0 147 208 / 0.20)',
+          width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+          background: 'rgba(0, 229, 255, 0.1)', border: '1px solid rgba(0, 229, 255, 0.3)',
+          boxShadow: 'inset 0 0 10px rgba(0, 229, 255, 0.1)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <CircleDot size={18} style={{ color: '#0093D0' }} />
+          <CircleDot size={20} style={{ color: '#00E5FF', filter: 'drop-shadow(0 0 4px rgba(0,229,255,0.5))' }} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1021,7 +1048,7 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             {pivot.length_m && <span style={{ fontSize: 12, color: '#556677' }}>{pivot.length_m} m</span>}
             {area && <span style={{ fontSize: 12, color: '#556677' }}>{area.toFixed(1)} ha</span>}
             {pivot.flow_rate_m3h && <span style={{ fontSize: 12, color: '#556677' }}>{pivot.flow_rate_m3h} m³/h</span>}
-            {depth100 && <span style={{ fontSize: 12, color: '#0093D0', fontWeight: 600 }}>100% → {depth100.toFixed(1)} mm</span>}
+            {depth100 && <span style={{ fontSize: 12, color: '#00E5FF', fontWeight: 600 }}>100% → {depth100.toFixed(1)} mm</span>}
             {pivot.cuc_percent && <span style={{ fontSize: 12, color: '#556677' }}>CUC {pivot.cuc_percent}%</span>}
             {pivot.latitude && pivot.longitude && (
               <span style={{ fontSize: 12, color: '#556677', display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -1030,13 +1057,13 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
               </span>
             )}
             {pivot.weather_source && pivot.weather_source !== 'manual' && (
-              <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'rgb(6 182 212 / 0.08)', border: '1px solid rgb(6 182 212 / 0.2)', color: '#06b6d4', display: 'flex', alignItems: 'center', gap: 3 }}>
-                {pivot.weather_source === 'nasa' ? <Satellite size={9} /> : pivot.weather_source === 'plugfield' ? <Radio size={9} /> : <Sheet size={9} />}
+              <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(0, 229, 255, 0.08)', border: '1px solid rgba(0, 229, 255, 0.25)', color: '#00E5FF', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 500 }}>
+                {pivot.weather_source === 'nasa' ? <Satellite size={10} /> : pivot.weather_source === 'plugfield' ? <Radio size={10} /> : <Sheet size={10} />}
                 {pivot.weather_source === 'nasa' ? 'NASA POWER' : pivot.weather_source === 'plugfield' ? 'Plugfield' : 'Google Sheets'}
               </span>
             )}
             {pivot.sector_start_deg != null && (
-              <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'rgb(0 147 208 / 0.08)', border: '1px solid rgb(0 147 208 / 0.2)', color: '#0093D0' }}>
+              <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(0, 229, 255, 0.06)', border: '1px solid rgba(0, 229, 255, 0.15)', color: '#00E5FF', fontWeight: 500 }}>
                 Setor {pivot.sector_start_deg}°–{pivot.sector_end_deg}°
               </span>
             )}
@@ -1057,7 +1084,9 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             <button
               onClick={() => setExpanded(v => !v)}
               title="Ver tabela de velocidade"
-              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#0093D0', display: 'flex', alignItems: 'center', gap: 4 }}
+              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', color: '#00E5FF', display: 'flex', alignItems: 'center', gap: 4, transition: 'background 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 229, 255, 0.1)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
             >
               <Table2 size={14} />
               <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
@@ -1066,9 +1095,9 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
           <button
             onClick={onEdit}
             title="Editar"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
           >
             <Pencil size={14} />
           </button>
@@ -1076,9 +1105,9 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             onClick={onDelete}
             disabled={deleting}
             title="Excluir"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
           >
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
           </button>
@@ -1174,11 +1203,16 @@ export default function PivosPage() {
             title={farms.length === 0 ? 'Cadastre uma fazenda primeiro' : undefined}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
-              padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600,
-              background: farms.length === 0 ? '#0d1520' : '#0093D0',
+              padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, letterSpacing: '0.05em',
+              background: farms.length === 0 ? '#1a222c' : 'linear-gradient(135deg, #00E5FF, #0077B6)',
               border: 'none', color: farms.length === 0 ? '#556677' : '#fff',
               cursor: farms.length === 0 ? 'not-allowed' : 'pointer',
+              boxShadow: farms.length === 0 ? 'none' : '0 4px 15px rgba(0,229,255,0.3)',
+              textShadow: farms.length === 0 ? 'none' : '0 1px 2px rgba(0,0,0,0.5)',
+              transition: 'all 0.2s'
             }}
+            onMouseEnter={e => { if(farms.length !== 0) e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 229, 255, 0.5)' }}
+            onMouseLeave={e => { if(farms.length !== 0) e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 229, 255, 0.3)' }}
           >
             <Plus size={16} />
             Novo Pivô
@@ -1203,14 +1237,14 @@ export default function PivosPage() {
             <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
           </div>
         ) : farms.length === 0 ? (
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
-            <CircleDot size={28} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
+          <div style={{ background: 'rgba(15, 25, 35, 0.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+            <CircleDot size={28} style={{ color: '#00E5FF', margin: '0 auto 16px', filter: 'drop-shadow(0 0 8px rgba(0,229,255,0.4))' }} />
             <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>Cadastre uma fazenda primeiro</h3>
-            <p style={{ fontSize: 14, color: '#556677' }}>Os pivôs são vinculados a fazendas. Acesse <strong style={{ color: '#8899aa' }}>Configuração → Fazendas</strong> para começar.</p>
+            <p style={{ fontSize: 14, color: '#556677' }}>Os pivôs são vinculados a fazendas. Acesse <strong style={{ color: '#00E5FF' }}>Configuração → Fazendas</strong> para começar.</p>
           </div>
         ) : pivots.length === 0 ? (
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
-            <CircleDot size={28} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
+          <div style={{ background: 'rgba(15, 25, 35, 0.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+            <CircleDot size={28} style={{ color: '#00E5FF', margin: '0 auto 16px', filter: 'drop-shadow(0 0 8px rgba(0,229,255,0.4))' }} />
             <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>Nenhum pivô cadastrado</h3>
             <p style={{ fontSize: 14, color: '#556677', marginBottom: 24 }}>Cadastre os pivôs de irrigação das suas fazendas.</p>
             <button

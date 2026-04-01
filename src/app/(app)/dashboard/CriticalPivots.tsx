@@ -47,110 +47,120 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
 
   return (
     <div style={{
-      background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 14,
-      padding: 18,
+      background: 'rgba(15, 25, 35, 0.65)',
+      backdropFilter: 'blur(16px)',
+      border: urgentCount > 0 ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.06)',
+      boxShadow: urgentCount > 0 ? '0 0 20px rgba(239,68,68,0.1)' : '0 4px 20px rgba(0,0,0,0.2)',
+      borderRadius: 16,
+      padding: 20,
       display: 'flex',
       flexDirection: 'column',
-      gap: 12,
+      gap: 16,
       height: '100%',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#556677',
-        }}>
-          Pivôs Críticos
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: urgentCount > 0 ? '#ef4444' : '#22c55e',
+            boxShadow: urgentCount > 0 ? '0 0 10px #ef4444' : '0 0 10px #22c55e',
+            animation: urgentCount > 0 ? 'pulse 2s infinite' : 'none',
+          }} />
+          <span style={{
+            fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#e2e8f0',
+          }}>
+            Status Atual
+          </span>
+        </div>
         {urgentCount > 0 && (
           <span style={{
-            fontSize: 10, fontWeight: 700,
-            background: 'rgba(239,68,68,0.12)', color: '#ef4444',
-            border: '1px solid rgba(239,68,68,0.25)',
-            borderRadius: 99, padding: '2px 8px',
+            fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+            background: 'rgba(239,68,68,0.15)', color: '#ef4444',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 8, padding: '4px 8px',
           }}>
-            {urgentCount} urgente{urgentCount > 1 ? 's' : ''}
+            {urgentCount} crítico{urgentCount > 1 ? 's' : ''}
           </span>
         )}
       </div>
 
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+      `}} />
+
       {/* List */}
       {items.length === 0 ? (
-        <p style={{ fontSize: 12, color: '#556677', padding: '16px 0', textAlign: 'center' }}>
-          Nenhum pivô com safra ativa.
-        </p>
+        <div style={{ 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          flex: 1, minHeight: 120, border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 12 
+        }}>
+          <p style={{ fontSize: 13, color: '#556677' }}>
+            Nenhum pivô online.
+          </p>
+        </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, overflowY: 'auto' }}>
           {items.map(({ pivot, pct, status }) => {
             const s = STATUS_STYLE[status]
             return (
               <div key={pivot.id} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '12px 14px', borderRadius: 12,
-                background: s.bg, border: `1px solid ${s.border}`,
-              }}>
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '14px 16px', borderRadius: 12,
+                background: status === 'ok' ? 'rgba(255,255,255,0.02)' : s.bg, 
+                border: `1px solid ${s.border}`,
+                transition: 'transform 0.2s',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateX(4px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+              >
                 {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Link href={`/pivos/${pivot.id}`} style={{ textDecoration: 'none' }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{pivot.name}</span>
-                    </Link>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{pivot.name}</span>
                     {s.label && (
                       <span style={{
-                        fontSize: 8, fontWeight: 800, color: s.color,
+                        fontSize: 9, fontWeight: 800, color: s.color,
                         background: `${s.color}20`, border: `1px solid ${s.color}40`,
-                        borderRadius: 4, padding: '1px 5px', textTransform: 'uppercase',
+                        borderRadius: 6, padding: '2px 6px', textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                       }}>
                         {s.label}
                       </span>
                     )}
                   </div>
-                  <p style={{ fontSize: 11, color: '#556677', marginTop: 2 }}>
+                  <p style={{ fontSize: 11, color: '#8899aa' }}>
                     {pivot.farms?.name ?? ''}
                   </p>
                 </div>
 
-                {/* Percentage */}
-                <div style={{ textAlign: 'center', flexShrink: 0 }}>
-                  <span style={{
-                    fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-mono)',
-                    color: s.color, lineHeight: 1,
-                  }}>
-                    {pct !== null ? `${Math.round(pct)}%` : '—'}
-                  </span>
-                  <p style={{ fontSize: 9, color: '#556677', marginTop: 2 }}>umidade</p>
-                </div>
+                {/* Right Side Action / Field Cap */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{
+                      fontSize: 20, fontWeight: 800, fontFamily: 'var(--font-mono)',
+                      color: s.color, lineHeight: 1, textShadow: status !== 'ok' ? `0 0 10px ${s.color}40` : 'none'
+                    }}>
+                      {pct !== null ? `${Math.round(pct)}%` : '—'}
+                    </span>
+                    <p style={{ fontSize: 10, color: '#556677', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Umidade</p>
+                  </div>
 
-                {/* Action */}
-                {status === 'critico' ? (
                   <Link href="/manejo" style={{
-                    fontSize: 11, fontWeight: 700, color: '#ef4444',
-                    background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)',
-                    borderRadius: 8, padding: '6px 12px', textDecoration: 'none',
-                    whiteSpace: 'nowrap', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 32, height: 32, borderRadius: 8,
+                    background: status === 'critico' ? '#ef4444' : status === 'atencao' ? '#f59e0b' : 'rgba(255,255,255,0.05)',
+                    color: status === 'ok' ? '#8899aa' : '#fff',
+                    textDecoration: 'none', transition: 'all 0.2s',
+                    boxShadow: status !== 'ok' ? `0 4px 12px ${s.color}60` : 'none',
                   }}>
-                    Irrigar →
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
                   </Link>
-                ) : status === 'atencao' ? (
-                  <Link href="/manejo" style={{
-                    fontSize: 11, fontWeight: 700, color: '#f59e0b',
-                    background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)',
-                    borderRadius: 8, padding: '6px 12px', textDecoration: 'none',
-                    whiteSpace: 'nowrap', flexShrink: 0,
-                  }}>
-                    Ver pivô →
-                  </Link>
-                ) : (
-                  <span style={{
-                    fontSize: 11, fontWeight: 600, color: '#22c55e',
-                    flexShrink: 0,
-                  }}>
-                    {pct !== null ? `${Math.round(pct)}%` : ''}
-                  </span>
-                )}
+                </div>
               </div>
             )
           })}

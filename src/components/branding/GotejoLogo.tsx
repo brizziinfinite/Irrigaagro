@@ -79,7 +79,7 @@ export default function GotejoLogo({
             height={tagSize + 2}
             viewBox={`0 0 100 ${tagSize + 2}`}
             preserveAspectRatio="none"
-            style={{ marginTop: Math.round(size * 0.07), overflow: 'visible' }}
+            style={{ marginTop: Math.round(size * 0.18), overflow: 'visible' }}
           >
             <text
               x="0"

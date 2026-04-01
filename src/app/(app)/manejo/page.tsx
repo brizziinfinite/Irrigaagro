@@ -33,6 +33,7 @@ import {
   Edit2, Trash2, X, Plus
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell } from 'recharts'
 
 // ─── Status semáforo ─────────────────────────────────────────
 
@@ -222,15 +223,15 @@ function SoilDiagram({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
           <span style={{ fontSize: 13, color: '#8899aa' }}>Status:</span>
           <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color, display: 'flex', alignItems: 'center', gap: 4 }}>
-            {status === 'verde' || status === 'azul' ? 'Active' : status === 'amarelo' ? 'Warning' : 'Critical'} 
-            ({fieldCapacityPercent.toFixed(0)}% Moisture)
+            {status === 'verde' || status === 'azul' ? 'Ativo' : status === 'amarelo' ? 'Aviso' : 'Crítico'} 
+            ({fieldCapacityPercent.toFixed(0)}% Umidade)
           </span>
         </div>
       </div>
 
       {/* ── Center: O Gauge Radial SVG ── */}
       <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '20px 0'
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '20px 0', minHeight: 280
       }}>
         <svg width="260" height="260" viewBox="0 0 240 240" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
           <defs>
@@ -245,12 +246,7 @@ function SoilDiagram({
           </defs>
 
           {/* Background Track */}
-          <circle
-            cx="120" cy="120" r={radius}
-            fill="none"
-            stroke={trackColor}
-            strokeWidth={strokeWidth}
-          />
+          <circle cx="120" cy="120" r={radius} fill="none" stroke={trackColor} strokeWidth={strokeWidth} />
           
           {/* Progress Arc */}
           <circle
@@ -265,14 +261,11 @@ function SoilDiagram({
             style={{ transition: 'stroke-dashoffset 1s ease-out' }}
           />
 
-          {/* Limit Threshold Mark (ex: 70%) */}
+          {/* Limit Threshold Mark */}
           {alertThresholdPct && (
             <circle
               cx="120" cy="120" r={radius - strokeWidth/2 + 2}
-              fill="none"
-              stroke="rgba(255,255,255,0.4)"
-              strokeWidth="2"
-              strokeDasharray={'2 6'}
+              fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeDasharray={'2 6'}
               style={{ opacity: 0.5 }}
             />
           )}
@@ -281,11 +274,10 @@ function SoilDiagram({
         {/* Text inside Gauge */}
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          pointerEvents: 'none'
+          display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none'
         }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: '#8899aa', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Soil Moisture
+            Umidade (C.C.)
           </span>
           <span style={{ 
             fontSize: 54, fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1,
@@ -294,26 +286,48 @@ function SoilDiagram({
             {fieldCapacityPercent.toFixed(0)}<span style={{ fontSize: 30 }}>%</span>
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: cfg.color }}>
-               {cfg.label}
-            </span>
-            <span style={{ fontSize: 11, color: '#556677' }}>
-              · {fmtNum(adcNew, 1)}mm
-            </span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: cfg.color }}>{cfg.label}</span>
           </div>
         </div>
       </div>
 
-      {/* ── Footer: Metadados da Lavoura ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', background: 'rgba(0,0,0,0.2)', borderRadius: 16, marginTop: 10 }}>
-        <div>
-          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Crop / Phase</p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>{cropName ?? '—'} <span style={{ color: '#00E5FF' }}>D{das}</span></p>
+      {/* ── Stats Grid (Analytics Premium Agro) ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 'auto' }}>
+        
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: 16 }}>
+          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Situação da Cultura</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cropName ?? 'Não inf.'}</span>
+            <span style={{ fontSize: 11, color: '#00E5FF', fontWeight: 700 }}>D{das}</span>
+          </div>
+          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 8 }}>Prof. de Raiz: <span style={{ color: '#fff' }}>{Math.round(rootDepthCm)} cm</span></p>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Root Depth</p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9' }}>{Math.round(rootDepthCm)} cm</p>
+
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: 16 }}>
+          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Armazenamento</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }} title="Capacidade de Água Disponível: Água estocada que a raiz da cultura consegue extrair sem sofrer estresse severo."><span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}}>CAD:</span> {cad.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
+          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 8 }} title="Capacidade Total de Água: Quantidade máxima de água em milímetros que a atual profundidade de raiz consegue processar antes de escorrer (percolação profunda)."><span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}}>CTA Total:</span> <span style={{ color: '#fff' }}>{cta.toFixed(1)} mm</span></p>
         </div>
+
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: 16 }}>
+          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hídrico Solos</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#00E5FF', fontFamily: 'var(--font-mono)' }} title="Conteúdo de Umidade Atual (ADc): Volume real de água disponível no solo hoje."><span style={{cursor: 'help', borderBottom: '1px dotted #00E5FF'}}>Atual:</span> {adcNew.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
+          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 8 }}>Falta p/ CC: <span style={{ color: '#ef4444' }}>{Math.max(0, cta - adcNew).toFixed(1)} mm</span></p>
+        </div>
+
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: 16 }}>
+          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span>Limiar de Segurança</span>
+            {alertThresholdPct && <span style={{ color: '#f59e0b' }}>({alertThresholdPct}%)</span>}
+          </p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
+            Mín: {(cta * ((alertThresholdPct ?? 50)/100)).toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span>
+          </p>
+          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 8 }}>
+            Déficit Aceitável: <span style={{ color: '#fff' }}>{(cta - (cta * ((alertThresholdPct ?? 50)/100))).toFixed(1)} mm</span>
+          </p>
+        </div>
+
       </div>
     </div>
   )
@@ -1088,7 +1102,7 @@ export default function ManejoPage() {
   const climateInfo = getClimateSourceInfo(externalData?.climateSource ?? null)
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* ── Título ── */}
       <div>
@@ -1164,7 +1178,7 @@ export default function ManejoPage() {
 
       {/* ── MANEJO MAIN LAYOUT: GAUGE + TRENDS (TABLET VIEW) ── */}
       <div style={{
-        display: 'grid', gridTemplateColumns: 'minmax(400px, 1.1fr) 1fr', gap: 24, alignItems: 'stretch'
+        display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: 24, alignItems: 'stretch', minHeight: '600px'
       }}>
         
         {/* Lado Esquerdo - Gauge Radial */}
@@ -1207,122 +1221,227 @@ export default function ManejoPage() {
           )}
         </div>
 
-        {/* Lado Direito - Gráfico de Ondas e Recomendações */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-          {/* Projeção 7 dias (Irrigation Schedule Trend) */}
-          {projection.length > 0 && (
-            <ProjectionForecast
-              days={projection}
-              baseDays={baseProjection}
-              avgEto={avgEto}
-              pivot={selectedSeason?.pivots ?? null}
-              simulatedIrrigation={simulatedIrrigation}
-              onSimulate={setSimulatedIrrigation}
-            />
-          )}
-
-          {/* Painel de Recomendação (Schedule Data) */}
-          {calcResult?.recommendation && (
+        {/* Lado Direito - VISUALIZAÇÃO PREMIUM MOCKUP */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%', minWidth: 0 }}>
+          {calcResult?.recommendation ? (
             (() => {
+              const isConjugated = selectedSeason?.pivots?.operation_mode === 'conjugated'
               const rec = calcResult.recommendation
-              const statusStyles: Record<RecommendationStatus, { color: string; bg: string; border: string; label: string }> = {
-                ok:               { color: '#39FF14', bg: 'rgba(57, 255, 20, 0.08)', border: 'rgba(57, 255, 20, 0.2)',   label: 'Sem necessidade' },
-                queue:            { color: '#FFEA00', bg: 'rgba(255, 234, 0, 0.08)', border: 'rgba(255, 234, 0, 0.2)',  label: 'Fila de irrigação' },
-                irrigate_today:   { color: '#FF3366', bg: 'rgba(255, 51, 102, 0.08)', border: 'rgba(255, 51, 102, 0.2)', label: 'Irrigar hoje' },
-                operational_risk: { color: '#E60039', bg: 'rgba(230, 0, 57, 0.08)',  border: 'rgba(230, 0, 57, 0.2)',   label: 'Risco operacional' },
+              const statusStyles: Record<RecommendationStatus, { color: string; label: string }> = {
+                  ok:               { color: '#39FF14', label: 'SEM NECESSIDADE' },
+                  queue:            { color: '#FFEA00', label: 'FILA (PENDENTE)' },
+                  irrigate_today:   { color: '#00E5FF', label: 'IRRIGAR HOJE' },
+                  operational_risk: { color: '#E60039', label: 'ALERTA (T < 0%)' },
               }
-              const st = statusStyles[rec.status]
-              const isConjugated = (selectedSeason?.pivots?.operation_mode === 'conjugated')
-              const fmtMm = (v: number) => v.toFixed(1)
-              const fmtPct = (v: number, total: number) => total > 0 ? `${((v / total) * 100).toFixed(0)}%` : '—'
+              const st = statusStyles[rec.status] || statusStyles.ok
+
+              // 1. DATA PREP: Gráfico de Área (7-DAY TREND)
+              const trendData = projection.slice(0, 7).map((d) => {
+                 return {
+                    name: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(d.date + 'T12:00:00').getDay()],
+                    moisture: parseFloat(d.fieldCapacityPercent.toFixed(1))
+                 }
+              })
+
+              // 2. DATA PREP: Gráfico de Uso de Água (últimos 7 dias)
+              const waterUsageData = history.slice(0, 7).reverse().map((h: any) => {
+                 return {
+                   name: h.date.slice(8, 10), // dia
+                   usage: parseFloat(String((h.actual_depth_mm || 0) + (h.rainfall_mm || 0)))
+                 }
+              })
+              const totalWater7d = waterUsageData.reduce((acc, curr) => acc + curr.usage, 0)
+              const efficiency = 94 // Dummy/estático de Mockup UX
+              const tgtWater = totalWater7d > 0 ? totalWater7d * 1.1 : 15 // Target fixo se vazio
+
+              // 3. ANÁLISE PREDITIVA PARA O AGRICULTOR (Dias até próxima rega & Limites)
+              const progReal = projection.find(p => p.isIrrigationDay)
+              let previsaoTexto = 'Hoje'
+              if (!rec.shouldIrrigateToday) {
+                if (progReal) {
+                   const diasFaltam = progReal.das - calcResult.das
+                   if (diasFaltam === 1) previsaoTexto = `Amanhã (${progReal.recommendedDepthMm.toFixed(1)} mm)`
+                   else previsaoTexto = `Em ${diasFaltam} dias (${progReal.recommendedDepthMm.toFixed(1)} mm)`
+                } else {
+                   previsaoTexto = 'Seguro (>7 dias)'
+                }
+              }
+              const etcDiariaStr = calcResult.etc.toFixed(1)
+              const capMaxPivotStr = rec.maxDepthMm != null ? rec.maxDepthMm.toFixed(1) : '—'
+              const capWarning = (rec.maxDepthMm != null && calcResult.etc > rec.maxDepthMm)
+              const targetThresholdLine = 100 - (selectedSeason?.pivots?.alert_threshold_percent ?? 50)
 
               return (
-                <div style={{ background: '#0f1923', border: `1px solid ${st.border}`, borderRadius: 14, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14, flex: 1, boxShadow: 'inset 0 0 20px rgba(0,0,0,0.2)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%', minWidth: 0 }}>
                   
-                  {/* Action Buttons Inspirados no Mockup */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
-                    <button style={{
-                      background: 'linear-gradient(135deg, #CCFF00, #39FF14)', padding: '14px',
-                      borderRadius: 8, border: 'none', color: '#0F1923', fontWeight: 900, 
-                      fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.04em',
-                      boxShadow: '0 4px 16px rgba(57,255,20,0.3)', cursor: 'pointer'
-                    }}>
-                      Ajustar Manejo
-                    </button>
-                    <button style={{
-                      background: 'linear-gradient(135deg, #00B4D8, #00E5FF)', padding: '14px',
-                      borderRadius: 8, border: 'none', color: '#0F1923', fontWeight: 900, 
-                      fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.04em',
-                      boxShadow: '0 4px 16px rgba(0,229,255,0.3)', cursor: 'pointer'
-                    }}>
-                      Emergência
-                    </button>
+                  {/* === PAINEL 1: TENDÊNCIA DE UMIDADE === */}
+                  <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px 24px 14px 24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', flex: 1, minHeight: 280, position: 'relative' }}>
+                    <h3 style={{ fontSize: 12, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Tendência de Umidade do Solo (7 Dias)
+                    </h3>
+                    
+                    <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={trendData} margin={{ top: 20, right: 0, left: -25, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="colorMoisture" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#CCFF00" stopOpacity={0.6}/>
+                              <stop offset="70%" stopColor="#00E5FF" stopOpacity={0.1}/>
+                              <stop offset="100%" stopColor="#0f1923" stopOpacity={0}/>
+                            </linearGradient>
+                            <filter id="glow" height="200%">
+                              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                              <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                              </feMerge>
+                            </filter>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2A2E" />
+                          <XAxis dataKey="name" tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} dy={10} />
+                          <YAxis tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} domain={[50, 100]} />
+                          <Tooltip 
+                            contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 13 }} 
+                            itemStyle={{ color: '#CCFF00' }}
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="moisture" 
+                            stroke="#00E5FF" 
+                            strokeWidth={3}
+                            fillOpacity={1} 
+                            fill="url(#colorMoisture)" 
+                            style={{ filter: 'url(#glow)' }}
+                            activeDot={{ r: 6, fill: '#CCFF00', stroke: '#10151C', strokeWidth: 2 }}
+                          />
+                          <ReferenceLine y={targetThresholdLine} stroke="#FF3366" strokeDasharray="4 4" strokeWidth={1} label={{ position: 'insideTopLeft', value: 'ALVO MÍNIMO (%)', fill: '#FF3366', fontSize: 10, offset: 10 }} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
 
-                  {/* Status badge */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <span style={{
-                      padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
-                      background: st.bg, border: `1px solid ${st.border}`, color: st.color,
-                    }}>
-                      {st.label}
-                    </span>
-                    {rec.suggestedSpeedPercent != null && rec.shouldIrrigateToday && (
-                      <span style={{
-                        padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
-                        background: 'rgba(0,229,255,0.1)', border: '1px solid rgba(0,229,255,0.2)', color: '#00E5FF',
-                      }}>
-                        Sugestão: {rec.suggestedSpeedPercent}%
-                      </span>
-                    )}
-                    <span style={{ fontSize: 13, color: '#8899aa', flex: 1, fontStyle: 'italic' }}>{rec.reason}</span>
-                  </div>
+                  {/* === PAINÉIS 2 & 3: SCHEDULE + WATER USAGE === */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1.1fr) minmax(250px, 1fr)', gap: 24 }}>
+                    
+                    {/* Bloco Schedule */}
+                    <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', minWidth: 0 }}>
+                      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Irrigation Schedule</h3>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: '#A0AAB4' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>Status:</span>
+                          <span style={{ color: st.color, fontWeight: 800, textTransform: 'uppercase', background: `${st.color}20`, padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{st.label}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Próximo Passo:</span>
+                          <span style={{ color: '#fff', fontWeight: 600 }}>{previsaoTexto}</span>
+                        </div>
+                        <div style={{ height: 1, background: '#2A2A2E', margin: '4px 0' }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Demanda de Cultura:</span>
+                          <span style={{ color: capWarning ? '#FF3366' : '#fff' }}>{etcDiariaStr} mm/dia</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Estágio Fenológico:</span>
+                          <span style={{ color: '#00E5FF', fontWeight: 700 }}>{calcResult.cropStage ?? 1}</span>
+                        </div>
+                      </div>
 
-                  {/* Numeros Operacionais Completos */}
-                  <div style={{ display: 'grid', gridTemplateColumns: isConjugated ? 'repeat(5, 1fr)' : 'repeat(4, 1fr)', gap: 10, marginTop: 'auto' }}>
-                    <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-                      <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>CAD</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: '#00E5FF', fontFamily: 'var(--font-mono)' }}>{fmtMm(rec.cadTotalMm)}</span>
-                      <span style={{ fontSize: 10, color: '#556677' }}> mm</span>
-                    </div>
-                    {isConjugated && rec.maxDepthMm != null && (
-                      <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-                        <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>Lâmina Máx</span>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtMm(rec.maxDepthMm)}</span>
-                        <span style={{ fontSize: 10, color: '#556677' }}> mm</span>
+                      <div style={{ display: 'flex', gap: 12, marginTop: 'auto' }}>
+                        <button style={{
+                          flex: 1, background: '#CCFF00', padding: '16px',
+                          borderRadius: 12, border: 'none', color: '#10151c', fontWeight: 900, 
+                          fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em',
+                          boxShadow: '0 4px 20px rgba(204,255,0,0.25)', cursor: 'pointer', transition: 'all 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                        >
+                          MANAGE
+                        </button>
+                        <button style={{
+                          flex: 1, background: '#00E5FF', padding: '16px',
+                          borderRadius: 12, border: 'none', color: '#10151c', fontWeight: 900, 
+                          fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em',
+                          boxShadow: '0 4px 20px rgba(0,229,255,0.25)', cursor: 'pointer', transition: 'all 0.2s',
+                          textAlign: 'center', lineHeight: 1.2
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                        >
+                          EMERGENCY<br/>IRRIGATION
+                        </button>
                       </div>
-                    )}
-                    <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-                      <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>Depleção</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtMm(rec.deficitCurrentMm)}</span>
-                      <span style={{ fontSize: 10, color: '#556677' }}> mm · {fmtPct(rec.deficitCurrentMm, calcResult.cta)}</span>
                     </div>
-                    {isConjugated && (
-                      <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-                        <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>ETc Retorno</span>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtMm(rec.etcForecastUntilReturnMm)}</span>
-                        <span style={{ fontSize: 10, color: '#556677' }}> mm</span>
+
+                    {/* Bloco Water Usage */}
+                    <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Water Usage (7D)</h3>
+                        <div style={{ fontSize: 11, color: '#A0AAB4', textTransform: 'uppercase', textAlign: 'right' }}>
+                          <div>Total Aplicado: <strong style={{ color: '#fff' }}>{totalWater7d.toFixed(1)} mm</strong></div>
+                          <div style={{ marginTop: 2 }}>Alvo: <span style={{ color: '#8899aa'}}>{tgtWater.toFixed(1)} mm</span></div>
+                        </div>
                       </div>
-                    )}
-                    <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-                      <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>Déficit Prev.</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: rec.deficitProjectedMm >= rec.cadTotalMm ? '#FF3366' : '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
-                        {fmtMm(rec.deficitProjectedMm)}
-                      </span>
-                      <span style={{ fontSize: 10, color: '#556677' }}> mm · {fmtPct(rec.deficitProjectedMm, calcResult.cta)}</span>
+
+                      <div style={{ flex: 1, minHeight: 120, width: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={waterUsageData} margin={{ top: 10, right: 0, left: -20, bottom: -10 }}>
+                             <defs>
+                                <filter id="barGlow" x="-50%" y="-50%" width="200%" height="200%">
+                                   <feGaussianBlur stdDeviation="3" result="blur" />
+                                   <feMerge>
+                                     <feMergeNode in="blur"/>
+                                     <feMergeNode in="SourceGraphic"/>
+                                   </feMerge>
+                                </filter>
+                             </defs>
+                             <Tooltip 
+                               contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 12 }} 
+                               itemStyle={{ color: '#00E5FF' }}
+                               cursor={{ fill: 'rgba(0, 229, 255, 0.05)' }}
+                             />
+                             <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fill: '#556677', fontSize: 10}} dy={5} />
+                             <Bar dataKey="usage" radius={[4, 4, 0, 0]} maxBarSize={28} style={{ filter: 'url(#barGlow)' }}>
+                               {waterUsageData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.usage > 0 ? '#00E5FF' : '#2A2A2E'} />
+                               ))}
+                             </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) 1fr', gap: 12, marginTop: 'auto' }}>
+                        <button style={{
+                          background: '#323236', color: '#D0D0D4', border: '1px solid #444448', padding: '14px 4px', 
+                          borderRadius: 12, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center', transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#323236'}
+                        >
+                           ADJUST TARGET<br/>MOISTURE
+                        </button>
+                        <button style={{
+                          background: '#323236', color: '#D0D0D4', border: '1px solid #444448', padding: '14px 4px', 
+                          borderRadius: 12, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center', transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#323236'}
+                        >
+                           VIEW WEATHER<br/>FORECAST
+                        </button>
+                      </div>
                     </div>
-                    {!isConjugated && (
-                      <div style={{ background: '#10151C', borderRadius: 10, padding: '10px 12px', textAlign: 'center' }}>
-                        <span style={{ fontSize: 10, color: '#556677', display: 'block', marginBottom: 3 }}>Decisão</span>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: st.color, fontFamily: 'var(--font-mono)' }}>
-                          {rec.shouldIrrigateToday ? 'IRRIGAR' : 'OK'}
-                        </span>
-                      </div>
-                    )}
+
                   </div>
                 </div>
               )
             })()
+          ) : (
+             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#1c1c1e', borderRadius: 16 }}>
+                <span style={{ color: '#556677', fontSize: 13 }}>Carregando métricas e predições...</span>
+             </div>
           )}
         </div>
       </div>
