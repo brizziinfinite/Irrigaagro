@@ -34,7 +34,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell } from 'recharts'
+import { ComposedChart, Line, Area, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceArea, Cell, AreaChart, BarChart } from 'recharts'
 
 // ─── Status semáforo ─────────────────────────────────────────
 
@@ -631,125 +631,104 @@ interface TimelinePoint {
 function TimelineChart({ records, threshold = 70 }: { records: DailyManagement[]; threshold?: number }) {
   if (records.length < 2) return null
 
-  const data: TimelinePoint[] = [...records].reverse().map(r => ({
-    date: r.date,
-    eto: r.eto_mm ?? null,
-    etc: r.etc_mm ?? null,
-    rainfall: r.rainfall_mm ?? null,
-    fieldCapacityPercent: r.field_capacity_percent ?? null,
-    kc: r.kc ?? null,
-  }))
+  // Pegar os últimos 30 dias ordenados cronologicamente
+  const data = [...records]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-30)
+    .map(r => ({
+      dateRaw: r.date,
+      dateLabel: r.date.substring(8, 10) + '/' + r.date.substring(5, 7),
+      eto: r.eto_mm ?? 0,
+      etc: r.etc_mm ?? 0,
+      rainfall: r.rainfall_mm ?? 0,
+      adc: r.field_capacity_percent ?? 0
+    }))
 
-  const W = 800; const H = 200
-  const PAD = { top: 14, right: 30, bottom: 34, left: 40 }
-  const innerW = W - PAD.left - PAD.right
-  const innerH = H - PAD.top - PAD.bottom
-
-  const maxEto = Math.max(...data.map(d => d.eto ?? 0).filter(v => v > 0), 8)
-  const maxRain = Math.max(...data.map(d => d.rainfall ?? 0).filter(v => v > 0), 1)
-
-  function xPos(i: number) { return PAD.left + (i / Math.max(data.length - 1, 1)) * innerW }
-  function yLeft(val: number) { return PAD.top + innerH - (val / maxEto) * innerH }
-  function yRight(val: number) { return PAD.top + innerH - (val / 100) * innerH }
-
-  function makePath(getter: (d: TimelinePoint) => number | null, yFn: (v: number) => number) {
-    const segments: string[][] = []
-    let current: string[] = []
-    data.forEach((d, i) => {
-      const v = getter(d)
-      if (v !== null) {
-        current.push(`${xPos(i).toFixed(1)},${yFn(v).toFixed(1)}`)
-      } else {
-        if (current.length >= 2) segments.push(current)
-        current = []
-      }
-    })
-    if (current.length >= 2) segments.push(current)
-    return segments.map(s => `M ${s.join(' L ')}`).join(' ')
-  }
-
-  const pathEto = makePath(d => d.eto, yLeft)
-  const pathEtc = makePath(d => d.etc, yLeft)
-  const pathAdc = makePath(d => d.fieldCapacityPercent, yRight)
-
-  const tickStep = Math.ceil(data.length / 6)
-  const xTicks = data.map((d, i) => ({ i, label: fmtDate(d.date) })).filter((_, i) => i % tickStep === 0 || i === data.length - 1)
-  const yTicksLeft = [0, maxEto * 0.5, maxEto].map(v => ({ v, y: yLeft(v), label: v.toFixed(1) }))
-  const yTicksRight = [0, 50, 100].map(v => ({ v, y: yRight(v), label: `${v}%` }))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{ background: 'rgba(15, 25, 35, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 16px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)' }}>
+          <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#e2e8f0', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 6 }}>{label}</p>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {payload.map((entry: any, index: number) => (
+            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: entry.color }} />
+              <span style={{ fontSize: 12, color: '#8899aa', width: 40 }}>{entry.name}:</span>
+              <span style={{ fontSize: 12, color: '#fff', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{Number(entry.value).toFixed(1)}{entry.name === 'ADc' ? '%' : ' mm'}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <BarChart2 size={14} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>Timeline — Histórico Comparativo</span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {[
-            { color: '#f59e0b', label: 'ETo', dash: false },
-            { color: '#06b6d4', label: 'ETc', dash: false },
-            { color: '#0093D0', label: 'ADc%', dash: true },
-          ].map(({ color, label, dash }) => (
-            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#8899aa' }}>
-              <svg width="18" height="4">
-                <line x1="0" y1="2" x2="18" y2="2" stroke={color} strokeWidth="2" strokeDasharray={dash ? '4 2' : undefined} />
-              </svg>{label}
-            </span>
-          ))}
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#8899aa' }}>
-            <div style={{ width: 8, height: 12, background: 'rgba(255,255,255,0.25)', borderRadius: 2 }} />Chuva
-          </span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>Timeline Comparativa (Últimos 30 dias)</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8899aa' }}><div style={{ width: 10, height: 3, background: '#f59e0b', borderRadius: 2 }} /> ETo</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8899aa' }}><div style={{ width: 10, height: 3, background: '#06b6d4', borderRadius: 2 }} /> ETc</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8899aa' }}><div style={{ width: 10, height: 3, background: 'rgba(255, 255, 255, 0.85)', borderRadius: 2 }} /> Chuva</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#8899aa' }}><div style={{ width: 10, height: 3, background: 'rgba(0,147,208, 0.2)', borderRadius: 2 }} /> ADc / Umidade Atual (%)</span>
         </div>
       </div>
+      
+      <div style={{ padding: '16px 20px 0 0', width: '100%', height: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+            {/* Eixo esquerdo para Chuva, ETc, ETo */}
+            <YAxis yAxisId="left" orientation="left" stroke="rgba(255,255,255,0.1)" tick={{ fill: '#556677', fontSize: 11 }} tickLine={false} axisLine={false} />
+            {/* Eixo direito para ADc % */}
+            <YAxis yAxisId="right" orientation="right" domain={[0, 100]} stroke="rgba(255,255,255,0.1)" tick={{ fill: '#556677', fontSize: 11 }} tickLine={false} axisLine={false} />
+            
+            <XAxis dataKey="dateLabel" stroke="rgba(255,255,255,0.1)" tick={{ fill: '#556677', fontSize: 11 }} tickLine={false} axisLine={false} dy={10} minTickGap={20} />
+            
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+            
+            <defs>
+              <linearGradient id="moistureArea" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stopColor="rgba(239, 68, 68, 0.2)" />
+                <stop offset={`${threshold}%`} stopColor="rgba(239, 68, 68, 0.2)" />
+                <stop offset={`${threshold}%`} stopColor="rgba(0,147,208,0.08)" />
+                <stop offset="100%" stopColor="rgba(0,147,208,0.08)" />
+              </linearGradient>
+              <linearGradient id="moistureStroke" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stopColor="#ef4444" />
+                <stop offset={`${threshold}%`} stopColor="#ef4444" />
+                <stop offset={`${threshold}%`} stopColor="#0093D0" />
+                <stop offset="100%" stopColor="#0093D0" />
+              </linearGradient>
+            </defs>
 
-      <div style={{ padding: '6px 0 2px', overflowX: 'auto' }}>
-        <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', minWidth: 300 }}>
-          {yTicksLeft.map(({ v, y }) => (
-            <line key={v} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-          ))}
-          <line x1={PAD.left} y1={yRight(threshold)} x2={W - PAD.right} y2={yRight(threshold)} stroke="#f59e0b" strokeWidth="1" strokeDasharray="4 3" opacity="0.35" />
-          {data.map((d, i) => {
-            if (!d.rainfall || d.rainfall <= 0) return null
-            const barW = Math.max(4, innerW / data.length * 0.6)
-            const barH = (d.rainfall / Math.max(maxRain, 1)) * innerH * 0.35
-            return (
-              <rect key={i} x={xPos(i) - barW / 2} y={PAD.top + innerH - barH} width={barW} height={barH} fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.35)" strokeWidth="1" rx="2" style={{ cursor: 'default' }}>
-                <title>{fmtDate(d.date)}: {d.rainfall.toFixed(1)} mm de chuva</title>
-              </rect>
-            )
-          })}
-          {pathEto && <path d={pathEto} fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinejoin="round" />}
-          {pathEtc && <path d={pathEtc} fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinejoin="round" />}
-          {pathAdc && <path d={pathAdc} fill="none" stroke="#0093D0" strokeWidth="2" strokeDasharray="5 3" strokeLinejoin="round" />}
-          {data.map((d, i) => {
-            if (d.fieldCapacityPercent === null) return null
-            const pct = d.fieldCapacityPercent
-            const warningPct = threshold * 1.15
-            const color = pct >= warningPct ? '#22c55e' : pct >= threshold ? '#f59e0b' : '#ef4444'
-            const tip = [
-              fmtDate(d.date),
-              `CC: ${pct.toFixed(0)}%`,
-              d.eto != null ? `ETo: ${d.eto.toFixed(1)} mm` : null,
-              d.etc != null ? `ETc: ${d.etc.toFixed(1)} mm` : null,
-              d.rainfall && d.rainfall > 0 ? `Chuva: ${d.rainfall.toFixed(1)} mm` : null,
-            ].filter(Boolean).join(' | ')
-            return (
-              <circle key={i} cx={xPos(i)} cy={yRight(pct)} r="4" fill={color} stroke="#0f1923" strokeWidth="1.5" style={{ cursor: 'default' }}>
-                <title>{tip}</title>
-              </circle>
-            )
-          })}
-          {yTicksLeft.map(({ v, y, label }) => <text key={v} x={PAD.left - 5} y={y + 4} textAnchor="end" fontSize="9" fill="#445566">{label}</text>)}
-          {yTicksRight.map(({ v, y, label }) => <text key={v} x={W - PAD.right + 5} y={y + 4} textAnchor="start" fontSize="9" fill="#445566">{label}</text>)}
-          {xTicks.map(({ i, label }) => <text key={i} x={xPos(i)} y={H - 5} textAnchor="middle" fontSize="9" fill="#445566">{label}</text>)}
-          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-        </svg>
+            <ReferenceArea yAxisId="right" y1={threshold} y2={100} fill="rgba(34, 197, 94, 0.04)" />
+            <ReferenceArea yAxisId="right" y1={0} y2={threshold} fill="rgba(239, 68, 68, 0.04)" />
+
+            <ReferenceLine y={100} yAxisId="right" stroke="#22c55e" strokeDasharray="4 4" opacity={0.5} />
+            <ReferenceLine y={threshold} yAxisId="right" stroke="#f59e0b" strokeDasharray="4 4" opacity={0.5} />
+            <ReferenceLine y={0} yAxisId="right" stroke="#ef4444" strokeDasharray="4 4" opacity={0.5} />
+
+            {/* ADc como Área visual preenchendo o fundo (eixo direito) */}
+            <Area yAxisId="right" type="monotone" dataKey="adc" name="ADc (Umidade)" fill="url(#moistureArea)" stroke="url(#moistureStroke)" strokeWidth={3} />
+            
+            {/* Chuva como barras (eixo esquerdo) */}
+            <Bar yAxisId="left" dataKey="rainfall" name="Chuva" fill="rgba(255, 255, 255, 0.85)" radius={[4, 4, 0, 0]} maxBarSize={30} />
+            
+            {/* Linhas de ETc e ETo (eixo esquerdo) */}
+            <Line yAxisId="left" type="monotone" dataKey="eto" name="ETo" stroke="#f59e0b" strokeWidth={2} dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#0f1923', strokeWidth: 2 }} />
+            <Line yAxisId="left" type="monotone" dataKey="etc" name="ETc" stroke="#06b6d4" strokeWidth={2} dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#0f1923', strokeWidth: 2 }} />
+            
+          </ComposedChart>
+        </ResponsiveContainer>
       </div>
 
-      <div style={{ padding: '6px 20px 10px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10, color: '#445566' }}>Linha tracejada âmbar = limiar irrigação ({threshold}%)</span>
-        <span style={{ fontSize: 10, color: '#445566' }}>
-          Pontos: <span style={{ color: '#22c55e' }}>verde ≥{Math.round(threshold * 1.15)}%</span> · <span style={{ color: '#f59e0b' }}>âmbar ≥{threshold}%</span> · <span style={{ color: '#ef4444' }}>vermelho &lt;{threshold}%</span>
-        </span>
+      <div style={{ padding: '10px 20px 14px', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, color: '#445566' }}>Linha tracejada âmbar = limiar de segurança ({threshold}%)</span>
+        <span style={{ fontSize: 10, color: '#445566' }}>Dica: Passe o mouse para ver os valores exatos de cada dia</span>
       </div>
     </div>
   )
@@ -777,7 +756,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        {['Data', 'DAS', 'ETo', 'ETc', 'Kc', 'Chuva', 'ADc', 'CC%', 'Status', ''].map(h => (
+        {['Data', 'DAS', 'ETo', 'ETc', 'Kc', 'Chuva', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
           <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
       </div>
@@ -1518,7 +1497,7 @@ export default function ManejoPage() {
             {/* ADc anterior — compacto */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)' }}>
               <Droplets size={14} style={{ color: '#00E5FF', flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: '#445566' }}>ADc anterior:</span>
+              <span style={{ fontSize: 13, color: '#445566' }}>ADc (Umidade) anterior:</span>
               <span style={{ fontSize: 15, fontWeight: 700, color: '#00E5FF', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcPrev)} mm</span>
               <span style={{ fontSize: 12, color: '#334455', marginLeft: 2 }}>{history.length > 0 ? '(último registro)' : '(ADc inicial da safra)'}</span>
             </div>

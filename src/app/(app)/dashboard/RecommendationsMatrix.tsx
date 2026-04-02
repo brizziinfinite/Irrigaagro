@@ -163,9 +163,11 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: P
   }
 
   const cardStyle: React.CSSProperties = {
-    background: '#0f1923',
-    border: '1px solid rgba(255,255,255,0.06)',
-    borderRadius: 16,
+    background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+    border: '1px solid rgba(255,255,255,0.03)',
+    borderRadius: 20,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+    backdropFilter: 'blur(12px)',
     padding: 0,
     overflow: 'hidden',
   }
@@ -175,9 +177,9 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: P
       {/* ─── Header ─── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
-        gap: 10, padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        gap: 10, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.03)',
       }}>
-        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#556677' }}>
+        <span style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#e2e8f0' }}>
           Recomendações 7 dias
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -251,11 +253,12 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: P
                 {/* Sticky pivot column header */}
                 <th style={{
                   position: 'sticky', left: 0, zIndex: 2,
-                  background: '#0f1923', borderBottom: '1px solid rgba(255,255,255,0.06)',
-                  borderRight: '1px solid rgba(255,255,255,0.06)',
-                  padding: '10px 14px', textAlign: 'left', minWidth: 150,
+                  background: 'rgba(15, 19, 24, 0.95)', borderBottom: '1px solid rgba(255,255,255,0.03)',
+                  borderRight: '1px solid rgba(255,255,255,0.03)',
+                  padding: '12px 16px', textAlign: 'left', minWidth: 150,
+                  backdropFilter: 'blur(12px)'
                 }}>
-                  <span style={{ fontSize: 10, color: '#445566', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: 11, color: '#687b8d', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Pivô
                   </span>
                 </th>
@@ -268,11 +271,11 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: P
 
                   return (
                     <th key={date} style={{
-                      padding: '8px 6px',
+                      padding: '10px 6px',
                       textAlign: 'center',
-                      borderBottom: '1px solid rgba(255,255,255,0.06)',
-                      borderRight: '1px solid rgba(255,255,255,0.04)',
-                      background: '#0f1923',
+                      borderBottom: '1px solid rgba(255,255,255,0.03)',
+                      borderRight: '1px solid rgba(255,255,255,0.03)',
+                      background: 'rgba(22, 27, 33, 0.4)',
                       minWidth: 72,
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
@@ -315,9 +318,10 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: P
                   {/* Pivot name — sticky */}
                   <td style={{
                     position: 'sticky', left: 0, zIndex: 1,
-                    background: '#0f1923',
-                    borderRight: '1px solid rgba(255,255,255,0.06)',
-                    padding: '10px 14px',
+                    background: 'rgba(15, 19, 24, 0.95)',
+                    borderRight: '1px solid rgba(255,255,255,0.03)',
+                    padding: '10px 16px',
+                    backdropFilter: 'blur(12px)',
                   }}>
                     <Link href={`/pivos/${rec.pivotId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', margin: 0, whiteSpace: 'nowrap' }}>
@@ -365,6 +369,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: P
                           <span style={{
                             fontSize: 12, fontWeight: 800, color: colors.text,
                             fontFamily: 'var(--font-mono)', lineHeight: 1,
+                            textShadow: `0 0 8px ${colors.text}60`
                           }}>
                             {Math.round(day.fieldCapacityPercent)}%
                           </span>

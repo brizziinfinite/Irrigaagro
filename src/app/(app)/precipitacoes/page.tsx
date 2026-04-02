@@ -12,6 +12,7 @@ import {
   Calendar,
 } from 'lucide-react'
 import Link from 'next/link'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -306,13 +307,14 @@ function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareP
             <div style={{ width: 36, fontSize: 11, fontWeight: 700, color: d.color, textAlign: 'right', flexShrink: 0 }}>
               {d.label}
             </div>
-            <div style={{ flex: 1, height: 16, background: '#0f1923', borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ flex: 1, height: 14, background: '#0a1016', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 7, display: 'flex', alignItems: 'center' }}>
               <div style={{
                 height: '100%', width: `${(d.total / maxVal) * 100}%`,
                 background: d.color,
-                borderRadius: 8,
-                opacity: hovered === String(d.id) ? 1 : 0.7,
-                transition: 'width 0.3s, opacity 0.15s',
+                borderRadius: 7,
+                boxShadow: hovered === String(d.id) ? `0 0 12px ${d.color}90` : 'none',
+                opacity: hovered === String(d.id) ? 1 : 0.85,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }} />
             </div>
             <div style={{ width: 52, fontSize: 11, fontWeight: 600, color: '#e2e8f0', textAlign: 'right', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
@@ -328,8 +330,6 @@ function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareP
 // ─── Bar chart ────────────────────────────────────────────────────────────────
 
 function RainfallBarChart({ records, year, month }: { records: RainfallRecord[]; year: number; month: number }) {
-  const [hovered, setHovered] = useState<number | null>(null)
-
   const data = useMemo(() => {
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const map: Record<string, number> = {}
@@ -339,80 +339,51 @@ function RainfallBarChart({ records, year, month }: { records: RainfallRecord[];
         map[d.getDate()] = (map[d.getDate()] ?? 0) + r.rainfall_mm
       }
     }
-    return Array.from({ length: daysInMonth }, (_, i) => ({ day: i + 1, mm: map[i + 1] ?? 0 }))
+    return Array.from({ length: daysInMonth }, (_, i) => ({ 
+      day: String(i + 1), 
+      mm: map[i + 1] ?? 0 
+    }))
   }, [records, year, month])
 
-  const maxMm = useMemo(() => Math.max(...data.map(d => d.mm), 1), [data])
   const avgMm = useMemo(() => data.reduce((s, d) => s + d.mm, 0) / data.length, [data])
 
-  const H = 120
-  const barW = 100 / data.length
-  const avgY = H - (avgMm / maxMm) * (H - 10) - 4
-
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <svg
-        width="100%"
-        height={H}
-        viewBox={`0 0 100 ${H}`}
-        preserveAspectRatio="none"
-        style={{ display: 'block' }}
-      >
-        <defs>
-          <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3b82f6" />
-            <stop offset="100%" stopColor="#06b6d4" />
-          </linearGradient>
-        </defs>
-
-        {data.map((d, i) => {
-          const barH = (d.mm / maxMm) * (H - 10)
-          const x = i * barW
-          return (
-            <rect
-              key={d.day}
-              x={x + barW * 0.15}
-              y={H - barH}
-              width={barW * 0.7}
-              height={barH}
-              fill="url(#barGrad)"
-              opacity={hovered === d.day ? 1 : 0.7}
-              rx={1}
-              style={{ cursor: 'pointer' }}
-              onMouseEnter={() => setHovered(d.day)}
-              onMouseLeave={() => setHovered(null)}
-            />
-          )
-        })}
-
-        {avgMm > 0 && (
-          <line
-            x1={0} y1={avgY}
-            x2={100} y2={avgY}
-            stroke="#f59e0b"
-            strokeWidth={0.4}
-            strokeDasharray="2 1"
+    <div style={{ position: 'relative', width: '100%', height: 160 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
+          <defs>
+            <linearGradient id="barGradRain" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#06b6d4" />
+              <stop offset="50%" stopColor="#0284c7" />
+              <stop offset="100%" stopColor="#0284c7" stopOpacity={0.6} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.03)" vertical={false} />
+          <XAxis 
+            dataKey="day" 
+            tick={{ fill: '#556677', fontSize: 10 }} 
+            axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} 
+            tickLine={false} 
+            interval={0}
+            tickFormatter={(v, i) => i === 0 || i === data.length - 1 || (i + 1) % 5 === 0 ? v : ''}
           />
-        )}
-      </svg>
-
-      {hovered !== null && (() => {
-        const d = data.find(x => x.day === hovered)
-        if (!d) return null
-        const left = `${((hovered - 1) / data.length) * 100 + 50 / data.length}%`
-        return (
-          <div style={{
-            position: 'absolute', top: 4, left,
-            transform: 'translateX(-50%)',
-            background: '#080e14', border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: 6, padding: '4px 8px',
-            fontSize: 11, color: '#e2e8f0', whiteSpace: 'nowrap',
-            pointerEvents: 'none', zIndex: 10,
-          }}>
-            Dia {d.day}: {d.mm.toFixed(1)} mm
-          </div>
-        )
-      })()}
+          <YAxis 
+            tick={{ fill: '#556677', fontSize: 10 }} 
+            axisLine={false} 
+            tickLine={false} 
+            tickFormatter={v => v > 0 ? v : ''}
+          />
+          <Tooltip
+            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+            contentStyle={{ backgroundColor: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12, padding: '8px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+            formatter={(value: any) => [`${Number(value).toFixed(1)} mm`, 'Precipitação']}
+            labelFormatter={(label) => `Dia ${label}`}
+            labelStyle={{ color: '#8899aa', marginBottom: 4 }}
+          />
+          {avgMm > 0 && <ReferenceLine y={avgMm} stroke="#f59e0b" strokeDasharray="3 3" strokeWidth={1} />}
+          <Bar dataKey="mm" fill="url(#barGradRain)" radius={[4, 4, 0, 0]} maxBarSize={16} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   )
 }
@@ -1050,6 +1021,16 @@ export default function PrecipitacoesPage() {
   const [year, setYear]   = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [allRecords, setAllRecords] = useState<RainfallRecord[]>([])
+  
+  // -- Compare Mode --
+  const [isCompare, setIsCompare] = useState(false)
+  const [comparePivotId, setComparePivotId] = useState<string>('')
+  const [compareSectors, setCompareSectors] = useState<PivotSector[]>([])
+  const [compareActiveSectorId, setCompareActiveSectorId] = useState<string | null>(null)
+  const [compareYear, setCompareYear]   = useState(today.getFullYear())
+  const [compareMonth, setCompareMonth] = useState(today.getMonth())
+  const [compareAllRecords, setCompareAllRecords] = useState<RainfallRecord[]>([])
+  
   const [selectedDate, setSelectedDate] = useState(() => toYMD(today))
   const [editModal, setEditModal] = useState<{ date: string } | null>(null)
   const [showImport, setShowImport] = useState(false)
@@ -1093,6 +1074,10 @@ export default function PrecipitacoesPage() {
           if (current && options.some(p => p.id === current)) return current
           return options[0]?.id ?? ''
         })
+        setComparePivotId(current => {
+          if (current && options.some(p => p.id === current)) return current
+          return options[0]?.id ?? ''
+        })
       } catch (error) {
         if (!cancelled) {
           setLoadError(error instanceof Error ? error.message : 'Falha ao carregar pivôs')
@@ -1112,14 +1097,21 @@ export default function PrecipitacoesPage() {
   useEffect(() => {
     if (!pivotId) { setSectors([]); setActiveSectorId(null); return }
     let cancelled = false
-    listSectorsByPivotId(pivotId)
-      .then(data => { if (!cancelled) setSectors(data) })
-      .catch(() => { if (!cancelled) setSectors([]) })
+    listSectorsByPivotId(pivotId).then(data => { if (!cancelled) setSectors(data) }).catch(() => { if (!cancelled) setSectors([]) })
     return () => { cancelled = true }
   }, [pivotId])
 
-  // Reset activeSectorId when pivot changes
   useEffect(() => { setActiveSectorId(null) }, [pivotId])
+
+  // Compare sectors
+  useEffect(() => {
+    if (!comparePivotId) { setCompareSectors([]); setCompareActiveSectorId(null); return }
+    let cancelled = false
+    listSectorsByPivotId(comparePivotId).then(data => { if (!cancelled) setCompareSectors(data) }).catch(() => { if (!cancelled) setCompareSectors([]) })
+    return () => { cancelled = true }
+  }, [comparePivotId])
+
+  useEffect(() => { setCompareActiveSectorId(null) }, [comparePivotId])
 
   // Load all records for pivot+year (all sectors at once for comparison chart)
   const loadRecords = useCallback(async (pid: string, y: number) => {
@@ -1152,18 +1144,39 @@ export default function PrecipitacoesPage() {
     }
   }, [pivotId, year, loadRecords])
 
+  // Load Compare Records
+  useEffect(() => {
+    if (isCompare && comparePivotId) {
+      listRainfallByPivotIds([comparePivotId])
+        .then(data => {
+          setCompareAllRecords(data
+            .filter(r => r.date >= `${compareYear}-01-01` && r.date <= `${compareYear}-12-31`)
+            .sort((a, b) => a.date.localeCompare(b.date)))
+        }).catch(() => setCompareAllRecords([]))
+    } else {
+      setCompareAllRecords([])
+    }
+  }, [isCompare, comparePivotId, compareYear])
+
   // Records filtered by active sector (for calendar + chips)
   const records = useMemo(() => {
-    if (activeSectorId === null) {
-      // "Geral" tab: show records with no sector
-      return allRecords.filter(r => r.sector_id === null)
-    }
+    if (activeSectorId === null) return allRecords.filter(r => r.sector_id === null)
     return allRecords.filter(r => r.sector_id === activeSectorId)
   }, [allRecords, activeSectorId])
 
   const monthRecords = useMemo(
     () => records.filter(r => r.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)),
     [records, year, month]
+  )
+
+  const compareRecords = useMemo(() => {
+    if (compareActiveSectorId === null) return compareAllRecords.filter(r => r.sector_id === null)
+    return compareAllRecords.filter(r => r.sector_id === compareActiveSectorId)
+  }, [compareAllRecords, compareActiveSectorId])
+
+  const compareMonthRecords = useMemo(
+    () => compareRecords.filter(r => r.date.startsWith(`${compareYear}-${String(compareMonth + 1).padStart(2, '0')}`)),
+    [compareRecords, compareYear, compareMonth]
   )
 
   const editingRecord = useMemo(() => {
@@ -1273,6 +1286,18 @@ export default function PrecipitacoesPage() {
           </select>
 
           <button
+            onClick={() => setIsCompare(!isCompare)}
+            disabled={!pivotId}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8,
+              background: isCompare ? 'rgba(0,147,208,0.1)' : '#0d1520', border: isCompare ? '1px solid rgba(0,147,208,0.3)' : '1px solid rgba(255,255,255,0.06)',
+              color: isCompare ? '#0093D0' : '#8899aa', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+            }}
+          >
+            Comparar
+          </button>
+          <button
             onClick={() => setShowImport(true)}
             disabled={!pivotId}
             style={{
@@ -1308,7 +1333,8 @@ export default function PrecipitacoesPage() {
       )}
 
       {pivotId && (
-        <>
+        <div style={{ display: 'grid', gridTemplateColumns: isCompare ? 'repeat(auto-fit, minmax(420px, 1fr))' : '1fr', gap: 24, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Sector panel: map + tabs */}
           {sectors.length > 0 && (
             <div style={{
@@ -1408,7 +1434,67 @@ export default function PrecipitacoesPage() {
             year={year}
             month={month}
           />
-        </>
+        </div>
+
+        {isCompare && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingLeft: isCompare ? 24 : 0, borderLeft: isCompare ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+             <div style={{ background: '#0d1520', border: '1px dashed rgba(0,147,208,0.3)', borderRadius: 12, padding: 16 }}>
+               <span style={{ fontSize: 12, fontWeight: 600, color: '#0093D0', display: 'block', marginBottom: 12 }}>PARÂMETROS DE COMPARAÇÃO</span>
+               <select
+                 value={comparePivotId}
+                 onChange={e => setComparePivotId(e.target.value)}
+                 style={{
+                   padding: '8px 12px', borderRadius: 8, width: '100%',
+                   background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
+                   color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer',
+                 }}
+               >
+                 {pivots.map(p => <option key={p.id} value={p.id}>{p.farm_name} · {p.name}</option>)}
+               </select>
+             </div>
+
+             {compareSectors.length > 0 && (
+               <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16, display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                 <PivotCircleMap sectors={compareSectors} activeSectorId={compareActiveSectorId} onSelectSector={setCompareActiveSectorId} />
+                 <div style={{ flex: 1, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                   <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#556677' }}>Setor de Precipitação</p>
+                   <SectorTabs sectors={compareSectors} activeSectorId={compareActiveSectorId} onSelect={setCompareActiveSectorId} />
+                 </div>
+               </div>
+             )}
+
+             <RainfallChips
+               records={compareRecords}
+               selectedDate={selectedDate}
+               sectorLabel={compareActiveSectorId ? `Setor ${compareSectors.find(s=>s.id === compareActiveSectorId)?.name}` : undefined}
+             />
+
+             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 16px' }}>
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                 <button onClick={() => { if(compareMonth===0){setCompareMonth(11);setCompareYear(y=>y-1)}else setCompareMonth(m=>m-1) }} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}><ChevronLeft size={16} /></button>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                   <h2 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>{MONTH_NAMES[compareMonth]} {compareYear}</h2>
+                 </div>
+                 <div style={{ display: 'flex', gap: 6 }}>
+                   <button onClick={() => { const d=new Date(); setCompareYear(d.getFullYear()); setCompareMonth(d.getMonth()) }} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: '#8899aa', fontSize: 12 }}>Hoje</button>
+                   <button onClick={() => { if(compareMonth===11){setCompareMonth(0);setCompareYear(y=>y+1)}else setCompareMonth(m=>m+1) }} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}><ChevronRight size={16} /></button>
+                 </div>
+               </div>
+               <MonthCalendar year={compareYear} month={compareMonth} records={compareMonthRecords} selectedDate={selectedDate} onSelectDate={(d) => { /* readonly */ }} />
+             </div>
+
+             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16 }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                 <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>Distribuição diária</span>
+               </div>
+               <RainfallBarChart records={compareMonthRecords} year={compareYear} month={compareMonth} />
+             </div>
+             
+             <SectorCompareChart allRecords={compareAllRecords} sectors={compareSectors} year={compareYear} month={compareMonth} />
+             
+          </div>
+        )}
+        </div>
       )}
 
       {editModal && pivotId && pivots.some(p => p.id === pivotId) && (

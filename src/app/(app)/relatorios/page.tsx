@@ -218,12 +218,12 @@ function StressGauge({ value }: { value: number }) {
   const refMax = 12 // valor máximo recomendado pelos reports
 
   return (
-    <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px' }}>
+    <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', flex: 1, minWidth: 200 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <AlertTriangle size={14} style={{ color }} />
         <span style={{ fontSize: 11, color: '#8899aa' }}>Índice de Stress Hídrico</span>
       </div>
-      <p style={{ fontSize: 28, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+      <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {fmtNum(value)}%
       </p>
       <p style={{ fontSize: 10, color, marginTop: 4, fontWeight: 600 }}>{label}</p>
@@ -234,7 +234,51 @@ function StressGauge({ value }: { value: number }) {
         <div style={{ position: 'absolute', left: `${(refMax / 40) * 100}%`, top: 0, bottom: 0, width: 2, background: '#f59e0b', opacity: 0.6 }} />
         <div style={{ width: `${Math.min(100, (value / 40) * 100)}%`, height: '100%', background: color, borderRadius: 99 }} />
       </div>
-      <p style={{ fontSize: 9, color: '#556677', marginTop: 3 }}>Referência: máx. 10–12% (Irriger)</p>
+      <p style={{ fontSize: 9, color: '#556677', marginTop: 3 }}>Ref: máx. 10–12%</p>
+    </div>
+  )
+}
+
+function GaugeCard({ title, value, unit, color, desc }: {
+  title: string; value: number | null; unit: string; color: string; desc: string;
+}) {
+  if (value === null) return null
+  const percent = Math.min(100, Math.max(0, value))
+  return (
+    <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 200 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 11, color: '#8899aa', fontWeight: 600 }}>{title}</span>
+      </div>
+      <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+        {fmtNum(value, 1)}{unit}
+      </p>
+      
+      {/* Barra */}
+      <div style={{ marginTop: 22, height: 6, background: '#0d1520', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
+        <div style={{ width: `${percent}%`, height: '100%', background: color, borderRadius: 99 }} />
+      </div>
+      <p style={{ fontSize: 9, color: '#556677', marginTop: 6, lineHeight: 1.4 }}>{desc}</p>
+    </div>
+  )
+}
+
+function HealthGauges({ kpis }: { kpis: SeasonKPIs }) {
+  const etaEtoRaw = kpis.totalEtoMm > 0 ? (kpis.totalEtcMm / kpis.totalEtoMm) * 100 : null
+  const chuvEfRaw = kpis.totalRainfallMm > 0 ? (Math.min(kpis.totalEtcMm, kpis.totalRainfallMm) / kpis.totalRainfallMm) * 100 : null
+
+  return (
+    <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
+      <StressGauge value={kpis.stressIndex} />
+      <GaugeCard 
+        title="ETA / ETO Ratio" 
+        value={etaEtoRaw} unit="%" color={etaEtoRaw && etaEtoRaw >= 80 ? '#22c55e' : (etaEtoRaw && etaEtoRaw > 50 ? '#f59e0b' : '#ef4444')} 
+        desc={etaEtoRaw && etaEtoRaw >= 80 ? 'Saúde transpiratória excelente' : 'Atenção ao déficit (etaEto baixo indica estresse severo).'} 
+      />
+      <GaugeCard 
+        title="Índice Efetivo de Chuva" 
+        value={chuvEfRaw} unit="%" color={chuvEfRaw && chuvEfRaw >= 60 ? '#0093D0' : '#8899aa'} 
+        desc="Fração da chuva que pôde ser convertida em transpiração pela cultura." 
+      />
     </div>
   )
 }
@@ -328,101 +372,86 @@ function StageTable({ stages }: { stages: StageStats[] }) {
   )
 }
 
-function IrrigComparisonTable({ events }: { events: IrrigComparison[] }) {
-  if (events.length === 0) {
-    return (
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '32px 24px', textAlign: 'center' }}>
-        <Droplets size={24} style={{ color: '#556677', margin: '0 auto 10px' }} />
-        <p style={{ fontSize: 13, color: '#556677' }}>Nenhum evento de irrigação registrado ainda.</p>
-      </div>
-    )
-  }
+function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
+  const [expanded, setExpanded] = useState<number | null>(null)
+  if (records.length === 0) return null
 
-  // Agrupar por mês
-  const byMonth: Record<string, IrrigComparison[]> = {}
-  for (const e of events) {
-    const month = e.date.substring(0, 7) // YYYY-MM
-    if (!byMonth[month]) byMonth[month] = []
-    byMonth[month].push(e)
-  }
-
-  const monthNames: Record<string, string> = {
-    '01': 'Janeiro', '02': 'Fevereiro', '03': 'Março', '04': 'Abril',
-    '05': 'Maio', '06': 'Junho', '07': 'Julho', '08': 'Agosto',
-    '09': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro',
+  // Sort and group by Week (each week is 7 days from the start)
+  const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date))
+  const startDate = new Date(sorted[0].date)
+  
+  const weeks: { weekNum: number; startDate: string; endDate: string; records: DailyManagement[]; eto: number; etc: number; rain: number; irrig: number; days: number }[] = []
+  
+  for (const r of sorted) {
+    const d = new Date(r.date)
+    const diffTime = Math.abs(d.getTime() - startDate.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const weekNum = Math.floor(diffDays / 7) + 1
+    
+    let w = weeks.find(x => x.weekNum === weekNum)
+    if (!w) {
+      w = { weekNum, startDate: r.date, endDate: r.date, records: [], eto: 0, etc: 0, rain: 0, irrig: 0, days: 0 }
+      weeks.push(w)
+    }
+    w.endDate = r.date // mantem a data mais nova devido ao sort cronológico
+    w.records.push(r)
+    w.eto += r.eto_mm ?? 0
+    w.etc += r.etc_mm ?? 0
+    w.rain += r.rainfall_mm ?? 0
+    w.irrig += r.actual_depth_mm ?? 0
+    w.days++
   }
 
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Droplets size={13} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Irrigações — Recomendado vs Aplicado</span>
-        <span style={{ fontSize: 10, color: '#556677', marginLeft: 'auto' }}>como Irriga Global</span>
+        <Calendar size={13} style={{ color: '#0093D0' }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Consumo Hídrico — Resumo Semanal</span>
+        <span style={{ fontSize: 10, color: '#556677', marginLeft: 'auto' }}>clique na semana para expandir detahles dia a dia</span>
       </div>
 
-      {Object.entries(byMonth).map(([month, monthEvents]) => {
-        const [year, mo] = month.split('-')
-        const totalRec = monthEvents.reduce((s, e) => s + e.recommended, 0)
-        const totalApp = monthEvents.reduce((s, e) => s + (e.applied ?? 0), 0)
-
+      {weeks.map((w, i) => {
+        const isExp = expanded === w.weekNum
         return (
-          <div key={month}>
-            {/* Cabeçalho do mês */}
-            <div style={{ padding: '8px 18px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {monthNames[mo]} / {year}
-              </span>
-              <span style={{ fontSize: 10, color: '#556677' }}>
-                Total recomendado: <span style={{ color: '#f59e0b' }}>{fmtNum(totalRec)} mm</span>
-                {' · '}
-                Aplicado: <span style={{ color: '#0093D0' }}>{fmtNum(totalApp)} mm</span>
-              </span>
+          <div key={w.weekNum}>
+            {/* Cabecalho da semana */}
+            <div 
+              onClick={() => setExpanded(isExp ? null : w.weekNum)}
+              style={{ padding: '10px 18px', background: isExp ? 'rgba(0,147,208,0.05)' : (i % 2 ? '#080e14' : 'transparent'), borderBottom: i < weeks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                 <div style={{ width: 24, height: 24, borderRadius: 6, background: '#0e1720', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 11, color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    {w.weekNum}
+                 </div>
+                 <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                   Semana {w.weekNum} <span style={{ color: '#556677', fontWeight: 400, textTransform: 'none' }}>· {fmtDate(w.startDate)} – {fmtDate(w.endDate)}</span>
+                 </span>
+              </div>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+                 <span style={{ color: '#8899aa' }} title="ETo">ETo: <span style={{ color: '#e2e8f0' }}>{fmtNum(w.eto)}</span></span>
+                 <span style={{ color: '#8899aa' }} title="ETc">ETc: <span style={{ color: '#06b6d4' }}>{fmtNum(w.etc)}</span></span>
+                 <span style={{ color: '#8899aa' }} title="Precipitação">Chuva: <span style={{ color: '#38bdf8' }}>{fmtNum(w.rain)}</span></span>
+                 <span style={{ color: '#8899aa' }} title="Irrigação">Irrig: <span style={{ color: '#0093D0', fontWeight: 700 }}>{fmtNum(w.irrig)}</span></span>
+                 <ChevronDown size={14} style={{ color: '#556677', transform: isExp ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              </div>
             </div>
 
-            {/* Linhas de eventos */}
-            {monthEvents.map((e, i) => {
-              const deltaColor = e.delta === null ? '#556677' : e.delta >= 0 ? '#22c55e' : '#ef4444'
-              const hasApplied = e.applied !== null && e.applied !== undefined
-
-              return (
-                <div key={e.date} style={{
-                  display: 'grid', gridTemplateColumns: '100px 120px 120px 120px 1fr',
-                  alignItems: 'center', gap: 4, padding: '9px 18px',
-                  borderBottom: i < monthEvents.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                  background: i % 2 ? '#080e14' : 'transparent',
-                }}>
-                  <span style={{ fontSize: 12, color: '#8899aa' }}>{fmtDate(e.date)}</span>
-                  {/* Barra recomendada */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ height: 6, width: `${Math.min(100, (e.recommended / 20) * 100)}%`, minWidth: 4, background: '#f59e0b', borderRadius: 99 }} />
-                    <span style={{ fontSize: 12, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtNum(e.recommended)}</span>
+            {/* Expansivo: dias */}
+            {isExp && (
+              <div style={{ padding: '0px 18px', background: '#060a0f', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                {w.records.map((e, idx) => (
+                  <div key={e.date} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px', borderBottom: '1px solid rgba(255,255,255,0.02)', fontSize: 11 }}>
+                    <span style={{ color: '#778899', flex: 1, minWidth: 60 }}>{fmtDate(e.date)}</span>
+                    <div style={{ display: 'flex', gap: 16, flex: 3, justifyContent: 'flex-end', fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ color: '#8899aa', width: 50, textAlign: 'right' }}>{fmtNum(e.eto_mm)}</span>
+                      <span style={{ color: '#06b6d4', width: 50, textAlign: 'right' }}>{fmtNum(e.etc_mm)}</span>
+                      <span style={{ color: '#38bdf8', width: 50, textAlign: 'right' }}>{fmtNum(e.rainfall_mm)}</span>
+                      <span style={{ color: '#0093D0', width: 50, textAlign: 'right', fontWeight: e.actual_depth_mm ? 700 : 400 }}>{fmtNum(e.actual_depth_mm)}</span>
+                    </div>
                   </div>
-                  {/* Barra aplicada */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {hasApplied ? (
-                      <>
-                        <div style={{ height: 6, width: `${Math.min(100, ((e.applied ?? 0) / 20) * 100)}%`, minWidth: 4, background: '#0093D0', borderRadius: 99 }} />
-                        <span style={{ fontSize: 12, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(e.applied)}</span>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: 11, color: '#556677' }}>não registrado</span>
-                    )}
-                  </div>
-                  {/* Delta */}
-                  <span style={{ fontSize: 12, fontWeight: 600, color: deltaColor, fontFamily: 'var(--font-mono)' }}>
-                    {e.delta !== null ? (e.delta >= 0 ? '+' : '') + fmtNum(e.delta) : '—'}
-                  </span>
-                  {/* Acumulado do mês */}
-                  <span style={{ fontSize: 10, color: '#556677', textAlign: 'right' }}>
-                    {(() => {
-                      const idx = monthEvents.indexOf(e)
-                      const acc = monthEvents.slice(0, idx + 1).reduce((s, x) => s + (x.applied ?? 0), 0)
-                      return `acum: ${fmtNum(acc)} mm`
-                    })()}
-                  </span>
-                </div>
-              )
-            })}
+                ))}
+              </div>
+            )}
           </div>
         )
       })}
@@ -454,6 +483,9 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
     const cad = calcCAD(cta, info.fFactor)
     return cta > 0 ? (cad / cta) * 100 : 50
   })
+
+  const avgCad = cadPercents.length > 0 ? cadPercents.reduce((a, b) => a + b, 0) / cadPercents.length : 50
+  const avgCadOffset = `${(avgCad / 125) * 100}%`
 
   // Fases — regiões coloridas
   const stageColors: Record<number, string> = {
@@ -504,7 +536,7 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <TrendingDown size={13} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>ADc% ao Longo da Safra — com Fases Fenológicas</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>ADc% (Água Disponível no Solo) ao Longo da Safra</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
           {[1,2,3,4].map(s => (
             <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
@@ -572,9 +604,18 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
             )
           })}
 
+          <defs>
+            <linearGradient id="adcGradient" x1="0" y1={yRight(0)} x2="0" y2={yRight(125)} gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ef4444" />
+              <stop offset={avgCadOffset} stopColor="#ef4444" />
+              <stop offset={avgCadOffset} stopColor="#0093D0" />
+              <stop offset="100%" stopColor="#0093D0" />
+            </linearGradient>
+          </defs>
+
           {/* Curva ADc% */}
           {pathAdc && (
-            <path d={pathAdc} fill="none" stroke="#c9a227" strokeWidth="2.5" strokeLinejoin="round" />
+            <path d={pathAdc} fill="none" stroke="url(#adcGradient)" strokeWidth="3" strokeLinejoin="round" />
           )}
 
           {/* Pontos coloridos por status */}
@@ -608,7 +649,7 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
           <div style={{ width: 8, height: 12, background: 'rgb(56 189 248 / 0.4)', borderRadius: 1 }} /> Chuva
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
-          <div style={{ width: 16, height: 3, background: '#c9a227', borderRadius: 99 }} /> ADc%
+          <div style={{ width: 16, height: 3, background: '#0093D0', borderRadius: 99 }} /> ADc (%) Umidade Atual
         </span>
       </div>
     </div>
@@ -1121,10 +1162,8 @@ export default function RelatoriosPage() {
                 sub={`de ${kpis.totalDays} dias`} />
             </div>
 
-            {/* Stress gauge em destaque */}
-            <div style={{ marginTop: 10, maxWidth: 280 }}>
-              <StressGauge value={kpis.stressIndex} />
-            </div>
+            {/* Health gauges em destaque */}
+            <HealthGauges kpis={kpis} />
           </div>
 
           {/* ── SEÇÃO 2: Gráfico ADc% com fases ── */}
@@ -1196,7 +1235,7 @@ export default function RelatoriosPage() {
           <div>
             <SectionTitle icon={CheckCircle2} text="Irrigações — Recomendado vs Aplicado" />
             <div style={{ marginTop: 12 }}>
-              <IrrigComparisonTable events={kpis.irrigationComparison} />
+              <WeeklySummaryTable records={records} />
             </div>
           </div>
         </>

@@ -49,10 +49,12 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
 
   return (
     <div style={{
-      background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 14,
-      padding: 18,
+      background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+      backdropFilter: 'blur(12px)',
+      border: '1px solid rgba(255,255,255,0.03)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+      borderRadius: 20,
+      padding: 24,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
@@ -60,10 +62,10 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#556677',
+          fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
+          letterSpacing: '0.06em', color: '#e2e8f0',
         }}>
-          Histórico — Últimos 7 dias
+          Histórico Operacional (7d)
         </span>
         {!hasData && (
           <span style={{ fontSize: 10, color: '#556677' }}>Aguardando registros</span>
@@ -109,17 +111,19 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
                 cursor={{ fill: 'rgb(255 255 255 / 0.03)' }}
               />
             )}
-            <Bar yAxisId="mm" dataKey="irrigation" fill={hasData ? '#0093D0' : 'rgba(0,147,208,0.15)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
-            <Bar yAxisId="mm" dataKey="rainfall" fill={hasData ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.10)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            <Bar yAxisId="mm" dataKey="irrigation" fill={hasData ? '#00E5FF' : 'rgba(0,229,255,0.15)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            <Bar yAxisId="mm" dataKey="rainfall" fill={hasData ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.10)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
             {hasData && (
               <Line
                 yAxisId="pct"
                 type="monotone"
                 dataKey="moisture"
-                stroke="#22c55e"
-                strokeWidth={2}
-                dot={{ fill: '#22c55e', r: 3, strokeWidth: 0 }}
+                stroke="#CCFF00"
+                strokeWidth={3}
+                dot={{ fill: '#141e2b', stroke: '#CCFF00', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, fill: '#141e2b', stroke: '#CCFF00', strokeWidth: 3 }}
                 connectNulls
+                style={{ filter: 'drop-shadow(0 0 6px rgba(204,255,0,0.5))' }}
               />
             )}
           </ComposedChart>
@@ -127,14 +131,15 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 16, marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 12 }}>
         {[
-          { color: '#0093D0', label: 'Irrigação' },
-          { color: 'rgba(255,255,255,0.75)', label: 'Chuva' },
+          { color: '#00E5FF', label: 'Lâmina (mm)' },
+          { color: 'rgba(255,255,255,0.85)', label: 'Chuva (mm)' },
+          { color: '#CCFF00', label: 'Umidade Média (%)' },
         ].map(({ color, label }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: color, opacity: hasData ? 1 : 0.3 }} />
-            <span style={{ fontSize: 10, color: '#556677' }}>{label}</span>
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, boxShadow: hasData ? `0 0 8px ${color}` : 'none', opacity: hasData ? 1 : 0.4 }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#8899aa' }}>{label}</span>
           </div>
         ))}
       </div>

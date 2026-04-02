@@ -17,27 +17,31 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
   if (currentBills.length === 0) {
     return (
       <div style={{
-        background: '#0f1923',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 14,
-        padding: 20,
+        background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+        border: '1px solid rgba(255,255,255,0.03)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: 20,
+        padding: 24,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 18 }}>⚡</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span style={{ fontSize: 24, filter: 'drop-shadow(0 0 10px rgba(0, 229, 255, 0.8))' }}>⚡</span>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Energia & Custos</p>
-            <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
+            <p style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0' }}>Energia & Custos</p>
+            <p style={{ fontSize: 13, color: '#556677', marginTop: 4 }}>
               Nenhuma conta de energia registrada.
             </p>
           </div>
         </div>
         <Link href="/relatorios" style={{
-          fontSize: 11, fontWeight: 700, color: '#0093D0',
-          background: 'rgba(0,147,208,0.1)', border: '1px solid rgba(0,147,208,0.2)',
-          borderRadius: 8, padding: '6px 14px', textDecoration: 'none',
+          fontSize: 12, fontWeight: 800, color: '#00E5FF',
+          background: 'rgba(0, 229, 255, 0.1)', border: '1px solid rgba(0, 229, 255, 0.3)',
+          boxShadow: '0 0 12px rgba(0, 229, 255, 0.2)',
+          borderRadius: 10, padding: '8px 16px', textDecoration: 'none',
+          textTransform: 'uppercase', letterSpacing: '0.04em'
         }}>
           Importar →
         </Link>
@@ -123,21 +127,23 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
 
   return (
     <div style={{
-      background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 14,
-      padding: 20,
+      background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+      border: '1px solid rgba(255,255,255,0.03)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+      backdropFilter: 'blur(12px)',
+      borderRadius: 20,
+      padding: 24,
       display: 'flex',
       flexDirection: 'column',
-      gap: 16,
+      gap: 18,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14 }}>⚡</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 16, filter: 'drop-shadow(0 0 8px #CCFF00)' }}>⚡</span>
           <span style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#556677',
+            fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#e2e8f0',
           }}>
             Energia & Custos da Safra
           </span>
@@ -149,20 +155,21 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
         {kpiCards.map(({ label, value, sub, color }) => (
           <div key={label} style={{
-            background: '#141e2b',
-            borderRadius: 12,
-            padding: '14px 16px',
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.05)',
+            borderRadius: 14,
+            padding: '16px 18px',
           }}>
             <span style={{
-              fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: '#556677',
+              fontSize: 10, fontWeight: 800, textTransform: 'uppercase',
+              letterSpacing: '0.06em', color: '#687b8d',
             }}>
               {label}
             </span>
             <div style={{ marginTop: 8 }}>
               <span style={{
-                fontSize: 22, fontWeight: 800, fontFamily: 'var(--font-mono)',
-                color, lineHeight: 1,
+                fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-mono)',
+                color, lineHeight: 1, textShadow: `0 0 10px ${color}50`
               }}>
                 {value}
               </span>
@@ -180,12 +187,12 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 14 }}>
         {/* Distribuição */}
         <div style={{
-          background: '#141e2b', borderRadius: 12, padding: '14px 16px',
-          display: 'flex', flexDirection: 'column', gap: 10,
+          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '16px 18px',
+          display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           <span style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#556677',
+            fontSize: 11, fontWeight: 800, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#8899aa',
           }}>
             Distribuição
           </span>
@@ -220,12 +227,12 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
 
         {/* Evolução Mensal */}
         <div style={{
-          background: '#141e2b', borderRadius: 12, padding: '14px 16px',
-          display: 'flex', flexDirection: 'column', gap: 10,
+          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '16px 18px',
+          display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           <span style={{
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#556677',
+            fontSize: 11, fontWeight: 800, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#8899aa',
           }}>
             Evolução Mensal
           </span>
@@ -245,8 +252,9 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
                     {fmtBrl(custo)}
                   </span>
                   <div style={{
-                    width: '100%', maxWidth: 36, height: h, borderRadius: 4,
-                    background: 'linear-gradient(to top, rgba(0,147,208,0.25), rgba(0,147,208,0.6))',
+                    width: '100%', maxWidth: 36, height: h, borderRadius: 6,
+                    background: 'linear-gradient(to top, rgba(0, 229, 255, 0.2), rgba(0, 229, 255, 0.7))',
+                    boxShadow: '0 0 10px rgba(0,229,255,0.2)'
                   }} />
                   <span style={{ fontSize: 9, color: '#556677', textTransform: 'capitalize' }}>{mes}</span>
                 </div>

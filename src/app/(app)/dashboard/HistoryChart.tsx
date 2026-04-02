@@ -11,11 +11,11 @@ interface HistoryChartProps {
   activeSeasons: Season[]
 }
 
-// últimos 7 dias como placeholder
-function last7DaysLabels(): string[] {
-  return Array.from({ length: 7 }, (_, i) => {
+// últimos 15 dias como placeholder
+function last15DaysLabels(): string[] {
+  return Array.from({ length: 15 }, (_, i) => {
     const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
+    d.setDate(d.getDate() - (14 - i))
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
   })
 }
@@ -46,7 +46,7 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
           rainfall: Number(d.rainfall.toFixed(1)),
           moisture: d.count > 0 ? Number((d.moisture / d.count).toFixed(0)) : null,
         }))
-    : last7DaysLabels().map(date => ({ date, irrigation: 0, rainfall: 0, moisture: null }))
+    : last15DaysLabels().map(date => ({ date, irrigation: 0, rainfall: 0, moisture: null }))
 
   return (
     <div style={{
@@ -64,7 +64,7 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
           letterSpacing: '0.06em', color: '#556677',
         }}>
-          Histórico 7 dias
+          Histórico 15 dias
         </span>
         {!hasData && (
           <span style={{ fontSize: 10, color: '#556677' }}>Aguardando registros</span>
@@ -75,7 +75,7 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
       <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
         {[
           { color: '#0093D0', label: 'Irrigação (mm)' },
-          { color: '#22d3ee', label: 'Chuva (mm)' },
+          { color: 'rgba(255, 255, 255, 0.85)', label: 'Chuva (mm)' },
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: color, opacity: hasData ? 1 : 0.3 }} />
@@ -124,7 +124,7 @@ export function HistoryChart({ historyBySeason }: HistoryChartProps) {
               />
             )}
             <Bar yAxisId="mm" dataKey="irrigation" fill={hasData ? '#0093D0' : 'rgba(0,147,208,0.15)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
-            <Bar yAxisId="mm" dataKey="rainfall" fill={hasData ? '#22d3ee' : 'rgba(34,211,238,0.12)'} opacity={0.7} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            <Bar yAxisId="mm" dataKey="rainfall" fill="rgba(255, 255, 255, 0.85)" radius={[4, 4, 0, 0]} maxBarSize={32} />
             {hasData && (
               <Line
                 yAxisId="pct"

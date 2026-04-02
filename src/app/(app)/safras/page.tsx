@@ -289,7 +289,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             </div>
           )}
 
-          <NumField label="ADc Inicial no Plantio" value={initialAdc} onChange={setInitialAdc}
+          <NumField label="ADc Inicial no Plantio (Umidade %)" value={initialAdc} onChange={setInitialAdc}
             placeholder="100" unit="%" hint="% da CTA disponível no momento do plantio (normalmente 100%)" />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>

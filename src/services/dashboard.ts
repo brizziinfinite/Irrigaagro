@@ -94,7 +94,7 @@ export async function getDashboardDataForUser(
     const history = allHistories[i]
     const lastManagement = history[0] ?? null
     if (lastManagement) lastManagementBySeason[season.id] = lastManagement
-    historyBySeason[season.id] = history.slice(0, 7).reverse()
+    historyBySeason[season.id] = history.slice(0, 15).reverse()
 
     if (!crop || !season.planting_date) continue
 

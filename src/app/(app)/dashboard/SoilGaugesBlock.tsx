@@ -23,25 +23,34 @@ function GaugeCircle({ pct, color, size = 110 }: { pct: number; color: string; s
   const offset = circumference - (Math.min(100, Math.max(0, pct)) / 100) * circumference
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
-      <circle
-        cx={cx} cy={cy} r={r}
-        fill="none"
-        stroke={color}
-        strokeWidth="7"
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        transform={`rotate(-90 ${cx} ${cy})`}
-        style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-      />
-      <text x={cx} y={cy - 2} textAnchor="middle" fill="#e2e8f0" fontSize="22" fontWeight="700"
-        fontFamily="var(--font-mono)" dominantBaseline="central">
-        {Math.round(pct)}
-      </text>
-      <text x={cx} y={cy + 16} textAnchor="middle" fill="#556677" fontSize="10">%</text>
-    </svg>
+    <div style={{ position: 'relative', width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ filter: `drop-shadow(0 0 8px ${color}80)` }}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="7" />
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${cx} ${cy})`}
+          style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+        />
+      </svg>
+      <div style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+      }}>
+        <span style={{
+          fontSize: 24, fontWeight: 900, color: '#fff',
+          fontFamily: 'var(--font-mono)', lineHeight: 1, textShadow: `0 0 12px ${color}80`
+        }}>
+          {Math.round(pct)}
+        </span>
+        <span style={{ fontSize: 10, color: '#687b8d', fontWeight: 800, marginTop: 2 }}>%</span>
+      </div>
+    </div>
   )
 }
 
@@ -50,19 +59,21 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
 
   return (
     <div style={{
-      background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 14,
-      padding: '16px 18px',
+      background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+      border: '1px solid rgba(255,255,255,0.03)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+      backdropFilter: 'blur(12px)',
+      borderRadius: 20,
+      padding: '24px 20px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 14,
+      gap: 16,
       height: '100%',
     }}>
       {/* Header */}
       <span style={{
-        fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-        letterSpacing: '0.06em', color: '#556677',
+        fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
+        letterSpacing: '0.06em', color: '#e2e8f0',
       }}>
         Umidade do Solo
       </span>

@@ -3,9 +3,9 @@
 import Link from 'next/link'
 import {
   ResponsiveContainer, ComposedChart, Bar, Line,
-  XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine,
+  XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, ReferenceArea,
 } from 'recharts'
-import { Satellite } from 'lucide-react'
+import { Satellite, CloudRain } from 'lucide-react'
 import type { DailyManagement, Farm, Pivot } from '@/types/database'
 import type { ManagementSeasonContext } from '@/services/management'
 import { calcDAS } from '@/lib/calculations/management-balance'
@@ -143,93 +143,116 @@ function SoilDiagramRich({
         ))}
       </div>
 
-      {/* ── Bloco cinza ETc + emoji ── */}
-      <div style={{ margin: '14px 20px', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div>
+      {/* ── Bloco ETc + emoji Pill Premium ── */}
+      <div style={{ margin: '14px 20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.02)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#8899aa' }}>ETc</p>
-            <p style={{ fontSize: 22, fontWeight: 800, color: '#06b6d4', fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>{fmtNum(etc)} <span style={{ fontSize: 13, fontWeight: 400 }}>mm</span></p>
+            <span style={{ fontSize: 10, color: '#8899aa', letterSpacing: 2 }}>↑↑↑</span>
           </div>
-          <span style={{ fontSize: 28 }}>〰️</span>
-          <span style={{ fontSize: 10, color: '#556677' }}>↑↑↑</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <p style={{ fontSize: 18, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{fmtNum(etc)} <span style={{ fontSize: 12, fontWeight: 400, color: '#8899aa' }}>mm</span></p>
+            <span style={{ fontSize: 14, color: '#556677', lineHeight: 1 }}>≋</span>
+          </div>
         </div>
-        <span style={{ fontSize: 36, flex: 1, textAlign: 'center' }}>{cropEmoji}</span>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#8899aa' }}>{stageLabels[cropStage] ?? `Fase ${cropStage}`}</p>
-          <p style={{ fontSize: 18, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)', lineHeight: 1.1 }}>{das} <span style={{ fontSize: 12, fontWeight: 400, color: '#556677' }}>dias</span></p>
+        
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <div style={{ background: 'rgba(0,0,0,0.2)', width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ fontSize: 22 }}>{cropEmoji}</span>
+          </div>
+        </div>
+        
+        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 64, flex: '1 1 auto', alignItems: 'flex-end' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>{stageLabels[cropStage] ?? `Fase ${cropStage}`}</p>
+          <p style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{das} <span style={{ fontSize: 12, fontWeight: 400, color: '#8899aa' }}>dias</span></p>
         </div>
       </div>
 
-      {/* ── Diagrama de solo ── */}
-      <div style={{ margin: '0 20px 20px', position: 'relative', borderRadius: 12, overflow: 'hidden', height: H }}>
+      {/* ── Diagrama de solo (Wavy Premium) ── */}
+      <div style={{ margin: '0 20px 20px', position: 'relative', borderRadius: 12, overflow: 'hidden', height: H, background: '#0a1016' /* Cyber-Agro Dark Soil */ }}>
+        
+        {/* Sonda vertical (Central Pipeline) */}
+        <div style={{
+          position: 'absolute', left: '50%', top: `${100 - ctaTopPct}%`, bottom: '6%',
+          width: 8, background: 'linear-gradient(to right, #445566, #8899aa, #445566)',
+          borderRadius: 2, transform: 'translateX(-50%)', zIndex: 1,
+        }}>
+          {/* Cap da Sonda (Superficie) */}
+          <div style={{ position: 'absolute', top: -4, left: '50%', transform: 'translateX(-50%)', width: 14, height: 6, borderRadius: 2, background: '#8899aa' }} />
+        </div>
 
-        {/* Fundo total */}
-        <div style={{ position: 'absolute', inset: 0, background: '#0e7490' }} />
-
-        {/* Camada de água disponível */}
+        {/* Camada de Água Disponível com Efeito Wavy */}
         <div style={{
           position: 'absolute', left: 0, right: 0, bottom: 0,
           height: `${adcTopPct}%`,
-          background: '#06b6d4', transition: 'height 0.5s ease',
-        }} />
+          transition: 'height 0.8s ease',
+          zIndex: 2,
+          display: 'flex', flexDirection: 'column',
+          overflow: 'hidden',
+        }}>
+          <style>{`
+            @keyframes waterWaveX {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+          `}</style>
+          {/* A onda SVG duplicada para scroll contínuo sem solavancos */}
+          <div style={{ width: '200%', display: 'flex', animation: 'waterWaveX 14s linear infinite', flexShrink: 0 }}>
+            <svg viewBox="0 0 1000 60" preserveAspectRatio="none" style={{ width: '50%', height: 20, display: 'block', transform: 'translateY(1px)' }}>
+              <path d="M0,60 L0,30 C 250,55 250,5 500,30 C 750,55 750,5 1000,30 L1000,60 Z" fill="#06b6d4" opacity="0.8" />
+              <path d="M0,60 L0,40 C 300,60 300,10 600,40 C 850,60 850,20 1000,40 L1000,60 Z" fill="#0284c7" opacity="0.5" />
+              <path d="M0,60 L0,45 C 200,65 200,25 500,45 C 800,65 800,25 1000,45 L1000,60 Z" fill="#0891b2" />
+            </svg>
+            <svg viewBox="0 0 1000 60" preserveAspectRatio="none" style={{ width: '50%', height: 20, display: 'block', transform: 'translateY(1px)' }}>
+              <path d="M0,60 L0,30 C 250,55 250,5 500,30 C 750,55 750,5 1000,30 L1000,60 Z" fill="#06b6d4" opacity="0.8" />
+              <path d="M0,60 L0,40 C 300,60 300,10 600,40 C 850,60 850,20 1000,40 L1000,60 Z" fill="#0284c7" opacity="0.5" />
+              <path d="M0,60 L0,45 C 200,65 200,25 500,45 C 800,65 800,25 1000,45 L1000,60 Z" fill="#0891b2" />
+            </svg>
+          </div>
+          {/* Corpo da Água */}
+          <div style={{ flex: 1, background: '#0891b2' /* Darker Cyan para profundidade */ }} />
+        </div>
 
-        {/* Área de déficit */}
-        {deficitMm > 0 && (
-          <div style={{
-            position: 'absolute', left: 0, right: 0,
-            bottom: `${deficitBotPct}%`,
-            height: `${Math.max(0, deficitTopPct - deficitBotPct)}%`,
-            background: 'rgba(20,30,45,0.88)',
-          }} />
-        )}
-
-        {/* Linha verde — superfície */}
+        {/* Linha verde — CC */}
         <div style={{ position: 'absolute', bottom: `${ctaTopPct}%`, left: 0, right: 0, height: 3, background: '#22c55e', zIndex: 3 }} />
 
-        {/* Linha amarela — limite CAD */}
-        <div style={{ position: 'absolute', bottom: `${cadLinePct}%`, left: 0, right: 0, height: 3, background: '#facc15', zIndex: 3 }} />
+        {/* Linha amarela — Limite CAD */}
+        <div style={{ position: 'absolute', bottom: `${cadLinePct}%`, left: 0, right: 0, height: 2, background: '#f59e0b', zIndex: 3, opacity: 0.9 }} />
 
-        {/* Linha vermelha — ponto de murcha */}
-        <div style={{ position: 'absolute', bottom: '1%', left: 0, right: 0, height: 3, background: '#ef4444', zIndex: 3 }} />
+        {/* Linha vermelha — Ponto de Murcha */}
+        <div style={{ position: 'absolute', bottom: '1%', left: 0, right: 0, height: 2, background: '#ef4444', zIndex: 3 }} />
 
-        {/* Label déficit — canto superior direito */}
+        {/* ── Badges Ancorados ── */}
+
+        {/* Badge: Déficit Previsto (Ancorado à direita, junto à linha Verde) */}
         {deficitMm > 0 && (
-          <div style={{ position: 'absolute', top: `${100 - ctaTopPct + 4}%`, right: 12, zIndex: 5 }}>
-            <div style={{ background: 'rgba(30,41,59,0.92)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '5px 10px' }}>
-              <p style={{ fontSize: 10, color: '#94a3b8' }}>{recommendedDepthMm > 0 ? 'Déficit Hoje' : 'Espaço Livre'}</p>
-              <p style={{ fontSize: 14, fontWeight: 800, color: recommendedDepthMm > 0 ? cfg.color : '#556677', fontFamily: 'var(--font-mono)' }}>{fmtNum(deficitMm)} mm</p>
+          <div style={{ position: 'absolute', bottom: `calc(${ctaTopPct}% - 4px)`, right: 12, transform: 'translateY(100%)', zIndex: 5 }}>
+            <div style={{ background: 'rgba(20, 30, 45, 0.85)', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '6px 12px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+              <p style={{ fontSize: 10, color: '#e2e8f0', fontWeight: 600 }}>Déficit Previsto</p>
+              <p style={{ fontSize: 14, fontWeight: 800, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtNum(deficitMm)} mm</p>
             </div>
           </div>
         )}
 
-        {/* Label Disponível — esquerda dentro do ciano */}
-        <div style={{ position: 'absolute', bottom: `${Math.max(2, adcTopPct * 0.4)}%`, left: 12, zIndex: 5 }}>
-          <div style={{ background: 'rgba(15,25,35,0.85)', borderRadius: 6, padding: '4px 10px' }}>
-            <p style={{ fontSize: 10, color: '#94a3b8' }}>Disponível</p>
-            <p style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcMm)} mm</p>
+        {/* Badge: Disponível (Ancorado à esquerda, LOGO ABAIXO da onda de água) */}
+        <div style={{ position: 'absolute', bottom: `calc(${Math.max(2, adcTopPct)}% - 24px)`, left: 12, transform: 'translateY(0%)', zIndex: 5 }}>
+          <div style={{ background: 'rgba(6, 40, 60, 0.85)', backdropFilter: 'blur(4px)', border: '1px solid rgba(6, 182, 212, 0.4)', borderRadius: 8, padding: '6px 12px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+            <p style={{ fontSize: 10, color: '#e2e8f0', fontWeight: 600 }}>Disponível</p>
+            <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcMm)} mm</p>
           </div>
         </div>
 
-        {/* Sonda vertical */}
-        <div style={{
-          position: 'absolute', left: '50%', top: `${100 - ctaTopPct}%`, bottom: '4%',
-          width: 8, background: 'linear-gradient(to bottom, #94a3b8, #64748b)',
-          borderRadius: 4, transform: 'translateX(-50%)', zIndex: 4,
-        }}>
-          <div style={{ position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)', width: 14, height: 14, borderRadius: '50%', background: '#475569' }} />
-        </div>
-
-        {/* Label profundidade de manejo */}
-        <div style={{ position: 'absolute', left: '50%', bottom: `${Math.max(8, adcTopPct * 0.35)}%`, transform: 'translateX(-40%)', zIndex: 5 }}>
-          <div style={{ background: 'rgba(15,25,35,0.9)', borderRadius: 6, padding: '4px 10px', whiteSpace: 'nowrap' }}>
-            <p style={{ fontSize: 10, color: '#94a3b8' }}>Prof. de Manejo</p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(rootDepthCm, 0)} cm</p>
+        {/* Label Profundidade de Manejo — Colado na ponta inferior da Sonda */}
+        <div style={{ position: 'absolute', left: '50%', bottom: '8%', transform: 'translateX(-50%)', zIndex: 5 }}>
+          <div style={{ background: 'rgba(20, 30, 45, 0.95)', border: '1px solid rgba(136,153,170,0.3)', borderRadius: 6, padding: '6px 12px', whiteSpace: 'nowrap', textAlign: 'center' }}>
+            <p style={{ fontSize: 10, color: '#8899aa', fontWeight: 600 }}>Prof. de Manejo</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)', marginTop: 2 }}>{fmtNum(rootDepthCm, 0)} cm</p>
           </div>
         </div>
 
-        {/* CC% e status — canto superior esquerdo */}
-        <div style={{ position: 'absolute', top: `${100 - ctaTopPct + 6}%`, left: 8, zIndex: 5 }}>
-          <div style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 8, padding: '3px 8px' }}>
+        {/* CC% e Status — Canto Superior Esquerdo */}
+        <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 5 }}>
+          <div style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 8, padding: '4px 10px', backdropFilter: 'blur(2px)' }}>
             <p style={{ fontSize: 11, fontWeight: 800, color: cfg.color }}>{fmtNum(fieldCapacityPercent, 0)}% · {cfg.label}</p>
           </div>
         </div>
@@ -238,10 +261,10 @@ function SoilDiagramRich({
       {/* ── Legenda ── */}
       <div style={{ padding: '0 20px 14px', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         {[
-          { color: '#22c55e', label: 'Superfície' },
-          { color: '#06b6d4', label: 'Água disponível' },
-          { color: '#facc15', label: 'Limite CAD' },
-          { color: '#ef4444', label: 'Ponto de murcha' },
+          { color: '#22c55e', label: 'Cap. de Campo (CC)' },
+          { color: '#06b6d4', label: 'Umidade Atual' },
+          { color: '#f59e0b', label: 'Limite CAD' },
+          { color: '#ef4444', label: 'Ponto de Murcha' },
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 18, height: 3, background: color, borderRadius: 2 }} />
@@ -389,14 +412,26 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
             labelStyle={{ color: '#8899aa', marginBottom: 4 }}
             cursor={{ fill: 'rgba(255,255,255,0.03)' }}
           />
+          <defs>
+            <linearGradient id="moistureGradient" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stopColor="#ef4444" />
+              <stop offset={`${safetyPct}%`} stopColor="#ef4444" />
+              <stop offset={`${safetyPct}%`} stopColor="#0093D0" />
+              <stop offset="100%" stopColor="#0093D0" />
+            </linearGradient>
+          </defs>
+
+          <ReferenceArea yAxisId="pct" y1={safetyPct} y2={100} fill="rgba(34, 197, 94, 0.04)" />
+          <ReferenceArea yAxisId="pct" y1={0} y2={safetyPct} fill="rgba(239, 68, 68, 0.04)" />
+
           <ReferenceLine yAxisId="pct" y={100}        stroke="#22c55e" strokeDasharray="5 4" strokeWidth={1.5} />
           <ReferenceLine yAxisId="pct" y={safetyPct}  stroke="#f59e0b" strokeDasharray="5 4" strokeWidth={1.5} />
           <ReferenceLine yAxisId="pct" y={0}          stroke="#ef4444" strokeDasharray="5 4" strokeWidth={1.5} />
 
           <Bar yAxisId="mm" dataKey="irrigation" name="Irrigação (mm)"    fill="#22d3ee" radius={[3,3,0,0]} maxBarSize={14} />
-          <Bar yAxisId="mm" dataKey="rainfall"   name="Precipitação (mm)" fill="rgba(200,210,220,0.65)" radius={[3,3,0,0]} maxBarSize={14} />
+          <Bar yAxisId="mm" dataKey="rainfall"   name="Precipitação (mm)" fill="rgba(255,255,255,0.85)" radius={[3,3,0,0]} maxBarSize={14} />
 
-          <Line yAxisId="pct" type="monotone" dataKey="moisture"    name="% Campo"       stroke="#0093D0" strokeWidth={2.5} dot={false} connectNulls />
+          <Line yAxisId="pct" type="monotone" dataKey="moisture"    name="% Campo"       stroke="url(#moistureGradient)" strokeWidth={3} dot={false} connectNulls />
           <Line yAxisId="pct" type="monotone" dataKey="stageChange" name="Troca de fase"  stroke="transparent" strokeWidth={0}
             dot={{ fill: '#f59e0b', r: 6, strokeWidth: 2, stroke: '#0d1520' }}
             activeDot={false} connectNulls={false}
@@ -422,7 +457,7 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
           <span style={{ fontSize: 10, color: '#556677' }}>Irrigação (mm)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(200,210,220,0.65)' }} />
+          <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(255,255,255,0.85)' }} />
           <span style={{ fontSize: 10, color: '#556677' }}>Precipitação (mm)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
