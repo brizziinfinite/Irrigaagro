@@ -148,6 +148,9 @@ export interface Pivot {
   return_interval_days: number
   preferred_speed_percent: number | null
   min_speed_percent: number | null
+  rs_correction_factor: number | null
+  rs_factor_updated_at: string | null
+  rs_factor_sample_days: number | null
 }
 
 export interface PivotInsert {
@@ -366,6 +369,9 @@ export interface WeatherStation {
   device_id: string | null
   api_provider: WeatherStationProvider
   created_at: string
+  rs_correction_factor: number | null
+  rs_factor_updated_at: string | null
+  rs_factor_sample_days: number | null
 }
 
 export interface WeatherStationInsert {

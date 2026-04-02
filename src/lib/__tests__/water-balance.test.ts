@@ -48,6 +48,7 @@ function makePivot(overrides: Partial<Pivot> = {}): Pivot {
     sector_start_deg: null, sector_end_deg: null,
     operation_mode: 'individual', paired_pivot_id: null, return_interval_days: 1,
     preferred_speed_percent: 50, min_speed_percent: 42,
+    rs_correction_factor: null, rs_factor_updated_at: null, rs_factor_sample_days: null,
     ...overrides,
   }
 }
