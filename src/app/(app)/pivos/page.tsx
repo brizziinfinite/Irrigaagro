@@ -441,7 +441,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4" onClick={e => e.stopPropagation()}>
           {/* Fazenda */}
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Fazenda *</label>
@@ -994,8 +994,9 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               Cancelar
             </button>
             <button
-              type="submit"
+              type="button"
               disabled={loading}
+              onClick={e => { e.preventDefault(); e.stopPropagation(); handleSubmit(e as unknown as React.FormEvent) }}
               style={{
                 flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 700, letterSpacing: '0.05em',
                 background: 'linear-gradient(135deg, #00E5FF 0%, #0077B6 100%)', border: 'none', color: '#fff', cursor: 'pointer',
