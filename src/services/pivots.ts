@@ -4,6 +4,7 @@ import type { TypedSupabaseClient } from './base'
 
 export interface PivotWithFarmName extends Pivot {
   farms: { name: string } | null
+  sectorCount?: number
 }
 
 const pivotsTable = (client: TypedSupabaseClient) => (client as any).from('pivots')
@@ -25,7 +26,23 @@ export async function listPivotsByFarmIds(
     throw new Error(`Falha ao listar pivôs: ${error.message}`)
   }
 
-  return (data ?? []) as PivotWithFarmName[]
+  const pivots = (data ?? []) as PivotWithFarmName[]
+
+  // Busca contagem de setores separadamente para evitar join complexo no PostgREST
+  const ids = pivots.map(p => p.id)
+  if (ids.length === 0) return pivots
+
+  const { data: sectorRows } = await (client as any)
+    .from('pivot_sectors')
+    .select('pivot_id')
+    .in('pivot_id', ids)
+
+  const countMap: Record<string, number> = {}
+  for (const row of (sectorRows ?? [])) {
+    countMap[row.pivot_id] = (countMap[row.pivot_id] ?? 0) + 1
+  }
+
+  return pivots.map(p => ({ ...p, sectorCount: countMap[p.id] ?? 0 }))
 }
 
 export async function createPivot(

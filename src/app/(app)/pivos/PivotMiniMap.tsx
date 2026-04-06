@@ -8,10 +8,11 @@ export interface PivotMiniMapProps {
   latitude: number | null
   longitude: number | null
   lengthM: number | null
-  sectorStart: number | null
-  sectorEnd: number | null
+  sectors: { start: string; end: string }[]
   onLocationChange: (lat: number, lng: number) => void
 }
+
+const SECTOR_COLORS = ['#0093D0', '#22c55e', '#f59e0b', '#a855f7', '#ef4444', '#22d3ee']
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LeafletModule = typeof import('leaflet') & { [key: string]: any }
@@ -20,8 +21,7 @@ export function PivotMiniMap({
   latitude,
   longitude,
   lengthM,
-  sectorStart,
-  sectorEnd,
+  sectors,
   onLocationChange,
 }: PivotMiniMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -30,7 +30,7 @@ export function PivotMiniMap({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const geometryRef = useRef<any>(null)
+  const geometryLayersRef = useRef<any[]>([])
   const leafletRef = useRef<LeafletModule | null>(null)
 
   // ── Effect 1: mount map once ──────────────────────────────────────────────
@@ -128,44 +128,41 @@ export function PivotMiniMap({
       markerRef.current = null
     }
 
-    // Remove old geometry layer
-    if (geometryRef.current) {
-      geometryRef.current.remove()
-      geometryRef.current = null
-    }
+    // Remove all old geometry layers
+    for (const layer of geometryLayersRef.current) layer.remove()
+    geometryLayersRef.current = []
 
-    // Draw new geometry
     if (latitude !== null && longitude !== null && lengthM && lengthM > 0) {
-      const isFullCircle = sectorStart === null || sectorEnd === null
-      if (isFullCircle) {
-        geometryRef.current = L.circle([latitude, longitude], {
-          radius: lengthM,
-          color: '#0093D0',
-          weight: 2,
-          fillColor: '#0093D0',
-          fillOpacity: 0.15,
-          interactive: false,
-        }).addTo(map)
-      } else {
-        const coords = buildSectorPolygon(latitude, longitude, lengthM, sectorStart, sectorEnd)
-        geometryRef.current = L.polygon(coords, {
-          color: '#0093D0',
-          weight: 2,
-          fillColor: '#0093D0',
-          fillOpacity: 0.15,
-          interactive: false,
-        }).addTo(map)
-      }
+      const sectorsWithAngles = sectors.filter(s => s.start !== '' && s.end !== '')
 
-      // Fit map to show geometry
-      const pts = buildSectorPolygon(latitude, longitude, lengthM, sectorStart, sectorEnd)
-      if (pts.length > 1) {
-        map.fitBounds(L.latLngBounds(pts), { padding: [30, 30] })
+      if (sectorsWithAngles.length === 0) {
+        // Círculo completo
+        const layer = L.circle([latitude, longitude], {
+          radius: lengthM, color: '#0093D0', weight: 2,
+          fillColor: '#0093D0', fillOpacity: 0.15, interactive: false,
+        }).addTo(map)
+        geometryLayersRef.current = [layer]
+        map.setView([latitude, longitude], 14)
+      } else {
+        // Um polígono por setor com cor diferente
+        const allPoints: [number, number][] = []
+        sectorsWithAngles.forEach((s, i) => {
+          const color = SECTOR_COLORS[i % SECTOR_COLORS.length]
+          const coords = buildSectorPolygon(latitude, longitude, lengthM, Number(s.start), Number(s.end))
+          const layer = L.polygon(coords, {
+            color, weight: 2, fillColor: color, fillOpacity: 0.2, interactive: false,
+          }).addTo(map)
+          geometryLayersRef.current.push(layer)
+          allPoints.push(...coords)
+        })
+        if (allPoints.length > 1) {
+          map.fitBounds(L.latLngBounds(allPoints), { padding: [30, 30] })
+        }
       }
     } else if (latitude !== null && longitude !== null) {
       map.setView([latitude, longitude], 14)
     }
-  }, [latitude, longitude, lengthM, sectorStart, sectorEnd, onLocationChange])
+  }, [latitude, longitude, lengthM, sectors, onLocationChange])
 
   return (
     <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>

@@ -19,6 +19,7 @@ import {
   upsertDailyManagementRecord,
   type ManagementExternalData,
 } from '@/services/management'
+import { upsertRainfallRecord } from '@/services/rainfall'
 import {
   type EToSource,
   type EToConfidence,
@@ -1080,6 +1081,21 @@ export default function ManejoPage() {
     }
     try {
       await upsertDailyManagementRecord(payload)
+
+      // Sincroniza chuva manual com rainfall_records
+      // Assim a correção feita no manejo aparece em /precipitacoes
+      const pivotId = selectedSeason.pivots?.id
+      const rainfallMm = payload.rainfall_mm ?? 0
+      if (pivotId && rainfallMm > 0) {
+        await upsertRainfallRecord({
+          pivot_id: pivotId,
+          date,
+          rainfall_mm: rainfallMm,
+          source: 'manual',
+          sector_id: null,
+        })
+      }
+
       setSaveMsg('Registro salvo com sucesso!')
       setEditingRecord(null)
       await loadHistory(selectedSeason.id)

@@ -439,7 +439,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onS
         pivot_id: pivotId,
         date,
         rainfall_mm: mm,
-        source: existing?.source ?? 'manual',
+        source: 'manual',
         sector_id: sectorId,
         updated_at: new Date().toISOString(),
       })
@@ -492,15 +492,27 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onS
           </button>
         </div>
 
-        {existing && (
-          <div style={{
-            fontSize: 11, padding: '3px 10px', borderRadius: 20,
-            background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#556677',
-            alignSelf: 'flex-start',
-          }}>
-            Fonte: {existing.source === 'manual' ? 'Manual' : existing.source === 'import' ? 'Importação' : 'Estação'}
-          </div>
-        )}
+        {existing && (() => {
+          const sourceCfg: Record<string, { label: string; color: string; border: string }> = {
+            manual:   { label: 'Manual',    color: '#22c55e', border: 'rgb(34 197 94 / 0.25)' },
+            import:   { label: 'Importado', color: '#f59e0b', border: 'rgb(245 158 11 / 0.25)' },
+            station:  { label: 'Estação',   color: '#8899aa', border: 'rgba(255,255,255,0.12)' },
+            plugfield:{ label: 'Plugfield', color: '#22d3ee', border: 'rgb(34 211 238 / 0.25)' },
+          }
+          const cfg = sourceCfg[existing.source] ?? sourceCfg.station
+          return (
+            <div style={{
+              fontSize: 11, padding: '3px 10px', borderRadius: 20,
+              background: '#0d1520', border: `1px solid ${cfg.border}`, color: cfg.color,
+              alignSelf: 'flex-start',
+            }}>
+              {cfg.label}
+              {existing.source === 'plugfield' && (
+                <span style={{ color: '#556677', marginLeft: 4 }}>— editar muda para Manual</span>
+              )}
+            </div>
+          )
+        })()}
 
         {error && (
           <div style={{
@@ -550,10 +562,11 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onS
             <button
               onClick={handleClear}
               disabled={saving}
+              title={existing.source === 'plugfield' ? 'O cron vai recriar este registro automaticamente no proximo dia' : undefined}
               style={{
                 padding: '10px 14px', borderRadius: 8,
                 background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
-                color: '#8899aa', cursor: 'pointer', fontSize: 13,
+                color: existing.source === 'plugfield' ? '#f59e0b' : '#8899aa', cursor: 'pointer', fontSize: 13,
               }}
             >
               Limpar

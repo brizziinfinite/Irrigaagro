@@ -12,8 +12,7 @@ import {
   updatePivot,
   type PivotWithFarmName,
 } from '@/services/pivots'
-import { CircleDot, Plus, Pencil, Trash2, X, Loader2, ChevronDown, Table2, ChevronRight, MapPin, Satellite, Sheet, Hand, Radio, Layers, Link2 } from 'lucide-react'
-import type { PivotSector } from '@/types/database'
+import { CircleDot, Plus, Pencil, Trash2, X, Loader2, ChevronDown, Table2, ChevronRight, MapPin, Satellite, Sheet, Hand, Radio, Link2, Layers } from 'lucide-react'
 import { listSectorsByPivotId, createSector, updateSector, deleteSector } from '@/services/pivot-sectors'
 
 const PivotMiniMapDynamic = dynamic(
@@ -209,72 +208,41 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
   const [plugfieldDeviceId, setPlugfieldDeviceId] = useState(pivot?.weather_config?.plugfield_device_id?.toString() ?? '')
   const [plugfieldToken, setPlugfieldToken] = useState(pivot?.weather_config?.plugfield_token ?? '')
   const [plugfieldApiKey, setPlugfieldApiKey] = useState(pivot?.weather_config?.plugfield_api_key ?? '')
-  const [sectorStart, setSectorStart] = useState<string>(pivot?.sector_start_deg?.toString() ?? '')
-  const [sectorEnd, setSectorEnd] = useState<string>(pivot?.sector_end_deg?.toString() ?? '')
   const [operationMode, setOperationMode] = useState<OperationMode>(pivot?.operation_mode ?? 'individual')
+
+  // Setores — estado local para novos pivôs; carregado do banco na edição
+  interface PendingSector { id?: string; name: string; start: string; end: string }
+  const [sectors, setSectors] = useState<PendingSector[]>([])
+  const [sectorsLoaded, setSectorsLoaded] = useState(false)
+  const [newSectorName, setNewSectorName] = useState('')
+  const [newSectorStart, setNewSectorStart] = useState('')
+  const [newSectorEnd, setNewSectorEnd] = useState('')
+  const [sectorError, setSectorError] = useState('')
+  const [deletingSectorId, setDeletingSectorId] = useState<string | null>(null)
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editStart, setEditStart] = useState('')
+  const [editEnd, setEditEnd] = useState('')
+  const [savingEditIndex, setSavingEditIndex] = useState<number | null>(null)
+
+  // Carrega setores existentes na edição
+  useEffect(() => {
+    if (!pivot?.id || sectorsLoaded) return
+    let cancelled = false
+    listSectorsByPivotId(pivot.id).then(data => {
+      if (!cancelled) {
+        setSectors(data.map(s => ({ id: s.id, name: s.name, start: s.angle_start?.toString() ?? '', end: s.angle_end?.toString() ?? '' })))
+        setSectorsLoaded(true)
+      }
+    }).catch(() => { if (!cancelled) setSectorsLoaded(true) })
+    return () => { cancelled = true }
+  }, [pivot?.id, sectorsLoaded])
   const [pairedPivotId, setPairedPivotId] = useState(pivot?.paired_pivot_id ?? '')
   const [returnIntervalDays, setReturnIntervalDays] = useState(pivot?.return_interval_days?.toString() ?? '1')
   const [preferredSpeed, setPreferredSpeed] = useState(pivot?.preferred_speed_percent?.toString() ?? '')
   const [minSpeedPct, setMinSpeedPct] = useState(pivot?.min_speed_percent?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  // Sectors
-  const [sectors, setSectors] = useState<PivotSector[]>([])
-  const [loadingSectors, setLoadingSectors] = useState(false)
-  const [newSectorName, setNewSectorName] = useState('')
-  const [newSectorStart, setNewSectorStart] = useState('')
-  const [newSectorEnd, setNewSectorEnd] = useState('')
-  const [sectorError, setSectorError] = useState('')
-  const [savingSector, setSavingSector] = useState(false)
-  const [deletingSectorId, setDeletingSectorId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!pivot?.id) { setSectors([]); return }
-    let cancelled = false
-    setLoadingSectors(true)
-    listSectorsByPivotId(pivot.id)
-      .then(data => { if (!cancelled) setSectors(data) })
-      .catch(() => { if (!cancelled) setSectors([]) })
-      .finally(() => { if (!cancelled) setLoadingSectors(false) })
-    return () => { cancelled = true }
-  }, [pivot?.id])
-
-  async function handleAddSector() {
-    if (!pivot?.id) return
-    if (!newSectorName.trim()) { setSectorError('Informe o nome do setor.'); return }
-    setSectorError('')
-    setSavingSector(true)
-    try {
-      const created = await createSector({
-        pivot_id: pivot.id,
-        name: newSectorName.trim(),
-        angle_start: newSectorStart ? Number(newSectorStart) : null,
-        angle_end: newSectorEnd ? Number(newSectorEnd) : null,
-        sort_order: sectors.length,
-      })
-      setSectors(prev => [...prev, created])
-      setNewSectorName('')
-      setNewSectorStart('')
-      setNewSectorEnd('')
-    } catch (e) {
-      setSectorError(e instanceof Error ? e.message : 'Falha ao criar setor')
-    } finally {
-      setSavingSector(false)
-    }
-  }
-
-  async function handleDeleteSector(id: string) {
-    setDeletingSectorId(id)
-    try {
-      await deleteSector(id)
-      setSectors(prev => prev.filter(s => s.id !== id))
-    } catch {
-      // ignore
-    } finally {
-      setDeletingSectorId(null)
-    }
-  }
 
   // Stable callback so PivotMiniMap's useEffect doesn't re-run on every render (REGRA #3)
   const handleLocationChange = useCallback((lat: number, lng: number) => {
@@ -315,30 +283,6 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
       }
     }
 
-    // Sector validation
-    const hasStart = sectorStart.trim() !== ''
-    const hasEnd = sectorEnd.trim() !== ''
-    if (hasStart !== hasEnd) {
-      setError('Informe início e fim do setor, ou deixe ambos vazios para círculo completo.')
-      return
-    }
-    if (hasStart && hasEnd) {
-      const sStart = Number(sectorStart)
-      const sEnd = Number(sectorEnd)
-      if (isNaN(sStart) || sStart < 0 || sStart > 360) {
-        setError('Ângulo de início do setor deve ser entre 0 e 360°.')
-        return
-      }
-      if (isNaN(sEnd) || sEnd < 0 || sEnd > 360) {
-        setError('Ângulo de fim do setor deve ser entre 0 e 360°.')
-        return
-      }
-      if (sStart === sEnd) {
-        setError('Ângulos iguais criam um setor vazio. Use 0 e 360 para círculo completo, ou deixe ambos vazios.')
-        return
-      }
-    }
-
     setError('')
     setLoading(true)
 
@@ -363,8 +307,6 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               ...(pivot?.weather_config?.station_id ? { station_id: pivot.weather_config.station_id } : {}),
             }
           : null,
-      sector_start_deg: sectorStart ? Number(sectorStart) : null,
-      sector_end_deg: sectorEnd ? Number(sectorEnd) : null,
       operation_mode: operationMode,
       paired_pivot_id: operationMode === 'conjugated' && pairedPivotId ? pairedPivotId : null,
       return_interval_days: returnIntervalDays ? Number(returnIntervalDays) : 1,
@@ -373,18 +315,98 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
     }
 
     try {
+      let pivotId: string
       if (isEdit) {
         await updatePivot(pivot.id, payload)
+        pivotId = pivot.id
       } else {
-        await createPivot(payload)
+        const created = await createPivot(payload)
+        pivotId = created.id
+      }
+
+      const newSectors = sectors.filter(s => !s.id)
+      if (newSectors.length > 0) {
+        const existingCount = sectors.filter(x => x.id).length
+        await Promise.all(newSectors.map((s, i) =>
+          createSector({
+            pivot_id: pivotId,
+            name: s.name,
+            angle_start: s.start ? Number(s.start) : null,
+            angle_end: s.end ? Number(s.end) : null,
+            sort_order: existingCount + i,
+          })
+        ))
       }
 
       await onSaved()
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao salvar pivô')
+      console.error('[PivotModal] Erro ao salvar:', err)
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
+    }
+  }
+
+  function handleAddSector() {
+    if (!newSectorName.trim()) { setSectorError('Informe o nome do setor.'); return }
+    const hasStart = newSectorStart.trim() !== ''
+    const hasEnd = newSectorEnd.trim() !== ''
+    if (hasStart !== hasEnd) { setSectorError('Informe início e fim, ou deixe ambos vazios.'); return }
+    setSectorError('')
+    setSectors(prev => [...prev, { name: newSectorName.trim(), start: newSectorStart, end: newSectorEnd }])
+    setNewSectorName('')
+    setNewSectorStart('')
+    setNewSectorEnd('')
+  }
+
+  async function handleRemoveSector(index: number) {
+    const s = sectors[index]
+    if (s.id) {
+      setDeletingSectorId(s.id)
+      try {
+        await deleteSector(s.id)
+        setSectors(prev => prev.filter((_, i) => i !== index))
+        if (editingIndex === index) setEditingIndex(null)
+      } catch (err) {
+        setSectorError(err instanceof Error ? err.message : 'Falha ao excluir setor')
+      } finally {
+        setDeletingSectorId(null)
+      }
+    } else {
+      setSectors(prev => prev.filter((_, i) => i !== index))
+      if (editingIndex === index) setEditingIndex(null)
+    }
+  }
+
+  function handleStartEdit(index: number) {
+    const s = sectors[index]
+    setEditingIndex(index)
+    setEditName(s.name)
+    setEditStart(s.start)
+    setEditEnd(s.end)
+  }
+
+  async function handleSaveSectorEdit(index: number) {
+    if (!editName.trim()) return
+    const s = sectors[index]
+    setSavingEditIndex(index)
+    try {
+      if (s.id) {
+        await updateSector(s.id, {
+          name: editName.trim(),
+          angle_start: editStart ? Number(editStart) : null,
+          angle_end: editEnd ? Number(editEnd) : null,
+        })
+      }
+      setSectors(prev => prev.map((item, i) =>
+        i === index ? { ...item, name: editName.trim(), start: editStart, end: editEnd } : item
+      ))
+      setEditingIndex(null)
+    } catch {
+      // silencioso
+    } finally {
+      setSavingEditIndex(null)
     }
   }
 
@@ -412,7 +434,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
           {/* Fazenda */}
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Fazenda *</label>
@@ -512,8 +534,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             latitude={parsedCoords?.lat ?? null}
             longitude={parsedCoords?.lng ?? null}
             lengthM={parseFloat(lengthM) || null}
-            sectorStart={sectorStart ? parseFloat(sectorStart) : null}
-            sectorEnd={sectorEnd ? parseFloat(sectorEnd) : null}
+            sectors={sectors}
             onLocationChange={handleLocationChange}
           />
 
@@ -553,66 +574,117 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             )}
           </div>
 
-          {/* Separador setor */}
+          {/* ── Setores ─────────────────────────────────────────── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Setor de Irrigação</span>
+            <Layers size={11} style={{ color: '#556677' }} />
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Setores</span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
             <span style={{ fontSize: 10, color: '#556677' }}>opcional</span>
           </div>
           <p style={{ fontSize: 11, color: '#556677', margin: '-8px 0 0' }}>
-            Deixe vazio para círculo completo (360°).
+            Divida o pivô em setores para irrigação e precipitação. Sem setores = círculo completo.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {/* Lista de setores */}
+          {sectors.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {sectors.map((s, i) => (
+                editingIndex === i ? (
+                  /* Modo edição inline */
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto auto', gap: 6, alignItems: 'center', padding: '8px 10px', background: '#0d1520', borderRadius: 8, border: '1px solid rgba(0,147,208,0.3)' }}>
+                    <input
+                      type="text" value={editName} onChange={e => setEditName(e.target.value)}
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveSectorEdit(i) } if (e.key === 'Escape') setEditingIndex(null) }}
+                      style={{ padding: '5px 8px', borderRadius: 6, fontSize: 13, background: '#111f2e', border: '1px solid rgba(0,147,208,0.4)', color: '#e2e8f0', outline: 'none' }}
+                    />
+                    <input
+                      type="number" value={editStart} onChange={e => setEditStart(e.target.value)}
+                      placeholder="Início°" min={0} max={360} step="any"
+                      style={{ padding: '5px 8px', borderRadius: 6, fontSize: 13, background: '#111f2e', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+                    />
+                    <input
+                      type="number" value={editEnd} onChange={e => setEditEnd(e.target.value)}
+                      placeholder="Fim°" min={0} max={360} step="any"
+                      style={{ padding: '5px 8px', borderRadius: 6, fontSize: 13, background: '#111f2e', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+                    />
+                    <button type="button" onClick={() => handleSaveSectorEdit(i)} disabled={savingEditIndex === i}
+                      style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: '#0093D0', color: '#fff', fontSize: 12, fontWeight: 600 }}>
+                      {savingEditIndex === i ? <Loader2 size={11} className="animate-spin" /> : 'OK'}
+                    </button>
+                    <button type="button" onClick={() => setEditingIndex(null)}
+                      style={{ padding: '5px 8px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'transparent', color: '#556677' }}>
+                      <X size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  /* Modo visualização */
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#0d1520', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{s.name}</span>
+                    {(s.start || s.end) && (
+                      <span style={{ fontSize: 11, color: '#556677', fontFamily: 'var(--font-mono)' }}>
+                        {s.start || '—'}°–{s.end || '—'}°
+                      </span>
+                    )}
+                    <button type="button" onClick={() => handleStartEdit(i)}
+                      style={{ padding: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: '#556677' }}>
+                      <Pencil size={12} />
+                    </button>
+                    <button type="button" onClick={() => handleRemoveSector(i)} disabled={deletingSectorId === s.id}
+                      style={{ padding: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: '#556677' }}>
+                      {deletingSectorId === s.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    </button>
+                  </div>
+                )
+              ))}
+            </div>
+          )}
+
+          {/* Formulário adicionar setor */}
+          {sectorError && <p style={{ fontSize: 11, color: '#ef4444', margin: '-4px 0' }}>{sectorError}</p>}
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, alignItems: 'flex-end' }}>
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
-                Início do setor
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="number"
-                  value={sectorStart}
-                  onChange={e => setSectorStart(e.target.value)}
-                  placeholder="Ex: 0"
-                  step="any"
-                  min={0}
-                  max={360}
-                  style={{
-                    width: '100%', padding: '10px 44px 10px 14px', borderRadius: 10, fontSize: 14,
-                    background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
-                  }}
-                  onFocus={e => e.target.style.borderColor = '#0093D0'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
-                />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#556677', pointerEvents: 'none' }}>°</span>
-              </div>
-              <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>0=Norte, 90=Leste</p>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Nome *</label>
+              <input
+                type="text"
+                value={newSectorName}
+                onChange={e => setNewSectorName(e.target.value)}
+                placeholder="Ex: A, B, Norte…"
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddSector() } }}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', boxSizing: 'border-box' }}
+                onFocus={e => e.target.style.borderColor = '#0093D0'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
-                Fim do setor
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="number"
-                  value={sectorEnd}
-                  onChange={e => setSectorEnd(e.target.value)}
-                  placeholder="Ex: 270"
-                  step="any"
-                  min={0}
-                  max={360}
-                  style={{
-                    width: '100%', padding: '10px 44px 10px 14px', borderRadius: 10, fontSize: 14,
-                    background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
-                  }}
-                  onFocus={e => e.target.style.borderColor = '#0093D0'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
-                />
-                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#556677', pointerEvents: 'none' }}>°</span>
-              </div>
-              <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>sentido horário</p>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Início °</label>
+              <input
+                type="number" value={newSectorStart} onChange={e => setNewSectorStart(e.target.value)}
+                placeholder="0" min={0} max={360} step="any"
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', boxSizing: 'border-box' }}
+                onFocus={e => e.target.style.borderColor = '#0093D0'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              />
             </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Fim °</label>
+              <input
+                type="number" value={newSectorEnd} onChange={e => setNewSectorEnd(e.target.value)}
+                placeholder="270" min={0} max={360} step="any"
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', boxSizing: 'border-box' }}
+                onFocus={e => e.target.style.borderColor = '#0093D0'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleAddSector}
+              style={{ padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
+            >
+              <Plus size={12} /> Adicionar
+            </button>
           </div>
+          <p style={{ fontSize: 11, color: '#556677', margin: '-4px 0 0' }}>0=Norte, 90=Leste, sentido horário</p>
 
           {/* Limiar de alerta */}
           <div>
@@ -884,103 +956,6 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             </div>
           )}
 
-          {/* Setores de precipitação — só disponível na edição */}
-          {isEdit && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
-                <Layers size={11} style={{ color: '#556677' }} />
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Setores de Precipitação</span>
-                <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
-                <span style={{ fontSize: 10, color: '#556677' }}>opcional</span>
-              </div>
-              <p style={{ fontSize: 11, color: '#556677', margin: '-8px 0 0' }}>
-                Divida o pivô em zonas para registrar chuva por setor.
-              </p>
-
-              {/* Sector list */}
-              {loadingSectors ? (
-                <div style={{ fontSize: 11, color: '#556677' }}>Carregando setores…</div>
-              ) : sectors.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {sectors.map(s => (
-                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#0d1520', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{s.name}</span>
-                      {s.angle_start != null && s.angle_end != null && (
-                        <span style={{ fontSize: 11, color: '#556677', fontFamily: 'var(--font-mono)' }}>{s.angle_start}°–{s.angle_end}°</span>
-                      )}
-                      {s.area_ha && <span style={{ fontSize: 11, color: '#556677' }}>{s.area_ha} ha</span>}
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteSector(s.id)}
-                        disabled={deletingSectorId === s.id}
-                        style={{ padding: '4px', border: 'none', background: 'transparent', cursor: 'pointer', color: '#556677' }}
-                      >
-                        {deletingSectorId === s.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add sector form */}
-              {sectorError && (
-                <p style={{ fontSize: 11, color: '#ef4444' }}>{sectorError}</p>
-              )}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                <div style={{ flex: '2 1 120px' }}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Nome do Setor</label>
-                  <input
-                    type="text"
-                    value={newSectorName}
-                    onChange={e => setNewSectorName(e.target.value)}
-                    placeholder="Ex: A, B, Norte…"
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
-                    onFocus={e => e.target.style.borderColor = '#0093D0'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
-                  />
-                </div>
-                <div style={{ flex: '1 1 70px' }}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Início °</label>
-                  <input
-                    type="number"
-                    value={newSectorStart}
-                    onChange={e => setNewSectorStart(e.target.value)}
-                    placeholder="0"
-                    min={0} max={360} step="any"
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
-                    onFocus={e => e.target.style.borderColor = '#0093D0'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
-                  />
-                </div>
-                <div style={{ flex: '1 1 70px' }}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Fim °</label>
-                  <input
-                    type="number"
-                    value={newSectorEnd}
-                    onChange={e => setNewSectorEnd(e.target.value)}
-                    placeholder="90"
-                    min={0} max={360} step="any"
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
-                    onFocus={e => e.target.style.borderColor = '#0093D0'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddSector}
-                  disabled={savingSector}
-                  style={{
-                    padding: '8px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                    background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 12,
-                    display: 'flex', alignItems: 'center', gap: 4, opacity: savingSector ? 0.7 : 1, flexShrink: 0,
-                  }}
-                >
-                  {savingSector ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                  Adicionar
-                </button>
-              </div>
-            </>
-          )}
 
           {/* Botões */}
           <div className="flex gap-3 mt-2">
@@ -1087,9 +1062,9 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
                 {pivot.weather_source === 'nasa' ? 'NASA POWER' : pivot.weather_source === 'plugfield' ? 'Plugfield' : 'Google Sheets'}
               </span>
             )}
-            {pivot.sector_start_deg != null && (
+            {pivot.sectorCount != null && pivot.sectorCount > 0 && (
               <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(0, 229, 255, 0.06)', border: '1px solid rgba(0, 229, 255, 0.15)', color: '#00E5FF', fontWeight: 500 }}>
-                Setor {pivot.sector_start_deg}°–{pivot.sector_end_deg}°
+                {pivot.sectorCount} {pivot.sectorCount === 1 ? 'setor' : 'setores'}
               </span>
             )}
             {pivot.operation_mode === 'conjugated' && (

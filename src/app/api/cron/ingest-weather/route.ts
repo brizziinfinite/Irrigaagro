@@ -579,6 +579,31 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ── Grava chuva em rainfall_records (source='plugfield') ──────────────────
+    // Só grava se teve chuva detectada pelo sensor
+    // Preserva edições manuais: não sobrescreve registros source='manual'
+    if (weatherDay.rainfall > 0) {
+      const { data: existingRainfall } = await (supabase as any)
+        .from('rainfall_records')
+        .select('id, source')
+        .eq('pivot_id', pivot.id)
+        .eq('date', fetchDate)
+        .is('sector_id', null)
+        .maybeSingle()
+
+      if (!existingRainfall || existingRainfall.source !== 'manual') {
+        await (supabase as any)
+          .from('rainfall_records')
+          .upsert({
+            pivot_id: pivot.id,
+            date: fetchDate,
+            rainfall_mm: weatherDay.rainfall,
+            source: 'plugfield',
+            sector_id: null,
+          }, { onConflict: 'pivot_id,sector_id,date' })
+      }
+    }
+
     const usedFactor = rsSource === 'plugfield_fallback'
       ? ((station?.rs_correction_factor ?? null) ?? (pivot.rs_correction_factor ?? null) ?? parseFloat(process.env.ETO_PLUGFIELD_CORRECTION_FACTOR ?? '0.82'))
       : null
