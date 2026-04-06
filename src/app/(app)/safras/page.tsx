@@ -12,9 +12,11 @@ import {
   listSeasonsByFarmIds,
   updateSeason,
 } from '@/services/seasons'
+import { getLastManagementBySeason } from '@/services/management'
+import type { DailyManagement } from '@/types/database'
 import {
   Sprout, Plus, Pencil, Trash2, X, Loader2, ChevronDown,
-  CalendarDays, Droplets, FlaskConical, Info,
+  CalendarDays, Droplets, FlaskConical, Info, TrendingDown, AlertTriangle,
 } from 'lucide-react'
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -337,10 +339,63 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
   )
 }
 
+// ─── Mini Wave de umidade ─────────────────────────────────────
+function MiniWave({ pct, threshold = 70 }: { pct: number; threshold?: number }) {
+  const clamped = Math.max(0, Math.min(100, pct))
+  const color = clamped >= threshold * 1.15 ? '#22c55e'
+    : clamped >= threshold ? '#f59e0b'
+    : '#ef4444'
+  const waveY = 100 - clamped
+
+  return (
+    <div style={{ position: 'relative', width: 64, height: 64, borderRadius: 12, overflow: 'hidden', background: 'rgba(0,0,0,0.25)', border: `1px solid ${color}30`, flexShrink: 0 }}>
+      <svg width="64" height="64" style={{ position: 'absolute', inset: 0 }}>
+        <defs>
+          <style>{`
+            @keyframes wave1 { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+            @keyframes wave2 { from { transform: translateX(-50%) } to { transform: translateX(0) } }
+          `}</style>
+        </defs>
+        {/* Onda 1 */}
+        <g style={{ animation: 'wave1 3s linear infinite' }}>
+          <path d={`M0,${waveY} Q16,${waveY - 6} 32,${waveY} Q48,${waveY + 6} 64,${waveY} Q80,${waveY - 6} 96,${waveY} Q112,${waveY + 6} 128,${waveY} L128,64 L0,64 Z`}
+            fill={`${color}30`} />
+        </g>
+        {/* Onda 2 (offset) */}
+        <g style={{ animation: 'wave2 2.2s linear infinite' }}>
+          <path d={`M0,${waveY + 2} Q16,${waveY - 4} 32,${waveY + 2} Q48,${waveY + 8} 64,${waveY + 2} Q80,${waveY - 4} 96,${waveY + 2} Q112,${waveY + 8} 128,${waveY + 2} L128,64 L0,64 Z`}
+            fill={`${color}20`} />
+        </g>
+        {/* Linha de superfície */}
+        <g style={{ animation: 'wave1 3s linear infinite' }}>
+          <path d={`M0,${waveY} Q16,${waveY - 6} 32,${waveY} Q48,${waveY + 6} 64,${waveY} Q80,${waveY - 6} 96,${waveY} Q112,${waveY + 6} 128,${waveY}`}
+            fill="none" stroke={color} strokeWidth="1.5" opacity="0.7" />
+        </g>
+      </svg>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+        <span style={{ fontSize: 16, fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{Math.round(clamped)}</span>
+        <span style={{ fontSize: 9, color: `${color}99`, fontWeight: 600 }}>%</span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Card da safra ────────────────────────────────────────────
 function SeasonCard({ season, onEdit, onDelete, deleting }: {
   season: SeasonFull; onEdit: () => void; onDelete: () => void; deleting: boolean
 }) {
+  const [lastRecord, setLastRecord] = useState<Pick<DailyManagement, 'date' | 'field_capacity_percent' | 'etc_mm' | 'eto_mm' | 'needs_irrigation'> | null>(null)
+  const [loadingRecord, setLoadingRecord] = useState(season.is_active)
+
+  useEffect(() => {
+    if (!season.is_active) return
+    let cancelled = false
+    getLastManagementBySeason(season.id)
+      .then(r => { if (!cancelled) { setLastRecord(r); setLoadingRecord(false) } })
+      .catch(() => { if (!cancelled) setLoadingRecord(false) })
+    return () => { cancelled = true }
+  }, [season.id, season.is_active])
+
   const totalDays = season.crops
     ? (season.crops.stage1_days ?? 0) + (season.crops.stage2_days ?? 0) + (season.crops.stage3_days ?? 0) + (season.crops.stage4_days ?? 0)
     : 0
@@ -352,22 +407,60 @@ function SeasonCard({ season, onEdit, onDelete, deleting }: {
     ? calcCTA(season.field_capacity, season.wilting_point, season.bulk_density, peakRoot)
     : null
 
+  const threshold = 70 // padrão — idealmente viria do pivô
+  const pct = lastRecord?.field_capacity_percent ?? null
+  const statusColor = pct === null ? '#556677'
+    : pct >= threshold * 1.15 ? '#22c55e'
+    : pct >= threshold ? '#f59e0b'
+    : '#ef4444'
+
   return (
-    <div style={{ background: '#0f1923', border: `1px solid ${season.is_active ? 'rgb(0 147 208 / 0.25)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 16, padding: '18px 20px' }}>
+    <div style={{
+      background: season.is_active ? 'linear-gradient(145deg, #0f1923, #0c1520)' : '#0c1318',
+      border: `1px solid ${season.is_active ? (pct !== null && pct < threshold ? 'rgba(239,68,68,0.25)' : 'rgba(0,147,208,0.2)') : 'rgba(255,255,255,0.05)'}`,
+      borderRadius: 18,
+      padding: '18px 20px',
+      boxShadow: season.is_active ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
+      transition: 'box-shadow 0.2s',
+    }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-        <div style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0, background: season.is_active ? 'rgb(0 147 208 / 0.12)' : '#0d1520', border: `1px solid ${season.is_active ? 'rgb(0 147 208 / 0.25)' : 'rgba(255,255,255,0.06)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Sprout size={18} style={{ color: season.is_active ? '#0093D0' : '#556677' }} />
-        </div>
+        {/* Mini-wave ou ícone simples */}
+        {season.is_active ? (
+          loadingRecord ? (
+            <div style={{ width: 64, height: 64, borderRadius: 12, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Loader2 size={16} className="animate-spin" style={{ color: '#334455' }} />
+            </div>
+          ) : pct !== null ? (
+            <MiniWave pct={pct} threshold={threshold} />
+          ) : (
+            <div style={{ width: 64, height: 64, borderRadius: 12, background: 'rgba(0,147,208,0.08)', border: '1px solid rgba(0,147,208,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, gap: 2 }}>
+              <Sprout size={20} style={{ color: '#0093D0' }} />
+              <span style={{ fontSize: 8, color: '#334455', fontWeight: 600 }}>SEM DADOS</span>
+            </div>
+          )
+        ) : (
+          <div style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Sprout size={18} style={{ color: '#334455' }} />
+          </div>
+        )}
 
         <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Título + badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>{season.name}</p>
-            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgb(34 197 94 / 0.12)' : '#0d1520', color: season.is_active ? '#22c55e' : '#556677', border: `1px solid ${season.is_active ? 'rgb(34 197 94 / 0.25)' : 'rgba(255,255,255,0.06)'}` }}>
+            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgb(34 197 94 / 0.10)' : '#0d1520', color: season.is_active ? '#22c55e' : '#445566', border: `1px solid ${season.is_active ? 'rgb(34 197 94 / 0.2)' : 'rgba(255,255,255,0.05)'}` }}>
               {season.is_active ? '● Ativa' : 'Inativa'}
             </span>
+            {/* Badge de alerta de irrigação */}
+            {season.is_active && lastRecord?.needs_irrigation && (
+              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <AlertTriangle size={9} /> Irrigar
+              </span>
+            )}
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
+          {/* Localização e cultura */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
             <span style={{ fontSize: 12, color: '#556677' }}>
               {season.farms.name}{season.pivots ? ` · ${season.pivots.name}` : ''}
             </span>
@@ -381,26 +474,46 @@ function SeasonCard({ season, onEdit, onDelete, deleting }: {
             )}
           </div>
 
-          {/* Chips */}
+          {/* Mini KPIs se safra ativa com dados */}
+          {season.is_active && lastRecord && (
+            <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, background: `${statusColor}12`, border: `1px solid ${statusColor}25` }}>
+                <Droplets size={10} style={{ color: statusColor }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: statusColor, fontFamily: 'var(--font-mono)' }}>{pct?.toFixed(0)}% umidade</span>
+              </div>
+              {lastRecord.etc_mm && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)' }}>
+                  <TrendingDown size={10} style={{ color: '#06b6d4' }} />
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>ETc {lastRecord.etc_mm.toFixed(1)} mm</span>
+                </div>
+              )}
+              <span style={{ fontSize: 10, color: '#334455', alignSelf: 'center' }}>
+                {lastRecord.date ? new Date(lastRecord.date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
+              </span>
+            </div>
+          )}
+
+          {/* Chips de solo */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {season.field_capacity && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#0d1520', color: '#8899aa', display: 'flex', alignItems: 'center', gap: 3 }}><Droplets size={10} />CC {season.field_capacity}%</span>}
-            {season.wilting_point && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#0d1520', color: '#8899aa' }}>PM {season.wilting_point}%</span>}
-            {season.bulk_density && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: '#0d1520', color: '#8899aa' }}>Ds {season.bulk_density}</span>}
-            {cta && <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgb(0 147 208 / 0.10)', color: '#0093D0', border: '1px solid rgb(0 147 208 / 0.20)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}><FlaskConical size={10} />CTA {cta.toFixed(1)} mm</span>}
+            {season.field_capacity && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#556677', display: 'flex', alignItems: 'center', gap: 2 }}><Droplets size={9} />CC {season.field_capacity}%</span>}
+            {season.wilting_point && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#556677' }}>PM {season.wilting_point}%</span>}
+            {season.bulk_density && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#556677' }}>Ds {season.bulk_density}</span>}
+            {cta && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: 'rgba(0,147,208,0.08)', color: '#0093D0', border: '1px solid rgba(0,147,208,0.18)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}><FlaskConical size={9} />CTA {cta.toFixed(1)} mm</span>}
           </div>
         </div>
 
+        {/* Botões de ação */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           <button onClick={onEdit} title="Editar"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0093D0'; (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.1)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#556677'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
             <Pencil size={14} />
           </button>
           <button onClick={onDelete} disabled={deleting} title="Excluir"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#556677' }}>
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
           </button>
         </div>

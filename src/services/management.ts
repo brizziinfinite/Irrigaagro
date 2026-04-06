@@ -154,6 +154,21 @@ export async function listDailyManagementBySeason(
   return (data ?? []) as DailyManagement[]
 }
 
+export async function getLastManagementBySeason(
+  seasonId: string,
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+): Promise<DailyManagement | null> {
+  const { data, error } = await dailyManagementTable(client)
+    .select('date, field_capacity_percent, etc_mm, eto_mm, needs_irrigation')
+    .eq('season_id', seasonId)
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw managementServiceError('buscar último registro de', error)
+  return data as DailyManagement | null
+}
+
 export async function upsertDailyManagementRecord(
   input: DailyManagementInsert,
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient
