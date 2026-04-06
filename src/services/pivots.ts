@@ -66,14 +66,22 @@ export async function updatePivot(
   input: PivotUpdate,
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient
 ): Promise<Pivot> {
-  const { data, error } = await pivotsTable(client)
+  const { error } = await pivotsTable(client)
     .update(input)
     .eq('id', id)
-    .select()
-    .single()
 
   if (error) {
     throw new Error(`Falha ao atualizar pivô: ${error.message}`)
+  }
+
+  // Buscar o registro atualizado em query separada (evita problema de RLS no .select() pós-update)
+  const { data, error: fetchError } = await pivotsTable(client)
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (fetchError) {
+    throw new Error(`Falha ao buscar pivô atualizado: ${fetchError.message}`)
   }
 
   return data as Pivot
