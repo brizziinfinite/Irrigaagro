@@ -151,6 +151,10 @@ export interface Pivot {
   rs_correction_factor: number | null
   rs_factor_updated_at: string | null
   rs_factor_sample_days: number | null
+  field_capacity: number | null
+  wilting_point: number | null
+  bulk_density: number | null
+  f_factor: number | null
 }
 
 export interface PivotInsert {
@@ -177,6 +181,10 @@ export interface PivotInsert {
   return_interval_days?: number
   preferred_speed_percent?: number | null
   min_speed_percent?: number | null
+  field_capacity?: number | null
+  wilting_point?: number | null
+  bulk_density?: number | null
+  f_factor?: number | null
 }
 
 export type PivotUpdate = Partial<PivotInsert>

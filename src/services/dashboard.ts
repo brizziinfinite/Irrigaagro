@@ -106,9 +106,9 @@ export async function getDashboardDataForUser(
       // Sem histórico: parte do ADc inicial da safra
       const stageInfo = getStageInfoForDas(crop, das)
       const cta = calcCTA(
-        Number(season.field_capacity ?? 32),
-        Number(season.wilting_point ?? 14),
-        Number(season.bulk_density ?? 1.4),
+        Number(pivot?.field_capacity ?? season.field_capacity ?? 32),
+        Number(pivot?.wilting_point ?? season.wilting_point ?? 14),
+        Number(pivot?.bulk_density ?? season.bulk_density ?? 1.4),
         stageInfo.rootDepthCm
       )
       currentAdc = cta * ((season.initial_adc_percent ?? 100) / 100)
@@ -173,9 +173,9 @@ export async function getDashboardDataForUser(
         const avgEtc = lastManagement.etc_mm ?? 3
         const stageInfo = getStageInfoForDas(crop, calcDAS(season.planting_date, gapDateStr))
         const cta = calcCTA(
-          Number(season.field_capacity ?? 32),
-          Number(season.wilting_point ?? 14),
-          Number(season.bulk_density ?? 1.4),
+          Number(pivot?.field_capacity ?? season.field_capacity ?? 32),
+          Number(pivot?.wilting_point ?? season.wilting_point ?? 14),
+          Number(pivot?.bulk_density ?? season.bulk_density ?? 1.4),
           stageInfo.rootDepthCm
         )
         runningAdc = Math.max(0, Math.min(runningAdc - avgEtc, cta))
@@ -184,9 +184,9 @@ export async function getDashboardDataForUser(
       currentAdc = runningAdc
       const stageInfo = getStageInfoForDas(crop, das)
       const cta = calcCTA(
-        Number(season.field_capacity ?? 32),
-        Number(season.wilting_point ?? 14),
-        Number(season.bulk_density ?? 1.4),
+        Number(pivot?.field_capacity ?? season.field_capacity ?? 32),
+        Number(pivot?.wilting_point ?? season.wilting_point ?? 14),
+        Number(pivot?.bulk_density ?? season.bulk_density ?? 1.4),
         stageInfo.rootDepthCm
       )
       currentPct = cta > 0 ? (currentAdc / cta) * 100 : 0
@@ -197,9 +197,9 @@ export async function getDashboardDataForUser(
     const avgEto = lastManagement?.eto_mm ?? 5
     projectionBySeason[season.id] = calcProjection({
       crop, startDate: today, startDas: das, startAdc: currentAdc,
-      fieldCapacity: Number(season.field_capacity ?? 32),
-      wiltingPoint:  Number(season.wilting_point  ?? 14),
-      bulkDensity:   Number(season.bulk_density   ?? 1.4),
+      fieldCapacity: Number(pivot?.field_capacity ?? season.field_capacity ?? 32),
+      wiltingPoint:  Number(pivot?.wilting_point  ?? season.wilting_point  ?? 14),
+      bulkDensity:   Number(pivot?.bulk_density   ?? season.bulk_density   ?? 1.4),
       avgEto, pivot, days: 7,
     })
   }

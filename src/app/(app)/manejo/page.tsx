@@ -99,18 +99,16 @@ function resolvePreviousAdc(
   const prevRecord = history.find((record) => record.date < date)
   if (prevRecord?.ctda != null) return prevRecord.ctda
 
-  if (!season || !season.crops || !season.field_capacity || !season.wilting_point || !season.bulk_density || !das) {
-    return 0
-  }
+  if (!season || !season.crops || !das) return 0
+
+  const fc = season.pivots?.field_capacity ?? season.field_capacity
+  const wp = season.pivots?.wilting_point  ?? season.wilting_point
+  const bd = season.pivots?.bulk_density   ?? season.bulk_density
+  if (!fc || !wp || !bd) return 0
 
   const initialPct = season.initial_adc_percent ?? 100
   const { rootDepthCm } = getStageInfoForDas(season.crops, das)
-  const cta = calcCTA(
-    Number(season.field_capacity),
-    Number(season.wilting_point),
-    Number(season.bulk_density),
-    rootDepthCm
-  )
+  const cta = calcCTA(Number(fc), Number(wp), Number(bd), rootDepthCm)
 
   return (initialPct / 100) * cta
 }

@@ -241,6 +241,10 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
   const [returnIntervalDays, setReturnIntervalDays] = useState(pivot?.return_interval_days?.toString() ?? '1')
   const [preferredSpeed, setPreferredSpeed] = useState(pivot?.preferred_speed_percent?.toString() ?? '')
   const [minSpeedPct, setMinSpeedPct] = useState(pivot?.min_speed_percent?.toString() ?? '')
+  // Parâmetros de solo
+  const [fieldCapacity, setFieldCapacity] = useState(pivot?.field_capacity?.toString() ?? '')
+  const [wiltingPoint, setWiltingPoint]   = useState(pivot?.wilting_point?.toString() ?? '')
+  const [bulkDensity, setBulkDensity]     = useState(pivot?.bulk_density?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -312,6 +316,9 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
       return_interval_days: returnIntervalDays ? Number(returnIntervalDays) : 1,
       preferred_speed_percent: preferredSpeed ? Number(preferredSpeed) : null,
       min_speed_percent: minSpeedPct ? Number(minSpeedPct) : null,
+      field_capacity: fieldCapacity ? Number(fieldCapacity) : null,
+      wilting_point:  wiltingPoint  ? Number(wiltingPoint)  : null,
+      bulk_density:   bulkDensity   ? Number(bulkDensity)   : null,
     }
 
     try {
@@ -956,6 +963,21 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             </div>
           )}
 
+
+          {/* Separador solo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Parâmetros de Solo</span>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <Field label="Cap. Campo (CC)" value={fieldCapacity} onChange={setFieldCapacity} placeholder="32" unit="%" hint="% volumétrico" />
+            <Field label="Pto. Murcha (PM)" value={wiltingPoint}   onChange={setWiltingPoint}   placeholder="14" unit="%" hint="% volumétrico" />
+            <Field label="Dens. Solo (Ds)"  value={bulkDensity}   onChange={setBulkDensity}   placeholder="1.4" unit="g/cm³" />
+          </div>
+          <p style={{ fontSize: 11, color: '#556677', margin: '-8px 0 0' }}>
+            Esses valores ficam no pivô e são usados no balanço hídrico. Você ainda pode sobrescrevê-los por safra, se necessário.
+          </p>
 
           {/* Botões */}
           <div className="flex gap-3 mt-2">

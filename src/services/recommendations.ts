@@ -177,9 +177,9 @@ export async function buildPivotRecommendations(
       } else {
         const stageInfo = getStageInfoForDas(crop, das)
         const cta = calcCTA(
-          Number(season.field_capacity ?? 32),
-          Number(season.wilting_point ?? 14),
-          Number(season.bulk_density ?? 1.4),
+          Number(pivot.field_capacity ?? season.field_capacity ?? 32),
+          Number(pivot.wilting_point ?? season.wilting_point ?? 14),
+          Number(pivot.bulk_density ?? season.bulk_density ?? 1.4),
           stageInfo.rootDepthCm,
         )
         startAdc = cta * ((season.initial_adc_percent ?? 100) / 100)
@@ -206,9 +206,9 @@ export async function buildPivotRecommendations(
         startDate: today,
         startDas: das,
         startAdc,
-        fieldCapacity: Number(season.field_capacity ?? 32),
-        wiltingPoint: Number(season.wilting_point ?? 14),
-        bulkDensity: Number(season.bulk_density ?? 1.4),
+        fieldCapacity: Number(pivot.field_capacity ?? season.field_capacity ?? 32),
+        wiltingPoint: Number(pivot.wilting_point ?? season.wilting_point ?? 14),
+        bulkDensity: Number(pivot.bulk_density ?? season.bulk_density ?? 1.4),
         avgEto,
         pivot,
         days: 7,

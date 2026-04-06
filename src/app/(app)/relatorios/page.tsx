@@ -106,9 +106,9 @@ function calcKPIs(records: DailyManagement[], season: SeasonFull): SeasonKPIs {
     if (season.crops && r.das) {
       const info = getStageInfoForDas(season.crops, r.das)
       const cta = calcCTA(
-        Number(season.field_capacity ?? 32),
-        Number(season.wilting_point ?? 14),
-        Number(season.bulk_density ?? 1.4),
+        Number(season.pivots?.field_capacity ?? season.field_capacity ?? 32),
+        Number(season.pivots?.wilting_point ?? season.wilting_point ?? 14),
+        Number(season.pivots?.bulk_density ?? season.bulk_density ?? 1.4),
         info.rootDepthCm
       )
       const cad = calcCAD(cta, info.fFactor)
@@ -479,7 +479,7 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
   const cadPercents = sorted.map(r => {
     if (!season.crops || !r.das) return 50
     const info = getStageInfoForDas(season.crops, r.das)
-    const cta = calcCTA(Number(season.field_capacity ?? 32), Number(season.wilting_point ?? 14), Number(season.bulk_density ?? 1.4), info.rootDepthCm)
+    const cta = calcCTA(Number(season.pivots?.field_capacity ?? season.field_capacity ?? 32), Number(season.pivots?.wilting_point ?? season.wilting_point ?? 14), Number(season.pivots?.bulk_density ?? season.bulk_density ?? 1.4), info.rootDepthCm)
     const cad = calcCAD(cta, info.fFactor)
     return cta > 0 ? (cad / cta) * 100 : 50
   })

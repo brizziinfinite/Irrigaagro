@@ -639,9 +639,9 @@ export default function LancamentosPage() {
         const { season, crop } = ctx
         const das = season.planting_date ? calcDAS(season.planting_date, today) : 1
         const stageInfo = crop ? getStageInfoForDas(crop, das) : null
-        const CC = season.field_capacity ?? 32
-        const PM = season.wilting_point  ?? 14
-        const Ds = season.bulk_density   ?? 1.4
+        const CC = ctx.pivot?.field_capacity ?? season.field_capacity ?? 32
+        const PM = ctx.pivot?.wilting_point  ?? season.wilting_point  ?? 14
+        const Ds = ctx.pivot?.bulk_density   ?? season.bulk_density   ?? 1.4
         const ctaMm = stageInfo ? calcCTA(CC, PM, Ds, stageInfo.rootDepthCm) : 0
         const cadMm = stageInfo ? calcCAD(ctaMm, stageInfo.fFactor) : 0
         const lastRecord = history.find(h => h.ctda != null)

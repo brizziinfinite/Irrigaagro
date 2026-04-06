@@ -71,9 +71,9 @@ export function computeResolvedManagementBalance(
 
   const das = season.planting_date ? calcDAS(season.planting_date, date) : 1
   const stageInfo = getStageInfoForDas(crop, das)
-  const fieldCapacity = Number(season.field_capacity ?? 32)
-  const wiltingPoint = Number(season.wilting_point ?? 14)
-  const bulkDensity = Number(season.bulk_density ?? 1.4)
+  const fieldCapacity = Number(pivot?.field_capacity ?? season.field_capacity ?? 32)
+  const wiltingPoint = Number(pivot?.wilting_point ?? season.wilting_point ?? 14)
+  const bulkDensity = Number(pivot?.bulk_density ?? season.bulk_density ?? 1.4)
   const cta = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfo.rootDepthCm)
   const cad = calcCAD(cta, stageInfo.fFactor)
 
