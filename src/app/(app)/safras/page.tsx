@@ -137,7 +137,9 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
   const isEdit = !!season
   const [name, setName]               = useState(season?.name ?? '')
   const [farmId, setFarmId]           = useState(season?.farm_id ?? farms[0]?.id ?? '')
+  // Edição: pivô único. Criação: múltiplos pivôs via checkboxes
   const [pivotId, setPivotId]         = useState(season?.pivot_id ?? '')
+  const [selectedPivotIds, setSelectedPivotIds] = useState<string[]>([])
   const [cropId, setCropId]           = useState(season?.crop_id ?? '')
   const [plantingDate, setPlantingDate] = useState(season?.planting_date ?? '')
   const [cc, setCc]                   = useState(season?.field_capacity?.toString() ?? '')
@@ -150,9 +152,31 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState('')
 
-  const farmPivots      = pivots.filter(p => p.farm_id === farmId)
-  const selectedCrop    = crops.find(c => c.id === cropId) ?? null
-  const peakRoot        = selectedCrop?.root_depth_stage3_cm ?? selectedCrop?.root_depth_stage1_cm ?? null
+  const farmPivots   = pivots.filter(p => p.farm_id === farmId)
+  const selectedCrop = crops.find(c => c.id === cropId) ?? null
+  const peakRoot     = selectedCrop?.root_depth_stage3_cm ?? selectedCrop?.root_depth_stage1_cm ?? null
+
+  // Pré-preenche CC/PM/Ds ao selecionar pivô (apenas se ainda vazio)
+  function handlePivotToggle(pid: string) {
+    setSelectedPivotIds(prev => {
+      const next = prev.includes(pid) ? prev.filter(x => x !== pid) : [...prev, pid]
+      // Preenche solo com dados do primeiro pivô selecionado que tiver dados
+      const pivot = pivots.find(p => p.id === pid)
+      if (!prev.includes(pid) && pivot) {
+        if (!cc && pivot.field_capacity) setCc(pivot.field_capacity.toString())
+        if (!pm && pivot.wilting_point)  setPm(pivot.wilting_point.toString())
+        if (!ds && pivot.bulk_density)   setDs(pivot.bulk_density.toString())
+      }
+      return next
+    })
+  }
+
+  // Ao trocar fazenda, limpa seleção de pivôs
+  function handleFarmChange(fid: string) {
+    setFarmId(fid)
+    setSelectedPivotIds([])
+    setPivotId('')
+  }
 
   const ctaPreview = useMemo(() => {
     const ccN = parseFloat(cc), pmN = parseFloat(pm), dsN = parseFloat(ds)
@@ -171,9 +195,10 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
       }
     }
     setError(''); setLoading(true)
-    const payload = {
-      name: name.trim(), farm_id: farmId,
-      pivot_id: pivotId || null, crop_id: cropId || null,
+
+    const basePayload = {
+      farm_id: farmId,
+      crop_id: cropId || null,
       planting_date: plantingDate || null,
       field_capacity: cc ? Number(cc) : null,
       wilting_point:  pm ? Number(pm) : null,
@@ -183,11 +208,20 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
       notes: notes.trim() || null,
       is_active: isActive,
     }
+
     try {
       if (isEdit) {
-        await updateSeason(season.id, payload)
+        await updateSeason(season.id, { ...basePayload, name: name.trim(), pivot_id: pivotId || null })
       } else {
-        await createSeason(payload)
+        // Criação em lote: 1 safra por pivô selecionado
+        const targets = selectedPivotIds.length > 0 ? selectedPivotIds : [null]
+        await Promise.all(targets.map(pid => {
+          const pivot = pivots.find(p => p.id === pid)
+          const safraName = targets.length > 1 && pivot
+            ? `${name.trim()} — ${pivot.name}`
+            : name.trim()
+          return createSeason({ ...basePayload, name: safraName, pivot_id: pid })
+        }))
       }
       onSaved()
       onClose()
@@ -197,6 +231,10 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
       setLoading(false)
     }
   }
+
+  const submitLabel = isEdit ? 'Salvar' : selectedPivotIds.length > 1
+    ? `Criar ${selectedPivotIds.length} Safras`
+    : 'Criar Safra'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
@@ -214,32 +252,82 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
           <SectionLabel text="Identificação" />
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Nome da Safra *</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+              Nome da Safra *
+            </label>
             <input type="text" value={name} onChange={e => setName(e.target.value)} required
-              placeholder="Ex: Safra 2025/26 Soja — Pivô Central"
+              placeholder="Ex: Safra 2025/26 Soja"
               style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
               onFocus={e => e.target.style.borderColor = '#0093D0'}
               onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
+            {!isEdit && selectedPivotIds.length > 1 && (
+              <p style={{ fontSize: 11, color: '#0093D0', marginTop: 4 }}>
+                Será criado: "{name} — Pivô A", "{name} — Pivô B"…
+              </p>
+            )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <StyledSelect label="Fazenda" value={farmId} onChange={v => { setFarmId(v); setPivotId('') }} required>
-              {farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-            </StyledSelect>
+          {/* Fazenda */}
+          <StyledSelect label="Fazenda" value={farmId} onChange={handleFarmChange} required>
+            {farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </StyledSelect>
+
+          {/* Pivôs — checkboxes na criação, select na edição */}
+          {isEdit ? (
             <StyledSelect label="Pivô" value={pivotId} onChange={setPivotId}>
               <option value="">Sem pivô específico</option>
               {farmPivots.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </StyledSelect>
-          </div>
-
-          {/* Aviso: múltiplas safras no mesmo pivô */}
-          <div style={{ display: 'flex', gap: 8, padding: '10px 12px', borderRadius: 10, background: 'rgb(6 182 212 / 0.06)', border: '1px solid rgb(6 182 212 / 0.15)' }}>
-            <Info size={13} style={{ color: '#06b6d4', flexShrink: 0, marginTop: 1 }} />
-            <p style={{ fontSize: 11, color: '#556677', lineHeight: 1.5 }}>
-              Um pivô pode ter <strong style={{ color: '#8899aa' }}>múltiplas safras ativas</strong> ao mesmo tempo — ex: 50% soja + 50% milho. Cada safra tem seu próprio balanço hídrico.
-            </p>
-          </div>
+          ) : (
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 8 }}>
+                Pivôs <span style={{ color: '#556677', fontWeight: 400 }}>(selecione um ou mais)</span>
+              </label>
+              {farmPivots.length === 0 ? (
+                <p style={{ fontSize: 12, color: '#556677', padding: '10px 14px', background: '#0d1520', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+                  Nenhum pivô cadastrado nesta fazenda.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {farmPivots.map(p => {
+                    const checked = selectedPivotIds.includes(p.id)
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handlePivotToggle(p.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                          borderRadius: 10, cursor: 'pointer', textAlign: 'left',
+                          border: `1px solid ${checked ? 'rgba(0,147,208,0.4)' : 'rgba(255,255,255,0.06)'}`,
+                          background: checked ? 'rgba(0,147,208,0.08)' : '#0d1520',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <div style={{
+                          width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                          border: `2px solid ${checked ? '#0093D0' : 'rgba(255,255,255,0.2)'}`,
+                          background: checked ? '#0093D0' : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>{p.name}</p>
+                          {p.field_capacity && (
+                            <p style={{ fontSize: 11, color: '#556677', margin: 0 }}>
+                              CC {p.field_capacity}% · PM {p.wilting_point}% · Ds {p.bulk_density}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           <SectionLabel text="Cultura e Plantio" />
 
@@ -257,7 +345,6 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             />
           </div>
 
-          {/* Timeline ao vivo */}
           {selectedCrop && plantingDate && (
             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
               <p style={{ fontSize: 11, fontWeight: 600, color: '#0093D0', marginBottom: 2 }}>📅 Cronograma — {selectedCrop.name}</p>
@@ -273,7 +360,6 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             <NumField label="Dens. Solo (Ds)" value={ds} onChange={setDs} placeholder="1.4" unit="g/cm³" />
           </div>
 
-          {/* CTA ao vivo */}
           {ctaPreview !== null && (
             <div style={{ background: '#0d1520', border: '1px solid rgb(0 147 208 / 0.20)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 16 }}>
               <div>
@@ -286,7 +372,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
               <div style={{ flex: 1, fontSize: 11, color: '#556677', lineHeight: 1.9 }}>
                 <p>CTA = ((CC − PM) ÷ 10) × Ds × Raiz</p>
                 <p>= (({cc} − {pm}) ÷ 10) × {ds} × {peakRoot} cm</p>
-                <p style={{ color: '#556677' }}>CAD = CTA × f  →  calculado por fase no manejo</p>
+                <p>CAD = CTA × f  →  calculado por fase no manejo</p>
               </div>
             </div>
           )}
@@ -299,10 +385,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
               placeholder="0.50" hint="Fallback quando a cultura não define fator f por fase" />
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Observações</label>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                rows={3}
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
                 placeholder="Anotações operacionais da safra"
                 style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', resize: 'vertical' }}
               />
@@ -330,7 +413,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             <button type="submit" disabled={loading}
               style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {loading && <Loader2 size={14} className="animate-spin" />}
-              {isEdit ? 'Salvar' : 'Criar Safra'}
+              {submitLabel}
             </button>
           </div>
         </form>
