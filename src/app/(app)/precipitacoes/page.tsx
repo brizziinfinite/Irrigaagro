@@ -401,6 +401,32 @@ interface EditModalProps {
   onDeleted: () => Promise<void>
 }
 
+// Dispara recalculate do daily_management para o pivô+data alterados (silencioso)
+async function syncManagementForPivotDate(pivotId: string, date: string) {
+  try {
+    // Busca a safra ativa vinculada ao pivô
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+    const { data: season } = await (supabase as any)
+      .from('seasons')
+      .select('id')
+      .eq('pivot_id', pivotId)
+      .eq('is_active', true)
+      .gte('planting_date', '2000-01-01')
+      .lte('planting_date', date)
+      .order('planting_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (!season?.id) return
+    // Dispara recalculate só para aquele dia (não aguarda — fire and forget)
+    fetch('/api/seasons/recalculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ season_id: season.id, date }),
+    }).catch(() => {})
+  } catch { /* silencioso — não bloqueia o usuário */ }
+}
+
 function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onSaved, onDeleted }: EditModalProps) {
   const [value, setValue] = useState(existing ? String(existing.rainfall_mm) : '0')
   const [saving, setSaving] = useState(false)
@@ -443,6 +469,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onS
         sector_id: sectorId,
         updated_at: new Date().toISOString(),
       })
+      syncManagementForPivotDate(pivotId, date)
       await onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao salvar precipitação')
@@ -457,6 +484,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onS
       setSaving(true)
       setError('')
       await deleteRainfallRecord(existing.id)
+      syncManagementForPivotDate(pivotId, date)
       await onDeleted()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao excluir precipitação')

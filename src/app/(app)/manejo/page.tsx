@@ -19,7 +19,7 @@ import {
   upsertDailyManagementRecord,
   type ManagementExternalData,
 } from '@/services/management'
-import { upsertRainfallRecord } from '@/services/rainfall'
+import { upsertRainfallRecord, deleteRainfallRecord, listRainfallByPivotIdAndSector } from '@/services/rainfall'
 import {
   type EToSource,
   type EToConfidence,
@@ -1080,18 +1080,25 @@ export default function ManejoPage() {
     try {
       await upsertDailyManagementRecord(payload)
 
-      // Sincroniza chuva manual com rainfall_records
-      // Assim a correção feita no manejo aparece em /precipitacoes
+      // Sincroniza chuva com rainfall_records (fonte autoritativa)
+      // Se chuva > 0 → upsert com source='manual'. Se chuva = 0 → remove registro existente.
       const pivotId = selectedSeason.pivots?.id
       const rainfallMm = payload.rainfall_mm ?? 0
-      if (pivotId && rainfallMm > 0) {
-        await upsertRainfallRecord({
-          pivot_id: pivotId,
-          date,
-          rainfall_mm: rainfallMm,
-          source: 'manual',
-          sector_id: null,
-        })
+      if (pivotId) {
+        if (rainfallMm > 0) {
+          await upsertRainfallRecord({
+            pivot_id: pivotId,
+            date,
+            rainfall_mm: rainfallMm,
+            source: 'manual',
+            sector_id: null,
+          })
+        } else {
+          // Se zerou a chuva, remove o registro de rainfall_records (se existir)
+          const existing = await listRainfallByPivotIdAndSector(pivotId, null)
+          const rec = existing.find(r => r.date === date)
+          if (rec) await deleteRainfallRecord(rec.id)
+        }
       }
 
       setSaveMsg('Registro salvo com sucesso!')

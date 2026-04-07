@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}))
   const seasonId: string = body.season_id
+  const singleDate: string | null = body.date ?? null // recalcula só este dia se informado
   if (!seasonId) {
     return NextResponse.json({ error: 'season_id obrigatório' }, { status: 400 })
   }
@@ -92,12 +93,15 @@ export async function POST(req: NextRequest) {
   const endDate = todayBRT()
   const context = { season, farm, pivot, crop }
 
+  // Se date informado, recalcula só aquele dia (mas encadeia ADc desde o plantio)
   const dates: string[] = []
   let d = plantingDate
   while (d <= endDate) {
     dates.push(d)
     d = addDays(d, 1)
   }
+  // Se single date, só grava aquele dia mas percorre o histórico para encadear o ADc
+  const targetDate = singleDate ?? null
 
   const existingRecords = await listDailyManagementBySeason(seasonId, supabase)
   const existingByDate = new Map<string, DailyManagement>()
@@ -164,7 +168,11 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       }
 
-      await upsertDailyManagementRecord(payload, supabase)
+      // Se targetDate informado, só persiste o registro daquele dia
+      if (!targetDate || dateStr === targetDate) {
+        await upsertDailyManagementRecord(payload, supabase)
+        processed++
+      }
 
       runningHistory.unshift({
         ...existing, id: existing?.id ?? '', season_id: seasonId, date: dateStr,
@@ -176,7 +184,9 @@ export async function POST(req: NextRequest) {
         actual_speed_percent: payload.actual_speed_percent ?? null,
       } as DailyManagement)
 
-      processed++
+      // Se targetDate e já passamos do dia alvo, podemos parar
+      if (targetDate && dateStr === targetDate) break
+
     } catch { skipped++ }
   }
 
