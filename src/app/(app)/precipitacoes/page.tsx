@@ -465,33 +465,26 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
         return
       }
 
-      // Pivô atual: upsert normal (o índice do banco resolve o conflito)
-      await upsertRainfallRecord({
-        pivot_id: pivotId,
-        date,
-        rainfall_mm: mm,
-        source: 'manual',
-        sector_id: sectorId,
-        updated_at: new Date().toISOString(),
-      })
-      syncManagementForPivotDate(pivotId, date)
+      // O índice único usa COALESCE(sector_id, uuid_nil) — upsert via PostgREST não consegue
+      // resolver conflito quando sector_id = null. Usamos delete + insert para todos os pivôs.
+      const { createClient } = await import('@/lib/supabase/client')
+      const sb = createClient() as any
 
-      // Pivôs extras: sector_id=null — o índice usa COALESCE então upsert falha.
-      // Usamos delete + insert para garantir idempotência.
-      if (extraPivotIds.length > 0) {
-        const { createClient } = await import('@/lib/supabase/client')
-        const sb = createClient() as any
-        await Promise.all(extraPivotIds.map(async pid => {
-          await sb.from('rainfall_records')
-            .delete()
-            .eq('pivot_id', pid)
-            .eq('date', date)
-            .is('sector_id', null)
-          await sb.from('rainfall_records')
-            .insert({ pivot_id: pid, date, rainfall_mm: mm, source: 'manual', sector_id: null, updated_at: new Date().toISOString() })
-          syncManagementForPivotDate(pid, date)
-        }))
-      }
+      const allTargets = [
+        { pid: pivotId, sid: sectorId },
+        ...extraPivotIds.map(pid => ({ pid, sid: null as string | null })),
+      ]
+
+      await Promise.all(allTargets.map(async ({ pid, sid }) => {
+        let q = sb.from('rainfall_records').delete().eq('pivot_id', pid).eq('date', date)
+        q = sid ? q.eq('sector_id', sid) : q.is('sector_id', null)
+        await q
+        await sb.from('rainfall_records').insert({
+          pivot_id: pid, date, rainfall_mm: mm, source: 'manual',
+          sector_id: sid ?? null, updated_at: new Date().toISOString(),
+        })
+        syncManagementForPivotDate(pid, date)
+      }))
       await onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao salvar precipitação')
