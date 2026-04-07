@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import type { Farm, Pivot, Crop, Season } from '@/types/database'
 import { useAuth } from '@/hooks/useAuth'
 import { listCropsByCompany } from '@/services/crops'
@@ -16,7 +16,7 @@ import { getLastManagementBySeason } from '@/services/management'
 import type { DailyManagement } from '@/types/database'
 import {
   Sprout, Plus, Pencil, Trash2, X, Loader2, ChevronDown,
-  CalendarDays, Droplets, FlaskConical, Info, TrendingDown, AlertTriangle,
+  CalendarDays, Droplets, FlaskConical, TrendingDown, AlertTriangle,
 } from 'lucide-react'
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -142,9 +142,6 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
   const [selectedPivotIds, setSelectedPivotIds] = useState<string[]>([])
   const [cropId, setCropId]           = useState(season?.crop_id ?? '')
   const [plantingDate, setPlantingDate] = useState(season?.planting_date ?? '')
-  const [cc, setCc]                   = useState(season?.field_capacity?.toString() ?? '')
-  const [pm, setPm]                   = useState(season?.wilting_point?.toString() ?? '')
-  const [ds, setDs]                   = useState(season?.bulk_density?.toString() ?? '')
   const [fFactor, setFFactor]         = useState(season?.f_factor?.toString() ?? '')
   const [initialAdc, setInitialAdc]   = useState(season?.initial_adc_percent?.toString() ?? '100')
   const [notes, setNotes]             = useState(season?.notes ?? '')
@@ -154,21 +151,11 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
 
   const farmPivots   = pivots.filter(p => p.farm_id === farmId)
   const selectedCrop = crops.find(c => c.id === cropId) ?? null
-  const peakRoot     = selectedCrop?.root_depth_stage3_cm ?? selectedCrop?.root_depth_stage1_cm ?? null
 
-  // Pré-preenche CC/PM/Ds ao selecionar pivô (apenas se ainda vazio)
   function handlePivotToggle(pid: string) {
-    setSelectedPivotIds(prev => {
-      const next = prev.includes(pid) ? prev.filter(x => x !== pid) : [...prev, pid]
-      // Preenche solo com dados do primeiro pivô selecionado que tiver dados
-      const pivot = pivots.find(p => p.id === pid)
-      if (!prev.includes(pid) && pivot) {
-        if (!cc && pivot.field_capacity) setCc(pivot.field_capacity.toString())
-        if (!pm && pivot.wilting_point)  setPm(pivot.wilting_point.toString())
-        if (!ds && pivot.bulk_density)   setDs(pivot.bulk_density.toString())
-      }
-      return next
-    })
+    setSelectedPivotIds(prev =>
+      prev.includes(pid) ? prev.filter(x => x !== pid) : [...prev, pid]
+    )
   }
 
   // Ao trocar fazenda, limpa seleção de pivôs
@@ -177,12 +164,6 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
     setSelectedPivotIds([])
     setPivotId('')
   }
-
-  const ctaPreview = useMemo(() => {
-    const ccN = parseFloat(cc), pmN = parseFloat(pm), dsN = parseFloat(ds)
-    if (ccN > 0 && pmN > 0 && dsN > 0 && peakRoot) return calcCTA(ccN, pmN, dsN, peakRoot)
-    return null
-  }, [cc, pm, ds, peakRoot])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -200,9 +181,6 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
       farm_id: farmId,
       crop_id: cropId || null,
       planting_date: plantingDate || null,
-      field_capacity: cc ? Number(cc) : null,
-      wilting_point:  pm ? Number(pm) : null,
-      bulk_density:   ds ? Number(ds) : null,
       f_factor: fFactor ? Number(fFactor) : null,
       initial_adc_percent: initialAdc ? Number(initialAdc) : null,
       notes: notes.trim() || null,
@@ -349,31 +327,6 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
               <p style={{ fontSize: 11, fontWeight: 600, color: '#0093D0', marginBottom: 2 }}>📅 Cronograma — {selectedCrop.name}</p>
               <PhaseTimeline plantingDate={plantingDate} crop={selectedCrop} />
-            </div>
-          )}
-
-          <SectionLabel text="Parâmetros de Solo" />
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-            <NumField label="Cap. Campo (CC)" value={cc} onChange={setCc} placeholder="32" unit="%" hint="% volumétrico" />
-            <NumField label="Pto. Murcha (PM)" value={pm} onChange={setPm} placeholder="14" unit="%" hint="% volumétrico" />
-            <NumField label="Dens. Solo (Ds)" value={ds} onChange={setDs} placeholder="1.4" unit="g/cm³" />
-          </div>
-
-          {ctaPreview !== null && (
-            <div style={{ background: '#0d1520', border: '1px solid rgb(0 147 208 / 0.20)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div>
-                <p style={{ fontSize: 10, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.06em' }}>CTA estimada</p>
-                <p style={{ fontSize: 22, fontWeight: 800, color: '#0093D0', fontFamily: 'var(--font-mono)', lineHeight: 1.2 }}>
-                  {ctaPreview.toFixed(1)} <span style={{ fontSize: 12, fontWeight: 400, color: '#556677' }}>mm</span>
-                </p>
-                <p style={{ fontSize: 10, color: '#556677' }}>raiz fase {selectedCrop?.root_depth_stage3_cm ? '3' : '1'}: {peakRoot} cm</p>
-              </div>
-              <div style={{ flex: 1, fontSize: 11, color: '#556677', lineHeight: 1.9 }}>
-                <p>CTA = ((CC − PM) ÷ 10) × Ds × Raiz</p>
-                <p>= (({cc} − {pm}) ÷ 10) × {ds} × {peakRoot} cm</p>
-                <p>CAD = CTA × f  →  calculado por fase no manejo</p>
-              </div>
             </div>
           )}
 
