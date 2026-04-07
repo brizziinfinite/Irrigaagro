@@ -124,6 +124,8 @@ interface Props {
   historyBySeason: Record<string, DailyManagement[]>
   /** ADc projetado para hoje (%), descontando ETc dos dias sem registro */
   currentFieldCapacityBySeasonId: Record<string, number>
+  /** ADc projetado para hoje (mm), ponto de partida para projeções */
+  currentAdcBySeasonId?: Record<string, number>
   diagnosticsByPivot: Record<string, PivotDiagnostic>
   energyBills: EnergyBill[]
   summary: {
@@ -146,6 +148,7 @@ export function DashboardClient({
   lastManagementBySeason,
   historyBySeason,
   currentFieldCapacityBySeasonId,
+  currentAdcBySeasonId,
   diagnosticsByPivot,
   energyBills,
   summary,
@@ -269,6 +272,7 @@ export function DashboardClient({
         <RecommendationsMatrix
           contexts={contexts}
           lastMgmtBySeasonId={lastManagementBySeason}
+          currentAdcBySeasonId={currentAdcBySeasonId}
           today={(() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}` })()}
         />
         

@@ -50,6 +50,7 @@ export default async function DashboardPage() {
         lastManagementBySeason={dashboard.lastManagementBySeason}
         historyBySeason={dashboard.historyBySeason}
         currentFieldCapacityBySeasonId={dashboard.currentFieldCapacityBySeasonId}
+        currentAdcBySeasonId={dashboard.currentAdcBySeasonId}
         diagnosticsByPivot={dashboard.diagnosticsByPivot}
         energyBills={dashboard.energyBills}
         summary={dashboard.summary}

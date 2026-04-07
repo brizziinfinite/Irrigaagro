@@ -402,10 +402,10 @@ interface EditModalProps {
   onDeleted: () => Promise<void>
 }
 
-// Dispara recalculate do daily_management para o pivô+data alterados (silencioso)
-async function syncManagementForPivotDate(pivotId: string, date: string) {
+// Recalcula o daily_management completo da safra a partir da data alterada.
+// Retorna true se recalculou com sucesso, false caso contrário.
+async function syncManagementForPivotDate(pivotId: string, date: string): Promise<boolean> {
   try {
-    // Busca a safra ativa vinculada ao pivô
     const { createClient } = await import('@/lib/supabase/client')
     const supabase = createClient()
     const { data: season } = await (supabase as any)
@@ -418,19 +418,23 @@ async function syncManagementForPivotDate(pivotId: string, date: string) {
       .order('planting_date', { ascending: false })
       .limit(1)
       .maybeSingle()
-    if (!season?.id) return
-    // Dispara recalculate só para aquele dia (não aguarda — fire and forget)
-    fetch('/api/seasons/recalculate', {
+    if (!season?.id) return false
+    // Recalcula a partir da data corrigida (propaga para todos os dias seguintes)
+    const res = await fetch('/api/seasons/recalculate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ season_id: season.id, date }),
-    }).catch(() => {})
-  } catch { /* silencioso — não bloqueia o usuário */ }
+    })
+    return res.ok
+  } catch {
+    return false
+  }
 }
 
 function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, onClose, onSaved, onDeleted }: EditModalProps) {
   const [value, setValue] = useState(existing ? String(existing.rainfall_mm) : '0')
   const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState('')
   // Pivôs extras onde aplicar o mesmo valor (excluindo o pivô atual que já é salvo)
   const otherPivots = allPivots.filter(p => p.id !== pivotId)
@@ -483,9 +487,13 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
           pivot_id: pid, date, rainfall_mm: mm, source: 'manual',
           sector_id: sid ?? null, updated_at: new Date().toISOString(),
         })
-        syncManagementForPivotDate(pid, date)
       }))
       await onSaved()
+
+      // Recalcula manejo de forma síncrona para todos os pivôs afetados
+      setSyncing(true)
+      await Promise.all(allTargets.map(({ pid }) => syncManagementForPivotDate(pid, date)))
+      setSyncing(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao salvar precipitação')
     } finally {
@@ -499,12 +507,15 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
       setSaving(true)
       setError('')
       await deleteRainfallRecord(existing.id)
-      syncManagementForPivotDate(pivotId, date)
       await onDeleted()
+      setSyncing(true)
+      setSaving(false)
+      await syncManagementForPivotDate(pivotId, date)
+      setSyncing(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao excluir precipitação')
-    } finally {
       setSaving(false)
+      setSyncing(false)
     }
   }
 
@@ -624,14 +635,14 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || syncing}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer',
               background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 13,
-              opacity: saving ? 0.7 : 1,
+              opacity: (saving || syncing) ? 0.7 : 1,
             }}
           >
-            {saving ? 'Salvando…' : 'Salvar'}
+            {saving ? 'Salvando…' : syncing ? 'Atualizando manejo…' : 'Salvar'}
           </button>
           {existing && (
             <button

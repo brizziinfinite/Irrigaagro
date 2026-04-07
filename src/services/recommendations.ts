@@ -158,6 +158,7 @@ export async function buildPivotRecommendations(
   contexts: ManagementSeasonContext[],
   lastMgmtBySeasonId: Record<string, { ctda: number | null; eto_mm: number | null; date: string } | null>,
   today: string,
+  currentAdcBySeasonId?: Record<string, number>,
 ): Promise<PivotRecommendation[]> {
   const active = contexts.filter(ctx => ctx.season.is_active && ctx.pivot && ctx.crop)
 
@@ -170,9 +171,12 @@ export async function buildPivotRecommendations(
       const das = calcDAS(season.planting_date ?? today, today)
       const avgEto = lastMgmt?.eto_mm ?? 5
 
-      // Start ADc
+      // Start ADc — usa currentAdcBySeasonId (já avançado até hoje pelo dashboard)
+      // se disponível; caso contrário, usa último registro salvo no banco.
       let startAdc = 0
-      if (lastMgmt?.ctda != null) {
+      if (currentAdcBySeasonId?.[season.id] != null) {
+        startAdc = currentAdcBySeasonId[season.id]
+      } else if (lastMgmt?.ctda != null) {
         startAdc = lastMgmt.ctda
       } else {
         const stageInfo = getStageInfoForDas(crop, das)

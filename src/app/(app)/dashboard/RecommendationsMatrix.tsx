@@ -16,6 +16,7 @@ import type { IrrigationStatus } from '@/types/database'
 interface Props {
   contexts: ManagementSeasonContext[]
   lastMgmtBySeasonId: Record<string, DailyManagement | null>
+  currentAdcBySeasonId?: Record<string, number>
   today: string
 }
 
@@ -81,7 +82,7 @@ function buildShareText(recs: PivotRecommendation[], days: string[]): string {
 }
 
 // ─── Main Component ───────────────────────────────────────────
-export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: Props) {
+export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdcBySeasonId, today }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [recommendations, setRecommendations] = useState<PivotRecommendation[]>([])
@@ -110,7 +111,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, today }: P
           mgmtMap[id] = { ctda: mgmt.ctda ?? null, eto_mm: mgmt.eto_mm ?? null, date: mgmt.date }
         }
 
-        const recs = await buildPivotRecommendations(contexts, mgmtMap, today)
+        const recs = await buildPivotRecommendations(contexts, mgmtMap, today, currentAdcBySeasonId)
         if (!cancelled) {
           setRecommendations(recs)
         }

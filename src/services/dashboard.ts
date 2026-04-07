@@ -30,6 +30,8 @@ export interface DashboardData {
   projectionBySeason: Record<string, ProjectionDay[]>
   /** ADc projetado para HOJE (%), descontando ETc dos dias sem registro */
   currentFieldCapacityBySeasonId: Record<string, number>
+  /** ADc projetado para HOJE (mm), usado como ponto de partida para projeções */
+  currentAdcBySeasonId: Record<string, number>
   diagnosticsByPivot: Record<string, PivotDiagnostic>
   energyBills: EnergyBill[]
   summary: {
@@ -84,6 +86,7 @@ export async function getDashboardDataForUser(
   const projectionBySeason: Record<string, ProjectionDay[]> = {}
   // ADc projetado para HOJE usando dados climáticos reais do banco
   const currentFieldCapacityBySeasonId: Record<string, number> = {}
+  const currentAdcBySeasonId: Record<string, number> = {}
   // Usa data local BRT (UTC-3) para evitar avanço de dia à noite
   const now = new Date()
   const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000)
@@ -193,6 +196,7 @@ export async function getDashboardDataForUser(
     }
 
     currentFieldCapacityBySeasonId[season.id] = currentPct
+    currentAdcBySeasonId[season.id] = currentAdc
 
     const avgEto = lastManagement?.eto_mm ?? 5
     projectionBySeason[season.id] = calcProjection({
@@ -237,6 +241,7 @@ export async function getDashboardDataForUser(
     historyBySeason,
     projectionBySeason,
     currentFieldCapacityBySeasonId,
+    currentAdcBySeasonId,
     diagnosticsByPivot,
     energyBills,
     summary,

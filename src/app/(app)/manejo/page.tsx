@@ -905,6 +905,14 @@ export default function ManejoPage() {
 
   useEffect(() => { if (selectedSeasonId) loadHistory(selectedSeasonId) }, [selectedSeasonId, loadHistory])
 
+  // Recarrega histórico quando o usuário volta para a aba (ex: após editar precipitações)
+  useEffect(() => {
+    if (!selectedSeasonId) return
+    const handleFocus = () => loadHistory(selectedSeasonId)
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [selectedSeasonId, loadHistory])
+
   const selectedSeason = useMemo(
     () => seasons.find(s => s.id === selectedSeasonId) ?? null,
     [seasons, selectedSeasonId]
@@ -1615,6 +1623,29 @@ export default function ManejoPage() {
             <span style={{ fontSize: 10, color: '#556677', background: '#0d1520', padding: '2px 8px', borderRadius: 10 }}>
               {history.length} Registros Salvos
             </span>
+            {selectedSeasonId && (
+              <span
+                role="button"
+                title="Recalcular histórico completo (use após corrigir precipitações)"
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  if (!selectedSeasonId) return
+                  const btn = e.currentTarget
+                  btn.style.color = '#f59e0b'
+                  btn.textContent = '...'
+                  await fetch('/api/seasons/recalculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ season_id: selectedSeasonId }),
+                  })
+                  await loadHistory(selectedSeasonId)
+                  btn.style.color = '#22c55e'
+                  btn.textContent = '✓'
+                  setTimeout(() => { btn.style.color = '#556677'; btn.textContent = '↻' }, 2000)
+                }}
+                style={{ fontSize: 14, color: '#556677', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
+              >↻</span>
+            )}
             {showHistoryTab ? <ChevronDown size={14} /> : <TrendingDown size={14} />}
           </div>
         </button>

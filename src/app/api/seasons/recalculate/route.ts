@@ -168,8 +168,9 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       }
 
-      // Se targetDate informado, só persiste o registro daquele dia
-      if (!targetDate || dateStr === targetDate) {
+      // Se targetDate informado, persiste a partir daquele dia (inclusive) até hoje,
+      // pois a mudança de chuva afeta o ADc de todos os dias seguintes.
+      if (!targetDate || dateStr >= targetDate) {
         await upsertDailyManagementRecord(payload, supabase)
         processed++
       }
@@ -183,9 +184,6 @@ export async function POST(req: NextRequest) {
         actual_depth_mm: payload.actual_depth_mm ?? null,
         actual_speed_percent: payload.actual_speed_percent ?? null,
       } as DailyManagement)
-
-      // Se targetDate e já passamos do dia alvo, podemos parar
-      if (targetDate && dateStr === targetDate) break
 
     } catch { skipped++ }
   }
