@@ -16,7 +16,7 @@ import { getLastManagementBySeason } from '@/services/management'
 import type { DailyManagement } from '@/types/database'
 import {
   Sprout, Plus, Pencil, Trash2, X, Loader2, ChevronDown,
-  CalendarDays, Droplets, FlaskConical, TrendingDown, AlertTriangle,
+  CalendarDays, Droplets, FlaskConical, TrendingDown, AlertTriangle, RefreshCw,
 } from 'lucide-react'
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -417,8 +417,9 @@ function MiniWave({ pct, threshold = 70 }: { pct: number; threshold?: number }) 
 }
 
 // ─── Card da safra ────────────────────────────────────────────
-function SeasonCard({ season, onEdit, onDelete, deleting }: {
+function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalculating }: {
   season: SeasonFull; onEdit: () => void; onDelete: () => void; deleting: boolean
+  onRecalculate: () => void; recalculating: boolean
 }) {
   const [lastRecord, setLastRecord] = useState<Pick<DailyManagement, 'date' | 'field_capacity_percent' | 'etc_mm' | 'eto_mm' | 'needs_irrigation'> | null>(null)
   const [loadingRecord, setLoadingRecord] = useState(season.is_active)
@@ -540,6 +541,14 @@ function SeasonCard({ season, onEdit, onDelete, deleting }: {
 
         {/* Botões de ação */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          {season.is_active && season.planting_date && (
+            <button onClick={onRecalculate} disabled={recalculating} title="Atualizar histórico do plantio até hoje"
+              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677' }}
+              onMouseEnter={e => { if (!recalculating) { (e.currentTarget as HTMLElement).style.color = '#22c55e'; (e.currentTarget as HTMLElement).style.background = 'rgba(34,197,94,0.1)' } }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#556677'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
+              <RefreshCw size={14} className={recalculating ? 'animate-spin' : ''} />
+            </button>
+          )}
           <button onClick={onEdit} title="Editar"
             style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0093D0'; (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.1)' }}
@@ -568,8 +577,9 @@ export default function SafrasPage() {
   const [loading, setLoading]     = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingSeason, setEditingSeason] = useState<SeasonFull | null>(null)
-  const [deletingId, setDeletingId]       = useState<string | null>(null)
-  const [pageError, setPageError]         = useState('')
+  const [deletingId, setDeletingId]           = useState<string | null>(null)
+  const [recalculatingId, setRecalculatingId] = useState<string | null>(null)
+  const [pageError, setPageError]             = useState('')
 
   const loadData = useCallback(async () => {
     if (!company?.id) {
@@ -607,6 +617,25 @@ export default function SafrasPage() {
     if (authLoading) return
     loadData()
   }, [authLoading, loadData])
+
+  async function handleRecalculate(id: string) {
+    setRecalculatingId(id)
+    setPageError('')
+    try {
+      const res = await fetch('/api/seasons/recalculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ season_id: id }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Falha ao recalcular')
+      await loadData()
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : 'Falha ao recalcular histórico')
+    } finally {
+      setRecalculatingId(null)
+    }
+  }
 
   async function handleDelete(id: string) {
     if (!confirm('Excluir esta safra? O histórico de manejo será removido.')) return
@@ -690,6 +719,8 @@ export default function SafrasPage() {
                       onEdit={() => { setEditingSeason(s); setModalOpen(true) }}
                       onDelete={() => handleDelete(s.id)}
                       deleting={deletingId === s.id}
+                      onRecalculate={() => handleRecalculate(s.id)}
+                      recalculating={recalculatingId === s.id}
                     />
                   ))}
                 </div>
@@ -704,6 +735,8 @@ export default function SafrasPage() {
                       onEdit={() => { setEditingSeason(s); setModalOpen(true) }}
                       onDelete={() => handleDelete(s.id)}
                       deleting={deletingId === s.id}
+                      onRecalculate={() => handleRecalculate(s.id)}
+                      recalculating={recalculatingId === s.id}
                     />
                   ))}
                 </div>
