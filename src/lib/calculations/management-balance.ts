@@ -81,6 +81,11 @@ export function computeResolvedManagementBalance(
   const adcPrev = prevRecord?.ctda
     ?? ((season.initial_adc_percent ?? 100) / 100) * cta
 
+  // CTA do dia anterior — para escalar ADc quando a raiz cresceu
+  const dasPrev = das - 1
+  const stageInfoPrev = dasPrev > 0 ? getStageInfoForDas(crop, dasPrev) : stageInfo
+  const ctaPrev = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrev.rootDepthCm)
+
   const tempMax = parseOptionalNumber(tmax)
   const tempMin = parseOptionalNumber(tmin)
   const humidityValue = parseOptionalNumber(humidity)
@@ -121,7 +126,7 @@ export function computeResolvedManagementBalance(
   const irrigationMm = parseOptionalNumber(actualDepth) ?? 0
   const actualSpeedPercent = parseOptionalNumber(actualSpeed)
   const etc = calcEtc(etoResolution.etoMm, stageInfo.kc)
-  const adcNew = calcADc(adcPrev, rainfallMm, irrigationMm, etc, cta)
+  const adcNew = calcADc(adcPrev, rainfallMm, irrigationMm, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
