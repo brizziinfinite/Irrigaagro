@@ -153,6 +153,45 @@ interface StageInfo {
   fFactor: number
 }
 
+const ROOT_DEPTH_MAX_CM = 40 // limite prático por compactação de solo
+
+/**
+ * Calcula a profundidade de raiz para um dado DAS.
+ * Usa crescimento contínuo (cm/dia) quando disponível,
+ * limitado ao máximo prático de 40 cm.
+ */
+function calcRootDepthCm(crop: Crop, das: number): number {
+  const rate    = crop.root_growth_rate_cm_day ?? null
+  const initial = crop.root_initial_depth_cm  ?? null
+  const startDas = crop.root_start_das        ?? null
+
+  if (rate != null && initial != null && startDas != null) {
+    // Modelo contínuo: cresce rate cm/dia a partir de startDas
+    const growthDays = Math.max(0, das - startDas)
+    return Math.min(initial + rate * growthDays, ROOT_DEPTH_MAX_CM)
+  }
+
+  // Fallback: modelo por estágio (campos legados)
+  const s1 = crop.stage1_days ?? 15
+  const s2 = crop.stage2_days ?? 35
+  const s3 = crop.stage3_days ?? 40
+
+  const r1 = crop.root_depth_stage1_cm ?? 20
+  const r2 = crop.root_depth_stage2_cm ?? r1
+  const r3 = crop.root_depth_stage3_cm ?? r2
+  const r4 = crop.root_depth_stage4_cm ?? r3
+
+  const dasClamp = Math.max(1, das)
+
+  if (dasClamp <= s1) return Math.min(r1, ROOT_DEPTH_MAX_CM)
+  if (dasClamp <= s1 + s2) {
+    const progress = (dasClamp - s1) / s2
+    return Math.min(r1 + (r2 - r1) * progress, ROOT_DEPTH_MAX_CM)
+  }
+  if (dasClamp <= s1 + s2 + s3) return Math.min(r3, ROOT_DEPTH_MAX_CM)
+  return Math.min(r4, ROOT_DEPTH_MAX_CM)
+}
+
 export function getStageInfoForDas(crop: Crop, das: number): StageInfo {
   const s1 = crop.stage1_days ?? 15
   const s2 = crop.stage2_days ?? 35
@@ -163,41 +202,36 @@ export function getStageInfoForDas(crop: Crop, das: number): StageInfo {
   const kcMid   = crop.kc_mid   ?? 1.15
   const kcFinal = crop.kc_final ?? 0.45
 
-  const r1 = crop.root_depth_stage1_cm ?? 20
-  const r2 = crop.root_depth_stage2_cm ?? r1
-  const r3 = crop.root_depth_stage3_cm ?? r2
-  const r4 = crop.root_depth_stage4_cm ?? r3
-
   const f1 = crop.f_factor_stage1 ?? 0.40
   const f2 = crop.f_factor_stage2 ?? f1
   const f3 = crop.f_factor_stage3 ?? f2
   const f4 = crop.f_factor_stage4 ?? f3
 
   const dasClamp = Math.max(1, das)
+  const rootDepthCm = calcRootDepthCm(crop, dasClamp)
 
   // Fase 1 — Kc constante = kc_ini
   if (dasClamp <= s1) {
-    return { stage: 1, kc: kcIni, rootDepthCm: r1, fFactor: f1 }
+    return { stage: 1, kc: kcIni, rootDepthCm, fFactor: f1 }
   }
 
   // Fase 2 — Kc linear de kc_ini → kc_mid
   if (dasClamp <= s1 + s2) {
     const progress = (dasClamp - s1) / s2
     const kc = kcIni + (kcMid - kcIni) * progress
-    const root = r1 + (r2 - r1) * progress
-    return { stage: 2, kc, rootDepthCm: root, fFactor: f2 }
+    return { stage: 2, kc, rootDepthCm, fFactor: f2 }
   }
 
   // Fase 3 — Kc constante = kc_mid
   if (dasClamp <= s1 + s2 + s3) {
-    return { stage: 3, kc: kcMid, rootDepthCm: r3, fFactor: f3 }
+    return { stage: 3, kc: kcMid, rootDepthCm, fFactor: f3 }
   }
 
   // Fase 4 — Kc linear de kc_mid → kc_final
   const s4Start = s1 + s2 + s3
   const progress = Math.min((dasClamp - s4Start) / s4, 1)
   const kc = kcMid + (kcFinal - kcMid) * progress
-  return { stage: 4, kc, rootDepthCm: r4, fFactor: f4 }
+  return { stage: 4, kc, rootDepthCm, fFactor: f4 }
 }
 
 export function getKcForDas(crop: Crop, das: number): number {

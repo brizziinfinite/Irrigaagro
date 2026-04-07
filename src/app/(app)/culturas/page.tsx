@@ -59,10 +59,9 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
   const [s2days, setS2days] = useState(crop?.stage2_days?.toString() ?? '')
   const [s3days, setS3days] = useState(crop?.stage3_days?.toString() ?? '')
   const [s4days, setS4days] = useState(crop?.stage4_days?.toString() ?? '')
-  const [r1, setR1] = useState(crop?.root_depth_stage1_cm?.toString() ?? '')
-  const [r2, setR2] = useState(crop?.root_depth_stage2_cm?.toString() ?? '')
-  const [r3, setR3] = useState(crop?.root_depth_stage3_cm?.toString() ?? '')
-  const [r4, setR4] = useState(crop?.root_depth_stage4_cm?.toString() ?? '')
+  const [rootInitial, setRootInitial]   = useState(crop?.root_initial_depth_cm?.toString() ?? '')
+  const [rootRate, setRootRate]         = useState(crop?.root_growth_rate_cm_day?.toString() ?? '')
+  const [rootStartDas, setRootStartDas] = useState(crop?.root_start_das?.toString() ?? '')
   const [f1, setF1] = useState(crop?.f_factor_stage1?.toString() ?? '')
   const [f2, setF2] = useState(crop?.f_factor_stage2?.toString() ?? '')
   const [f3, setF3] = useState(crop?.f_factor_stage3?.toString() ?? '')
@@ -80,10 +79,9 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
     setS2days(preset.stage2_days.toString())
     setS3days(preset.stage3_days.toString())
     setS4days(preset.stage4_days.toString())
-    setR1(preset.root_depth_stage1_cm.toString())
-    setR2(preset.root_depth_stage2_cm.toString())
-    setR3(preset.root_depth_stage3_cm.toString())
-    setR4(preset.root_depth_stage4_cm.toString())
+    setRootInitial(preset.root_initial_depth_cm.toString())
+    setRootRate(preset.root_growth_rate_cm_day.toString())
+    setRootStartDas(preset.root_start_das.toString())
     setF1(preset.f_factor_stage1.toString())
     setF2(preset.f_factor_stage2.toString())
     setF3(preset.f_factor_stage3.toString())
@@ -112,10 +110,9 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
       stage2_days: s2days ? Number(s2days) : null,
       stage3_days: s3days ? Number(s3days) : null,
       stage4_days: s4days ? Number(s4days) : null,
-      root_depth_stage1_cm: r1 ? Number(r1) : null,
-      root_depth_stage2_cm: r2 ? Number(r2) : null,
-      root_depth_stage3_cm: r3 ? Number(r3) : null,
-      root_depth_stage4_cm: r4 ? Number(r4) : null,
+      root_initial_depth_cm:   rootInitial   ? Number(rootInitial)   : null,
+      root_growth_rate_cm_day: rootRate      ? Number(rootRate)      : null,
+      root_start_das:          rootStartDas  ? Number(rootStartDas)  : null,
       f_factor_stage1: f1 ? Number(f1) : null,
       f_factor_stage2: f2 ? Number(f2) : null,
       f_factor_stage3: f3 ? Number(f3) : null,
@@ -140,10 +137,10 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
   }
 
   const stageData = [
-    { label: 'Fase 1 — Inicial',         days: s1days, setDays: setS1days, root: r1, setRoot: setR1, f: f1, setF: setF1, kc: kcIni,   setKc: setKcIni,   kcLabel: 'Kc ini',   hint: 'constante' },
-    { label: 'Fase 2 — Desenvolvimento', days: s2days, setDays: setS2days, root: r2, setRoot: setR2, f: f2, setF: setF2, kc: null,    setKc: null,       kcLabel: null,       hint: 'interpolado' },
-    { label: 'Fase 3 — Médio',           days: s3days, setDays: setS3days, root: r3, setRoot: setR3, f: f3, setF: setF3, kc: kcMid,   setKc: setKcMid,   kcLabel: 'Kc mid',   hint: 'constante' },
-    { label: 'Fase 4 — Final',           days: s4days, setDays: setS4days, root: r4, setRoot: setR4, f: f4, setF: setF4, kc: kcFinal, setKc: setKcFinal, kcLabel: 'Kc final', hint: 'interpolado' },
+    { label: 'Fase 1 — Inicial',         days: s1days, setDays: setS1days, f: f1, setF: setF1, kc: kcIni,   setKc: setKcIni,   kcLabel: 'Kc ini',   hint: 'constante' },
+    { label: 'Fase 2 — Desenvolvimento', days: s2days, setDays: setS2days, f: f2, setF: setF2, kc: null,    setKc: null,       kcLabel: null,       hint: 'interpolado' },
+    { label: 'Fase 3 — Médio',           days: s3days, setDays: setS3days, f: f3, setF: setF3, kc: kcMid,   setKc: setKcMid,   kcLabel: 'Kc mid',   hint: 'constante' },
+    { label: 'Fase 4 — Final',           days: s4days, setDays: setS4days, f: f4, setF: setF4, kc: kcFinal, setKc: setKcFinal, kcLabel: 'Kc final', hint: 'interpolado' },
   ]
 
   return (
@@ -224,6 +221,35 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
             </div>
           )}
 
+          {/* Crescimento de Raiz */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>
+                Crescimento de Raiz
+              </span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+            </div>
+            <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <NumInput
+                  label="Prof. inicial" value={rootInitial} onChange={setRootInitial}
+                  placeholder="5" unit="cm"
+                  hint="Ao germinar"
+                />
+                <NumInput
+                  label="Taxa crescimento" value={rootRate} onChange={setRootRate}
+                  placeholder="1.0" unit="cm/d"
+                  hint="Máx efetivo: 40 cm"
+                />
+                <NumInput
+                  label="Início (DAS)" value={rootStartDas} onChange={setRootStartDas}
+                  placeholder="4" unit="DAS"
+                  hint="Após germinação"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* 4 Fases */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -253,14 +279,10 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
                     <span style={{ fontSize: 10, color: '#556677', marginLeft: 4 }}>Kc {stage.hint}</span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: stage.kcLabel ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: stage.kcLabel ? '1fr 1fr 1fr' : '1fr 1fr', gap: 10 }}>
                     <NumInput
                       label="Duração" value={stage.days} onChange={stage.setDays}
                       placeholder="dias" unit="dias" small
-                    />
-                    <NumInput
-                      label="Profund. raiz" value={stage.root} onChange={stage.setRoot}
-                      placeholder="cm" unit="cm" small
                     />
                     <NumInput
                       label="Fator f" value={stage.f} onChange={stage.setF}
@@ -309,11 +331,13 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
   const hasStages = crop.stage1_days || crop.stage2_days || crop.stage3_days || crop.stage4_days
 
   const stageRows = [
-    { label: 'Fase 1', days: crop.stage1_days, root: crop.root_depth_stage1_cm, f: crop.f_factor_stage1, kc: crop.kc_ini,   kcLabel: 'Kc ini',      hint: 'constante' },
-    { label: 'Fase 2', days: crop.stage2_days, root: crop.root_depth_stage2_cm, f: crop.f_factor_stage2, kc: null,          kcLabel: 'interpolado', hint: '' },
-    { label: 'Fase 3', days: crop.stage3_days, root: crop.root_depth_stage3_cm, f: crop.f_factor_stage3, kc: crop.kc_mid,   kcLabel: 'Kc mid',      hint: 'constante' },
-    { label: 'Fase 4', days: crop.stage4_days, root: crop.root_depth_stage4_cm, f: crop.f_factor_stage4, kc: crop.kc_final, kcLabel: 'Kc final',    hint: 'interpolado' },
+    { label: 'Fase 1', days: crop.stage1_days, f: crop.f_factor_stage1, kc: crop.kc_ini,   kcLabel: 'Kc ini',      hint: 'constante' },
+    { label: 'Fase 2', days: crop.stage2_days, f: crop.f_factor_stage2, kc: null,          kcLabel: 'interpolado', hint: '' },
+    { label: 'Fase 3', days: crop.stage3_days, f: crop.f_factor_stage3, kc: crop.kc_mid,   kcLabel: 'Kc mid',      hint: 'constante' },
+    { label: 'Fase 4', days: crop.stage4_days, f: crop.f_factor_stage4, kc: crop.kc_final, kcLabel: 'Kc final',    hint: 'interpolado' },
   ]
+
+  const hasRootGrowth = crop.root_growth_rate_cm_day != null
 
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
@@ -384,19 +408,34 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
       {/* Detalhes expandíveis das fases */}
       {expanded && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', padding: '14px 18px' }}>
+          {/* Crescimento de raiz */}
+          {hasRootGrowth && (
+            <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Prof. inicial', value: crop.root_initial_depth_cm != null ? `${crop.root_initial_depth_cm} cm` : '—' },
+                { label: 'Taxa', value: crop.root_growth_rate_cm_day != null ? `${crop.root_growth_rate_cm_day} cm/dia` : '—' },
+                { label: 'Início', value: crop.root_start_das != null ? `DAS ${crop.root_start_das}` : '—' },
+                { label: 'Máx. efetivo', value: '40 cm' },
+              ].map(item => (
+                <div key={item.label} style={{ background: '#0d1520', borderRadius: 8, padding: '6px 12px' }}>
+                  <span style={{ fontSize: 9, color: '#556677', display: 'block', marginBottom: 2 }}>{item.label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 70px 55px 70px', background: '#0d1520', padding: '8px 14px', gap: 8 }}>
-              {['Fase', 'Descrição', 'Dias', 'Raiz (cm)', 'Fator f', 'Kc'].map(h => (
+            <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', background: '#0d1520', padding: '8px 14px', gap: 8 }}>
+              {['Fase', 'Descrição', 'Dias', 'Fator f', 'Kc'].map(h => (
                 <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
               ))}
             </div>
             {stageRows.map((row, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 70px 55px 70px', padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#0093D0' }}>Fase {i + 1}</span>
                 <span style={{ fontSize: 12, color: '#8899aa' }}>{['Inicial', 'Desenvolvimento', 'Médio', 'Final'][i]} <span style={{ color: '#556677', fontSize: 10 }}>{row.hint ? `(${row.hint})` : ''}</span></span>
                 <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
-                <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.root ?? '—'}</span>
                 <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.f ?? '—'}</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: row.kc ? '#0093D0' : '#556677', fontFamily: 'var(--font-mono)' }}>{row.kc ?? row.kcLabel}</span>
               </div>
