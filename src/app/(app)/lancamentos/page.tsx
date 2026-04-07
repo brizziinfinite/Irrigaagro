@@ -101,9 +101,16 @@ function adcForDate(meta: PivotMeta, date: string, pivotGrid: PivotGrid): number
   while (cursor < date) {
     const das = season.planting_date ? calcDAS(season.planting_date, cursor) : 1
     const stageInfo = crop ? getStageInfoForDas(crop, das) : null
+    const dasPrevCursor = das - 1
+    const stageInfoPrevCursor = crop && dasPrevCursor > 0 ? getStageInfoForDas(crop, dasPrevCursor) : stageInfo
+    const fieldCapacity = context.pivot?.field_capacity ?? context.season.field_capacity ?? 32
+    const wiltingPoint = context.pivot?.wilting_point ?? context.season.wilting_point ?? 14
+    const bulkDensity = context.pivot?.bulk_density ?? context.season.bulk_density ?? 1.4
+    const ctaCursor = stageInfo ? calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfo.rootDepthCm) : ctaMm
+    const ctaPrevCursor = stageInfoPrevCursor ? calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrevCursor.rootDepthCm) : ctaCursor
     const etc = calcEtc(lastEto, stageInfo?.kc ?? 1)
     const cell = pivotGrid[cursor]
-    adc = calcADc(adc, cell ? (parseNum(cell.rainfall) ?? 0) : 0, cell ? (parseNum(cell.lamina) ?? 0) : 0, etc, ctaMm)
+    adc = calcADc(adc, cell ? (parseNum(cell.rainfall) ?? 0) : 0, cell ? (parseNum(cell.lamina) ?? 0) : 0, etc, ctaCursor, ctaPrevCursor)
     cursor = addDays(cursor, 1)
   }
   return adc
@@ -121,10 +128,17 @@ function projectedPct(meta: PivotMeta, date: string, pivotGrid: PivotGrid): numb
   const adc = adcForDate(meta, date, pivotGrid)
   const das = season.planting_date ? calcDAS(season.planting_date, date) : 1
   const stageInfo = getStageInfoForDas(crop, das)
+  const dasPrevProj = das - 1
+  const stageInfoPrevProj = dasPrevProj > 0 ? getStageInfoForDas(crop, dasPrevProj) : stageInfo
+  const fieldCapacity = context.pivot?.field_capacity ?? context.season.field_capacity ?? 32
+  const wiltingPoint = context.pivot?.wilting_point ?? context.season.wilting_point ?? 14
+  const bulkDensity = context.pivot?.bulk_density ?? context.season.bulk_density ?? 1.4
+  const ctaProj = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfo.rootDepthCm)
+  const ctaPrevProj = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrevProj.rootDepthCm)
   const lastEto = meta.history.find(h => h.eto_mm != null)?.eto_mm ?? 5
   const cell = pivotGrid[date]
-  const adcNew = calcADc(adc, cell ? (parseNum(cell.rainfall) ?? 0) : 0, cell ? (parseNum(cell.lamina) ?? 0) : 0, calcEtc(lastEto, stageInfo.kc), ctaMm)
-  return (adcNew / ctaMm) * 100
+  const adcNew = calcADc(adc, cell ? (parseNum(cell.rainfall) ?? 0) : 0, cell ? (parseNum(cell.lamina) ?? 0) : 0, calcEtc(lastEto, stageInfo.kc), ctaProj, ctaPrevProj)
+  return (adcNew / ctaProj) * 100
 }
 
 function pctColor(pct: number | null, threshold: number): string {

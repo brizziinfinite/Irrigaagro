@@ -168,7 +168,7 @@ export function getStageInfoForDas(crop: Crop, das: number): StageInfo {
   const r3 = crop.root_depth_stage3_cm ?? r2
   const r4 = crop.root_depth_stage4_cm ?? r3
 
-  const f1 = crop.f_factor_stage1 ?? 0.55
+  const f1 = crop.f_factor_stage1 ?? 0.40
   const f2 = crop.f_factor_stage2 ?? f1
   const f3 = crop.f_factor_stage3 ?? f2
   const f4 = crop.f_factor_stage4 ?? f3
@@ -251,17 +251,30 @@ export function calcEtc(eto: number, kc: number, ks = 1): number {
  * chuvaEfetiva = min(chuva, espaço livre no perfil) — spec seção 9.1
  * Excesso de chuva que transborda a CTA não é contabilizado.
  * Resultado limitado ao intervalo [0, CTA].
+ *
+ * Quando a CTA cresce (raiz aprofunda entre um dia e outro), o solo recém
+ * acessível já contém água proporcional à umidade atual do perfil explorado.
+ * Escalamos o ADc antes de aplicar o balanço do dia:
+ *   adcEscalado = adcPrev × (ctaNova / ctaAnterior)
+ * Exemplo: raiz 12→20cm, adcPrev=18mm, ctaPrev=20.7mm, ctaNova=34.5mm
+ *   → adcEscalado = 18 × (34.5/20.7) = 30mm  (mesma % CC, mais mm)
  */
 export function calcADc(
   adcPrev: number,
   rainfall: number,
   irrigation: number,
   etc: number,
-  cta: number
+  cta: number,
+  ctaPrev?: number  // CTA do dia anterior; se maior que cta, sem efeito
 ): number {
-  const espacoLivre = Math.max(0, cta - adcPrev)
+  // Escala quando a raiz cresceu (CTA aumentou)
+  const adcBase = (ctaPrev && ctaPrev > 0 && cta > ctaPrev)
+    ? adcPrev * (cta / ctaPrev)
+    : adcPrev
+
+  const espacoLivre = Math.max(0, cta - adcBase)
   const chuvaEfetiva = Math.min(Math.max(0, rainfall), espacoLivre)
-  const newAdc = adcPrev + chuvaEfetiva + Math.max(0, irrigation) - etc
+  const newAdc = adcBase + chuvaEfetiva + Math.max(0, irrigation) - etc
   return clamp(newAdc, 0, cta)
 }
 
@@ -457,6 +470,10 @@ export function calcProjection(params: {
     const cta = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, rootDepthCm)
     const cad = calcCAD(cta, fFactor)
 
+    const dasPrevLoop = das - 1
+    const stageInfoPrevLoop = dasPrevLoop > 0 ? getStageInfoForDas(crop, dasPrevLoop) : stageInfo
+    const ctaPrevLoop = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrevLoop.rootDepthCm)
+
     const etoForDay = etoByDay?.[i - 1] ?? avgEto
     const rainfallForDay = rainfallByDay?.[i - 1] ?? 0
     const etcAvg = calcEtc(etoForDay, kc)
@@ -464,7 +481,7 @@ export function calcProjection(params: {
     const irrigBruto = irrigationByDay?.[i - 1] ?? 0
     const cuc = (pivot?.cuc_percent ?? 85) / 100
     const irrigLiquido = irrigBruto * cuc
-    const adcProjected = calcADc(adcPrev, rainfallForDay, irrigLiquido, etcAvg, cta)
+    const adcProjected = calcADc(adcPrev, rainfallForDay, irrigLiquido, etcAvg, cta, ctaPrevLoop)
     const fieldCapacityPercent = cta > 0 ? (adcProjected / cta) * 100 : 0
     const alertThresholdPct = pivot?.alert_threshold_percent ?? null
     const status = getIrrigationStatus(adcProjected, cad, false, cta, alertThresholdPct)
@@ -623,10 +640,14 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
   const cta = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, rootDepthCm)
   const cad = calcCAD(cta, fFactor)
 
+  const dasPrev = das - 1
+  const stageInfoPrev = dasPrev > 0 ? getStageInfoForDas(crop, dasPrev) : stageInfo
+  const ctaPrev = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrev.rootDepthCm)
+
   const eto = calcETo(weather)
   const etc = calcEtc(eto, kc)
 
-  const adcNew = calcADc(adcPrev, rainfall, irrigation, etc, cta)
+  const adcNew = calcADc(adcPrev, rainfall, irrigation, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
