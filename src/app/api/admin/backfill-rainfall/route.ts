@@ -61,14 +61,14 @@ export async function GET(req: NextRequest) {
 
       if (existing) { skipped++; continue }
 
-      // Insere com source='plugfield' (veio do sensor via planilha)
+      // Insere com source='station' (veio da planilha da estação)
       const { error: insErr } = await (supabase as any)
         .from('rainfall_records')
         .insert({
           pivot_id: pivot.id,
           date: row.date,
           rainfall_mm: row.rainfall_mm,
-          source: 'plugfield',
+          source: 'station',
           sector_id: null,
         })
 

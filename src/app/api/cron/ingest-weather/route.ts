@@ -579,10 +579,13 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // ── Grava chuva em rainfall_records (source='plugfield') ──────────────────
-    // Só grava se teve chuva detectada pelo sensor
+    // ── Grava chuva em rainfall_records ───────────────────────────────────────
+    // Só grava se teve chuva detectada. source depende da origem dos dados:
+    // Plugfield API direta → 'plugfield', Google Sheets / Open-Meteo → 'station'
     // Preserva edições manuais: não sobrescreve registros source='manual'
     if (weatherDay.rainfall > 0) {
+      const rainfallSource = weatherDay.source === 'plugfield' ? 'plugfield' : 'station'
+
       const { data: existingRainfall } = await (supabase as any)
         .from('rainfall_records')
         .select('id, source')
@@ -598,7 +601,7 @@ export async function GET(req: NextRequest) {
             pivot_id: pivot.id,
             date: fetchDate,
             rainfall_mm: weatherDay.rainfall,
-            source: 'plugfield',
+            source: rainfallSource,
             sector_id: null,
           }, { onConflict: 'pivot_id,sector_id,date' })
       }
