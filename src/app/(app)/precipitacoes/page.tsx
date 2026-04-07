@@ -396,6 +396,7 @@ interface EditModalProps {
   sectorId: string | null
   sectorName: string | null
   existing: RainfallRecord | null
+  allPivots: { id: string; name: string }[]
   onClose: () => void
   onSaved: () => Promise<void>
   onDeleted: () => Promise<void>
@@ -427,10 +428,13 @@ async function syncManagementForPivotDate(pivotId: string, date: string) {
   } catch { /* silencioso — não bloqueia o usuário */ }
 }
 
-function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onSaved, onDeleted }: EditModalProps) {
+function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, onClose, onSaved, onDeleted }: EditModalProps) {
   const [value, setValue] = useState(existing ? String(existing.rainfall_mm) : '0')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  // Pivôs extras onde aplicar o mesmo valor (excluindo o pivô atual que já é salvo)
+  const otherPivots = allPivots.filter(p => p.id !== pivotId)
+  const [extraPivotIds, setExtraPivotIds] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -461,15 +465,18 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onS
         return
       }
 
-      await upsertRainfallRecord({
-        pivot_id: pivotId,
-        date,
-        rainfall_mm: mm,
-        source: 'manual',
-        sector_id: sectorId,
-        updated_at: new Date().toISOString(),
-      })
-      syncManagementForPivotDate(pivotId, date)
+      const allTargetIds = [pivotId, ...extraPivotIds]
+      await Promise.all(allTargetIds.map(pid =>
+        upsertRainfallRecord({
+          pivot_id: pid,
+          date,
+          rainfall_mm: mm,
+          source: 'manual',
+          sector_id: pid === pivotId ? sectorId : null,
+          updated_at: new Date().toISOString(),
+        })
+      ))
+      allTargetIds.forEach(pid => syncManagementForPivotDate(pid, date))
       await onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao salvar precipitação')
@@ -573,6 +580,38 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, onClose, onS
             }}
           />
         </div>
+
+        {otherPivots.length > 0 && (
+          <div>
+            <p style={{ fontSize: 11, color: '#8899aa', marginBottom: 8 }}>Aplicar também em:</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {otherPivots.map(p => {
+                const checked = extraPivotIds.includes(p.id)
+                return (
+                  <button key={p.id} type="button"
+                    onClick={() => setExtraPivotIds(prev => checked ? prev.filter(x => x !== p.id) : [...prev, p.id])}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                      borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+                      border: `1px solid ${checked ? 'rgba(0,147,208,0.4)' : 'rgba(255,255,255,0.06)'}`,
+                      background: checked ? 'rgba(0,147,208,0.08)' : '#0d1520',
+                    }}
+                  >
+                    <div style={{
+                      width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                      border: `2px solid ${checked ? '#0093D0' : 'rgba(255,255,255,0.2)'}`,
+                      background: checked ? '#0093D0' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                    <span style={{ fontSize: 13, color: checked ? '#e2e8f0' : '#8899aa' }}>{p.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 8 }}>
           <button
@@ -1545,6 +1584,7 @@ export default function PrecipitacoesPage() {
           sectorId={activeSectorId}
           sectorName={activeSector?.name ?? null}
           existing={editingRecord}
+          allPivots={pivots}
           onClose={() => setEditModal(null)}
           onSaved={handleSaved}
           onDeleted={handleDeleted}
