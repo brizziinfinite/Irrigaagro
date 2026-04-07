@@ -311,6 +311,9 @@ export interface Crop {
   root_depth_stage2_cm: number | null
   root_depth_stage3_cm: number | null
   root_depth_stage4_cm: number | null
+  root_initial_depth_cm: number | null
+  root_growth_rate_cm_day: number | null
+  root_start_das: number | null
   f_factor_stage1: number | null
   f_factor_stage2: number | null
   f_factor_stage3: number | null
@@ -332,6 +335,9 @@ export interface CropInsert {
   root_depth_stage2_cm?: number | null
   root_depth_stage3_cm?: number | null
   root_depth_stage4_cm?: number | null
+  root_initial_depth_cm?: number | null
+  root_growth_rate_cm_day?: number | null
+  root_start_das?: number | null
   f_factor_stage1?: number | null
   f_factor_stage2?: number | null
   f_factor_stage3?: number | null
