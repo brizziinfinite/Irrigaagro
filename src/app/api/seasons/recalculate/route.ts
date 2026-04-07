@@ -117,7 +117,9 @@ export async function POST(req: NextRequest) {
       const existing = existingByDate.get(dateStr)
       const actualDepthStr = existing?.actual_depth_mm ? String(existing.actual_depth_mm) : ''
       const actualSpeedStr = existing?.actual_speed_percent ? String(existing.actual_speed_percent) : ''
-      const rainfallStr = existing?.rainfall_mm ? String(existing.rainfall_mm) : ''
+      // Chuva vem sempre de rainfall_records (externalData.rainfall) — fonte autoritativa.
+      // Passamos rainfall='' para que o cálculo use externalData.rainfall com prioridade correta
+      // (manual > plugfield > estação), sem sobrescrever com valor antigo do daily_management.
 
       let scheduledMm: number | null = null
       try {
@@ -132,7 +134,7 @@ export async function POST(req: NextRequest) {
         humidity: climateSnapshot.humidity_percent != null ? String(climateSnapshot.humidity_percent) : '',
         wind: climateSnapshot.wind_speed_ms != null ? String(climateSnapshot.wind_speed_ms) : '',
         radiation: climateSnapshot.solar_radiation_wm2 != null ? String(climateSnapshot.solar_radiation_wm2) : '',
-        rainfall: rainfallStr,
+        rainfall: '',
         actualDepth: actualDepthStr || (scheduledMm != null ? String(scheduledMm) : ''),
         actualSpeed: actualSpeedStr,
         externalData,
@@ -148,7 +150,7 @@ export async function POST(req: NextRequest) {
         wind_speed_ms: climateSnapshot.wind_speed_ms ?? null,
         solar_radiation_wm2: climateSnapshot.solar_radiation_wm2 ?? null,
         eto_mm: result.eto, etc_mm: result.etc,
-        rainfall_mm: existing?.rainfall_mm ?? externalData.rainfall?.rainfall_mm ?? climateSnapshot.rainfall_mm ?? 0,
+        rainfall_mm: externalData.rainfall?.rainfall_mm ?? climateSnapshot.rainfall_mm ?? 0,
         kc: result.kc, ks: result.ks, ctda: result.adcNew, cta: result.cta,
         recommended_depth_mm: result.recommendedDepthMm,
         recommended_speed_percent: result.recommendedSpeedPercent,
