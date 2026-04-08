@@ -518,8 +518,9 @@ export function calcProjection(params: {
     const adcProjected = calcADc(adcPrev, rainfallForDay, irrigLiquido, etcAvg, cta, ctaPrevLoop)
     const fieldCapacityPercent = cta > 0 ? (adcProjected / cta) * 100 : 0
     const alertThresholdPct = pivot?.alert_threshold_percent ?? null
+    const irrigationTargetPct = pivot?.irrigation_target_percent ?? null
     const status = getIrrigationStatus(adcProjected, cad, false, cta, alertThresholdPct)
-    const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcProjected, alertThresholdPct, null)
+    const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcProjected, alertThresholdPct, irrigationTargetPct)
     const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
     // Marca o primeiro dia que precisa irrigar
@@ -685,8 +686,9 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
   const ks = calcKs(adcNew, cad)
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
+  const irrigationTargetPct = pivot?.irrigation_target_percent ?? null
   const status = getIrrigationStatus(adcNew, cad, isIrrigating)
-  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew)
+  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew, null, irrigationTargetPct)
   const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
   return {

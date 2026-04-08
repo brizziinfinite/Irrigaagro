@@ -243,6 +243,7 @@ export async function getRainfallRecordByPivotDate(
     .select('*')
     .eq('pivot_id', pivotId)
     .eq('date', date)
+    .is('sector_id', null)
     .maybeSingle()
 
   if (error) {

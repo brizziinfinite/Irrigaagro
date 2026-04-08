@@ -155,6 +155,7 @@ export interface Pivot {
   wilting_point: number | null
   bulk_density: number | null
   f_factor: number | null
+  irrigation_target_percent: number | null
 }
 
 export interface PivotInsert {
@@ -185,6 +186,7 @@ export interface PivotInsert {
   wilting_point?: number | null
   bulk_density?: number | null
   f_factor?: number | null
+  irrigation_target_percent?: number | null
 }
 
 export type PivotUpdate = Partial<PivotInsert>

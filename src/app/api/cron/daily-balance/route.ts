@@ -360,7 +360,7 @@ export async function GET(req: NextRequest) {
           solar_radiation_wm2: climateSnapshot.solar_radiation_wm2 ?? null,
           eto_mm: result.eto,
           etc_mm: result.etc,
-          rainfall_mm: externalData.rainfall?.rainfall_mm ?? climateSnapshot.rainfall_mm ?? 0,
+          rainfall_mm: externalData.rainfall?.rainfall_mm ?? 0,
           kc: result.kc,
           ks: result.ks,
           ctda: result.adcNew,

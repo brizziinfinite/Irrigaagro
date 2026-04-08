@@ -202,6 +202,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
   })
   const parsedCoords = useMemo(() => parseCoords(coordsRaw), [coordsRaw])
   const [alertThreshold, setAlertThreshold] = useState(pivot?.alert_threshold_percent?.toString() ?? '70')
+  const [irrigationTarget, setIrrigationTarget] = useState(pivot?.irrigation_target_percent?.toString() ?? '80')
   const [weatherSource, setWeatherSource] = useState<WeatherSource>(pivot?.weather_source ?? 'nasa')
   const [spreadsheetId, setSpreadsheetId] = useState(pivot?.weather_config?.spreadsheet_id ?? '')
   const [sheetGid, setSheetGid] = useState(pivot?.weather_config?.gid ?? '')
@@ -300,6 +301,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
       latitude: parsedCoords?.lat ?? null,
       longitude: parsedCoords?.lng ?? null,
       alert_threshold_percent: alertThreshold ? Number(alertThreshold) : 70,
+      irrigation_target_percent: irrigationTarget ? Number(irrigationTarget) : 80,
       weather_source: weatherSource,
       weather_config: weatherSource === 'google_sheets' && spreadsheetId
         ? { spreadsheet_id: spreadsheetId, gid: sheetGid || undefined }
@@ -721,6 +723,36 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             <p style={{ fontSize: 11, color: '#556677', marginTop: 6 }}>
               Sistema avisa para irrigar quando a capacidade de campo cair abaixo deste valor.
               Padrão: 70%.
+            </p>
+          </div>
+
+          {/* Alvo de reposição */}
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+              Alvo de Reposição de Irrigação
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <input
+                type="range"
+                min={50}
+                max={100}
+                step={5}
+                value={irrigationTarget || '80'}
+                onChange={e => setIrrigationTarget(e.target.value)}
+                style={{ flex: 1, accentColor: '#22c55e', cursor: 'pointer' }}
+              />
+              <div style={{
+                minWidth: 52, padding: '6px 10px', borderRadius: 8, textAlign: 'center',
+                background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>
+                  {irrigationTarget || 80}
+                </span>
+                <span style={{ fontSize: 10, color: '#556677' }}>%</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 11, color: '#556677', marginTop: 6 }}>
+              Até onde repor após acionar a irrigação. Padrão: 80% (evita encharcamento).
             </p>
           </div>
 

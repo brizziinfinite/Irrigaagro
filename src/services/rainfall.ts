@@ -33,16 +33,23 @@ function rainfallServiceError(action: string, error: { message: string }) {
 
 export async function listRainfallByPivotIds(
   pivotIds: string[],
-  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
+  dateFrom?: string,
+  dateTo?: string
 ): Promise<RainfallRecord[]> {
   if (pivotIds.length === 0) {
     return []
   }
 
-  const { data, error } = await rainfallTable(client)
+  let q = rainfallTable(client)
     .select('*')
     .in('pivot_id', pivotIds)
-    .order('date', { ascending: false })
+    .order('date', { ascending: true })
+
+  if (dateFrom) q = q.gte('date', dateFrom)
+  if (dateTo)   q = q.lte('date', dateTo)
+
+  const { data, error } = await q
 
   if (error) {
     throw rainfallServiceError('listar', error)

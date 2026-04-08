@@ -119,8 +119,6 @@ export function computeResolvedManagementBalance(
 
   const rainfallMm = parseOptionalNumber(rainfall)
     ?? externalData?.rainfall?.rainfall_mm
-    ?? externalData?.weather?.rainfall_mm
-    ?? externalData?.geolocationWeather?.rainfall_mm
     ?? 0
 
   const irrigationMm = parseOptionalNumber(actualDepth) ?? 0
@@ -131,11 +129,12 @@ export function computeResolvedManagementBalance(
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
   // Usa threshold configurado no pivô (ex: 70%) como gatilho
-  // e repõe até 100% de campo (target implícito)
+  // e repõe até irrigation_target_percent (ex: 80%) — não necessariamente 100%
   const alertThresholdPct = pivot?.alert_threshold_percent ?? null
+  const irrigationTargetPct = pivot?.irrigation_target_percent ?? null
 
   const status = getIrrigationStatus(adcNew, cad, Boolean(actualSpeedPercent && actualSpeedPercent > 0), cta, alertThresholdPct)
-  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew, alertThresholdPct, null)
+  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew, alertThresholdPct, irrigationTargetPct)
   const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
   // Motor de recomendação v2 — individual ou conjugado

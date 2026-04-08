@@ -580,9 +580,8 @@ export async function GET(req: NextRequest) {
     }
 
     // ── Grava chuva em rainfall_records ───────────────────────────────────────
-    // Só grava se teve chuva detectada. source depende da origem dos dados:
-    // Plugfield API direta → 'plugfield', Google Sheets / Open-Meteo → 'station'
-    // Preserva edições manuais: não sobrescreve registros source='manual'
+    // Só grava se teve chuva detectada e NÃO existe registro manual ou import.
+    // Planilha (import) e lançamentos manuais têm prioridade sobre estação/Plugfield.
     if (weatherDay.rainfall > 0) {
       const rainfallSource = weatherDay.source === 'plugfield' ? 'plugfield' : 'station'
 
@@ -594,7 +593,9 @@ export async function GET(req: NextRequest) {
         .is('sector_id', null)
         .maybeSingle()
 
-      if (!existingRainfall || existingRainfall.source !== 'manual') {
+      // Só grava se não existe registro de fonte confiável (manual ou import)
+      const existingSource = existingRainfall?.source
+      if (!existingRainfall || (existingSource !== 'manual' && existingSource !== 'import')) {
         await (supabase as any)
           .from('rainfall_records')
           .upsert({

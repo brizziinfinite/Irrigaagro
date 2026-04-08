@@ -14,6 +14,16 @@ import {
 import Link from 'next/link'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts'
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Constrói mapa date→mm somando todos os registros.
+ *  O banco garante unicidade por (pivot_id, date, sector_id), então não há duplicatas. */
+function buildRainfallMap(records: RainfallRecord[]): Record<string, number> {
+  const map: Record<string, number> = {}
+  for (const r of records) map[r.date] = (map[r.date] ?? 0) + r.rainfall_mm
+  return map
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SECTOR_COLORS: Record<string, string> = {
@@ -201,17 +211,45 @@ function SectorTabs({ sectors, activeSectorId, onSelect }: SectorTabsProps) {
 
 function RainfallChips({
   records,
+  pivotId,
   selectedDate,
+  calYear,
+  calMonth,
   sectorLabel,
 }: {
   records: RainfallRecord[]
+  pivotId: string
   selectedDate: string
+  calYear: number
+  calMonth: number
   sectorLabel?: string
 }) {
-  const chips = useMemo(() => {
-    const map: Record<string, number> = {}
-    for (const r of records) map[r.date] = (map[r.date] ?? 0) + r.rainfall_mm
+  const [rangeFrom, setRangeFrom] = useState('')
+  const [rangeTo,   setRangeTo]   = useState('')
+  const [rangeTotal, setRangeTotal] = useState<number | null>(null)
+  const [rangeLoading, setRangeLoading] = useState(false)
 
+  // Calcula total do período quando ambas as datas estão preenchidas
+  useEffect(() => {
+    if (!rangeFrom || !rangeTo || !pivotId || rangeFrom > rangeTo) {
+      setRangeTotal(null)
+      return
+    }
+    let cancelled = false
+    setRangeLoading(true)
+    listRainfallByPivotIds([pivotId], undefined, rangeFrom, rangeTo)
+      .then(data => {
+        if (cancelled) return
+        const map = buildRainfallMap(data.filter(r => r.sector_id === null))
+        setRangeTotal(Object.values(map).reduce((s, v) => s + v, 0))
+      })
+      .catch(() => setRangeTotal(null))
+      .finally(() => { if (!cancelled) setRangeLoading(false) })
+    return () => { cancelled = true }
+  }, [rangeFrom, rangeTo, pivotId])
+
+  const chips = useMemo(() => {
+    const map = buildRainfallMap(records)
     const selD = new Date(selectedDate + 'T00:00:00')
     const day = map[selectedDate] ?? 0
     const dow = selD.getDay()
@@ -222,38 +260,68 @@ function RainfallChips({
       weekDates.push(toYMD(d))
     }
     const week = weekDates.reduce((s, k) => s + (map[k] ?? 0), 0)
-    const prefix = selectedDate.slice(0, 7)
+    const prefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`
     const month = Object.entries(map).reduce((s, [k, v]) => k.startsWith(prefix) ? s + v : s, 0)
-    const yearPrefix = selectedDate.slice(0, 4)
+    const yearPrefix = String(calYear)
     const year = Object.entries(map).reduce((s, [k, v]) => k.startsWith(yearPrefix) ? s + v : s, 0)
-
     return [
-      { label: 'Dia',  value: day },
+      { label: 'Dia',    value: day },
       { label: 'Semana', value: week },
-      { label: 'Mês',  value: month },
-      { label: 'Ano',  value: year },
+      { label: 'Mês',    value: month },
+      { label: 'Ano',    value: year },
     ]
-  }, [records, selectedDate])
+  }, [records, selectedDate, calYear, calMonth])
+
+  const inputStyle: React.CSSProperties = {
+    background: '#0d1520', border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 8, color: '#e2e8f0', fontSize: 12, padding: '5px 8px',
+    outline: 'none', cursor: 'pointer',
+  }
 
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-      {sectorLabel && (
-        <span style={{ fontSize: 11, color: '#556677', marginRight: 4 }}>{sectorLabel}</span>
-      )}
-      {chips.map(c => (
-        <div
-          key={c.label}
-          style={{
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Chips padrão */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        {sectorLabel && (
+          <span style={{ fontSize: 11, color: '#556677', marginRight: 4 }}>{sectorLabel}</span>
+        )}
+        {chips.map(c => (
+          <div key={c.label} style={{
             padding: '6px 14px', borderRadius: 20,
             background: c.value > 0 ? 'rgb(6 182 212 / 0.1)' : '#0d1520',
             border: `1px solid ${c.value > 0 ? 'rgb(6 182 212 / 0.3)' : 'rgba(255,255,255,0.06)'}`,
             color: c.value > 0 ? '#06b6d4' : '#556677',
             fontSize: 12, fontWeight: 600,
-          }}
-        >
-          {c.label}: {c.value.toFixed(1)} mm
-        </div>
-      ))}
+          }}>
+            {c.label}: {c.value.toFixed(1)} mm
+          </div>
+        ))}
+      </div>
+
+      {/* Filtro de período personalizado */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 11, color: '#556677', fontWeight: 600 }}>Período:</span>
+        <input type="date" value={rangeFrom} onChange={e => setRangeFrom(e.target.value)} style={inputStyle} />
+        <span style={{ fontSize: 11, color: '#556677' }}>até</span>
+        <input type="date" value={rangeTo} onChange={e => setRangeTo(e.target.value)} style={inputStyle} />
+        {rangeLoading && (
+          <span style={{ fontSize: 12, color: '#556677' }}>calculando…</span>
+        )}
+        {!rangeLoading && rangeTotal !== null && (
+          <div style={{
+            padding: '6px 14px', borderRadius: 20,
+            background: rangeTotal > 0 ? 'rgb(34 197 94 / 0.1)' : '#0d1520',
+            border: `1px solid ${rangeTotal > 0 ? 'rgb(34 197 94 / 0.3)' : 'rgba(255,255,255,0.06)'}`,
+            color: rangeTotal > 0 ? '#22c55e' : '#556677',
+            fontSize: 12, fontWeight: 700,
+          }}>
+            Total: {rangeTotal.toFixed(1)} mm
+          </div>
+        )}
+        {rangeFrom && rangeTo && rangeFrom > rangeTo && (
+          <span style={{ fontSize: 11, color: '#ef4444' }}>Data inicial maior que final</span>
+        )}
+      </div>
     </div>
   )
 }
@@ -280,9 +348,9 @@ function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareP
     ]
 
     return groups.map(g => {
-      const total = allRecords
-        .filter(r => r.date.startsWith(prefix) && r.sector_id === g.id)
-        .reduce((s, r) => s + r.rainfall_mm, 0)
+      const sectorRecords = allRecords.filter(r => r.date.startsWith(prefix) && r.sector_id === g.id)
+      const sectorMap = buildRainfallMap(sectorRecords)
+      const total = Object.values(sectorMap).reduce((s, v) => s + v, 0)
       return { ...g, total }
     }).filter(g => g.total > 0 || g.id === null)
   }, [allRecords, sectors, year, month])
@@ -332,16 +400,17 @@ function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareP
 function RainfallBarChart({ records, year, month }: { records: RainfallRecord[]; year: number; month: number }) {
   const data = useMemo(() => {
     const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const map: Record<string, number> = {}
-    for (const r of records) {
-      const d = new Date(r.date + 'T00:00:00')
+    const byDate = buildRainfallMap(records)
+    const map: Record<number, number> = {}
+    for (const [date, mm] of Object.entries(byDate)) {
+      const d = new Date(date + 'T00:00:00')
       if (d.getFullYear() === year && d.getMonth() === month) {
-        map[d.getDate()] = (map[d.getDate()] ?? 0) + r.rainfall_mm
+        map[d.getDate()] = mm
       }
     }
-    return Array.from({ length: daysInMonth }, (_, i) => ({ 
-      day: String(i + 1), 
-      mm: map[i + 1] ?? 0 
+    return Array.from({ length: daysInMonth }, (_, i) => ({
+      day: String(i + 1),
+      mm: map[i + 1] ?? 0
     }))
   }, [records, year, month])
 
@@ -725,9 +794,15 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
   const [error, setError]       = useState('')
   const [selectedPivotIds, setSelectedPivotIds] = useState<string[]>([pivotId])
 
-  function extractSpreadsheetId(raw: string): string | null {
+  // Retorna { sid, pub } — pub=true quando é URL de "Publicar na web" (/d/e/...)
+  function extractSpreadsheetId(raw: string): { sid: string; pub: boolean } | null {
+    // URL publicada na web: /spreadsheets/d/e/2PACX-1v.../pub...
+    const pubM = raw.match(/\/spreadsheets\/d\/e\/([a-zA-Z0-9-_]+)/)
+    if (pubM) return { sid: pubM[1], pub: true }
+    // URL normal: /spreadsheets/d/{ID}/...
     const m = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
-    return m ? m[1] : null
+    if (m) return { sid: m[1], pub: false }
+    return null
   }
 
   function extractGidFromUrl(raw: string): string | null {
@@ -736,21 +811,10 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
   }
 
   async function fetchTabs(sid: string) {
+    // fetchTabs só funciona para planilhas não-publicadas (requer login Google)
+    // Para planilhas publicadas na web, o auto-detect de abas não é possível
     setLoadingTabs(true)
     setTabs([])
-    try {
-      const res = await fetch(`https://docs.google.com/spreadsheets/d/${sid}/edit`)
-      if (!res.ok) { setLoadingTabs(false); return }
-      const html = await res.text()
-      const matches = [...html.matchAll(/"name":"([^"]+)","index":\d+,"sheetId":(\d+)/g)]
-      if (matches.length > 0) {
-        const found: SheetTab[] = matches.map(m => ({ name: m[1], gid: m[2] }))
-        setTabs(found)
-        setGid(found[0].gid)
-      }
-    } catch {
-      // silently ignore
-    }
     setLoadingTabs(false)
   }
 
@@ -759,20 +823,21 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
     setPreview(null)
     setHeaders([])
     setTabs([])
-    const sid = extractSpreadsheetId(raw)
-    if (!sid) return
+    const parsed = extractSpreadsheetId(raw)
+    if (!parsed) return
     const gidFromUrl = extractGidFromUrl(raw)
-    if (gidFromUrl) setGid(gidFromUrl)
-    fetchTabs(sid)
+    setGid(gidFromUrl ?? '0')
+    if (!parsed.pub) fetchTabs(parsed.sid)
   }
 
   async function handleFetch() {
     setError('')
-    const sid = extractSpreadsheetId(url)
-    if (!sid) { setError('URL inválida. Cole a URL completa do Google Sheets.'); return }
+    const parsed = extractSpreadsheetId(url)
+    if (!parsed) { setError('URL inválida. Cole a URL completa do Google Sheets.'); return }
+    const { sid, pub } = parsed
     setLoading(true)
     try {
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=${gid}`
+      const csvUrl = `/api/sheets-proxy?sid=${sid}&gid=${gid}${pub ? '&pub=1' : ''}`
       const res = await fetch(csvUrl)
       if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}). Certifique-se de que está pública.`)
       const text = await res.text()
@@ -792,8 +857,9 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
   const abortRef = useRef<AbortController | null>(null)
 
   async function handleImport() {
-    const sid = extractSpreadsheetId(url)
-    if (!sid) return
+    const parsed = extractSpreadsheetId(url)
+    if (!parsed) return
+    const { sid, pub } = parsed
     setImporting(true)
     setProgress(0)
     setError('')
@@ -802,7 +868,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
     abortRef.current = controller
 
     try {
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=${gid}`
+      const csvUrl = `/api/sheets-proxy?sid=${sid}&gid=${gid}${pub ? '&pub=1' : ''}`
       const res = await fetch(csvUrl, { signal: controller.signal })
       if (!res.ok) throw new Error(`Planilha não acessível (erro ${res.status}).`)
       const text = await res.text()
@@ -825,22 +891,33 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
         throw new Error(`Nenhum registro válido encontrado. ${skippedRows} linha(s) com data ou valor inválido.`)
       }
 
-      const parsed = validRows.flatMap(r =>
-        selectedPivotIds.map(pid => ({ pivot_id: pid, date: r.date, rainfall_mm: r.rainfall_mm, source: 'import' as const }))
-      )
+      // Desduplicar por pivot_id+date — mantém o último valor caso a planilha tenha datas repetidas
+      const deduped = new Map<string, { pivot_id: string; date: string; rainfall_mm: number; source: 'import' }>()
+      for (const r of validRows) {
+        for (const pid of selectedPivotIds) {
+          deduped.set(`${pid}__${r.date}`, { pivot_id: pid, date: r.date, rainfall_mm: r.rainfall_mm, source: 'import' })
+        }
+      }
+      const parsed = Array.from(deduped.values())
 
       const chunkSize = 50
-      for (let i = 0; i < parsed.length; i += chunkSize) {
+      const total = parsed.length
+      for (let i = 0; i < total; i += chunkSize) {
         if (controller.signal.aborted) throw new Error('Importação cancelada.')
-        await upsertRainfallRecords(parsed.slice(i, i + chunkSize))
-        setProgress(Math.round(((i + chunkSize) / parsed.length) * 100))
+        try {
+          await upsertRainfallRecords(parsed.slice(i, i + chunkSize))
+        } catch (chunkErr) {
+          throw new Error(`Erro ao salvar lote ${Math.floor(i/chunkSize)+1}: ${chunkErr instanceof Error ? chunkErr.message : String(chunkErr)}`)
+        }
+        setProgress(Math.min(100, Math.round(((i + chunkSize) / total) * 100)))
       }
 
-      const msg = `${validRows.length} registros importados para ${selectedPivotIds.length} pivô(s).` +
+      setProgress(100)
+      const msg = `✓ ${validRows.length} registros importados para ${selectedPivotIds.length} pivô(s).` +
         (skippedRows > 0 ? ` ${skippedRows} linha(s) ignorada(s).` : '')
       setError(msg)
 
-      await onImported()
+      try { await onImported() } catch { /* não bloqueia o modal */ }
     } catch (e) {
       if (controller.signal.aborted) return
       setError(e instanceof Error ? e.message : 'Erro durante importação.')
@@ -899,9 +976,12 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
               {tabs.map(t => <option key={t.gid} value={t.gid}>{t.name}</option>)}
             </select>
           ) : (
-            <input type="text" placeholder="GID da aba (padrão: 0)" value={gid} onChange={e => setGid(e.target.value)}
+            <input type="number" placeholder="0" value={gid} onChange={e => setGid(e.target.value)}
               style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }} />
           )}
+          <p style={{ fontSize: 11, color: '#556677', margin: '2px 0 0' }}>
+            Número GID da aba — visível na URL da planilha após <code style={{ color: '#8899aa' }}>#gid=</code>. Para a 1ª aba use 0.
+          </p>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1018,11 +1098,7 @@ interface CalendarProps {
 function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: CalendarProps) {
   const today = toYMD(new Date())
 
-  const recordMap = useMemo(() => {
-    const m: Record<string, number> = {}
-    for (const r of records) m[r.date] = (m[r.date] ?? 0) + r.rainfall_mm
-    return m
-  }, [records])
+  const recordMap = useMemo(() => buildRainfallMap(records), [records])
 
   const cells = useMemo(() => {
     const firstDay = new Date(year, month, 1).getDay()
@@ -1107,6 +1183,362 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
   )
 }
 
+// ─── Annual History Matrix ─────────────────────────────────────────────────────
+
+const MONTH_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+
+interface HistoryMatrixProps {
+  records: RainfallRecord[]
+  loading: boolean
+  pivotName: string
+}
+
+function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixProps) {
+  // Build year×month matrix from records (sector_id = null only → general)
+  const { years, matrix, avgByMonth, maxAvg, yearTotals } = useMemo(() => {
+    const general = records.filter(r => r.sector_id === null)
+    // Group by year then month
+    const byYearMonth: Record<number, Record<number, number>> = {}
+    for (const r of general) {
+      const [y, m] = r.date.split('-').map(Number)
+      if (!byYearMonth[y]) byYearMonth[y] = {}
+      byYearMonth[y][m - 1] = (byYearMonth[y][m - 1] ?? 0) + r.rainfall_mm
+    }
+    const years = Object.keys(byYearMonth).map(Number).sort((a, b) => a - b)
+    const matrix = years.map(y => ({
+      year: y,
+      months: Array.from({ length: 12 }, (_, m) => byYearMonth[y][m] ?? null) as (number | null)[],
+    }))
+    // Average per month across years that have data for that month
+    const avgByMonth = Array.from({ length: 12 }, (_, m) => {
+      const vals = years.map(y => byYearMonth[y][m]).filter((v): v is number => v != null)
+      return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
+    })
+    const maxAvg = Math.max(...avgByMonth, 1)
+    const yearTotals = matrix.map(row => row.months.reduce<number>((s, v) => s + (v ?? 0), 0))
+    return { years, matrix, avgByMonth, maxAvg, yearTotals }
+  }, [records])
+
+  const [hoveredMonth, setHoveredMonth] = useState<number | null>(null)
+
+  if (loading) {
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, #0a1628 0%, #0d1e2e 100%)',
+        border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 32,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200,
+      }}>
+        <span style={{ color: '#556677', fontSize: 13 }}>Carregando histórico…</span>
+      </div>
+    )
+  }
+
+  if (years.length === 0) return null
+
+  // Color for a cell value
+  function cellColor(v: number | null): { bg: string; text: string; border: string } {
+    if (v === null) return { bg: 'transparent', text: '#2a3a4a', border: 'transparent' }
+    if (v === 0) return { bg: 'rgba(255,255,255,0.02)', text: '#334155', border: 'rgba(255,255,255,0.04)' }
+    if (v < 50) return { bg: 'rgba(6,182,212,0.08)', text: '#22d3ee', border: 'rgba(6,182,212,0.15)' }
+    if (v < 100) return { bg: 'rgba(6,182,212,0.14)', text: '#06b6d4', border: 'rgba(6,182,212,0.25)' }
+    if (v < 150) return { bg: 'rgba(59,130,246,0.14)', text: '#60a5fa', border: 'rgba(59,130,246,0.25)' }
+    if (v < 200) return { bg: 'rgba(99,102,241,0.18)', text: '#a5b4fc', border: 'rgba(99,102,241,0.3)' }
+    return { bg: 'rgba(168,85,247,0.18)', text: '#c084fc', border: 'rgba(168,85,247,0.3)' }
+  }
+
+  // Intensity 0-1 for bar
+  function barIntensity(v: number) { return Math.min(1, v / maxAvg) }
+
+  return (
+    <div style={{
+      background: 'linear-gradient(160deg, #070e1a 0%, #0b1622 60%, #060d18 100%)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 28,
+      position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Subtle glow top-right */}
+      <div style={{
+        position: 'absolute', top: -80, right: -80, width: 280, height: 280,
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,147,208,0.06) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute', bottom: -60, left: -60, width: 200, height: 200,
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 10,
+              background: 'linear-gradient(135deg, rgba(0,147,208,0.3), rgba(99,102,241,0.3))',
+              border: '1px solid rgba(0,147,208,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <path d="M3 3v18h18" stroke="#0093D0" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M7 16l4-4 4 4 4-6" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div>
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', lineHeight: 1 }}>
+                Histórico Anual
+              </h2>
+              <p style={{ fontSize: 11, color: '#556677', marginTop: 3 }}>{pivotName} · {years[0]}–{years[years.length - 1]}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          {[
+            { label: '< 50 mm', color: '#22d3ee' },
+            { label: '50–100', color: '#06b6d4' },
+            { label: '100–150', color: '#60a5fa' },
+            { label: '150–200', color: '#a5b4fc' },
+            { label: '> 200', color: '#c084fc' },
+          ].map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: l.color, opacity: 0.85 }} />
+              <span style={{ fontSize: 10, color: '#556677' }}>{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Table + Chart — side by side */}
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+
+        {/* Left: Table */}
+        <div style={{ flex: '1 1 420px', overflowX: 'auto', overflowY: 'visible' }}>
+          <table style={{ borderCollapse: 'separate', borderSpacing: '3px', minWidth: 420, width: '100%' }}>
+            <thead>
+              <tr>
+                <th style={{ width: 48, textAlign: 'left', padding: '4px 8px', fontSize: 10, fontWeight: 700, color: '#334155', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ano</th>
+                {MONTH_SHORT.map((m, mi) => (
+                  <th key={m} style={{
+                    padding: '4px 4px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                    color: hoveredMonth === mi ? '#f472b6' : '#556677',
+                    transition: 'color 0.15s', textAlign: 'center', cursor: 'default',
+                  }}>
+                    {m}
+                  </th>
+                ))}
+                <th style={{ padding: '4px 8px', fontSize: 10, fontWeight: 700, color: '#334155', textAlign: 'right', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {matrix.map((row, ri) => (
+                <tr key={row.year}>
+                  <td style={{ padding: '2px 8px', fontSize: 12, fontWeight: 700, color: '#8899aa', whiteSpace: 'nowrap' }}>
+                    {row.year}
+                  </td>
+                  {row.months.map((v, mi) => {
+                    const c = cellColor(v)
+                    return (
+                      <td
+                        key={mi}
+                        onMouseEnter={() => setHoveredMonth(mi)}
+                        onMouseLeave={() => setHoveredMonth(null)}
+                        style={{ padding: '2px 3px', cursor: 'default' }}
+                      >
+                        <div style={{
+                          borderRadius: 6, padding: '4px 3px',
+                          background: hoveredMonth === mi && v !== null && v > 0
+                            ? 'rgba(236,72,153,0.15)'
+                            : hoveredMonth === mi && v !== null
+                            ? 'rgba(255,255,255,0.04)'
+                            : c.bg,
+                          border: `1px solid ${hoveredMonth === mi && v !== null && v > 0 ? 'rgba(236,72,153,0.35)' : c.border}`,
+                          textAlign: 'center', transition: 'all 0.15s', minWidth: 30,
+                        }}>
+                          <span style={{
+                            fontSize: 10, fontWeight: hoveredMonth === mi && v !== null && v > 0 ? 700 : 600,
+                            color: hoveredMonth === mi && v !== null && v > 0 ? '#f472b6' : v === null ? '#1a2535' : c.text,
+                            fontVariantNumeric: 'tabular-nums',
+                            transition: 'color 0.15s',
+                          }}>
+                            {v === null ? '—' : v === 0 ? '·' : v < 10 ? v.toFixed(1) : Math.round(v)}
+                          </span>
+                        </div>
+                      </td>
+                    )
+                  })}
+                  <td style={{ padding: '2px 8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: yearTotals[ri] > 0 ? '#e2e8f0' : '#334155', fontVariantNumeric: 'tabular-nums' }}>
+                      {Math.round(yearTotals[ri])}
+                    </span>
+                    <span style={{ fontSize: 9, color: '#556677', marginLeft: 2 }}>mm</span>
+                  </td>
+                </tr>
+              ))}
+
+              {/* Average row */}
+              <tr>
+                <td style={{ padding: '5px 8px' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                    Média
+                  </div>
+                </td>
+                {avgByMonth.map((avg, mi) => {
+                  const c = cellColor(avg)
+                  return (
+                    <td
+                      key={mi}
+                      onMouseEnter={() => setHoveredMonth(mi)}
+                      onMouseLeave={() => setHoveredMonth(null)}
+                      style={{ padding: '2px 3px' }}
+                    >
+                      <div style={{
+                        borderRadius: 6, padding: '4px 3px',
+                        background: hoveredMonth === mi && avg > 0 ? 'rgba(236,72,153,0.15)' : avg > 0 ? c.bg : 'transparent',
+                        border: hoveredMonth === mi && avg > 0 ? '1px solid rgba(236,72,153,0.35)' : avg > 0 ? `1px solid rgba(245,158,11,0.2)` : '1px solid transparent',
+                        textAlign: 'center', transition: 'all 0.15s',
+                      }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: hoveredMonth === mi && avg > 0 ? '#f472b6' : avg > 0 ? '#f59e0b' : '#334155', fontVariantNumeric: 'tabular-nums', transition: 'color 0.15s' }}>
+                          {avg > 0 ? Math.round(avg) : '—'}
+                        </span>
+                      </div>
+                    </td>
+                  )
+                })}
+                <td style={{ padding: '2px 8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', fontVariantNumeric: 'tabular-nums' }}>
+                    {Math.round(avgByMonth.reduce((a, b) => a + b, 0))}
+                  </span>
+                  <span style={{ fontSize: 9, color: '#556677', marginLeft: 2 }}>mm/ano</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
+
+        {/* Right: Bar chart */}
+        <div style={{ flex: '0 0 350px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Média mensal</p>
+            <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>
+              {years.length} ano{years.length !== 1 ? 's' : ''} de dados
+            </p>
+          </div>
+
+          {/* Chart */}
+          <div style={{ position: 'relative', width: '100%' }}>
+            {/* Y-axis grid lines */}
+            {[0, 0.25, 0.5, 0.75, 1].map(frac => {
+              const val = Math.round(maxAvg * frac)
+              return (
+                <div key={frac} style={{
+                  position: 'absolute', left: 32, right: 0,
+                  top: `${(1 - frac) * 100}%`, height: 1,
+                  background: frac === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
+                }}>
+                  <span style={{
+                    position: 'absolute', left: -30, fontSize: 9, color: '#556677',
+                    fontVariantNumeric: 'tabular-nums', fontWeight: 600, minWidth: 26, textAlign: 'right',
+                  }}>
+                    {val}
+                  </span>
+                </div>
+              )
+            })}
+
+            {/* Bars */}
+            <div style={{
+              height: 310, display: 'flex', alignItems: 'flex-end', gap: 6,
+              paddingLeft: 32, paddingRight: 8, position: 'relative',
+            }}>
+              {avgByMonth.map((avg, mi) => {
+                const intensity = barIntensity(avg)
+                const isHov = hoveredMonth === mi
+                const barH = Math.max(intensity * 288, avg > 0 ? 4 : 0)
+
+                return (
+                  <div
+                    key={mi}
+                    style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'default', position: 'relative' }}
+                    onMouseEnter={() => setHoveredMonth(mi)}
+                    onMouseLeave={() => setHoveredMonth(null)}
+                  >
+                    {/* Tooltip */}
+                    {isHov && avg > 0 && (
+                      <div style={{
+                        position: 'absolute', bottom: barH + 10, left: '50%', transform: 'translateX(-50%)',
+                        background: '#0a1628', border: '1px solid rgba(0,147,208,0.3)', borderRadius: 8,
+                        padding: '5px 8px', zIndex: 10, whiteSpace: 'nowrap',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+                      }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#f472b6', fontVariantNumeric: 'tabular-nums' }}>
+                          {avg.toFixed(1)} mm
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Value label */}
+                    {avg > 0 && (
+                      <div style={{
+                        position: 'absolute', bottom: barH + 3,
+                        fontSize: 8, fontWeight: 700,
+                        color: isHov ? '#f472b6' : '#8899aa',
+                        fontVariantNumeric: 'tabular-nums',
+                        transition: 'color 0.15s', pointerEvents: 'none',
+                      }}>
+                        {Math.round(avg)}
+                      </div>
+                    )}
+
+                    {/* Bar */}
+                    <div style={{
+                      width: '100%', height: barH,
+                      borderRadius: '4px 4px 2px 2px',
+                      background: isHov
+                        ? 'linear-gradient(180deg, #f472b6 0%, #ec4899 50%, #db2777 100%)'
+                        : `linear-gradient(180deg, rgba(6,182,212,${0.4 + intensity * 0.5}) 0%, rgba(0,147,208,${0.3 + intensity * 0.5}) 50%, rgba(99,102,241,${0.3 + intensity * 0.4}) 100%)`,
+                      boxShadow: isHov ? '0 0 14px rgba(236,72,153,0.5), 0 0 28px rgba(236,72,153,0.2)' : `0 0 ${intensity * 6}px rgba(6,182,212,${intensity * 0.2})`,
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative', overflow: 'hidden',
+                    }}>
+                      {isHov && (
+                        <div style={{
+                          position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                          transform: 'skewX(-20deg)',
+                        }} />
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* X-axis labels */}
+            <div style={{ display: 'flex', gap: 6, paddingLeft: 32, paddingRight: 8, paddingTop: 5 }}>
+              {MONTH_SHORT.map((m, mi) => (
+                <div key={m} style={{ flex: 1, textAlign: 'center' }}>
+                  <span style={{
+                    fontSize: 8, fontWeight: 600,
+                    color: hoveredMonth === mi ? '#f472b6' : '#8899aa',
+                    transition: 'color 0.15s',
+                  }}>
+                    {m}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PrecipitacoesPage() {
@@ -1130,6 +1562,9 @@ export default function PrecipitacoesPage() {
   const [compareMonth, setCompareMonth] = useState(today.getMonth())
   const [compareAllRecords, setCompareAllRecords] = useState<RainfallRecord[]>([])
   
+  const [allTimeRecords, setAllTimeRecords] = useState<RainfallRecord[]>([])
+  const [loadingAllTime, setLoadingAllTime] = useState(false)
+
   const [selectedDate, setSelectedDate] = useState(() => toYMD(today))
   const [editModal, setEditModal] = useState<{ date: string } | null>(null)
   const [showImport, setShowImport] = useState(false)
@@ -1219,12 +1654,9 @@ export default function PrecipitacoesPage() {
       setLoadingRecords(true)
       setLoadError('')
       setActionError('')
-      const data = await listRainfallByPivotIds([pid])
-      setAllRecords(
-        data
-          .filter(r => r.date >= `${y}-01-01` && r.date <= `${y}-12-31`)
-          .sort((a, b) => a.date.localeCompare(b.date))
-      )
+      // Busca apenas o ano visível — ~50-100 registros por ano, escala para qualquer volume
+      const data = await listRainfallByPivotIds([pid], undefined, `${y}-01-01`, `${y}-12-31`)
+      setAllRecords(data)
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : 'Falha ao carregar precipitações')
       setAllRecords([])
@@ -1243,15 +1675,24 @@ export default function PrecipitacoesPage() {
     }
   }, [pivotId, year, loadRecords])
 
+  // Load ALL historical records for history matrix (once per pivot, no year filter)
+  useEffect(() => {
+    if (!pivotId) { setAllTimeRecords([]); return }
+    let cancelled = false
+    setLoadingAllTime(true)
+    listRainfallByPivotIds([pivotId])
+      .then(data => { if (!cancelled) setAllTimeRecords(data) })
+      .catch(() => { if (!cancelled) setAllTimeRecords([]) })
+      .finally(() => { if (!cancelled) setLoadingAllTime(false) })
+    return () => { cancelled = true }
+  }, [pivotId])
+
   // Load Compare Records
   useEffect(() => {
     if (isCompare && comparePivotId) {
-      listRainfallByPivotIds([comparePivotId])
-        .then(data => {
-          setCompareAllRecords(data
-            .filter(r => r.date >= `${compareYear}-01-01` && r.date <= `${compareYear}-12-31`)
-            .sort((a, b) => a.date.localeCompare(b.date)))
-        }).catch(() => setCompareAllRecords([]))
+      listRainfallByPivotIds([comparePivotId], undefined, `${compareYear}-01-01`, `${compareYear}-12-31`)
+        .then(data => setCompareAllRecords(data))
+        .catch(() => setCompareAllRecords([]))
     } else {
       setCompareAllRecords([])
     }
@@ -1285,10 +1726,17 @@ export default function PrecipitacoesPage() {
 
   const activeSector = useMemo(() => sectors.find(s => s.id === activeSectorId) ?? null, [sectors, activeSectorId])
 
+  async function reloadAllTime(pid: string) {
+    try {
+      const data = await listRainfallByPivotIds([pid])
+      setAllTimeRecords(data)
+    } catch { /* silently ignore */ }
+  }
+
   async function handleSaved() {
     if (!pivotId) return
     try {
-      await loadRecords(pivotId, year)
+      await Promise.all([loadRecords(pivotId, year), reloadAllTime(pivotId)])
       setEditModal(null)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Falha ao recarregar precipitações')
@@ -1298,7 +1746,7 @@ export default function PrecipitacoesPage() {
   async function handleDeleted() {
     if (!pivotId) return
     try {
-      await loadRecords(pivotId, year)
+      await Promise.all([loadRecords(pivotId, year), reloadAllTime(pivotId)])
       setEditModal(null)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Falha ao recarregar precipitações')
@@ -1308,7 +1756,7 @@ export default function PrecipitacoesPage() {
   async function handleImported() {
     if (!pivotId) return
     try {
-      await loadRecords(pivotId, year)
+      await Promise.all([loadRecords(pivotId, year), reloadAllTime(pivotId)])
       setShowImport(false)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Falha ao recarregar precipitações')
@@ -1316,12 +1764,25 @@ export default function PrecipitacoesPage() {
   }
 
   function prevMonth() {
-    if (month === 0) { setMonth(11); setYear(y => y - 1) }
-    else setMonth(m => m - 1)
+    const newMonth = month === 0 ? 11 : month - 1
+    const newYear  = month === 0 ? year - 1 : year
+    setMonth(newMonth)
+    setYear(newYear)
+    // Mantém o dia do mês se existir, senão vai para dia 1
+    const selDay = new Date(selectedDate + 'T00:00:00').getDate()
+    const daysInNew = new Date(newYear, newMonth + 1, 0).getDate()
+    const clampedDay = Math.min(selDay, daysInNew)
+    setSelectedDate(`${newYear}-${String(newMonth + 1).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`)
   }
   function nextMonth() {
-    if (month === 11) { setMonth(0); setYear(y => y + 1) }
-    else setMonth(m => m + 1)
+    const newMonth = month === 11 ? 0 : month + 1
+    const newYear  = month === 11 ? year + 1 : year
+    setMonth(newMonth)
+    setYear(newYear)
+    const selDay = new Date(selectedDate + 'T00:00:00').getDate()
+    const daysInNew = new Date(newYear, newMonth + 1, 0).getDate()
+    const clampedDay = Math.min(selDay, daysInNew)
+    setSelectedDate(`${newYear}-${String(newMonth + 1).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`)
   }
   function goToday() {
     const t = new Date()
@@ -1333,7 +1794,7 @@ export default function PrecipitacoesPage() {
   const selectedPivot = pivots.find(p => p.id === pivotId)
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
@@ -1466,7 +1927,10 @@ export default function PrecipitacoesPage() {
           {/* Chips */}
           <RainfallChips
             records={records}
+            pivotId={pivotId}
             selectedDate={selectedDate}
+            calYear={year}
+            calMonth={month}
             sectorLabel={activeSector ? `Setor ${activeSector.name}` : undefined}
           />
 
@@ -1564,7 +2028,10 @@ export default function PrecipitacoesPage() {
 
              <RainfallChips
                records={compareRecords}
+               pivotId={comparePivotId}
                selectedDate={selectedDate}
+               calYear={compareYear}
+               calMonth={compareMonth}
                sectorLabel={compareActiveSectorId ? `Setor ${compareSectors.find(s=>s.id === compareActiveSectorId)?.name}` : undefined}
              />
 
@@ -1616,6 +2083,15 @@ export default function PrecipitacoesPage() {
           allPivots={pivots}
           onClose={() => setShowImport(false)}
           onImported={handleImported}
+        />
+      )}
+
+      {/* Annual history matrix — always visible when pivot is selected */}
+      {pivotId && (
+        <RainfallHistoryMatrix
+          records={allTimeRecords}
+          loading={loadingAllTime}
+          pivotName={selectedPivot?.name ?? ''}
         />
       )}
     </div>
