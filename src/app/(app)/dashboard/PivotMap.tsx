@@ -267,7 +267,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
         }
       }
       if (allPoints.length > 1) {
-        map.fitBounds(L.latLngBounds(allPoints), { padding: [50, 50] })
+        map.fitBounds(L.latLngBounds(allPoints), { padding: [90, 90] })
       }
     })
 

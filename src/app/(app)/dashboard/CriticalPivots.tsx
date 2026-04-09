@@ -19,6 +19,16 @@ const STATUS_STYLE: Record<PivotStatus, { color: string; bg: string; border: str
   ok:      { color: '#22c55e', bg: '#141e2b',                border: 'rgba(255,255,255,0.06)', label: '' },
 }
 
+// Cor da água baseada no nível de umidade — independente do status operacional
+function tankColor(pct: number | null): string {
+  if (pct === null) return '#334155'
+  if (pct >= 90)  return '#0093D0' // azul
+  if (pct >= 80)  return '#22c55e' // verde
+  if (pct >= 70)  return '#f59e0b' // laranja
+  if (pct > 65)   return '#ef4444' // vermelho
+  return '#a855f7'                  // roxo <=65
+}
+
 export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, diagnosticsByPivot }: CriticalPivotsProps) {
   const items: Array<{
     pivot: Pivot & { farms: { id: string; name: string } | null }
@@ -88,6 +98,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
 
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes tankWave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
       `}} />
 
       {/* List */}
@@ -137,16 +148,75 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                 </div>
 
                 {/* Right Side Action / Field Cap */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{
-                      fontSize: 20, fontWeight: 800, fontFamily: 'var(--font-mono)',
-                      color: s.color, lineHeight: 1, textShadow: status !== 'ok' ? `0 0 10px ${s.color}40` : 'none'
-                    }}>
-                      {pct !== null ? `${Math.round(pct)}%` : '—'}
-                    </span>
-                    <p style={{ fontSize: 10, color: '#556677', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Umidade</p>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {/* Mini Tank — cor por nível de umidade */}
+                  {(() => {
+                    const tc = tankColor(pct)
+                    return (
+                      <div style={{
+                        width: 58, height: 62,
+                        borderRadius: 10,
+                        border: `1px solid ${tc}35`,
+                        background: 'rgba(5,10,18,0.85)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: `0 0 14px ${tc}25, 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)`,
+                        flexShrink: 0,
+                      }}>
+                        {/* Linhas de escala internas */}
+                        {[75, 50, 25].map(mark => (
+                          <div key={mark} style={{
+                            position: 'absolute', left: 0, right: 0,
+                            bottom: `${mark}%`, height: 1,
+                            background: 'rgba(255,255,255,0.05)', zIndex: 1,
+                          }} />
+                        ))}
+
+                        {/* Água */}
+                        {pct !== null && (
+                          <div style={{
+                            position: 'absolute', left: 0, right: 0, bottom: 0,
+                            height: `${Math.min(100, Math.max(0, pct))}%`,
+                            transition: 'height 1s cubic-bezier(0.4,0,0.2,1)',
+                            overflow: 'hidden',
+                            display: 'flex', flexDirection: 'column',
+                            zIndex: 2,
+                          }}>
+                            {/* Onda */}
+                            <div style={{ width: '200%', display: 'flex', animation: 'tankWave 2.5s linear infinite', flexShrink: 0, height: 10 }}>
+                              <svg viewBox="0 0 200 20" preserveAspectRatio="none" style={{ width: '50%', height: 10, display: 'block' }}>
+                                <path d="M0,20 L0,10 C40,18 60,2 100,10 C140,18 160,2 200,10 L200,20 Z" fill={tc} opacity="0.95"/>
+                              </svg>
+                              <svg viewBox="0 0 200 20" preserveAspectRatio="none" style={{ width: '50%', height: 10, display: 'block' }}>
+                                <path d="M0,20 L0,10 C40,18 60,2 100,10 C140,18 160,2 200,10 L200,20 Z" fill={tc} opacity="0.95"/>
+                              </svg>
+                            </div>
+                            <div style={{ flex: 1, background: `linear-gradient(to bottom, ${tc}50, ${tc}25)` }} />
+                          </div>
+                        )}
+
+                        {/* % + label centralizados */}
+                        <div style={{
+                          position: 'absolute', inset: 0, zIndex: 3,
+                          display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', justifyContent: 'center', gap: 1,
+                        }}>
+                          <span style={{
+                            fontSize: 15, fontWeight: 900,
+                            color: pct !== null && pct > 30 ? '#fff' : tc,
+                            fontFamily: 'var(--font-mono)',
+                            textShadow: '0 1px 6px rgba(0,0,0,0.9)',
+                            lineHeight: 1, letterSpacing: '-0.02em',
+                          }}>
+                            {pct !== null ? `${Math.round(pct)}%` : '—'}
+                          </span>
+                          <span style={{ fontSize: 7, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                            campo
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })()}
 
                   <Link href="/manejo" style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',

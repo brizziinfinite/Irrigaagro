@@ -156,9 +156,9 @@ function SoilDiagramRich({
           </div>
         </div>
         
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-          <div style={{ background: 'rgba(0,0,0,0.2)', width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <span style={{ fontSize: 22 }}>{cropEmoji}</span>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ background: 'rgba(0,0,0,0.2)', width: 56, height: 56, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ fontSize: 30, lineHeight: 1 }}>{cropEmoji}</span>
           </div>
         </div>
         
@@ -242,18 +242,39 @@ function SoilDiagramRich({
           </div>
         </div>
 
-        {/* Label Profundidade de Manejo — Colado na ponta inferior da Sonda */}
-        <div style={{ position: 'absolute', left: '50%', bottom: '8%', transform: 'translateX(-50%)', zIndex: 5 }}>
-          <div style={{ background: 'rgba(20, 30, 45, 0.95)', border: '1px solid rgba(136,153,170,0.3)', borderRadius: 6, padding: '6px 12px', whiteSpace: 'nowrap', textAlign: 'center' }}>
-            <p style={{ fontSize: 10, color: '#8899aa', fontWeight: 600 }}>Prof. de Manejo</p>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)', marginTop: 2 }}>{fmtNum(rootDepthCm, 0)} cm</p>
+        {/* Badge Prof. de Manejo — centralizado no diagrama, junto à sonda */}
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 6 }}>
+          <div style={{
+            background: 'rgba(8, 16, 28, 0.75)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 14,
+            padding: '10px 20px',
+            textAlign: 'center',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
+          }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>Prof. de Manejo</p>
+            <p style={{ fontSize: 22, fontWeight: 900, color: '#e2e8f0', fontFamily: 'var(--font-mono)', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {fmtNum(rootDepthCm, 0)}
+              <span style={{ fontSize: 12, fontWeight: 400, color: '#8899aa', marginLeft: 4 }}>cm</span>
+            </p>
           </div>
         </div>
 
         {/* CC% e Status — Canto Superior Esquerdo */}
         <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 5 }}>
-          <div style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 8, padding: '4px 10px', backdropFilter: 'blur(2px)' }}>
-            <p style={{ fontSize: 11, fontWeight: 800, color: cfg.color }}>{fmtNum(fieldCapacityPercent, 0)}% · {cfg.label}</p>
+          <div style={{
+            background: cfg.bg,
+            border: `1px solid ${cfg.border}`,
+            borderRadius: 20,
+            padding: '5px 12px',
+            backdropFilter: 'blur(6px)',
+            boxShadow: `0 0 12px ${cfg.color}30`,
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.color, boxShadow: `0 0 6px ${cfg.color}` }} />
+            <p style={{ fontSize: 11, fontWeight: 800, color: cfg.color, margin: 0 }}>{fmtNum(fieldCapacityPercent, 0)}% · {cfg.label}</p>
           </div>
         </div>
       </div>
@@ -502,9 +523,9 @@ export function PivotDetailClient({ pivot, farm, context, history, today }: Prop
   const das       = season?.planting_date ? calcDAS(season.planting_date, today) : 0
   const stageInfo = crop ? getStageInfoForDas(crop, das) : null
 
-  const CC      = season?.field_capacity ?? 0
-  const PM      = season?.wilting_point  ?? 0
-  const Ds      = season?.bulk_density   ?? 1.0
+  const CC      = pivot.field_capacity ?? season?.field_capacity ?? 0
+  const PM      = pivot.wilting_point  ?? season?.wilting_point  ?? 0
+  const Ds      = pivot.bulk_density   ?? season?.bulk_density   ?? 1.0
   const fFactor = stageInfo?.fFactor ?? season?.f_factor ?? 0.5
 
   const ctaMm = stageInfo ? calcCTA(CC, PM, Ds, stageInfo.rootDepthCm) : 0

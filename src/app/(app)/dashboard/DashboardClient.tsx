@@ -211,7 +211,7 @@ export function DashboardClient({
             <Info size={16} style={{ color: '#f59e0b' }} />
           </div>
           <div style={{ flex: 1, minWidth: 260 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Atenção Operacional no Parque</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Alertas do Sistema</p>
             <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
               {summary.pivotsWithAlerts} pivô(s) com alertas pendentes · {summary.pivotsWithClimateFallback} usando fallback climático
             </p>
@@ -236,6 +236,10 @@ export function DashboardClient({
               Planta da Fazenda
             </span>
             <span style={{ fontSize: 12, color: '#8899aa' }}>Visão espacial instantânea</span>
+            <span style={{ fontSize: 11, color: '#445566', marginLeft: 4 }}>·</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#445566' }}>
+              {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+            </span>
           </div>
           <PivotMap onPivotClick={setSelectedPivotPlotId} pivots={pivots.map(p => ({
             id:               p.id,

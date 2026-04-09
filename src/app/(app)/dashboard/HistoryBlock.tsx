@@ -109,15 +109,24 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
                 }}
                 labelStyle={{ color: '#8899aa', marginBottom: 4 }}
                 cursor={{ fill: 'rgb(255 255 255 / 0.03)' }}
+                formatter={(value: number, name: string) => {
+                  const labels: Record<string, string> = {
+                    irrigation: 'Lâmina (mm)',
+                    rainfall:   'Chuva (mm)',
+                    moisture:   'Umidade (%)',
+                  }
+                  return [value, labels[name] ?? name]
+                }}
               />
             )}
-            <Bar yAxisId="mm" dataKey="irrigation" fill={hasData ? '#00E5FF' : 'rgba(0,229,255,0.15)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
-            <Bar yAxisId="mm" dataKey="rainfall" fill={hasData ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.10)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            <Bar yAxisId="mm" dataKey="irrigation" name="Lâmina (mm)" fill={hasData ? '#00E5FF' : 'rgba(0,229,255,0.15)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            <Bar yAxisId="mm" dataKey="rainfall" name="Chuva (mm)" fill={hasData ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.10)'} radius={[4, 4, 0, 0]} maxBarSize={32} />
             {hasData && (
               <Line
                 yAxisId="pct"
                 type="monotone"
                 dataKey="moisture"
+                name="Umidade (%)"
                 stroke="#CCFF00"
                 strokeWidth={3}
                 dot={{ fill: '#141e2b', stroke: '#CCFF00', strokeWidth: 2, r: 4 }}
