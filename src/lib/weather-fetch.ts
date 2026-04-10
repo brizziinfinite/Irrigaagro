@@ -1,5 +1,5 @@
 // ============================================================
-// Busca automática de dados climáticos — Gotejo
+// Busca automática de dados climáticos — IrrigaAgro
 // Fontes: Google Sheets (Plugfield) com fallback NASA POWER
 // ============================================================
 

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Eye, EyeOff, Loader2, Mail, LockKeyhole, User, ArrowRight, Droplets, BarChart3, Zap } from 'lucide-react'
-import GotejoLogo from '@/components/branding/GotejoLogo'
+import IrrigaAgroLogo from '@/components/branding/IrrigaAgroLogo'
 
 // ─── SVG Pivot Animation ──────────────────────────────────────────────────────
 function PivotAnimation() {
@@ -195,7 +195,9 @@ export default function LoginPage() {
       }}
         className="hero-panel"
       >
-        <GotejoLogo size={42} showText />
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <IrrigaAgroLogo size={36} showText />
+        </div>
 
         {/* Central visual */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40 }}>
@@ -235,7 +237,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-          <span style={{ fontSize: 12, color: '#556677' }}>Gotejo</span>
+          <span style={{ fontSize: 12, color: '#556677' }}>IrrigaAgro</span>
         </div>
       </div>
 
@@ -253,7 +255,7 @@ export default function LoginPage() {
 
         {/* Mobile logo */}
         <div style={{ marginBottom: 40, display: 'flex', justifyContent: 'center' }} className="mobile-logo">
-          <GotejoLogo size={42} showText />
+          <IrrigaAgroLogo size={36} showText />
         </div>
 
         {/* Mode toggle */}
@@ -452,7 +454,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ marginTop: 32, textAlign: 'center', fontSize: 11, color: '#556677' }}>
-          Ao continuar, você concorda com os termos de uso do Gotejo.
+          Ao continuar, você concorda com os termos de uso do IrrigaAgro.
         </div>
       </div>
 

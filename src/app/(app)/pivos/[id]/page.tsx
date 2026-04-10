@@ -20,7 +20,7 @@ export default async function PivoDetailPage({ params }: Props) {
   if (!user) redirect('/login')
 
   const cookieStore = await cookies()
-  const preferredCompanyId = cookieStore.get('gotejo:active_company_id')?.value ?? null
+  const preferredCompanyId = cookieStore.get('irrigaagro:active_company_id')?.value ?? null
 
   const company = await getUserCompanyOrThrow(user.id, supabase, preferredCompanyId)
   const farms = await listFarmsByCompany(company.id, supabase)

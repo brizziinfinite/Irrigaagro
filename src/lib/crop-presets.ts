@@ -1,5 +1,5 @@
 // ============================================================
-// Presets de culturas FAO-56 — Gotejo
+// Presets de culturas FAO-56 — IrrigaAgro
 // Usados apenas para pré-preencher o formulário de nova cultura.
 // Não alteram culturas existentes.
 //

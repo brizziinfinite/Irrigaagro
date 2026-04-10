@@ -5,66 +5,103 @@ import React from 'react'
 type IrrigaAgroLogoProps = {
   size?: number
   showText?: boolean
-  compactText?: boolean
   className?: string
 }
 
 export default function IrrigaAgroLogo({
   size = 32,
   showText = true,
-  compactText = false,
   className = '',
 }: IrrigaAgroLogoProps) {
+  // Gota maior: ocupa a altura total incluindo a tagline
+  const wordSize = Math.round(size * 0.92)
+  const tagSize = Math.round(size * 0.24)
+  const totalH = Math.round(size + tagSize * 1.6)   // altura total = wordmark + gap + tagline
+  const iconH = totalH
+  const iconW = Math.round(totalH * 0.84)
+
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div
+      className={className}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.28) }}
+    >
+      {/* Gota com barras internas */}
       <svg
-        width={size}
-        height={size}
-        viewBox="0 0 64 64"
+        width={iconW}
+        height={iconH}
+        viewBox="0 0 84 100"
         fill="none"
-        aria-label="Logotipo IrrigaAgro"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="Ícone IrrigaAgro"
+        style={{ flexShrink: 0 }}
       >
         <defs>
-          <linearGradient id="ia-blue" x1="8" y1="6" x2="36" y2="46" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#38BDF8" />
-            <stop offset="1" stopColor="#0284C7" />
+          <linearGradient id="dropStroke" x1="42" y1="0" x2="42" y2="100" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stopColor="#4ade80" />
+            <stop offset="100%" stopColor="#38bdf8" />
           </linearGradient>
-          <linearGradient id="ia-green" x1="28" y1="22" x2="54" y2="54" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#84CC16" />
-            <stop offset="1" stopColor="#16A34A" />
+          <linearGradient id="bar1g" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+            <stop offset="0%"   stopColor="#4ade80" />
+            <stop offset="100%" stopColor="#22c55e" />
+          </linearGradient>
+          <linearGradient id="bar2g" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+            <stop offset="0%"   stopColor="#38bdf8" />
+            <stop offset="100%" stopColor="#22c55e" />
+          </linearGradient>
+          <linearGradient id="bar3g" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+            <stop offset="0%"   stopColor="#60a5fa" />
+            <stop offset="100%" stopColor="#38bdf8" />
           </linearGradient>
         </defs>
 
+        {/* Contorno da gota */}
         <path
-          d="M31.5 4C31.5 4 13 22.6 13 35.5C13 47.4 21.8 56 33 56C44.2 56 53 47.4 53 35.5C53 22.6 31.5 4 31.5 4Z"
-          fill="url(#ia-blue)"
+          d="M42 4 C42 4 8 44 8 64 C8 83 23 96 42 96 C61 96 76 83 76 64 C76 44 42 4 42 4 Z"
+          stroke="url(#dropStroke)"
+          strokeWidth="3.5"
+          fill="none"
+          strokeLinejoin="round"
         />
 
-        <path
-          d="M31.5 8C31.5 8 16 24.2 16 35.3C16 45.6 23.4 53 33 53"
-          stroke="rgba(255,255,255,0.65)"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-        />
+        {/* Barra esquerda — mais baixa */}
+        <rect x="22" y="62" width="10" height="22" rx="2.5" fill="url(#bar1g)" />
 
-        <path
-          d="M30 24C41.6 24 51 33.4 51 45C51 48.2 50.3 51.1 48.9 53.7H30V24Z"
-          fill="url(#ia-green)"
-          opacity="0.95"
-        />
+        {/* Barra central — média */}
+        <rect x="37" y="50" width="10" height="34" rx="2.5" fill="url(#bar2g)" />
 
-        <rect x="23" y="37" width="6" height="13" rx="1.5" fill="#0B1220" opacity="0.9" />
-        <rect x="31" y="30" width="6" height="20" rx="1.5" fill="#0B1220" opacity="0.9" />
-        <rect x="39" y="23" width="6" height="27" rx="1.5" fill="#0B1220" opacity="0.9" />
+        {/* Barra direita — mais alta */}
+        <rect x="52" y="38" width="10" height="46" rx="2.5" fill="url(#bar3g)" />
       </svg>
 
       {showText && (
-        <span className="leading-none">
-          <span className="font-extrabold tracking-tight text-sky-400">
-            {compactText ? 'Irriga' : 'Irriga'}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: Math.round(size * 0.07) }}>
+          {/* Wordmark */}
+          <span style={{
+            fontFamily: "'Inter', 'DM Sans', system-ui, sans-serif",
+            fontSize: wordSize,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
+          }}>
+            <span style={{ color: '#4ade80' }}>Irriga</span>
+            <span style={{ color: '#60a5fa' }}>Agro</span>
           </span>
-          {!compactText && <span className="font-light tracking-tight text-emerald-400">Agro</span>}
-        </span>
+
+          {/* Tagline — centralizada sob o wordmark */}
+          <span style={{
+            fontFamily: "'Inter', system-ui, sans-serif",
+            fontSize: tagSize,
+            fontWeight: 400,
+            letterSpacing: '0.18em',
+            color: 'rgba(255,255,255,0.45)',
+            whiteSpace: 'nowrap',
+            textTransform: 'uppercase',
+            textAlign: 'center',
+          }}>
+            Irrigação Inteligente
+          </span>
+        </div>
       )}
     </div>
   )

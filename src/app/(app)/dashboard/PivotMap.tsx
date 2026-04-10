@@ -245,7 +245,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
 
         marker.bindTooltip(popupHtml, {
           direction: 'top',
-          className: 'gotejo-popup',
+          className: 'irrigaagro-popup',
           opacity: 1
         })
         
@@ -335,16 +335,16 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
           70%  { transform: scale(2.2); opacity: 0; }
           100% { transform: scale(0.8); opacity: 0; }
         }
-        .gotejo-popup .leaflet-popup-content-wrapper {
+        .irrigaagro-popup .leaflet-popup-content-wrapper {
           background: transparent !important;
           border: none !important;
           box-shadow: none !important;
           padding: 0 !important;
         }
-        .gotejo-popup .leaflet-popup-content {
+        .irrigaagro-popup .leaflet-popup-content {
           margin: 0 !important;
         }
-        .gotejo-popup .leaflet-popup-tip-container {
+        .irrigaagro-popup .leaflet-popup-tip-container {
           display: none !important;
         }
         .leaflet-container {

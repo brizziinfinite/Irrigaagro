@@ -13,9 +13,10 @@ import {
   Stethoscope,
   LogOut,
   ChevronRight,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import GotejoLogo from '@/components/branding/GotejoLogo';
+import IrrigaAgroLogo from '@/components/branding/IrrigaAgroLogo';
 
 // SVG icon de pivô central — mockup aprovado
 function PivotIcon({ size = 20 }: { size?: number }) {
@@ -45,9 +46,10 @@ const OPERACIONAL = [
 ];
 
 const CONFIGURACAO = [
-  { icon: Wheat,        label: 'Culturas',         path: '/culturas'          },
-  { icon: Radio,        label: 'Estações',         path: '/estacoes'          },
-  { icon: Stethoscope,  label: 'Diagnóstico',      path: '/diagnostico-pivo'  },
+  { icon: Wheat,          label: 'Culturas',         path: '/culturas'          },
+  { icon: Radio,          label: 'Estações',         path: '/estacoes'          },
+  { icon: MessageSquare,  label: 'WhatsApp',         path: '/whatsapp'          },
+  { icon: Stethoscope,    label: 'Diagnóstico',      path: '/diagnostico-pivo'  },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -117,12 +119,10 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           padding: '26px 20px 20px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           display: 'flex',
+          justifyContent: 'center',
           alignItems: 'center',
-          gap: 14,
         }}>
-          <div style={{ minWidth: 0 }}>
-            <GotejoLogo size={42} showText />
-          </div>
+          <IrrigaAgroLogo size={36} showText />
         </div>
 
         {/* Navigation */}

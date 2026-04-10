@@ -1,8 +1,8 @@
-# Motor de Irrigação — Gotejo
+# Motor de Irrigação — IrrigaAgro
 
 ## Visão Geral
 
-O Gotejo implementa balanço hídrico diário seguindo a metodologia FAO-56 (Penman-Monteith). O motor calcula a necessidade de irrigação considerando evapotranspiração, chuva efetiva, características do solo e estágio da cultura.
+O IrrigaAgro implementa balanço hídrico diário seguindo a metodologia FAO-56 (Penman-Monteith). O motor calcula a necessidade de irrigação considerando evapotranspiração, chuva efetiva, características do solo e estágio da cultura.
 
 ## Conceitos Fundamentais
 

@@ -10,7 +10,7 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
   const cookieStore = await cookies()
-  const preferredCompanyId = cookieStore.get('gotejo:active_company_id')?.value ?? null
+  const preferredCompanyId = cookieStore.get('irrigaagro:active_company_id')?.value ?? null
 
   if (!user) {
     return (

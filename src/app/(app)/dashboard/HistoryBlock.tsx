@@ -109,13 +109,13 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
                 }}
                 labelStyle={{ color: '#8899aa', marginBottom: 4 }}
                 cursor={{ fill: 'rgb(255 255 255 / 0.03)' }}
-                formatter={(value: number, name: string) => {
+                formatter={(value, name) => {
                   const labels: Record<string, string> = {
                     irrigation: 'Lâmina (mm)',
                     rainfall:   'Chuva (mm)',
                     moisture:   'Umidade (%)',
                   }
-                  return [value, labels[name] ?? name]
+                  return [value, labels[String(name)] ?? name]
                 }}
               />
             )}

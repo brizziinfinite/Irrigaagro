@@ -13,6 +13,82 @@ export type OperationMode = 'individual' | 'conjugated'
 export type WeatherStationProvider = 'manual' | 'fieldclimate' | 'davis' | 'inmet'
 export type RainfallSource = 'manual' | 'import' | 'station' | 'plugfield'
 export type EnergyBillSource = 'upload' | 'whatsapp' | 'manual'
+
+// ─── WhatsApp ─────────────────────────────────────────────────
+export type WhatsAppMessageType =
+  | 'irrigation_alert'
+  | 'rain_forecast'
+  | 'daily_summary'
+  | 'status_update'
+  | 'rain_report'
+  | 'irrigation_confirm'
+  | 'energy_bill'
+  | 'manual'
+  | 'unknown'
+
+export type WhatsAppMessageStatus = 'pending' | 'sent' | 'delivered' | 'read' | 'failed'
+export type WhatsAppMessageDirection = 'inbound' | 'outbound'
+
+export interface WhatsAppContact {
+  id: string
+  company_id: string
+  user_id: string | null
+  phone: string
+  contact_name: string
+  is_active: boolean
+  notification_hour: number
+  language: string
+  created_at: string
+  updated_at: string
+}
+
+export interface WhatsAppContactInsert {
+  company_id: string
+  user_id?: string | null
+  phone: string
+  contact_name: string
+  is_active?: boolean
+  notification_hour?: number
+  language?: string
+}
+
+export type WhatsAppContactUpdate = Partial<WhatsAppContactInsert>
+
+export interface WhatsAppPivotSubscription {
+  id: string
+  contact_id: string
+  pivot_id: string
+  notify_irrigation: boolean
+  notify_rain: boolean
+  notify_status: boolean
+  notify_daily_summary: boolean
+  created_at: string
+}
+
+export interface WhatsAppPivotSubscriptionInsert {
+  contact_id: string
+  pivot_id: string
+  notify_irrigation?: boolean
+  notify_rain?: boolean
+  notify_status?: boolean
+  notify_daily_summary?: boolean
+}
+
+export type WhatsAppPivotSubscriptionUpdate = Partial<WhatsAppPivotSubscriptionInsert>
+
+export interface WhatsAppMessageLog {
+  id: string
+  contact_id: string | null
+  pivot_id: string | null
+  direction: WhatsAppMessageDirection
+  message_type: WhatsAppMessageType
+  content: string | null
+  raw_payload: unknown | null
+  media_url: string | null
+  status: WhatsAppMessageStatus
+  error_message: string | null
+  created_at: string
+}
 export type IrrigationScheduleStatus = 'planned' | 'done' | 'cancelled'
 export type IrrigationCancelledReason = 'chuva' | 'quebra' | 'outro'
 

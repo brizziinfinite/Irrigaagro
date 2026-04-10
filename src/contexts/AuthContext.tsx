@@ -36,7 +36,7 @@ interface AuthSession {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-const ACTIVE_COMPANY_KEY = 'gotejo:active_company_id'
+const ACTIVE_COMPANY_KEY = 'irrigaagro:active_company_id'
 
 function getPersistedCompanyId(): string | null {
   if (typeof window === 'undefined') return null

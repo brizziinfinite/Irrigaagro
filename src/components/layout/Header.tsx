@@ -16,6 +16,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/safras':    'Safras',
   '/culturas':  'Culturas',
   '/relatorios':'Relatórios',
+  '/whatsapp':  'WhatsApp',
+  '/lancamentos': 'Lançamentos',
+  '/recomendacoes': 'Recomendações',
 }
 
 interface HeaderProps {
@@ -26,7 +29,7 @@ interface HeaderProps {
 export function Header({ user: _, onMenuClick }: HeaderProps) {
   const pathname = usePathname()
   const { company } = useAuth()
-  const pageTitle = PAGE_TITLES[pathname] ?? 'Gotejo'
+  const pageTitle = PAGE_TITLES[pathname] ?? 'IrrigaAgro'
 
   return (
     <header
@@ -51,7 +54,7 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-sm">
-          <span style={{ color: 'var(--color-text-faint)' }} className="hidden sm:inline">Gotejo</span>
+          <span style={{ color: 'var(--color-text-faint)' }} className="hidden sm:inline">IrrigaAgro</span>
           <span style={{ color: 'var(--color-surface-border)' }} className="hidden sm:inline">/</span>
           <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{pageTitle}</span>
         </div>
