@@ -216,7 +216,6 @@ serve(async (_req) => {
         const ctaMm: number = mgmt.cta ?? 0
         const adcMm: number = mgmt.ctda ?? 0
         const rainfall = mgmt.rainfall_mm ?? 0
-        const kc = mgmt.kc != null ? mgmt.kc.toFixed(2) : '—'
 
         // Status
         let statusEmoji: string
@@ -243,7 +242,7 @@ serve(async (_req) => {
         const rainfallStr = rainfall > 0 ? ` · 🌧️ ${rainfall.toFixed(0)}mm` : ''
 
         let line = `🚜 *${pivoName}*${cropStr} — ${statusEmoji} ${statusLabel}\n`
-        line += `💧 CC: ${fcStr} · ETc: ${etcStr} · Kc: ${kc}${rainfallStr}\n`
+        line += `💧 CC: ${fcStr} · ETc: ${etcStr}${rainfallStr}\n`
 
         if (mgmt.needs_irrigation && sub.notify_irrigation) {
           hasIrrigationAlert = true
