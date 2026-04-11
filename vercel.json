@@ -11,6 +11,14 @@
     {
       "path": "/api/cron/daily-balance",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/afternoon-alert",
+      "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-report",
+      "schedule": "0 10 * * 1"
     }
   ]
 }

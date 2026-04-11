@@ -537,9 +537,105 @@ Regras:
         responseText = '📝 Ok, entendido.'
       }
 
-    } else if (msg === 'OK') {
+    } else if (msg === 'OK' || msg === 'IRRIGANDO' || msg === 'IRRIGOU') {
       messageType = 'irrigation_confirm'
-      responseText = '👍 Recebido!'
+      // Buscar seasons ativas para os pivôs do contato
+      const pivotIds = subs.map(s => s.pivot_id)
+      const { data: seasons } = await supabase
+        .from('seasons')
+        .select('id, pivot_id')
+        .in('pivot_id', pivotIds)
+        .eq('is_active', true)
+
+      const seasonByPivot: Record<string, string> = {}
+      for (const s of seasons ?? []) seasonByPivot[s.pivot_id] = s.id
+      const seasonIds = Object.values(seasonByPivot)
+
+      // Buscar último balanço com lâmina recomendada
+      const today = new Date().toISOString().slice(0, 10)
+      const twoDaysAgo = new Date(); twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+      const { data: mgmtRows } = seasonIds.length > 0
+        ? await supabase
+            .from('daily_management')
+            .select('id, season_id, pivot_id, date, recommended_depth_mm, needs_irrigation')
+            .in('season_id', seasonIds)
+            .gte('date', twoDaysAgo.toISOString().slice(0, 10))
+            .order('date', { ascending: false })
+        : { data: [] }
+
+      const mgmtBySeason: Record<string, any> = {}
+      for (const row of mgmtRows ?? []) {
+        if (!mgmtBySeason[row.season_id]) mgmtBySeason[row.season_id] = row
+      }
+
+      // Encontrar pivôs que precisavam irrigar
+      const irrigationNeeded = subs.filter(s => {
+        const sid = seasonByPivot[s.pivot_id]
+        return sid && mgmtBySeason[sid]?.needs_irrigation
+      })
+
+      if (irrigationNeeded.length === 0) {
+        responseText = '👍 Recebido! Nenhum pivô com irrigação pendente no sistema.'
+      } else {
+        // Guardar estado pendente no log para aguardar confirmação de lâmina
+        const pivoName = irrigationNeeded[0]?.pivots?.name || 'Pivô'
+        const sid = seasonByPivot[irrigationNeeded[0].pivot_id]
+        const recMm = mgmtBySeason[sid]?.recommended_depth_mm
+
+        // Salvar contexto pendente como mensagem de log com status 'pending_confirmation'
+        await supabase.from('whatsapp_messages_log').insert({
+          contact_id: contact.id,
+          direction: 'inbound',
+          message_type: 'irrigation_confirm',
+          content: msg,
+          raw_payload: { pivot_id: irrigationNeeded[0].pivot_id, season_id: sid, recommended_mm: recMm },
+          status: 'pending_lamina',
+        })
+
+        const recStr = recMm != null ? ` (ou responda *OK* para usar os *${recMm.toFixed(1)} mm* recomendados)` : ''
+        responseText = `💧 *Quantos mm foram aplicados no ${pivoName}?*\n\nDigite o valor em mm${recStr}.`
+      }
+
+    } else if (/^\d+([.,]\d+)?$/.test(msg) || msg === 'OK MM') {
+      // Resposta numérica após pergunta de lâmina
+      messageType = 'irrigation_confirm'
+      const { data: pending } = await supabase
+        .from('whatsapp_messages_log')
+        .select('id, raw_payload, created_at')
+        .eq('contact_id', contact.id)
+        .eq('status', 'pending_lamina')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (pending) {
+        const { pivot_id, season_id, recommended_mm } = pending.raw_payload as any
+        const laminaMm = msg === 'OK MM' ? recommended_mm : parseFloat(msg.replace(',', '.'))
+        const today = new Date().toISOString().slice(0, 10)
+
+        if (laminaMm > 0) {
+          // Registrar irrigação no daily_management
+          await supabase
+            .from('daily_management')
+            .update({ actual_depth_mm: laminaMm, needs_irrigation: false })
+            .eq('season_id', season_id)
+            .eq('date', today)
+
+          // Marcar pendência como resolvida
+          await supabase
+            .from('whatsapp_messages_log')
+            .update({ status: 'resolved' })
+            .eq('id', pending.id)
+
+          const pivName = subs.find(s => s.pivot_id === pivot_id)?.pivots?.name || 'Pivô'
+          responseText = `✅ *Irrigação registrada!*\n\n📍 ${pivName}\n💧 Lâmina: ${laminaMm.toFixed(1)} mm\n\nBalanço atualizado no sistema.`
+        } else {
+          responseText = `❌ Valor inválido. Responda com o número de mm aplicados (ex: *15* ou *12.5*).`
+        }
+      } else {
+        // Sem pendência — pode ser OK para confirmar lâmina recomendada
+        responseText = '👍 Recebido!'
+      }
 
     } else if (msg === 'ADIAR') {
       messageType = 'irrigation_confirm'
