@@ -167,79 +167,164 @@ serve(async (_req) => {
         }
       }
 
-      const weekday = now.toLocaleDateString('pt-BR', { weekday: 'long' })
       const dateShort = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-      // Cabeçalho natural
-      let messageBody = `Bom dia! ☀️ Aqui está o resumo de hoje, ${weekday} ${dateShort}.\n`
+      // Determinar fazenda (pegar a do primeiro pivô)
+      const fazendaName = subs[0]?.pivots?.farms?.name || 'Fazenda'
 
+      // Determinar situação hídrica geral
       let hasIrrigationAlert = false
+      const pivotLines: string[] = []
+      const criticalPivots: string[] = []
+      let okCount = 0, attentionCount = 0, criticalCount = 0
+
+      // Buscar info de safra (cultura, DAS) para o cabeçalho
+      const { data: seasonDetails } = seasonIds.length > 0
+        ? await supabase
+            .from('seasons')
+            .select('id, pivot_id, planting_date, crops ( name )')
+            .in('id', seasonIds)
+        : { data: [] }
+
+      const seasonInfoById: Record<string, any> = {}
+      for (const s of seasonDetails ?? []) {
+        seasonInfoById[s.id] = s
+      }
 
       for (const sub of subs) {
         const pivoName = sub.pivots?.name || 'Pivô'
+        const threshold = sub.pivots?.alert_threshold_percent ?? 70
         const seasonId = seasonByPivot[sub.pivot_id]
         const mgmt = seasonId ? mgmtBySeason[seasonId] : null
 
-        messageBody += `\n*${pivoName}*\n`
+        if (!mgmt) {
+          pivotLines.push(`🚜 *${pivoName}* — ⚫ Sem dados\n💧 Solo: —\n👉 _Balanço será atualizado às 20h_`)
+          continue
+        }
 
-        if (mgmt) {
-          const dataLabel = mgmt.date !== today
-            ? ` _(${mgmt.date.split('-').reverse().join('/')})_`
-            : ''
-          const fc = mgmt.field_capacity_percent != null
-            ? `${mgmt.field_capacity_percent.toFixed(0)}%`
-            : '—'
-          const deficit = mgmt.ctda != null ? `${mgmt.ctda.toFixed(1)} mm` : '—'
-          const etc = mgmt.etc_mm != null ? `${mgmt.etc_mm.toFixed(1)} mm` : '—'
+        const fc = mgmt.field_capacity_percent != null ? mgmt.field_capacity_percent : null
+        const rainfall = mgmt.rainfall_mm ?? 0
 
-          messageBody += `Solo: ${fc} da capacidade${dataLabel}\n`
-          messageBody += `Déficit: ${deficit} | ETc: ${etc}`
-
-          if (mgmt.rainfall_mm > 0) {
-            messageBody += ` | Chuva: ${mgmt.rainfall_mm.toFixed(1)} mm`
-          }
-          messageBody += '\n'
-
-          if (mgmt.needs_irrigation && sub.notify_irrigation) {
-            hasIrrigationAlert = true
-            const speed = mgmt.recommended_speed_percent != null
-              ? `${mgmt.recommended_speed_percent}%`
-              : '—'
-            const lamina = mgmt.recommended_depth_mm != null
-              ? `${mgmt.recommended_depth_mm.toFixed(1)} mm`
-              : '—'
-            messageBody += `⚠️ *Irrigar hoje* — velocidade ${speed}, lâmina ${lamina}\n`
-          } else {
-            messageBody += `✅ Sem necessidade de irrigar\n`
-          }
+        // Status do pivô
+        let statusEmoji: string
+        let statusLabel: string
+        if (fc == null) {
+          statusEmoji = '⚫'
+          statusLabel = 'Sem dados'
+        } else if (fc >= threshold + 8) {
+          statusEmoji = '🟢'
+          statusLabel = 'OK'
+          okCount++
+        } else if (fc >= threshold) {
+          statusEmoji = '🟡'
+          statusLabel = 'Atenção'
+          attentionCount++
         } else {
-          messageBody += `_Balanço será atualizado às 20h_\n`
+          statusEmoji = '🔴'
+          statusLabel = 'Crítico'
+          criticalCount++
+        }
+
+        const fcStr = fc != null ? `${fc.toFixed(0)}%` : '—'
+        const rainfallStr = `${rainfall.toFixed(0)} mm`
+
+        let line = `🚜 *${pivoName}* — ${statusEmoji} ${statusLabel}\n`
+        line += `💧 Solo: ${fcStr}\n`
+        line += `🌧️ Chuva: ${rainfallStr}\n`
+
+        if (mgmt.needs_irrigation && sub.notify_irrigation) {
+          hasIrrigationAlert = true
+          const speed = mgmt.recommended_speed_percent != null
+            ? `${mgmt.recommended_speed_percent}%`
+            : '—'
+          const lamina = mgmt.recommended_depth_mm != null
+            ? `${mgmt.recommended_depth_mm.toFixed(1)} mm`
+            : '—'
+          line += `👉 *Irrigar ${lamina} hoje* (vel. ${speed})`
+          criticalPivots.push(pivoName)
+        } else if (statusLabel === 'Atenção') {
+          line += `👉 *Programar irrigação (próximas 24h)*`
+        } else {
+          line += `👉 *Sem necessidade de irrigação hoje*`
+        }
+
+        pivotLines.push(line)
+      }
+
+      // Situação hídrica geral
+      let situacaoLabel: string
+      if (criticalCount > 0) {
+        situacaoLabel = '*Atenção imediata necessária*'
+      } else if (attentionCount > 0) {
+        situacaoLabel = '*Em atenção*'
+      } else {
+        situacaoLabel = '*Sob controle*'
+      }
+
+      // Buscar info de safra do primeiro pivô com season ativa
+      let cropHeader = ''
+      for (const sub of subs) {
+        const seasonId = seasonByPivot[sub.pivot_id]
+        if (seasonId && seasonInfoById[seasonId]) {
+          const s = seasonInfoById[seasonId]
+          const cropName = s.crops?.name || 'Cultura'
+          let das = 0
+          if (s.planting_date) {
+            const plantedDate = new Date(s.planting_date)
+            das = Math.floor((now.getTime() - plantedDate.getTime()) / (1000 * 60 * 60 * 24))
+          }
+          cropHeader = `🌱 *${cropName}${das > 0 ? ` — ${das} DAS` : ''}*`
+          break
         }
       }
+
+      // Montar mensagem
+      const divider = '━━━━━━━━━━━━━━━━━━━'
+
+      let messageBody = `🌱 *GOTEJO | MANEJO DIÁRIO*\n\n`
+      messageBody += `📍 ${fazendaName}\n`
+      messageBody += `📅 ${dateShort}\n`
+
+      if (cropHeader) {
+        messageBody += `\n${cropHeader}\n`
+      }
+      messageBody += `💧 Situação hídrica: ${situacaoLabel}\n`
+      messageBody += `\n${divider}\n\n`
+
+      messageBody += pivotLines.join(`\n\n${divider}\n\n`)
+      messageBody += `\n\n${divider}\n`
+
+      // Prioridade do dia
+      if (criticalPivots.length > 0) {
+        messageBody += `\n⚠️ *Prioridade do dia:*\n`
+        messageBody += `👉 Iniciar irrigação pelo *${criticalPivots[0]}*\n`
+      }
+
+      // Resumo geral
+      messageBody += `\n📊 *Resumo geral:*\n`
+      messageBody += `🟢 ${okCount} OK | 🟡 ${attentionCount} Atenção | 🔴 ${criticalCount} Crítico\n`
+
+      messageBody += `\n${divider}\n`
 
       // Previsão
       if (forecast.length > 0) {
-        messageBody += `\n*Previsão:*\n`
-        for (const day of forecast.slice(0, 4)) {
-          const isToday = day.date === today
-          const label = isToday
-            ? 'Hoje'
-            : new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
-          const emoji = weatherEmoji(day.weatherCode)
-          const rainStr = day.rain > 0 ? ` — chuva ${day.rain.toFixed(0)} mm` : ''
-          messageBody += `${emoji} ${label}: ${day.tmax.toFixed(0)}°/${day.tmin.toFixed(0)}° | ETo ${day.eto.toFixed(1)} mm${rainStr}\n`
+        const topWeatherCode = forecast[0].weatherCode
+        const hasRainToday = forecast[0].rain > 0
+        const highEto = forecast[0].eto > 5
+
+        messageBody += `\n🌤️ *Tendência:*\n`
+        if (!hasRainToday) {
+          messageBody += `• Sem chuva relevante hoje\n`
+        } else {
+          messageBody += `• Chuva prevista: ${forecast[0].rain.toFixed(0)} mm hoje\n`
+        }
+        if (highEto) {
+          messageBody += `• Consumo elevado da cultura\n`
         }
       }
 
-      // Frase motivacional do dia
-      const topWeatherCode = forecast.length > 0 ? forecast[0].weatherCode : 0
-      const phrase = await fetchMotivationalPhrase(weekday, topWeatherCode)
-      if (phrase) {
-        messageBody += `\n_${phrase}_`
-      }
-
-      // Rodapé simples
-      messageBody += `\n\nRegistrar chuva? É só responder: *CHUVA VALLEY 12*`
+      messageBody += `\n${divider}\n`
+      messageBody += `\n🔗 *Abrir painel completo:*\nhttps://gotejo.com.br/manejo`
 
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: 'POST',
