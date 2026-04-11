@@ -28,7 +28,7 @@ async function fetchForecast(lat: number, lon: number): Promise<ForecastDay[]> {
     url.searchParams.set('longitude', String(lon))
     url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,precipitation_sum,et0_fao_evapotranspiration,weather_code')
     url.searchParams.set('timezone', 'America/Sao_Paulo')
-    url.searchParams.set('forecast_days', '4')
+    url.searchParams.set('forecast_days', '5')
 
     const resp = await fetch(url.toString())
     if (!resp.ok) return []
@@ -47,39 +47,40 @@ async function fetchForecast(lat: number, lon: number): Promise<ForecastDay[]> {
   }
 }
 
-async function fetchMotivationalPhrase(weekday: string, weatherCode: number): Promise<string> {
-  const geminiKey = Deno.env.get('GEMINI_API_KEY')
-  if (!geminiKey) return ''
+/**
+ * Projeta quantos dias até o solo atingir o threshold crítico.
+ * Usa ETc de hoje como estimativa diária e desconta chuva prevista.
+ * Retorna a data estimada ou null se >7 dias.
+ */
+function projectNextIrrigationDate(
+  today: string,
+  adcMm: number,         // ADc atual em mm
+  ctaMm: number,         // CTA em mm
+  threshold: number,     // % threshold (ex: 70)
+  etcMm: number,         // ETc de hoje em mm/dia
+  forecastDays: ForecastDay[]  // previsão (index 0 = hoje)
+): { date: string; daysAway: number } | null {
+  if (ctaMm <= 0 || etcMm <= 0) return null
 
-  try {
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Crie UMA frase curta (máximo 12 palavras) de encorajamento para um agricultor brasileiro.
-Contexto: ${weekday}, clima ${weatherCode <= 2 ? 'ensolarado' : weatherCode <= 3 ? 'nublado' : 'com chuva'}.
-Regras:
-- Tom natural, como um amigo do campo falaria
-- Relacionada à terra, lavoura, natureza ou colheita
-- Sem clichês corporativos, sem exclamação, sem emoji
-- Apenas a frase, sem aspas, sem explicação`
-            }]
-          }],
-          generationConfig: { temperature: 1.2, maxOutputTokens: 64 }
-        })
+  const thresholdMm = (threshold / 100) * ctaMm
+  let adc = adcMm
+
+  for (let i = 1; i <= 7; i++) {
+    const rain = forecastDays[i]?.rain ?? 0
+    adc = Math.min(ctaMm, adc + rain) - etcMm
+    if (adc < 0) adc = 0
+
+    if (adc <= thresholdMm) {
+      const d = new Date(today + 'T12:00:00')
+      d.setDate(d.getDate() + i)
+      return {
+        date: d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
+        daysAway: i,
       }
-    )
-    if (!resp.ok) return ''
-    const data = await resp.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
-    return text.replace(/^["']|["']$/g, '')
-  } catch {
-    return ''
+    }
   }
+
+  return null
 }
 
 serve(async (_req) => {
@@ -138,22 +139,34 @@ serve(async (_req) => {
 
       const seasonIds = Object.values(seasonByPivot)
 
-      // Buscar últimos registros de daily_management por season_id
+      // Buscar últimos registros de daily_management (com ADc, CTA, ETc, Kc)
       const { data: mgmtRows } = seasonIds.length > 0
         ? await supabase
             .from('daily_management')
-            .select('season_id, date, field_capacity_percent, ctda, recommended_depth_mm, needs_irrigation, recommended_speed_percent, etc_mm, rainfall_mm')
+            .select('season_id, date, field_capacity_percent, ctda, cta, recommended_depth_mm, needs_irrigation, recommended_speed_percent, etc_mm, eto_mm, kc, rainfall_mm')
             .in('season_id', seasonIds)
             .gte('date', sinceDate)
             .order('date', { ascending: false })
         : { data: [] }
 
-      // Para cada season, pegar o registro mais recente
       const mgmtBySeason: Record<string, any> = {}
       for (const row of mgmtRows ?? []) {
         if (!mgmtBySeason[row.season_id]) {
           mgmtBySeason[row.season_id] = row
         }
+      }
+
+      // Buscar info de safra (cultura, DAS)
+      const { data: seasonDetails } = seasonIds.length > 0
+        ? await supabase
+            .from('seasons')
+            .select('id, pivot_id, planting_date, crops ( name )')
+            .in('id', seasonIds)
+        : { data: [] }
+
+      const seasonInfoById: Record<string, any> = {}
+      for (const s of seasonDetails ?? []) {
+        seasonInfoById[s.id] = s
       }
 
       // Buscar previsão para o primeiro pivô com coordenadas
@@ -168,28 +181,12 @@ serve(async (_req) => {
       }
 
       const dateShort = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-
-      // Determinar fazenda (pegar a do primeiro pivô)
       const fazendaName = subs[0]?.pivots?.farms?.name || 'Fazenda'
 
-      // Determinar situação hídrica geral
       let hasIrrigationAlert = false
       const pivotLines: string[] = []
       const criticalPivots: string[] = []
       let okCount = 0, attentionCount = 0, criticalCount = 0
-
-      // Buscar info de safra (cultura, DAS) para o cabeçalho
-      const { data: seasonDetails } = seasonIds.length > 0
-        ? await supabase
-            .from('seasons')
-            .select('id, pivot_id, planting_date, crops ( name )')
-            .in('id', seasonIds)
-        : { data: [] }
-
-      const seasonInfoById: Record<string, any> = {}
-      for (const s of seasonDetails ?? []) {
-        seasonInfoById[s.id] = s
-      }
 
       for (const sub of subs) {
         const pivoName = sub.pivots?.name || 'Pivô'
@@ -197,7 +194,7 @@ serve(async (_req) => {
         const seasonId = seasonByPivot[sub.pivot_id]
         const mgmt = seasonId ? mgmtBySeason[seasonId] : null
 
-        // DAS e cultura deste pivô específico
+        // DAS e cultura deste pivô
         const seasonInfo = seasonId ? seasonInfoById[seasonId] : null
         const cropName = seasonInfo?.crops?.name || null
         let das = 0
@@ -206,17 +203,22 @@ serve(async (_req) => {
           das = Math.floor((now.getTime() - plantedDate.getTime()) / (1000 * 60 * 60 * 24))
         }
 
+        const dasStr = das > 0 ? ` — ${das} DAS` : ''
+        const cropStr = cropName ? ` (${cropName}${dasStr})` : (das > 0 ? ` (${das} DAS)` : '')
+
         if (!mgmt) {
-          const dasStr = das > 0 ? ` (${das} DAS)` : ''
-          const cropStr = cropName ? ` — ${cropName}${dasStr}` : dasStr
-          pivotLines.push(`🚜 *${pivoName}*${cropStr} — ⚫ Sem dados\n💧 Solo: —\n👉 _Balanço será atualizado às 20h_`)
+          pivotLines.push(`🚜 *${pivoName}*${cropStr} — ⚫ Sem dados\n💧 CC: — · ETc: —\n👉 _Balanço será atualizado às 20h_`)
           continue
         }
 
         const fc = mgmt.field_capacity_percent != null ? mgmt.field_capacity_percent : null
+        const etcMm: number = mgmt.etc_mm ?? 0
+        const ctaMm: number = mgmt.cta ?? 0
+        const adcMm: number = mgmt.ctda ?? 0
         const rainfall = mgmt.rainfall_mm ?? 0
+        const kc = mgmt.kc != null ? mgmt.kc.toFixed(2) : '—'
 
-        // Status do pivô
+        // Status
         let statusEmoji: string
         let statusLabel: string
         if (fc == null) {
@@ -237,28 +239,37 @@ serve(async (_req) => {
         }
 
         const fcStr = fc != null ? `${fc.toFixed(0)}%` : '—'
-        const rainfallStr = `${rainfall.toFixed(0)} mm`
-        const dasStr = das > 0 ? ` — ${das} DAS` : ''
-        const cropStr = cropName ? ` (${cropName}${dasStr})` : (das > 0 ? ` (${das} DAS)` : '')
+        const etcStr = etcMm > 0 ? `${etcMm.toFixed(1)}mm` : '—'
+        const rainfallStr = rainfall > 0 ? ` · 🌧️ ${rainfall.toFixed(0)}mm` : ''
 
         let line = `🚜 *${pivoName}*${cropStr} — ${statusEmoji} ${statusLabel}\n`
-        line += `💧 Solo: ${fcStr}\n`
-        line += `🌧️ Chuva: ${rainfallStr}\n`
+        line += `💧 CC: ${fcStr} · ETc: ${etcStr} · Kc: ${kc}${rainfallStr}\n`
 
         if (mgmt.needs_irrigation && sub.notify_irrigation) {
           hasIrrigationAlert = true
-          const speed = mgmt.recommended_speed_percent != null
-            ? `${mgmt.recommended_speed_percent}%`
-            : '—'
-          const lamina = mgmt.recommended_depth_mm != null
-            ? `${mgmt.recommended_depth_mm.toFixed(1)} mm`
-            : '—'
-          line += `👉 *Irrigar ${lamina} hoje* (vel. ${speed})`
+          const speed = mgmt.recommended_speed_percent != null ? `${mgmt.recommended_speed_percent}%` : '—'
+          const lamina = mgmt.recommended_depth_mm != null ? `${mgmt.recommended_depth_mm.toFixed(1)}mm` : '—'
+          line += `🔴 *Irrigar hoje — ${lamina}* (vel. ${speed})`
           criticalPivots.push(pivoName)
-        } else if (statusLabel === 'Atenção') {
-          line += `👉 *Programar irrigação (próximas 24h)*`
         } else {
-          line += `👉 *Sem necessidade de irrigação hoje*`
+          // Projetar próxima irrigação
+          const proj = etcMm > 0 && ctaMm > 0
+            ? projectNextIrrigationDate(today, adcMm, ctaMm, threshold, etcMm, forecast)
+            : null
+
+          if (statusLabel === 'Atenção') {
+            if (proj) {
+              line += `🟡 Margem estreita — irrigar até *${proj.date}*`
+            } else {
+              line += `🟡 Margem estreita — monitore amanhã`
+            }
+          } else {
+            if (proj && proj.daysAway <= 5) {
+              line += `✅ OK — próxima irrigação estimada: *${proj.date}*`
+            } else {
+              line += `✅ Campo bem abastecido`
+            }
+          }
         }
 
         pivotLines.push(line)
@@ -266,21 +277,16 @@ serve(async (_req) => {
 
       // Situação hídrica geral
       let situacaoLabel: string
-      if (criticalCount > 0) {
-        situacaoLabel = '*Atenção imediata necessária*'
-      } else if (attentionCount > 0) {
-        situacaoLabel = '*Em atenção*'
-      } else {
-        situacaoLabel = '*Sob controle*'
-      }
+      if (criticalCount > 0) situacaoLabel = '🔴 *Irrigação necessária hoje*'
+      else if (attentionCount > 0) situacaoLabel = '🟡 *Em atenção*'
+      else situacaoLabel = '🟢 *Sob controle*'
 
       // Montar mensagem
       const divider = '━━━━━━━━━━━━━━━━━━━'
 
-      let messageBody = `🌱 *IRRIGAAGRO | MANEJO DIÁRIO*\n\n`
-      messageBody += `📍 ${fazendaName}\n`
-      messageBody += `📅 ${dateShort}\n`
-      messageBody += `💧 Situação hídrica: ${situacaoLabel}\n`
+      let messageBody = `🌱 *IRRIGAAGRO | MANEJO DIÁRIO*\n`
+      messageBody += `📍 ${fazendaName} · 📅 ${dateShort}\n`
+      messageBody += `${situacaoLabel}\n`
       messageBody += `\n${divider}\n\n`
 
       messageBody += pivotLines.join(`\n\n${divider}\n\n`)
@@ -288,35 +294,35 @@ serve(async (_req) => {
 
       // Prioridade do dia
       if (criticalPivots.length > 0) {
-        messageBody += `\n⚠️ *Prioridade do dia:*\n`
-        messageBody += `👉 Iniciar irrigação pelo *${criticalPivots[0]}*\n`
+        messageBody += `\n⚠️ *Prioridade:* Iniciar pelo *${criticalPivots[0]}*\n`
       }
 
-      // Resumo geral
-      messageBody += `\n📊 *Resumo geral:*\n`
-      messageBody += `🟢 ${okCount} OK | 🟡 ${attentionCount} Atenção | 🔴 ${criticalCount} Crítico\n`
+      // Resumo numérico
+      messageBody += `\n📊 ${okCount > 0 ? `🟢 ${okCount} OK` : ''}${attentionCount > 0 ? `  🟡 ${attentionCount} Atenção` : ''}${criticalCount > 0 ? `  🔴 ${criticalCount} Crítico` : ''}\n`
 
       messageBody += `\n${divider}\n`
 
-      // Previsão
-      if (forecast.length > 0) {
-        const topWeatherCode = forecast[0].weatherCode
-        const hasRainToday = forecast[0].rain > 0
-        const highEto = forecast[0].eto > 5
-
-        messageBody += `\n🌤️ *Tendência:*\n`
-        if (!hasRainToday) {
-          messageBody += `• Sem chuva relevante hoje\n`
-        } else {
-          messageBody += `• Chuva prevista: ${forecast[0].rain.toFixed(0)} mm hoje\n`
-        }
-        if (highEto) {
-          messageBody += `• Consumo elevado da cultura\n`
+      // Previsão 3 dias (D+1, D+2, D+3 — pula hoje)
+      const futureForecast = forecast.filter(d => d.date > today).slice(0, 3)
+      if (futureForecast.length > 0) {
+        messageBody += `\n📆 *Próximos dias:*\n`
+        for (const day of futureForecast) {
+          const label = new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+          const emoji = weatherEmoji(day.weatherCode)
+          const rainStr = day.rain >= 2 ? ` · 🌧️ ${day.rain.toFixed(0)}mm` : ''
+          // ETc estimada: ETo × Kc médio dos pivôs (ou 0.8 como fallback)
+          const avgKc = subs.reduce((sum: number, s: any) => {
+            const sid = seasonByPivot[s.pivot_id]
+            return sum + (sid && mgmtBySeason[sid]?.kc ? mgmtBySeason[sid].kc : 0.8)
+          }, 0) / subs.length
+          const etcForecast = (day.eto * avgKc).toFixed(1)
+          messageBody += `${emoji} ${label} — ${day.tmax.toFixed(0)}°/${day.tmin.toFixed(0)}° · ETc ~${etcForecast}mm${rainStr}\n`
         }
       }
 
       messageBody += `\n${divider}\n`
-      messageBody += `\n🔗 *Abrir painel completo:*\nhttps://app.irrigaagro.com.br/manejo`
+      messageBody += `\n🔗 *Painel completo:* app.irrigaagro.com.br\n`
+      messageBody += `💬 _Registre chuva: CHUVA [PIVÔ] [mm]_`
 
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: 'POST',
