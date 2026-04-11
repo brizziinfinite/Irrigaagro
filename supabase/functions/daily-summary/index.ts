@@ -129,7 +129,7 @@ serve(async (_req) => {
         .from('seasons')
         .select('id, pivot_id')
         .in('pivot_id', pivotIds)
-        .eq('active', true)
+        .eq('is_active', true)
 
       const seasonByPivot: Record<string, string> = {}
       for (const s of seasons ?? []) {
@@ -184,7 +184,7 @@ serve(async (_req) => {
 
         if (mgmt) {
           const dataLabel = mgmt.date !== today
-            ? ` _(dado de ${mgmt.date.split('-').reverse().join('/')})*`
+            ? ` _(${mgmt.date.split('-').reverse().join('/')})_`
             : ''
           const fc = mgmt.field_capacity_percent != null
             ? `${mgmt.field_capacity_percent.toFixed(0)}%`
@@ -213,7 +213,7 @@ serve(async (_req) => {
             messageBody += `✅ Sem necessidade de irrigar\n`
           }
         } else {
-          messageBody += `Sem balanço calculado ainda hoje\n`
+          messageBody += `_Balanço será atualizado às 20h_\n`
         }
       }
 
