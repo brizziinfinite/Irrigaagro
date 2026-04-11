@@ -197,8 +197,19 @@ serve(async (_req) => {
         const seasonId = seasonByPivot[sub.pivot_id]
         const mgmt = seasonId ? mgmtBySeason[seasonId] : null
 
+        // DAS e cultura deste pivô específico
+        const seasonInfo = seasonId ? seasonInfoById[seasonId] : null
+        const cropName = seasonInfo?.crops?.name || null
+        let das = 0
+        if (seasonInfo?.planting_date) {
+          const plantedDate = new Date(seasonInfo.planting_date)
+          das = Math.floor((now.getTime() - plantedDate.getTime()) / (1000 * 60 * 60 * 24))
+        }
+
         if (!mgmt) {
-          pivotLines.push(`🚜 *${pivoName}* — ⚫ Sem dados\n💧 Solo: —\n👉 _Balanço será atualizado às 20h_`)
+          const dasStr = das > 0 ? ` (${das} DAS)` : ''
+          const cropStr = cropName ? ` — ${cropName}${dasStr}` : dasStr
+          pivotLines.push(`🚜 *${pivoName}*${cropStr} — ⚫ Sem dados\n💧 Solo: —\n👉 _Balanço será atualizado às 20h_`)
           continue
         }
 
@@ -227,8 +238,10 @@ serve(async (_req) => {
 
         const fcStr = fc != null ? `${fc.toFixed(0)}%` : '—'
         const rainfallStr = `${rainfall.toFixed(0)} mm`
+        const dasStr = das > 0 ? ` — ${das} DAS` : ''
+        const cropStr = cropName ? ` (${cropName}${dasStr})` : (das > 0 ? ` (${das} DAS)` : '')
 
-        let line = `🚜 *${pivoName}* — ${statusEmoji} ${statusLabel}\n`
+        let line = `🚜 *${pivoName}*${cropStr} — ${statusEmoji} ${statusLabel}\n`
         line += `💧 Solo: ${fcStr}\n`
         line += `🌧️ Chuva: ${rainfallStr}\n`
 
@@ -261,33 +274,12 @@ serve(async (_req) => {
         situacaoLabel = '*Sob controle*'
       }
 
-      // Buscar info de safra do primeiro pivô com season ativa
-      let cropHeader = ''
-      for (const sub of subs) {
-        const seasonId = seasonByPivot[sub.pivot_id]
-        if (seasonId && seasonInfoById[seasonId]) {
-          const s = seasonInfoById[seasonId]
-          const cropName = s.crops?.name || 'Cultura'
-          let das = 0
-          if (s.planting_date) {
-            const plantedDate = new Date(s.planting_date)
-            das = Math.floor((now.getTime() - plantedDate.getTime()) / (1000 * 60 * 60 * 24))
-          }
-          cropHeader = `🌱 *${cropName}${das > 0 ? ` — ${das} DAS` : ''}*`
-          break
-        }
-      }
-
       // Montar mensagem
       const divider = '━━━━━━━━━━━━━━━━━━━'
 
-      let messageBody = `🌱 *GOTEJO | MANEJO DIÁRIO*\n\n`
+      let messageBody = `🌱 *IRRIGAAGRO | MANEJO DIÁRIO*\n\n`
       messageBody += `📍 ${fazendaName}\n`
       messageBody += `📅 ${dateShort}\n`
-
-      if (cropHeader) {
-        messageBody += `\n${cropHeader}\n`
-      }
       messageBody += `💧 Situação hídrica: ${situacaoLabel}\n`
       messageBody += `\n${divider}\n\n`
 
@@ -324,7 +316,7 @@ serve(async (_req) => {
       }
 
       messageBody += `\n${divider}\n`
-      messageBody += `\n🔗 *Abrir painel completo:*\nhttps://gotejo.com.br/manejo`
+      messageBody += `\n🔗 *Abrir painel completo:*\nhttps://app.irrigaagro.com.br/manejo`
 
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: 'POST',
