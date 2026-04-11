@@ -184,9 +184,15 @@ serve(async (_req) => {
       const fazendaName = subs[0]?.pivots?.farms?.name || 'Fazenda'
 
       let hasIrrigationAlert = false
-      const pivotLines: string[] = []
       const criticalPivots: string[] = []
       let okCount = 0, attentionCount = 0, criticalCount = 0
+
+      // Processar cada pivô e calcular priority_score para ordenação
+      interface PivotResult {
+        line: string
+        priorityScore: number
+      }
+      const pivotResults: PivotResult[] = []
 
       for (const sub of subs) {
         const pivoName = sub.pivots?.name || 'Pivô'
@@ -207,7 +213,7 @@ serve(async (_req) => {
         const cropStr = cropName ? ` (${cropName}${dasStr})` : (das > 0 ? ` (${das} DAS)` : '')
 
         if (!mgmt) {
-          pivotLines.push(`🚜 *${pivoName}*${cropStr} — ⚫ Sem dados\n💧 CC: — · ETc: —\n👉 _Balanço será atualizado às 20h_`)
+          pivotResults.push({ line: `🚜 *${pivoName}*${cropStr} — ⚫ Sem dados\n💧 CC: — · ETc: —\n👉 _Balanço será atualizado às 20h_`, priorityScore: -1 })
           continue
         }
 
@@ -216,18 +222,25 @@ serve(async (_req) => {
         const ctaMm: number = mgmt.cta ?? 0
         const adcMm: number = mgmt.ctda ?? 0
         const rainfall = mgmt.rainfall_mm ?? 0
+        const deficitMm = ctaMm > 0 ? Math.max(0, ctaMm - adcMm) : 0
 
-        // Status
+        // Projeção de próxima irrigação (necessária para priority_score)
+        const proj = etcMm > 0 && ctaMm > 0
+          ? projectNextIrrigationDate(today, adcMm, ctaMm, threshold, etcMm, forecast)
+          : null
+        const daysAway = proj?.daysAway ?? 7
+
+        // Classificação de status (thresholds fixos: OK ≥75%, Atenção 70-74%, Crítico <70%)
         let statusEmoji: string
         let statusLabel: string
         if (fc == null) {
           statusEmoji = '⚫'
           statusLabel = 'Sem dados'
-        } else if (fc >= threshold + 8) {
+        } else if (fc >= 75) {
           statusEmoji = '🟢'
           statusLabel = 'OK'
           okCount++
-        } else if (fc >= threshold) {
+        } else if (fc >= 70) {
           statusEmoji = '🟡'
           statusLabel = 'Atenção'
           attentionCount++
@@ -236,6 +249,11 @@ serve(async (_req) => {
           statusLabel = 'Crítico'
           criticalCount++
         }
+
+        // priority_score = (deficit_mm × 0.5) + ((100 - fc) × 0.3) + (dias_até_irrigação × 0.2)
+        const priorityScore = fc != null
+          ? (deficitMm * 0.5) + ((100 - fc) * 0.3) + (daysAway * 0.2)
+          : 0
 
         const fcStr = fc != null ? `${fc.toFixed(0)}%` : '—'
         const etcStr = etcMm > 0 ? `${etcMm.toFixed(1)}mm` : '—'
@@ -250,29 +268,22 @@ serve(async (_req) => {
           const lamina = mgmt.recommended_depth_mm != null ? `${mgmt.recommended_depth_mm.toFixed(1)}mm` : '—'
           line += `🔴 *Irrigar hoje — ${lamina}* (vel. ${speed})`
           criticalPivots.push(pivoName)
+        } else if (statusLabel === 'Atenção') {
+          line += proj
+            ? `🟡 Margem estreita — irrigar até *${proj.date}*`
+            : `🟡 Margem estreita — monitore amanhã`
         } else {
-          // Projetar próxima irrigação
-          const proj = etcMm > 0 && ctaMm > 0
-            ? projectNextIrrigationDate(today, adcMm, ctaMm, threshold, etcMm, forecast)
-            : null
-
-          if (statusLabel === 'Atenção') {
-            if (proj) {
-              line += `🟡 Margem estreita — irrigar até *${proj.date}*`
-            } else {
-              line += `🟡 Margem estreita — monitore amanhã`
-            }
-          } else {
-            if (proj && proj.daysAway <= 5) {
-              line += `✅ OK — próxima irrigação estimada: *${proj.date}*`
-            } else {
-              line += `✅ Campo bem abastecido`
-            }
-          }
+          line += proj && proj.daysAway <= 5
+            ? `✅ OK — próxima irrigação estimada: *${proj.date}*`
+            : `✅ Campo bem abastecido`
         }
 
-        pivotLines.push(line)
+        pivotResults.push({ line, priorityScore })
       }
+
+      // Ordenar por priority_score decrescente (mais urgente primeiro)
+      pivotResults.sort((a, b) => b.priorityScore - a.priorityScore)
+      const pivotLines = pivotResults.map(r => r.line)
 
       // Situação hídrica geral
       let situacaoLabel: string
