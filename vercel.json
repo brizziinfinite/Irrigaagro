@@ -9,8 +9,8 @@
       "schedule": "0 23 * * *"
     },
     {
-      "path": "/api/cron/daily-balance",
-      "schedule": "0 10 * * *"
+      "path": "/api/cron/daily-summary",
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/afternoon-alert",
