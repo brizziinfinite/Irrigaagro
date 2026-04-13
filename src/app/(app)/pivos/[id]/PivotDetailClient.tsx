@@ -356,18 +356,24 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
     if (sorted[i].crop_stage !== sorted[i - 1].crop_stage) stageDates.add(sorted[i].date)
   }
 
-  // Converte field_capacity_percent (0-100 normalizado) → % volumétrica real
-  // moisture_vol = PM + (CC - PM) * (field_capacity_percent / 100)
-  const toVol = (pct: number | null) =>
-    pct == null ? null : PM + (CC - PM) * (pct / 100)
-
   const chartData = sorted.map(m => {
-    const vol = toVol(m.field_capacity_percent)
+    // Nos dias com excesso a curva sobe acima da CC proporcionalmente ao excesso
+    // excesso_relativo = irn_mm / cta → fração além da CTA
+    // moisture_vol = CC + excesso_relativo × (CC - PM)
+    const excessMm = m.irn_mm ?? 0
+    const ctaMm    = m.cta ?? 0
+    let vol: number | null
+    if (excessMm > 0 && ctaMm > 0) {
+      vol = CC + (excessMm / ctaMm) * (CC - PM)
+    } else {
+      const pct = m.field_capacity_percent
+      vol = pct == null ? null : PM + (CC - PM) * (pct / 100)
+    }
     return {
       date: new Date(m.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
       irrigation: m.actual_depth_mm ?? 0,
       rainfall: m.rainfall_mm ?? 0,
-      excess: m.irn_mm ?? 0,
+      excess: excessMm,
       moisture: vol,
       stageChange: stageDates.has(m.date) ? vol : null,
     }
@@ -376,10 +382,11 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
   // Linhas de referência em % volumétrica real
   const safetyVol = PM + (CC - PM) * (1 - fFactor)  // limite de estresse
 
-  // Domínio do eixo: de PM-margem até CC+margem
+  // Domínio do eixo: de PM-margem até CC + maior excesso observado
+  const maxMoisture = Math.max(...chartData.map(d => d.moisture ?? CC))
   const margin = (CC - PM) * 0.08
   const yMin  = Math.max(0, Math.floor((PM - margin) * 10) / 10)
-  const yMax  = Math.ceil((CC + margin) * 10) / 10
+  const yMax  = Math.ceil((Math.max(maxMoisture, CC) + margin) * 10) / 10
 
   // Gradiente: vermelho abaixo da segurança, azul acima
   // Normalizado para o domínio [yMin, yMax]
