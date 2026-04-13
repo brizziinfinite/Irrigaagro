@@ -133,7 +133,32 @@ export async function GET(req: NextRequest) {
   // Aceita ?force=true para sobrescrever registros existentes
   const dateParam = req.nextUrl.searchParams.get('date')
   const force = req.nextUrl.searchParams.get('force') === 'true'
-  const today = dateParam ?? previousDay(todayBRT()) // processa D-1 por padrão
+  const todayBRTStr = todayBRT()
+
+  // Catch-up automático: detecta dias em atraso (máx 3) e processa todos
+  // Só ativa no modo automático (sem ?date manual)
+  let datesToProcess: string[]
+  if (!dateParam) {
+    const candidates = [previousDay(todayBRTStr), previousDay(previousDay(todayBRTStr)), previousDay(previousDay(previousDay(todayBRTStr)))]
+    // Verifica quais datas ainda não têm registros (qualquer safra)
+    const missingDates: string[] = []
+    for (const candidate of candidates) {
+      const { count } = await supabase
+        .from('daily_management')
+        .select('id', { count: 'exact', head: true })
+        .eq('date', candidate) as { count: number | null }
+      if (!count || count === 0) missingDates.push(candidate)
+    }
+    // Sempre inclui D-1 (mesmo que já exista, para garantir)
+    const d1 = previousDay(todayBRTStr)
+    datesToProcess = missingDates.includes(d1) ? missingDates : [...missingDates, d1]
+    // Ordena do mais antigo para o mais recente
+    datesToProcess.sort()
+  } else {
+    datesToProcess = [dateParam]
+  }
+
+  const today = datesToProcess[datesToProcess.length - 1] // data principal para logs
   const startedAt = Date.now()
   const requestId = getRequestId(req)
   const triggerSource = getTriggerSource(req)
@@ -183,13 +208,14 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    for (const processDate of datesToProcess) {
     for (const context of contexts) {
       const { season, farm, pivot, crop } = context
       const seasonLabel = `${season.name} (${farm.name})`
 
       try {
         const history = await listDailyManagementBySeason(season.id, supabase)
-        const existing = history.find((record) => record.date === today) ?? null
+        const existing = history.find((record) => record.date === processDate) ?? null
 
         if (existing && !force) {
           const result: CronSeasonResult = {
@@ -252,7 +278,7 @@ export async function GET(req: NextRequest) {
         const externalData = await getManagementExternalData(
           farm.id,
           pivot.id,
-          today,
+          processDate,
           pivot,
           supabase
         )
@@ -260,7 +286,7 @@ export async function GET(req: NextRequest) {
         // Busca lâmina aplicada/planejada no Lançamentos para esta data
         let scheduledIrrigationMm: number | null = null
         try {
-          const schedule = await getScheduledIrrigationForDate(pivot.id, today, supabase)
+          const schedule = await getScheduledIrrigationForDate(pivot.id, processDate, supabase)
           if (schedule?.lamina_mm != null && schedule.lamina_mm > 0) {
             scheduledIrrigationMm = schedule.lamina_mm
           }
@@ -305,7 +331,7 @@ export async function GET(req: NextRequest) {
         const result = computeResolvedManagementBalance({
           context,
           history,
-          date: today,
+          date: processDate,
           tmax: climateSnapshot.temp_max != null ? String(climateSnapshot.temp_max) : '',
           tmin: climateSnapshot.temp_min != null ? String(climateSnapshot.temp_min) : '',
           humidity: climateSnapshot.humidity_percent != null ? String(climateSnapshot.humidity_percent) : '',
@@ -350,7 +376,7 @@ export async function GET(req: NextRequest) {
 
         const payload: DailyManagementInsert = {
           season_id: season.id,
-          date: today,
+          date: processDate,
           das: result.das,
           crop_stage: result.cropStage,
           temp_max: climateSnapshot.temp_max ?? null,
@@ -384,7 +410,7 @@ export async function GET(req: NextRequest) {
           : 'indisponível'
 
         const climateRoute = externalData.climateSource ?? 'manual'
-        const das = calcDAS(season.planting_date, today)
+        const das = calcDAS(season.planting_date, processDate)
 
         const irrigNote = scheduledIrrigationMm != null ? ` · irrigação ${scheduledIrrigationMm.toFixed(1)}mm (Lançamentos)` : ''
 
@@ -445,7 +471,8 @@ export async function GET(req: NextRequest) {
           },
         })
       }
-    }
+    } // end for context
+    } // end for processDate
 
     const ok = results.filter((item) => item.status === 'ok').length
     const skipped = results.filter((item) => item.status === 'skipped').length

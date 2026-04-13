@@ -180,6 +180,18 @@ serve(async (_req) => {
         }
       }
 
+      // Verificar se já enviou resumo diário hoje para este contato
+      const { data: sentToday } = await supabase
+        .from('whatsapp_messages_log')
+        .select('id')
+        .eq('contact_id', contact.id)
+        .in('message_type', ['daily_summary', 'irrigation_alert'])
+        .eq('direction', 'outbound')
+        .gte('created_at', `${today}T00:00:00`)
+        .limit(1)
+
+      if (sentToday && sentToday.length > 0) continue // já enviou resumo hoje
+
       const dateShort = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
       const fazendaName = subs[0]?.pivots?.farms?.name || 'Fazenda'
 
@@ -344,7 +356,7 @@ serve(async (_req) => {
           phone: contact.phone,
           message: messageBody,
           contact_id: contact.id,
-          message_type: hasIrrigationAlert ? 'irrigation_alert' : 'daily_summary',
+          message_type: 'daily_summary',
         }),
       })
 

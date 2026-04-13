@@ -426,6 +426,26 @@ async function calibrateRsFactor(
   return results
 }
 
+/** Retorna lista de datas ISO faltantes nos últimos maxDays dias (exceto hoje) */
+async function getMissingWeatherDates(
+  supabase: TypedSupabaseClient,
+  stationId: string,
+  today: string,
+  maxDays = 3
+): Promise<string[]> {
+  const dates: string[] = []
+  for (let i = 1; i <= maxDays; i++) {
+    dates.push(daysAgo(today, i))
+  }
+  const { data } = await (supabase as any)
+    .from('weather_data')
+    .select('date')
+    .eq('station_id', stationId)
+    .in('date', dates)
+  const existing = new Set((data ?? []).map((r: { date: string }) => r.date))
+  return dates.filter(d => !existing.has(d))
+}
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
@@ -439,7 +459,9 @@ export async function GET(req: NextRequest) {
   ) as TypedSupabaseClient
 
   const today = todayBRT()
-  const fetchDate = previousDay(today) // D-1
+  // ?date=YYYY-MM-DD para reprocessar data específica; padrão = D-1
+  const dateParam = req.nextUrl.searchParams.get('date')
+  const fetchDate = dateParam ?? previousDay(today)
 
   // Busca todos os pivôs com weather_config + estação vinculada à fazenda
   // Inclui rs_correction_factor da estação e do próprio pivô para usar fator calibrado
@@ -467,17 +489,29 @@ export async function GET(req: NextRequest) {
       continue
     }
 
+    // Detecta dias em atraso (até 3 dias) e monta lista de datas a processar
+    let datesToProcess = [fetchDate]
+    if (station && !dateParam) {
+      const missing = await getMissingWeatherDates(supabase, station.id, today, 3)
+      // Inclui dias em atraso que ainda não estão na lista
+      const extra = missing.filter(d => d !== fetchDate)
+      if (extra.length > 0) {
+        datesToProcess = [...extra, fetchDate]
+      }
+    }
+
+    for (const dateToProcess of datesToProcess) {
     // Verifica se já existe registro para esta estação/data (evita reprocessar)
     if (station) {
       const { data: existing } = await (supabase as any)
         .from('weather_data')
         .select('id')
         .eq('station_id', station.id)
-        .eq('date', fetchDate)
+        .eq('date', dateToProcess)
         .maybeSingle()
 
       if (existing) {
-        results.push({ pivot: pivot.name, date: fetchDate, status: 'skipped', message: 'Já existe' })
+        results.push({ pivot: pivot.name, date: dateToProcess, status: 'skipped', message: 'Já existe' })
         continue
       }
     }
@@ -489,7 +523,7 @@ export async function GET(req: NextRequest) {
     if (config.plugfield_device_id && config.plugfield_token && config.plugfield_api_key) {
       weatherDay = await fetchFromPlugfield(
         Number(config.plugfield_device_id),
-        fetchDate,
+        dateToProcess,
         String(config.plugfield_token),
         String(config.plugfield_api_key),
       )
@@ -497,45 +531,48 @@ export async function GET(req: NextRequest) {
 
     // 2. Google Sheets (planilha Plugfield exportada)
     if (!weatherDay && pivot.weather_source === 'google_sheets' && config.spreadsheet_id) {
-      weatherDay = await fetchFromGoogleSheets(config.spreadsheet_id, fetchDate, config.gid)
+      weatherDay = await fetchFromGoogleSheets(config.spreadsheet_id, dateToProcess, config.gid)
     }
 
-    // 3. Fallback: Open-Meteo (arquivo histórico, gratuito, dados D-1 disponíveis no mesmo dia)
+    // 3. Fallback: Open-Meteo — sempre tenta se os anteriores falharem
     if (!weatherDay && pivot.latitude != null && pivot.longitude != null) {
-      const omData = await getWeatherByPivotGeolocation(pivot.latitude, pivot.longitude, fetchDate)
-      if (omData) {
-        weatherDay = {
-          tempMax:        omData.temp_max ?? 30,
-          tempMin:        omData.temp_min ?? 18,
-          humidity:       omData.humidity_percent ?? 65,
-          windSpeed:      omData.wind_speed_ms ?? 2,
-          solarRadiation: omData.solar_radiation_wm2 ?? 200,
-          rainfall:       omData.rainfall_mm ?? 0,
-          source: omData.source,
+      try {
+        const omData = await getWeatherByPivotGeolocation(pivot.latitude, pivot.longitude, dateToProcess)
+        if (omData) {
+          weatherDay = {
+            tempMax:        omData.temp_max ?? 30,
+            tempMin:        omData.temp_min ?? 18,
+            humidity:       omData.humidity_percent ?? 65,
+            windSpeed:      omData.wind_speed_ms ?? 2,
+            solarRadiation: omData.solar_radiation_wm2 ?? 200,
+            rainfall:       omData.rainfall_mm ?? 0,
+            source: omData.source,
+          }
         }
+      } catch {
+        // Open-Meteo falhou — sem dados para este dia
       }
     }
 
     if (!weatherDay) {
-      results.push({ pivot: pivot.name, date: fetchDate, status: 'error', message: 'Sem dados climáticos (todas as fontes falharam)' })
+      results.push({ pivot: pivot.name, date: dateToProcess, status: 'error', message: 'Sem dados climáticos (Plugfield + Sheets + Open-Meteo falharam)' })
       continue
     }
 
     // ── Rs NASA: substitui Rs do Plugfield para cálculo ETo mais preciso ──
-    // NASA POWER tem dados D-1 disponíveis; se falhar, usa Rs do Plugfield como fallback
     let rsSource = 'plugfield_fallback'
-    let rgForEto = weatherDay.solarRadiation // W/m² (Plugfield fallback)
+    let rgForEto = weatherDay.solarRadiation
 
     if (pivot.latitude != null && pivot.longitude != null) {
-      const rsNasaMJ = await fetchRsFromNASA(pivot.latitude, pivot.longitude, fetchDate)
+      const rsNasaMJ = await fetchRsFromNASA(pivot.latitude, pivot.longitude, dateToProcess)
       if (rsNasaMJ !== null) {
-        rgForEto = rsNasaMJ / 0.0864 // MJ/m²/dia → W/m²
+        rgForEto = rsNasaMJ / 0.0864
         rsSource = 'nasa'
       }
     }
 
     // Calcula ETo Penman-Monteith FAO-56 com Rs correto
-    const doy = getDayOfYear(fetchDate)
+    const doy = getDayOfYear(dateToProcess)
     const lat = pivot.latitude ?? -15
     let eto = calcETo(
       weatherDay.tempMax, weatherDay.tempMin,
@@ -544,8 +581,6 @@ export async function GET(req: NextRequest) {
     )
 
     // ── Fator de correção calibrado por estação/pivô ───────────────────
-    // Prioridade: fator da estação → fator do pivô → variável de ambiente → 0.82
-    // Aplicado apenas quando Rs vem do Plugfield/Sheets (sensor não calibrado).
     if (rsSource === 'plugfield_fallback') {
       const factor =
         (station?.rs_correction_factor ?? null) ??
@@ -560,7 +595,7 @@ export async function GET(req: NextRequest) {
         .from('weather_data')
         .upsert({
           station_id: station.id,
-          date: fetchDate,
+          date: dateToProcess,
           temp_max: weatherDay.tempMax,
           temp_min: weatherDay.tempMin,
           humidity_percent: weatherDay.humidity,
@@ -574,14 +609,12 @@ export async function GET(req: NextRequest) {
         }, { onConflict: 'station_id,date' })
 
       if (upsertErr) {
-        results.push({ pivot: pivot.name, date: fetchDate, status: 'error', message: upsertErr.message })
+        results.push({ pivot: pivot.name, date: dateToProcess, status: 'error', message: upsertErr.message })
         continue
       }
     }
 
     // ── Grava chuva em rainfall_records ───────────────────────────────────────
-    // Só grava se teve chuva detectada e NÃO existe registro manual ou import.
-    // Planilha (import) e lançamentos manuais têm prioridade sobre estação/Plugfield.
     if (weatherDay.rainfall > 0) {
       const rainfallSource = weatherDay.source === 'plugfield' ? 'plugfield' : 'station'
 
@@ -589,18 +622,17 @@ export async function GET(req: NextRequest) {
         .from('rainfall_records')
         .select('id, source')
         .eq('pivot_id', pivot.id)
-        .eq('date', fetchDate)
+        .eq('date', dateToProcess)
         .is('sector_id', null)
         .maybeSingle()
 
-      // Só grava se não existe registro de fonte confiável (manual ou import)
       const existingSource = existingRainfall?.source
       if (!existingRainfall || (existingSource !== 'manual' && existingSource !== 'import')) {
         await (supabase as any)
           .from('rainfall_records')
           .upsert({
             pivot_id: pivot.id,
-            date: fetchDate,
+            date: dateToProcess,
             rainfall_mm: weatherDay.rainfall,
             source: rainfallSource,
             sector_id: null,
@@ -613,10 +645,11 @@ export async function GET(req: NextRequest) {
       : null
     const correctionNote = usedFactor !== null ? ` [fator=${usedFactor}]` : ''
     results.push({
-      pivot: pivot.name, date: fetchDate,
+      pivot: pivot.name, date: dateToProcess,
       status: station ? 'ok' : 'ok_no_station',
       message: `ETo=${eto}mm via ${weatherDay.source}, Rs=${rsSource}${correctionNote}${!station ? ' (sem estação, não gravado)' : ''}`,
     })
+    } // end for dateToProcess
   }
 
   // ── Calibração retroativa (1x por execução) ──────────────────
