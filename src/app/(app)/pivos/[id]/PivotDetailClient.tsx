@@ -341,11 +341,13 @@ function AccumItem({ label, value }: { label: string; value: string }) {
   )
 }
 
-function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
+function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
   history: DailyManagement[]
   pivotName: string
   seasonName: string
   fFactor: number
+  CC: number   // Capacidade de campo (% volumétrica, ex: 30.49)
+  PM: number   // Ponto de murcha (% volumétrica, ex: 16.1)
 }) {
   const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date))
 
@@ -354,19 +356,34 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
     if (sorted[i].crop_stage !== sorted[i - 1].crop_stage) stageDates.add(sorted[i].date)
   }
 
-  const chartData = sorted.map(m => ({
-    date: new Date(m.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-    irrigation: m.actual_depth_mm ?? 0,
-    rainfall: m.rainfall_mm ?? 0,
-    excess: m.irn_mm ?? 0,
-    moisture: m.field_capacity_percent ?? null,
-    stageChange: stageDates.has(m.date) ? m.field_capacity_percent : null,
-  }))
+  // Converte field_capacity_percent (0-100 normalizado) → % volumétrica real
+  // moisture_vol = PM + (CC - PM) * (field_capacity_percent / 100)
+  const toVol = (pct: number | null) =>
+    pct == null ? null : PM + (CC - PM) * (pct / 100)
 
-  // safetyPct = ponto abaixo do qual há estresse hídrico
-  // fFactor é a depleção permitida (ex: 0.55 → planta aguenta perder 55% da CTA)
-  // No eixo do gráfico (0=PM, 100=CC): segurança = (1 - fFactor) × 100
-  const safetyPct = Math.round((1 - fFactor) * 100)
+  const chartData = sorted.map(m => {
+    const vol = toVol(m.field_capacity_percent)
+    return {
+      date: new Date(m.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+      irrigation: m.actual_depth_mm ?? 0,
+      rainfall: m.rainfall_mm ?? 0,
+      excess: m.irn_mm ?? 0,
+      moisture: vol,
+      stageChange: stageDates.has(m.date) ? vol : null,
+    }
+  })
+
+  // Linhas de referência em % volumétrica real
+  const safetyVol = PM + (CC - PM) * (1 - fFactor)  // limite de estresse
+
+  // Domínio do eixo: de PM-margem até CC+margem
+  const margin = (CC - PM) * 0.08
+  const yMin  = Math.max(0, Math.floor((PM - margin) * 10) / 10)
+  const yMax  = Math.ceil((CC + margin) * 10) / 10
+
+  // Gradiente: vermelho abaixo da segurança, azul acima
+  // Normalizado para o domínio [yMin, yMax]
+  const safetyFraction = Math.round(((safetyVol - yMin) / (yMax - yMin)) * 100)
 
   // ── Acumulados ──
   const totalIrrigation = sorted.reduce((s, m) => s + (m.actual_depth_mm ?? 0), 0)
@@ -426,11 +443,11 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
             axisLine={false} tickLine={false}
           />
           <YAxis
-            yAxisId="pct" orientation="right"
-            domain={[0, 100]}
+            yAxisId="vol" orientation="right"
+            domain={[yMin, yMax]}
             tick={{ fill: '#445566', fontSize: 10 }}
             axisLine={false} tickLine={false}
-            tickFormatter={(v: number) => `${v}%`}
+            tickFormatter={(v: number) => `${v.toFixed(1)}%`}
           />
           <Tooltip
             contentStyle={{ backgroundColor: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
@@ -440,25 +457,25 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
           <defs>
             <linearGradient id="moistureGradient" x1="0" y1="1" x2="0" y2="0">
               <stop offset="0%" stopColor="#ef4444" />
-              <stop offset={`${safetyPct}%`} stopColor="#ef4444" />
-              <stop offset={`${safetyPct}%`} stopColor="#0093D0" />
+              <stop offset={`${safetyFraction}%`} stopColor="#ef4444" />
+              <stop offset={`${safetyFraction}%`} stopColor="#0093D0" />
               <stop offset="100%" stopColor="#0093D0" />
             </linearGradient>
           </defs>
 
-          <ReferenceArea yAxisId="pct" y1={safetyPct} y2={100} fill="rgba(34, 197, 94, 0.04)" />
-          <ReferenceArea yAxisId="pct" y1={0} y2={safetyPct} fill="rgba(239, 68, 68, 0.04)" />
+          <ReferenceArea yAxisId="vol" y1={safetyVol} y2={yMax} fill="rgba(34, 197, 94, 0.04)" />
+          <ReferenceArea yAxisId="vol" y1={yMin} y2={safetyVol} fill="rgba(239, 68, 68, 0.04)" />
 
-          <ReferenceLine yAxisId="pct" y={100}        stroke="#22c55e" strokeDasharray="5 4" strokeWidth={1.5} />
-          <ReferenceLine yAxisId="pct" y={safetyPct}  stroke="#f59e0b" strokeDasharray="5 4" strokeWidth={1.5} />
-          {/* Ponto de murcha removido: 0% é o limite inferior do eixo, não linha operacional */}
+          <ReferenceLine yAxisId="vol" y={CC}         stroke="#22c55e" strokeDasharray="5 4" strokeWidth={1.5} label={{ value: `CC ${CC}%`, fill: '#22c55e', fontSize: 9, position: 'insideTopRight' }} />
+          <ReferenceLine yAxisId="vol" y={safetyVol}  stroke="#f59e0b" strokeDasharray="5 4" strokeWidth={1.5} label={{ value: `Seg. ${safetyVol.toFixed(1)}%`, fill: '#f59e0b', fontSize: 9, position: 'insideTopRight' }} />
+          <ReferenceLine yAxisId="vol" y={PM}         stroke="#ef4444" strokeDasharray="5 4" strokeWidth={1.5} label={{ value: `PM ${PM}%`, fill: '#ef4444', fontSize: 9, position: 'insideBottomRight' }} />
 
           <Bar yAxisId="mm" dataKey="irrigation" name="Irrigação (mm)"    fill="#22d3ee" radius={[3,3,0,0]} maxBarSize={14} />
           <Bar yAxisId="mm" dataKey="rainfall"   name="Precipitação (mm)" fill="rgba(255,255,255,0.85)" radius={[3,3,0,0]} maxBarSize={14} />
           <Bar yAxisId="mm" dataKey="excess"     name="Excesso (mm)"      fill="#f97316" radius={[3,3,0,0]} maxBarSize={14} />
 
-          <Line yAxisId="pct" type="monotone" dataKey="moisture"    name="% Campo"       stroke="url(#moistureGradient)" strokeWidth={3} dot={false} connectNulls />
-          <Line yAxisId="pct" type="monotone" dataKey="stageChange" name="Troca de fase"  stroke="transparent" strokeWidth={0}
+          <Line yAxisId="vol" type="monotone" dataKey="moisture"    name="Umidade (%)"   stroke="url(#moistureGradient)" strokeWidth={3} dot={false} connectNulls />
+          <Line yAxisId="vol" type="monotone" dataKey="stageChange" name="Fase"          stroke="transparent" strokeWidth={0}
             dot={{ fill: '#f59e0b', r: 6, strokeWidth: 2, stroke: '#0d1520' }}
             activeDot={false} connectNulls={false}
           />
@@ -468,9 +485,10 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
       {/* Legend */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 12, paddingLeft: 4 }}>
         {[
-          { color: '#22c55e', label: 'CC (100%)', line: true },
-          { color: '#f59e0b', label: `Lim. Estresse (${safetyPct}%)`, line: true },
-          { color: '#0093D0', label: '% Campo', line: true },
+          { color: '#22c55e', label: `CC (${CC}%)` },
+          { color: '#f59e0b', label: `Lim. Estresse (${safetyVol.toFixed(1)}%)` },
+          { color: '#ef4444', label: `PM (${PM}%)` },
+          { color: '#0093D0', label: 'Umidade (%)' },
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 20, height: 2, background: color, borderRadius: 1 }} />
@@ -649,6 +667,8 @@ export function PivotDetailClient({ pivot, farm, context, history, today }: Prop
                 pivotName={pivot.name}
                 seasonName={season.name}
                 fFactor={fFactor}
+                CC={CC}
+                PM={PM}
               />
             </div>
           </div>
