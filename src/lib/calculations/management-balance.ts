@@ -124,9 +124,10 @@ export function computeResolvedManagementBalance(
   const irrigationMm = parseOptionalNumber(actualDepth) ?? 0
   const actualSpeedPercent = parseOptionalNumber(actualSpeed)
   const etc = calcEtc(etoResolution.etoMm, stageInfo.kc)
-  const { adc: adcNew, excessMm } = calcADcWithExcess(adcPrev, rainfallMm, irrigationMm, etc, cta, ctaPrev)
+  const { adc: adcNew, excessMm, peakReachedCta } = calcADcWithExcess(adcPrev, rainfallMm, irrigationMm, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
-  const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
+  // Se houve excesso (solo saturou durante o dia), exibir 100% no gráfico
+  const fieldCapacityPercent = peakReachedCta ? 100 : (cta > 0 ? (adcNew / cta) * 100 : 0)
 
   // Usa threshold configurado no pivô (ex: 70%) como gatilho
   // e repõe até irrigation_target_percent (ex: 80%) — não necessariamente 100%

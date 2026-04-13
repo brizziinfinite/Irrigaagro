@@ -317,7 +317,7 @@ export function calcADcWithExcess(
   etc: number,
   cta: number,
   ctaPrev?: number
-): { adc: number; excessMm: number } {
+): { adc: number; excessMm: number; peakReachedCta: boolean } {
   // Escala quando a raiz cresceu (CTA aumentou)
   const adcBase = (ctaPrev && ctaPrev > 0 && cta > ctaPrev)
     ? adcPrev * (cta / ctaPrev)
@@ -327,13 +327,17 @@ export function calcADcWithExcess(
   const chuvaEfetiva = Math.min(Math.max(0, rainfall), espacoLivre)
   const excessoChuva = Math.max(0, rainfall) - chuvaEfetiva
 
-  const newAdcBruto = adcBase + chuvaEfetiva + Math.max(0, irrigation) - etc
+  // Pico intradiário: antes de subtrair ETc, o solo chegou à CC?
+  const adcPico = adcBase + chuvaEfetiva + Math.max(0, irrigation)
+  const peakReachedCta = adcPico >= cta || excessoChuva > 0
+
+  const newAdcBruto = adcPico - etc
   const excessoIrrigacao = Math.max(0, newAdcBruto - cta)
 
   const adc = clamp(newAdcBruto, 0, cta)
   const excessMm = excessoChuva + excessoIrrigacao
 
-  return { adc, excessMm }
+  return { adc, excessMm, peakReachedCta }
 }
 
 // ─── Etapa 6: Coeficiente de estresse ────────────────────────
@@ -719,9 +723,9 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
   const eto = calcETo(weather)
   const etc = calcEtc(eto, kc)
 
-  const { adc: adcNew, excessMm } = calcADcWithExcess(adcPrev, rainfall, irrigation, etc, cta, ctaPrev)
+  const { adc: adcNew, excessMm, peakReachedCta } = calcADcWithExcess(adcPrev, rainfall, irrigation, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
-  const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
+  const fieldCapacityPercent = peakReachedCta ? 100 : (cta > 0 ? (adcNew / cta) * 100 : 0)
 
   const irrigationTargetPct = pivot?.irrigation_target_percent ?? null
   const status = getIrrigationStatus(adcNew, cad, isIrrigating)

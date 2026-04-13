@@ -451,7 +451,7 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
 
           <ReferenceLine yAxisId="pct" y={100}        stroke="#22c55e" strokeDasharray="5 4" strokeWidth={1.5} />
           <ReferenceLine yAxisId="pct" y={safetyPct}  stroke="#f59e0b" strokeDasharray="5 4" strokeWidth={1.5} />
-          <ReferenceLine yAxisId="pct" y={0}          stroke="#ef4444" strokeDasharray="5 4" strokeWidth={1.5} />
+          {/* Ponto de murcha removido: 0% é o limite inferior do eixo, não linha operacional */}
 
           <Bar yAxisId="mm" dataKey="irrigation" name="Irrigação (mm)"    fill="#22d3ee" radius={[3,3,0,0]} maxBarSize={14} />
           <Bar yAxisId="mm" dataKey="rainfall"   name="Precipitação (mm)" fill="rgba(255,255,255,0.85)" radius={[3,3,0,0]} maxBarSize={14} />
@@ -470,7 +470,6 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
         {[
           { color: '#22c55e', label: 'CC (100%)', line: true },
           { color: '#f59e0b', label: `Lim. Estresse (${safetyPct}%)`, line: true },
-          { color: '#ef4444', label: 'P. Murcha (0%)', line: true },
           { color: '#0093D0', label: '% Campo', line: true },
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
