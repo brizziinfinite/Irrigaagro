@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
         wind_speed_ms: climateSnapshot.wind_speed_ms ?? null,
         solar_radiation_wm2: climateSnapshot.solar_radiation_wm2 ?? null,
         eto_mm: result.eto, etc_mm: result.etc,
-        rainfall_mm: externalData.rainfall?.rainfall_mm ?? climateSnapshot.rainfall_mm ?? 0,
+        rainfall_mm: externalData.rainfall?.rainfall_mm ?? 0,
         kc: result.kc, ks: result.ks, ctda: result.adcNew, cta: result.cta,
         irn_mm: result.excessMm > 0 ? result.excessMm : null,
         recommended_depth_mm: result.recommendedDepthMm,

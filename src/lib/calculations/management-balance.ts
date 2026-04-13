@@ -117,9 +117,15 @@ export function computeResolvedManagementBalance(
 
   if (etoResolution.etoMm == null) return null
 
+  // Chuva: somente rainfall_records (lançamentos manuais/importados pelo gestor).
+  // Sensor de estação (Plugfield) NÃO é fonte para chuva — leituras imprecisas.
+  // Se não há lançamento manual, assume zero.
   const rainfallMm = parseOptionalNumber(rainfall)
     ?? externalData?.rainfall?.rainfall_mm
     ?? 0
+  // Nota: o parâmetro `rainfall` string vem vazio do recalculate/route.ts para forçar
+  // o uso exclusivo de externalData.rainfall (rainfall_records). A cadeia acima é correta
+  // porque getManagementExternalData já prioriza rainfall_records sobre weather_data.
 
   const irrigationMm = parseOptionalNumber(actualDepth) ?? 0
   const actualSpeedPercent = parseOptionalNumber(actualSpeed)
