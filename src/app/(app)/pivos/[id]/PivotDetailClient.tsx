@@ -357,23 +357,15 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
   }
 
   const chartData = sorted.map(m => {
-    // Nos dias com excesso a curva sobe acima da CC proporcionalmente ao excesso
-    // excesso_relativo = irn_mm / cta → fração além da CTA
-    // moisture_vol = CC + excesso_relativo × (CC - PM)
-    const excessMm = m.irn_mm ?? 0
-    const ctaMm    = m.cta ?? 0
-    let vol: number | null
-    if (excessMm > 0 && ctaMm > 0) {
-      vol = CC + (excessMm / ctaMm) * (CC - PM)
-    } else {
-      const pct = m.field_capacity_percent
-      vol = pct == null ? null : PM + (CC - PM) * (pct / 100)
-    }
+    // Converte field_capacity_percent (0-100 normalizado) → % volumétrica real
+    // Solo nunca passa da CC — excesso de chuva percola, não é representado acima da CC
+    const pct = m.field_capacity_percent
+    const vol = pct == null ? null : PM + (CC - PM) * (Math.min(pct, 100) / 100)
     return {
       date: new Date(m.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
       irrigation: m.actual_depth_mm ?? 0,
       rainfall: m.rainfall_mm ?? 0,
-      excess: excessMm,
+      excess: m.irn_mm ?? 0,
       moisture: vol,
       stageChange: stageDates.has(m.date) ? vol : null,
     }
@@ -382,11 +374,10 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
   // Linhas de referência em % volumétrica real
   const safetyVol = PM + (CC - PM) * (1 - fFactor)  // limite de estresse
 
-  // Domínio do eixo: de PM-margem até CC + maior excesso observado
-  const maxMoisture = Math.max(...chartData.map(d => d.moisture ?? CC))
-  const margin = (CC - PM) * 0.08
+  // Domínio do eixo: PM-margem até CC+margem (curva nunca passa da CC)
+  const margin = (CC - PM) * 0.1
   const yMin  = Math.max(0, Math.floor((PM - margin) * 10) / 10)
-  const yMax  = Math.ceil((Math.max(maxMoisture, CC) + margin) * 10) / 10
+  const yMax  = Math.ceil((CC + margin) * 10) / 10
 
   // Gradiente: vermelho abaixo da segurança, azul acima
   // Normalizado para o domínio [yMin, yMax]
@@ -479,7 +470,7 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
 
           <Bar yAxisId="mm" dataKey="irrigation" name="Irrigação (mm)"    fill="#22d3ee" radius={[3,3,0,0]} maxBarSize={14} />
           <Bar yAxisId="mm" dataKey="rainfall"   name="Precipitação (mm)" fill="rgba(255,255,255,0.85)" radius={[3,3,0,0]} maxBarSize={14} />
-          <Bar yAxisId="mm" dataKey="excess"     name="Excesso (mm)"      fill="#f97316" radius={[3,3,0,0]} maxBarSize={14} />
+          <Bar yAxisId="mm" dataKey="excess"     name="Excesso Irrigação (mm)" fill="#f97316" radius={[3,3,0,0]} maxBarSize={14} />
 
           <Line yAxisId="vol" type="monotone" dataKey="moisture"    name="Umidade (%)"   stroke="url(#moistureGradient)" strokeWidth={3} dot={false} connectNulls />
           <Line yAxisId="vol" type="monotone" dataKey="stageChange" name="Fase"          stroke="transparent" strokeWidth={0}
@@ -512,7 +503,7 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 10, height: 10, borderRadius: 2, background: '#f97316' }} />
-          <span style={{ fontSize: 10, color: '#556677' }}>Excesso (mm)</span>
+          <span style={{ fontSize: 10, color: '#556677' }}>Excesso Irrigação (mm)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid #0d1520' }} />

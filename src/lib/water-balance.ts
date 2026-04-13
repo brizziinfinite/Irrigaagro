@@ -325,17 +325,20 @@ export function calcADcWithExcess(
 
   const espacoLivre = Math.max(0, cta - adcBase)
   const chuvaEfetiva = Math.min(Math.max(0, rainfall), espacoLivre)
-  const excessoChuva = Math.max(0, rainfall) - chuvaEfetiva
 
-  // Pico intradiário: antes de subtrair ETc, o solo chegou à CC?
-  const adcPico = adcBase + chuvaEfetiva + Math.max(0, irrigation)
-  const peakReachedCta = adcPico >= cta || excessoChuva > 0
+  // Pico intradiário: solo chegou à CC (por chuva ou irrigação)?
+  const adcPosAgua = adcBase + chuvaEfetiva + Math.max(0, irrigation)
+  const peakReachedCta = adcPosAgua >= cta
 
-  const newAdcBruto = adcPico - etc
-  const excessoIrrigacao = Math.max(0, newAdcBruto - cta)
-
+  const newAdcBruto = adcPosAgua - etc
   const adc = clamp(newAdcBruto, 0, cta)
-  const excessMm = excessoChuva + excessoIrrigacao
+
+  // irn_mm = excesso de IRRIGAÇÃO apenas (água controlável pelo gestor).
+  // Chuva excessiva é perda não controlável — não é KPI de gestão (FAO-56 / USDA-NRCS).
+  // Calcula quanto da irrigação aplicada transbordou a CTA após chuva efetiva + ETc.
+  const adcAposChuvaEtc = clamp(adcBase + chuvaEfetiva - etc, 0, cta)
+  const espacoLivreParaIrrigacao = Math.max(0, cta - adcAposChuvaEtc)
+  const excessMm = Math.max(0, Math.max(0, irrigation) - espacoLivreParaIrrigacao)
 
   return { adc, excessMm, peakReachedCta }
 }
