@@ -72,8 +72,6 @@ export async function fetchFromGoogleSheets(
     const iTempMin   = idx('tempMin')
     const iHumidity  = idx('humidity')
     const iWind      = idx('wind')
-    const iRadiationW  = idx('radiationWatts')
-    const iRadiationWC = idx('radiationWattsCount')
     const iRadiation   = idx('radiation')
     const iRadiationC  = idx('radiationCount')
     const iRain      = idx('rainAccum')
@@ -95,15 +93,13 @@ export async function fetchFromGoogleSheets(
 
       if (isNaN(tempMax) || isNaN(tempMin)) return null
 
-      // Radiação: prefere radiationWatts (W/m²); fallback: radiation/radiationCount×3.1
+      // Radiação solar em W/m²: usa radiation/radiationCount×3.1 (média diária × fator de horas de sol)
+      // NOTA: a coluna 'radiationWatts' na planilha Plugfield contém ETo em mm/dia (não W/m²) — ignorada.
       let solarRadiation = 200
-      const radW = iRadiationW >= 0 ? parseNum(cols[iRadiationW] ?? '') : NaN
-      if (!isNaN(radW) && radW > 0) {
-        solarRadiation = radW
-      } else if (iRadiation >= 0 && iRadiationC >= 0) {
+      if (iRadiation >= 0 && iRadiationC >= 0) {
         const rad = parseNum(cols[iRadiation] ?? '')
         const radC = parseNum(cols[iRadiationC] ?? '')
-        // radiation/count = media de 24h em W/m²; ×3.1 ≈ media das horas de sol (8h/dia)
+        // radiation/count = média de 24h em W/m²; ×3.1 ≈ horas de sol efetivas (~8h/dia)
         if (!isNaN(rad) && !isNaN(radC) && radC > 0) {
           solarRadiation = Math.min((rad / radC) * 3.1, 800)
         }
@@ -165,11 +161,10 @@ export async function fetchFromPlugfield(
 
     if (!tempMax || !tempMin) return null
 
-    // Radiação: prefere radiationWatts; fallback: radiation/radiationCount × 3.1
+    // Radiação solar em W/m²: usa radiation/radiationCount×3.1
+    // NOTA: 'radiationWatts' da API Plugfield contém ETo em mm/dia (não W/m²) — ignorado.
     let solarRadiation = 200
-    if (d.radiationWatts != null && d.radiationWatts > 0) {
-      solarRadiation = d.radiationWatts
-    } else if (d.radiation != null && d.radiationCount > 0) {
+    if (d.radiation != null && d.radiationCount > 0) {
       solarRadiation = Math.min((d.radiation / d.radiationCount) * 3.1, 800)
     }
 

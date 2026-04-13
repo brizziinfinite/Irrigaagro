@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const seasonId: string = body.season_id
   const singleDate: string | null = body.date ?? null // recalcula só este dia se informado
+  const lastDays: number | null = body.last_days ?? null // limita a janela (ex: 7 dias)
   if (!seasonId) {
     return NextResponse.json({ error: 'season_id obrigatório' }, { status: 400 })
   }
@@ -93,15 +94,17 @@ export async function POST(req: NextRequest) {
   const endDate = todayBRT()
   const context = { season, farm, pivot, crop }
 
-  // Se date informado, recalcula só aquele dia (mas encadeia ADc desde o plantio)
+  // Monta lista de datas desde o plantio até hoje
   const dates: string[] = []
   let d = plantingDate
   while (d <= endDate) {
     dates.push(d)
     d = addDays(d, 1)
   }
-  // Se single date, só grava aquele dia mas percorre o histórico para encadear o ADc
-  const targetDate = singleDate ?? null
+
+  // last_days: limita a janela de gravação (percorre tudo para encadear ADc, mas só grava os últimos N dias)
+  const targetDate = singleDate
+    ?? (lastDays != null ? addDays(endDate, -lastDays + 1) : null)
 
   const existingRecords = await listDailyManagementBySeason(seasonId, supabase)
   const existingByDate = new Map<string, DailyManagement>()
@@ -156,6 +159,7 @@ export async function POST(req: NextRequest) {
         eto_mm: result.eto, etc_mm: result.etc,
         rainfall_mm: externalData.rainfall?.rainfall_mm ?? climateSnapshot.rainfall_mm ?? 0,
         kc: result.kc, ks: result.ks, ctda: result.adcNew, cta: result.cta,
+        irn_mm: result.excessMm > 0 ? result.excessMm : null,
         recommended_depth_mm: result.recommendedDepthMm,
         recommended_speed_percent: result.recommendedSpeedPercent,
         field_capacity_percent: result.fieldCapacityPercent,
