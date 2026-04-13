@@ -1506,12 +1506,19 @@ export default function ManejoPage() {
         </button>
 
         {showHistoryTab && (
-          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {history.length >= 2 && <WaterBalanceChart history={history} threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70} />}
+          <div style={{ marginTop: 16 }}>
             <HistoryTable records={history} onEdit={loadRecordIntoForm} onDelete={handleDelete} threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70} />
           </div>
         )}
       </div>
+
+      {/* ── Timeline Balanço Hídrico — sempre visível se há histórico ── */}
+      {history.length >= 2 && (
+        <WaterBalanceChart
+          history={history}
+          threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70}
+        />
+      )}
 
     </div>
   )
