@@ -1,6 +1,6 @@
 import type { Crop, DailyManagement, Farm, Pivot, Season } from '@/types/database'
 import {
-  calcADc,
+  calcADcWithExcess,
   calcCAD,
   calcCTA,
   calcEtc,
@@ -124,7 +124,7 @@ export function computeResolvedManagementBalance(
   const irrigationMm = parseOptionalNumber(actualDepth) ?? 0
   const actualSpeedPercent = parseOptionalNumber(actualSpeed)
   const etc = calcEtc(etoResolution.etoMm, stageInfo.kc)
-  const adcNew = calcADc(adcPrev, rainfallMm, irrigationMm, etc, cta, ctaPrev)
+  const { adc: adcNew, excessMm } = calcADcWithExcess(adcPrev, rainfallMm, irrigationMm, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
@@ -158,6 +158,7 @@ export function computeResolvedManagementBalance(
     eto: etoResolution.etoMm,
     etc,
     adcNew,
+    excessMm,
     ks,
     fieldCapacityPercent,
     status,

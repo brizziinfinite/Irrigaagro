@@ -850,7 +850,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                   </p>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Velocidade Mínima</label>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Velocidade Mínima Operacional</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type="number" step="1" min="5" max="100" value={minSpeedPct}
@@ -863,7 +863,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                     <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: '#556677', pointerEvents: 'none' }}>%</span>
                   </div>
                   <p style={{ fontSize: 10, color: '#556677', marginTop: 3 }}>
-                    Máximo que o pivô aguenta
+                    Limite mínimo (solo não absorve abaixo disso)
                     {minSpeedPct && lengthM && flowRate && time360 && (() => {
                       const d = calcDepth100(Number(flowRate), Number(time360), Number(lengthM)) * (100 / Number(minSpeedPct))
                       return d > 0 ? ` → ${d.toFixed(1)}mm` : ''

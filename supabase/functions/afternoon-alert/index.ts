@@ -124,8 +124,8 @@ serve(async (_req) => {
 
       if (sentToday && sentToday.length > 0) continue // já alertou hoje
 
-      // Avaliar quais pivôs vão atingir threshold amanhã
-      const alertPivots: string[] = []
+      // Avaliar quais pivôs vão atingir threshold em até 2 dias
+      const alertPivots: Array<{ name: string; daysUntil: number }> = []
 
       for (const sub of subs) {
         const seasonId = seasonByPivot[sub.pivot_id]
@@ -147,23 +147,37 @@ serve(async (_req) => {
 
         const daysUntil = projectDaysUntilThreshold(adcMm, ctaMm, threshold, etcMm, forecastRain)
 
-        // Alerta apenas quando vai atingir threshold amanhã (1 dia)
-        if (daysUntil === 1) {
-          alertPivots.push(sub.pivots?.name || 'Pivô')
+        // Alerta quando vai atingir threshold em até 2 dias
+        if (daysUntil <= 2) {
+          alertPivots.push({ name: sub.pivots?.name || 'Pivô', daysUntil })
         }
       }
 
       if (!alertPivots.length) continue
 
-      const pivosList = alertPivots.length === 1
-        ? `o *${alertPivots[0]}*`
-        : alertPivots.map(n => `*${n}*`).join(' e ')
+      // Monta mensagem diferenciada por urgência
+      const hoje = alertPivots.filter(p => p.daysUntil === 1)
+      const amanha = alertPivots.filter(p => p.daysUntil === 2)
 
-      const message =
-        `⚠️ *IRRIGAAGRO | Alerta de Irrigação*\n\n` +
-        `O solo de ${pivosList} vai atingir o nível crítico *amanhã*.\n\n` +
-        `👉 Programe a irrigação ainda hoje para evitar estresse hídrico.\n\n` +
-        `🔗 app.irrigaagro.com.br/manejo`
+      let message = `⚠️ *IRRIGAAGRO | Alerta de Irrigação*\n\n`
+
+      if (hoje.length > 0) {
+        const lista = hoje.length === 1
+          ? `o *${hoje[0].name}*`
+          : hoje.map(p => `*${p.name}*`).join(' e ')
+        message += `🔴 ${lista} atinge o nível crítico *amanhã*.\n`
+        message += `👉 Programe a irrigação *hoje*.\n\n`
+      }
+
+      if (amanha.length > 0) {
+        const lista = amanha.length === 1
+          ? `o *${amanha[0].name}*`
+          : amanha.map(p => `*${p.name}*`).join(' e ')
+        message += `🟡 ${lista} atinge o nível crítico *em 2 dias*.\n`
+        message += `👉 Planeje a irrigação para *amanhã*.\n\n`
+      }
+
+      message += `🔗 app.irrigaagro.com.br/manejo`
 
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: 'POST',

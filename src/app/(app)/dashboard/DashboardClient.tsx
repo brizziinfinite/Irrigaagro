@@ -15,8 +15,9 @@ import { HistoryBlock } from './HistoryBlock'
 import {
   Plus, ArrowRight,
   Droplets, AlertTriangle, AlertCircle, Info,
-  CheckCircle2, X
+  CheckCircle2, X, CalendarClock
 } from 'lucide-react'
+import { findRecommendedSpeed } from '@/lib/water-balance'
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Area, ReferenceLine } from 'recharts'
 
 const PivotMap = dynamic(
@@ -196,36 +197,210 @@ export function DashboardClient({
         </Link>
       </div>
 
-      {/* ② Alertas Globais (se houver) */}
-      {(summary.pivotsWithAlerts > 0 || summary.pivotsWithClimateFallback > 0) && (
-        <div style={{
-          background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
-          padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-        }}>
+      {/* ② Recomendações Operacionais — sempre visível */}
+      {(() => {
+        // Calcula projeção para cada pivô ativo usando dados do banco (sem fetch externo)
+        interface PivotRec {
+          pivotId: string
+          pivotName: string
+          pct: number | null
+          needsIrrigationToday: boolean
+          laminaToday: number | null
+          speedToday: number | null
+          daysAway: number | null
+          laminaProjected: number | null
+          speedProjected: number | null
+        }
+
+        const recs: PivotRec[] = []
+
+        for (const pivot of pivots) {
+          if (!activePivotIds.has(pivot.id)) continue
+          const mgmt = lastManagementByPivot[pivot.id]
+          const pct = mgmt?.field_capacity_percent ?? null
+
+          if (mgmt?.needs_irrigation) {
+            recs.push({
+              pivotId: pivot.id,
+              pivotName: pivot.name,
+              pct,
+              needsIrrigationToday: true,
+              laminaToday: mgmt.recommended_depth_mm ?? null,
+              speedToday: mgmt.recommended_speed_percent ?? null,
+              daysAway: null,
+              laminaProjected: null,
+              speedProjected: null,
+            })
+            continue
+          }
+
+          // Projeção simples sem forecast (usa ETc salvo no banco)
+          if (mgmt?.cta && mgmt?.ctda != null && mgmt?.etc_mm) {
+            const cta = mgmt.cta
+            const etcMm = mgmt.etc_mm
+            const threshold = pivot.alert_threshold_percent ?? 70
+            const target = pivot.irrigation_target_percent ?? 100
+            const thresholdMm = (threshold / 100) * cta
+            const targetMm = (target / 100) * cta
+            const speedFloor = pivot.min_speed_percent ?? 10
+            let adc = mgmt.ctda
+
+            for (let i = 1; i <= 7; i++) {
+              adc = Math.max(0, adc - etcMm)
+              if (adc <= thresholdMm) {
+                const deficit = Math.max(targetMm - adc, thresholdMm * 0.1)
+                const speed = findRecommendedSpeed(pivot, Math.max(0, targetMm - adc))
+                  ?? (Math.ceil(speedFloor / 10) * 10)
+                recs.push({
+                  pivotId: pivot.id,
+                  pivotName: pivot.name,
+                  pct,
+                  needsIrrigationToday: false,
+                  laminaToday: null,
+                  speedToday: null,
+                  daysAway: i,
+                  laminaProjected: Math.max(0, targetMm - adc),
+                  speedProjected: speed,
+                })
+                break
+              }
+            }
+          }
+        }
+
+        // Ordena: irrigar hoje primeiro, depois por dias
+        recs.sort((a, b) => {
+          if (a.needsIrrigationToday && !b.needsIrrigationToday) return -1
+          if (!a.needsIrrigationToday && b.needsIrrigationToday) return 1
+          return (a.daysAway ?? 99) - (b.daysAway ?? 99)
+        })
+
+        const urgentCount = recs.filter(r => r.needsIrrigationToday).length
+        const soonCount = recs.filter(r => !r.needsIrrigationToday && (r.daysAway ?? 99) <= 2).length
+        const hasAnything = recs.length > 0
+
+        const borderColor = urgentCount > 0
+          ? 'rgba(239,68,68,0.35)'
+          : soonCount > 0 ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.06)'
+        const headerColor = urgentCount > 0 ? '#ef4444' : soonCount > 0 ? '#f59e0b' : '#22c55e'
+        const headerBg = urgentCount > 0
+          ? 'rgba(239,68,68,0.08)' : soonCount > 0 ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.06)'
+
+        return (
           <div style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#0f1923', border: `1px solid ${borderColor}`, borderRadius: 16,
+            overflow: 'hidden', boxShadow: urgentCount > 0 ? '0 0 20px rgba(239,68,68,0.08)' : '0 4px 20px rgba(0,0,0,0.2)',
           }}>
-            <Info size={16} style={{ color: '#f59e0b' }} />
+            {/* Header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 18px', background: headerBg,
+              borderBottom: `1px solid ${borderColor}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CalendarClock size={14} style={{ color: headerColor }} />
+                <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#e2e8f0' }}>
+                  Recomendações de Irrigação
+                </span>
+                {urgentCount > 0 && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 800, color: '#ef4444',
+                    background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
+                    borderRadius: 6, padding: '2px 7px', textTransform: 'uppercase', letterSpacing: '0.05em',
+                  }}>
+                    {urgentCount} irrigar hoje
+                  </span>
+                )}
+              </div>
+              {summary.pivotsWithClimateFallback > 0 && (
+                <Link href="/diagnostico-pivo" style={{
+                  fontSize: 10, color: '#556677', textDecoration: 'none',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}>
+                  <Info size={10} /> {summary.pivotsWithClimateFallback} fallback climático
+                </Link>
+              )}
+            </div>
+
+            {/* Linhas */}
+            {!hasAnything ? (
+              <div style={{ padding: '16px 18px' }}>
+                <p style={{ fontSize: 12, color: '#556677' }}>Nenhum pivô ativo com dados de balanço.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {recs.map((rec, i) => {
+                  const isUrgent = rec.needsIrrigationToday
+                  const isSoon = !isUrgent && (rec.daysAway ?? 99) <= 2
+                  const color = isUrgent ? '#ef4444' : isSoon ? '#f59e0b' : '#22c55e'
+                  const Icon = isUrgent ? AlertCircle : isSoon ? AlertTriangle : CheckCircle2
+
+                  return (
+                    <div key={rec.pivotId} style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '10px 18px',
+                      borderBottom: i < recs.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                      background: isUrgent ? 'rgba(239,68,68,0.04)' : 'transparent',
+                    }}>
+                      <Icon size={14} style={{ color, flexShrink: 0 }} />
+
+                      {/* Nome do pivô */}
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', minWidth: 110 }}>
+                        {rec.pivotName}
+                      </span>
+
+                      {/* CC% */}
+                      {rec.pct != null && (
+                        <span style={{
+                          fontSize: 11, fontFamily: 'var(--font-mono)', color: color,
+                          background: `${color}15`, border: `1px solid ${color}30`,
+                          borderRadius: 4, padding: '1px 5px', flexShrink: 0,
+                        }}>
+                          {Math.round(rec.pct)}%
+                        </span>
+                      )}
+
+                      {/* Recomendação */}
+                      <span style={{ fontSize: 12, color: isUrgent ? '#e2e8f0' : '#8899aa', flex: 1 }}>
+                        {isUrgent
+                          ? 'Irrigar hoje'
+                          : rec.daysAway === 1 ? 'Irrigar amanhã'
+                          : `Irrigar em ${rec.daysAway} dias`}
+                      </span>
+
+                      {/* Lâmina */}
+                      {(rec.laminaToday ?? rec.laminaProjected ?? 0) > 0 && (
+                        <span style={{ fontSize: 11, color: '#e2e8f0', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                          {(rec.laminaToday ?? rec.laminaProjected ?? 0).toFixed(1)} mm
+                        </span>
+                      )}
+
+                      {/* Velocidade */}
+                      {(rec.speedToday ?? rec.speedProjected) != null && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, color: '#0093D0',
+                          fontFamily: 'var(--font-mono)',
+                          background: 'rgba(0,147,208,0.1)', border: '1px solid rgba(0,147,208,0.2)',
+                          borderRadius: 4, padding: '2px 7px', flexShrink: 0,
+                        }}>
+                          {rec.speedToday ?? rec.speedProjected}%
+                        </span>
+                      )}
+
+                      <Link href="/manejo" style={{
+                        fontSize: 10, color: '#556677', textDecoration: 'none',
+                        display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0,
+                      }}>
+                        Manejo <ArrowRight size={10} />
+                      </Link>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
-          <div style={{ flex: 1, minWidth: 260 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>Alertas do Sistema</p>
-            <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
-              {summary.pivotsWithAlerts} pivô(s) com alertas pendentes · {summary.pivotsWithClimateFallback} usando fallback climático
-            </p>
-          </div>
-          <Link href="/diagnostico-pivo" style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-            borderRadius: 10, fontSize: 12, fontWeight: 600, flexShrink: 0,
-            background: 'rgb(245 158 11 / 0.1)', border: '1px solid rgb(245 158 11 / 0.2)',
-            color: '#f59e0b', textDecoration: 'none',
-          }}>
-            Diagnóstico <ArrowRight size={13} />
-          </Link>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ③ Hero Section: Mapa + Radar Tático */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 2fr) minmax(320px, 1fr)', gap: 20 }}>

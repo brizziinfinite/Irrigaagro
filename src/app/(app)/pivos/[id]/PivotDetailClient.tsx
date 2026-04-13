@@ -358,11 +358,15 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
     date: new Date(m.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
     irrigation: m.actual_depth_mm ?? 0,
     rainfall: m.rainfall_mm ?? 0,
+    excess: m.irn_mm ?? 0,
     moisture: m.field_capacity_percent ?? null,
     stageChange: stageDates.has(m.date) ? m.field_capacity_percent : null,
   }))
 
-  const safetyPct = Math.round(fFactor * 100)
+  // safetyPct = ponto abaixo do qual há estresse hídrico
+  // fFactor é a depleção permitida (ex: 0.55 → planta aguenta perder 55% da CTA)
+  // No eixo do gráfico (0=PM, 100=CC): segurança = (1 - fFactor) × 100
+  const safetyPct = Math.round((1 - fFactor) * 100)
 
   // ── Acumulados ──
   const totalIrrigation = sorted.reduce((s, m) => s + (m.actual_depth_mm ?? 0), 0)
@@ -451,6 +455,7 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
 
           <Bar yAxisId="mm" dataKey="irrigation" name="Irrigação (mm)"    fill="#22d3ee" radius={[3,3,0,0]} maxBarSize={14} />
           <Bar yAxisId="mm" dataKey="rainfall"   name="Precipitação (mm)" fill="rgba(255,255,255,0.85)" radius={[3,3,0,0]} maxBarSize={14} />
+          <Bar yAxisId="mm" dataKey="excess"     name="Excesso (mm)"      fill="#f97316" radius={[3,3,0,0]} maxBarSize={14} />
 
           <Line yAxisId="pct" type="monotone" dataKey="moisture"    name="% Campo"       stroke="url(#moistureGradient)" strokeWidth={3} dot={false} connectNulls />
           <Line yAxisId="pct" type="monotone" dataKey="stageChange" name="Troca de fase"  stroke="transparent" strokeWidth={0}
@@ -464,8 +469,8 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 12, paddingLeft: 4 }}>
         {[
           { color: '#22c55e', label: 'CC (100%)', line: true },
-          { color: '#f59e0b', label: `Umid. Segurança (${safetyPct}%)`, line: true },
-          { color: '#ef4444', label: 'P. Murcha', line: true },
+          { color: '#f59e0b', label: `Lim. Estresse (${safetyPct}%)`, line: true },
+          { color: '#ef4444', label: 'P. Murcha (0%)', line: true },
           { color: '#0093D0', label: '% Campo', line: true },
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -480,6 +485,10 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor }: {
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(255,255,255,0.85)' }} />
           <span style={{ fontSize: 10, color: '#556677' }}>Precipitação (mm)</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 10, height: 10, borderRadius: 2, background: '#f97316' }} />
+          <span style={{ fontSize: 10, color: '#556677' }}>Excesso (mm)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid #0d1520' }} />

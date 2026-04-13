@@ -29,6 +29,7 @@ export interface WaterBalanceResult {
   eto: number           // mm/dia
   etc: number           // mm/dia
   adcNew: number        // mm — novo ADc após o dia
+  excessMm: number      // mm — excesso que transbordou da CTA (0 se não houve)
   ks: number            // coeficiente de estresse (0-1)
   fieldCapacityPercent: number // % da CTA atual
   status: IrrigationStatus
@@ -301,6 +302,22 @@ export function calcADc(
   cta: number,
   ctaPrev?: number  // CTA do dia anterior; se maior que cta, sem efeito
 ): number {
+  return calcADcWithExcess(adcPrev, rainfall, irrigation, etc, cta, ctaPrev).adc
+}
+
+/**
+ * Igual a calcADc, mas também retorna o excesso hídrico do dia (mm).
+ * Excesso = água que o solo não conseguiu reter (transbordou da CTA).
+ * Fontes: chuva acima do espaço livre + irrigação acima do espaço restante.
+ */
+export function calcADcWithExcess(
+  adcPrev: number,
+  rainfall: number,
+  irrigation: number,
+  etc: number,
+  cta: number,
+  ctaPrev?: number
+): { adc: number; excessMm: number } {
   // Escala quando a raiz cresceu (CTA aumentou)
   const adcBase = (ctaPrev && ctaPrev > 0 && cta > ctaPrev)
     ? adcPrev * (cta / ctaPrev)
@@ -308,8 +325,15 @@ export function calcADc(
 
   const espacoLivre = Math.max(0, cta - adcBase)
   const chuvaEfetiva = Math.min(Math.max(0, rainfall), espacoLivre)
-  const newAdc = adcBase + chuvaEfetiva + Math.max(0, irrigation) - etc
-  return clamp(newAdc, 0, cta)
+  const excessoChuva = Math.max(0, rainfall) - chuvaEfetiva
+
+  const newAdcBruto = adcBase + chuvaEfetiva + Math.max(0, irrigation) - etc
+  const excessoIrrigacao = Math.max(0, newAdcBruto - cta)
+
+  const adc = clamp(newAdcBruto, 0, cta)
+  const excessMm = excessoChuva + excessoIrrigacao
+
+  return { adc, excessMm }
 }
 
 // ─── Etapa 6: Coeficiente de estresse ────────────────────────
@@ -404,23 +428,36 @@ export function findRecommendedSpeed(
   // Lâmina = Volume / Área_m²  × 1000 (para mm)
   const area = Math.PI * Math.pow(pivot.length_m, 2)
 
+  // min_speed_percent = limite operacional mínimo (ex: 42% = não pode ir mais devagar)
+  // Isso equivale à lâmina máxima que o solo absorve sem saturar.
+  // A velocidade recomendada deve ser >= min_speed_percent.
+  const speedFloor = pivot.min_speed_percent ?? 10
+
   // Encontra a MAIOR velocidade (menor tempo) que aplica >= depthCorrected
-  for (let speed = 100; speed >= 10; speed -= 10) {
+  // respeitando o limite mínimo operacional.
+  // Itera de speedFloor → 100%: velocidade maior = menos tempo = menos lâmina.
+  // Retorna a maior % que ainda cobre a lâmina necessária.
+  let bestSpeed: number | null = null
+  const startSpeed = Math.ceil(speedFloor / 10) * 10 // arredonda para múltiplo de 10
+  for (let speed = startSpeed; speed <= 100; speed += 10) {
     const durHours = pivot.time_360_h / (speed / 100)
     const volumeM3 = pivot.flow_rate_m3h * durHours
     const lamina = (volumeM3 / area) * 1000 // mm
 
     if (lamina >= depthCorrected) {
-      continue  // ainda atende, tenta velocidade maior (menos tempo)
-    } else {
-      // velocidade anterior era a maior que ainda atendia
-      const prevSpeed = speed + 10
-      return prevSpeed <= 100 ? prevSpeed : null
+      bestSpeed = speed // velocidade maior que ainda cobre a lâmina necessária
     }
   }
 
-  // Velocidade 10% é suficiente para cobrir a lâmina corrigida
-  return 10
+  // Se nenhuma velocidade acima do mínimo cobre a lâmina, retorna o mínimo
+  // (pivô vai ter que rodar no limite e aplicar mais que o necessário — ok agronômico)
+  if (bestSpeed === null) {
+    const durMin = pivot.time_360_h / (speedFloor / 100)
+    const laminaMin = (pivot.flow_rate_m3h * durMin / area) * 1000
+    if (laminaMin > 0) return Math.ceil(speedFloor / 10) * 10
+  }
+
+  return bestSpeed
 }
 
 /** Dado uma % de velocidade, retorna a lâmina bruta que o pivô aplica (mm). */
@@ -682,7 +719,7 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
   const eto = calcETo(weather)
   const etc = calcEtc(eto, kc)
 
-  const adcNew = calcADc(adcPrev, rainfall, irrigation, etc, cta, ctaPrev)
+  const { adc: adcNew, excessMm } = calcADcWithExcess(adcPrev, rainfall, irrigation, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
@@ -702,6 +739,7 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
     eto,
     etc,
     adcNew,
+    excessMm,
     ks,
     fieldCapacityPercent,
     status,

@@ -391,6 +391,7 @@ export async function GET(req: NextRequest) {
           ks: result.ks,
           ctda: result.adcNew,
           cta: result.cta,
+          irn_mm: result.excessMm > 0 ? result.excessMm : null,
           recommended_depth_mm: result.recommendedDepthMm,
           recommended_speed_percent: result.recommendedSpeedPercent,
           field_capacity_percent: result.fieldCapacityPercent,

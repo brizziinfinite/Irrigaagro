@@ -148,6 +148,9 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
   const [isActive, setIsActive]       = useState(season?.is_active ?? true)
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState('')
+  const [recalcMsg, setRecalcMsg]     = useState('')
+  // Guarda data original para detectar mudança
+  const originalPlantingDate = season?.planting_date ?? null
 
   const farmPivots   = pivots.filter(p => p.farm_id === farmId)
   const selectedCrop = crops.find(c => c.id === cropId) ?? null
@@ -190,6 +193,24 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
     try {
       if (isEdit) {
         await updateSeason(season.id, { ...basePayload, name: name.trim(), pivot_id: pivotId || null })
+
+        // Se a data de plantio mudou, recalcula os últimos 7 dias do balanço hídrico
+        const plantingDateChanged = plantingDate && plantingDate !== originalPlantingDate
+        if (plantingDateChanged) {
+          setRecalcMsg('Recalculando balanço hídrico...')
+          try {
+            await fetch('/api/seasons/recalculate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ season_id: season.id, last_days: 7 }),
+            })
+            setRecalcMsg('✓ Balanço dos últimos 7 dias recalculado com novo DAS/Kc')
+          } catch {
+            setRecalcMsg('Aviso: recálculo automático falhou — rode manualmente em Diagnóstico')
+          }
+          // Aguarda um momento para o usuário ver a mensagem antes de fechar
+          await new Promise(r => setTimeout(r, 1800))
+        }
       } else {
         // Criação em lote: 1 safra por pivô selecionado
         const targets = selectedPivotIds.length > 0 ? selectedPivotIds : [null]
@@ -321,6 +342,16 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
               onFocus={e => e.target.style.borderColor = '#0093D0'}
               onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
+            {isEdit && plantingDate && plantingDate !== originalPlantingDate && (
+              <p style={{ marginTop: 6, fontSize: 11, color: '#f59e0b' }}>
+                ⚠ Data alterada — o balanço dos últimos 7 dias será recalculado ao salvar
+              </p>
+            )}
+            {recalcMsg && (
+              <p style={{ marginTop: 6, fontSize: 11, color: recalcMsg.startsWith('✓') ? '#22c55e' : '#f59e0b' }}>
+                {recalcMsg}
+              </p>
+            )}
           </div>
 
           {selectedCrop && plantingDate && (
