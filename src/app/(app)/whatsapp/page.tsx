@@ -40,22 +40,46 @@ import {
 
 interface ContactFormData {
   contact_name: string
-  phone: string
+  country_code: string
+  local_phone: string
   notification_hour: string
   is_active: boolean
 }
 
+const COUNTRY_CODES = [
+  { code: '55', flag: '🇧🇷', label: 'Brasil (+55)' },
+  { code: '1',  flag: '🇺🇸', label: 'EUA / Canadá (+1)' },
+  { code: '351', flag: '🇵🇹', label: 'Portugal (+351)' },
+  { code: '54',  flag: '🇦🇷', label: 'Argentina (+54)' },
+  { code: '598', flag: '🇺🇾', label: 'Uruguai (+598)' },
+  { code: '595', flag: '🇵🇾', label: 'Paraguai (+595)' },
+  { code: '56',  flag: '🇨🇱', label: 'Chile (+56)' },
+  { code: '57',  flag: '🇨🇴', label: 'Colômbia (+57)' },
+  { code: '34',  flag: '🇪🇸', label: 'Espanha (+34)' },
+]
+
 const INITIAL_FORM: ContactFormData = {
   contact_name: '',
-  phone: '',
+  country_code: '55',
+  local_phone: '',
   notification_hour: '7',
   is_active: true,
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-function formatPhone(raw: string): string {
-  return raw.replace(/\D/g, '')
+function buildPhone(countryCode: string, localPhone: string): string {
+  return countryCode + localPhone.replace(/\D/g, '')
+}
+
+function splitPhone(phone: string): { country_code: string; local_phone: string } {
+  const digits = phone.replace(/\D/g, '')
+  for (const c of COUNTRY_CODES) {
+    if (digits.startsWith(c.code)) {
+      return { country_code: c.code, local_phone: digits.slice(c.code.length) }
+    }
+  }
+  return { country_code: '55', local_phone: digits }
 }
 
 function displayPhone(phone: string): string {
@@ -120,9 +144,11 @@ export default function WhatsAppPage() {
 
   function openEdit(c: WhatsAppContact) {
     setEditingContact(c)
+    const { country_code, local_phone } = splitPhone(c.phone)
     setForm({
       contact_name: c.contact_name,
-      phone: c.phone,
+      country_code,
+      local_phone,
       notification_hour: String(c.notification_hour),
       is_active: c.is_active,
     })
@@ -134,9 +160,9 @@ export default function WhatsAppPage() {
     if (!company?.id) return
     setFormError(null)
 
-    const phone = formatPhone(form.phone)
+    const phone = buildPhone(form.country_code, form.local_phone)
     if (!form.contact_name.trim()) { setFormError('Nome é obrigatório'); return }
-    if (phone.length < 10) { setFormError('Telefone inválido (mínimo 10 dígitos com DDD)'); return }
+    if (form.local_phone.replace(/\D/g, '').length < 8) { setFormError('Número inválido (mínimo 8 dígitos com DDD)'); return }
 
     const hour = parseInt(form.notification_hour)
     if (isNaN(hour) || hour < 0 || hour > 23) { setFormError('Hora inválida (0–23)'); return }
@@ -530,15 +556,29 @@ export default function WhatsAppPage() {
 
               {/* Telefone */}
               <label style={{ fontSize: 12, color: '#8899aa', fontWeight: 600 }}>
-                Telefone (com código do país)
-                <input
-                  value={form.phone}
-                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                  placeholder="Ex: 5518999998888"
-                  style={inputStyle}
-                />
+                Telefone
+                <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                  <select
+                    value={form.country_code}
+                    onChange={e => setForm(f => ({ ...f, country_code: e.target.value }))}
+                    style={{
+                      ...inputStyle, marginTop: 0, width: 'auto', flexShrink: 0,
+                      paddingRight: 8, cursor: 'pointer',
+                    }}
+                  >
+                    {COUNTRY_CODES.map(c => (
+                      <option key={c.code} value={c.code}>{c.flag} {c.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    value={form.local_phone}
+                    onChange={e => setForm(f => ({ ...f, local_phone: e.target.value }))}
+                    placeholder="(18) 99999-8888"
+                    style={{ ...inputStyle, marginTop: 0, flex: 1 }}
+                  />
+                </div>
                 <span style={{ fontSize: 11, color: '#556677', marginTop: 4, display: 'block' }}>
-                  Formato: código país + DDD + número (sem espaços ou traços)
+                  Número completo com DDD, sem espaços ou traços
                 </span>
               </label>
 
