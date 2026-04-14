@@ -531,55 +531,106 @@ export function calcProjection(params: {
   irrigationByDay?: number[] // irrigação simulada por dia (mm brutos, index 0 = D+1) — CUC aplicado internamente
 }): ProjectionDay[] {
   const { crop, startDate, startDas, startAdc, fieldCapacity, wiltingPoint, bulkDensity, avgEto, pivot, days = 7, etoByDay, rainfallByDay, irrigationByDay } = params
+  const alertThresholdPct = pivot?.alert_threshold_percent ?? null
+  const irrigationTargetPct = pivot?.irrigation_target_percent ?? null
+  const cuc = (pivot?.cuc_percent ?? 85) / 100
 
-  const results: ProjectionDay[] = []
-  let adcPrev = startAdc
-  let firstIrrigationMarked = false
-
+  // ── Passo 1: projeção "seca" — sem irrigação — para encontrar quando o solo
+  // vai cruzar o threshold. Isso permite antecipar a irrigação 1 dia.
+  interface DryDay { adcDry: number; cta: number; cad: number; ctaPrev: number; etcAvg: number; rainfall: number; das: number; kc: number; cropStage: number; fFactor: number; rootDepthCm: number }
+  const dryDays: DryDay[] = []
+  let adcDry = startAdc
   for (let i = 1; i <= days; i++) {
-    const d = new Date(startDate + 'T12:00:00')
-    d.setDate(d.getDate() + i)
-    const date = d.toISOString().split('T')[0]
     const das = startDas + i
-
     const stageInfo = getStageInfoForDas(crop, das)
     const { stage: cropStage, kc, rootDepthCm, fFactor } = stageInfo
-
     const cta = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, rootDepthCm)
     const cad = calcCAD(cta, fFactor)
-
-    const dasPrevLoop = das - 1
-    const stageInfoPrevLoop = dasPrevLoop > 0 ? getStageInfoForDas(crop, dasPrevLoop) : stageInfo
-    const ctaPrevLoop = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrevLoop.rootDepthCm)
-
+    const dasPrev = das - 1
+    const stageInfoPrev = dasPrev > 0 ? getStageInfoForDas(crop, dasPrev) : stageInfo
+    const ctaPrev = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrev.rootDepthCm)
     const etoForDay = etoByDay?.[i - 1] ?? avgEto
     const rainfallForDay = rainfallByDay?.[i - 1] ?? 0
     const etcAvg = calcEtc(etoForDay, kc)
+    adcDry = calcADc(adcDry, rainfallForDay, 0, etcAvg, cta, ctaPrev)
+    dryDays.push({ adcDry, cta, cad, ctaPrev, etcAvg, rainfall: rainfallForDay, das, kc, cropStage, fFactor, rootDepthCm })
+  }
 
-    const irrigBruto = irrigationByDay?.[i - 1] ?? 0
-    const cuc = (pivot?.cuc_percent ?? 85) / 100
-    const irrigLiquido = irrigBruto * cuc
-    const adcProjected = calcADc(adcPrev, rainfallForDay, irrigLiquido, etcAvg, cta, ctaPrevLoop)
-    const fieldCapacityPercent = cta > 0 ? (adcProjected / cta) * 100 : 0
-    const alertThresholdPct = pivot?.alert_threshold_percent ?? null
-    const irrigationTargetPct = pivot?.irrigation_target_percent ?? null
-    const status = getIrrigationStatus(adcProjected, cad, false, cta, alertThresholdPct)
-    const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcProjected, alertThresholdPct, irrigationTargetPct)
-    const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
+  // ── Passo 2: determinar quais dias são dias de irrigação (antecipado).
+  // Se D+i+1 cruza o threshold, marcar D+i como dia de irrigação.
+  const irrigateDayIdx = new Set<number>() // índice base-0 (i-1)
+  for (let i = 0; i < dryDays.length; i++) {
+    const thresholdMm = alertThresholdPct != null && dryDays[i].cta > 0
+      ? (alertThresholdPct / 100) * dryDays[i].cta
+      : dryDays[i].cad
+    // Cruzou threshold neste dia?
+    if (dryDays[i].adcDry < thresholdMm) {
+      // Antecipa: marca o dia anterior se ainda não foi marcado
+      const targetIdx = i > 0 ? i - 1 : 0
+      if (!irrigateDayIdx.has(targetIdx)) {
+        irrigateDayIdx.add(targetIdx)
+      }
+      break // apenas a próxima irrigação necessária
+    }
+  }
 
-    // Marca o primeiro dia que precisa irrigar
-    const thresholdMm = alertThresholdPct != null && cta > 0 ? (alertThresholdPct / 100) * cta : cad
-    const isIrrigationDay = !firstIrrigationMarked && adcProjected < thresholdMm
-    if (isIrrigationDay) firstIrrigationMarked = true
+  // ── Passo 3: projeção real — simula irrigação nos dias marcados.
+  const results: ProjectionDay[] = []
+  let adcPrev = startAdc
+
+  for (let i = 1; i <= days; i++) {
+    const idx = i - 1
+    const dry = dryDays[idx]
+    const d = new Date(startDate + 'T12:00:00')
+    d.setDate(d.getDate() + i)
+    const date = d.toISOString().split('T')[0]
+
+    // ADc pré-irrigação (só com chuva e ETc)
+    const adcBeforeIrrig = calcADc(adcPrev, dry.rainfall, 0, dry.etcAvg, dry.cta, dry.ctaPrev)
+
+    // Status e lâmina baseados no ADc pré-irrigação (mostrar necessidade real)
+    const status = getIrrigationStatus(adcBeforeIrrig, dry.cad, false, dry.cta, alertThresholdPct)
+    const recommendedDepthMm = irrigateDayIdx.has(idx)
+      ? calcRecommendedIrrigation(dry.cta, dry.cad, adcBeforeIrrig, alertThresholdPct, irrigationTargetPct)
+      : 0
+    const recommendedSpeedPercent = pivot && recommendedDepthMm > 0
+      ? findRecommendedSpeed(pivot, recommendedDepthMm)
+      : null
+
+    // ADc pós-irrigação — usado para os dias seguintes
+    let adcPostIrrig = adcBeforeIrrig
+    if (irrigateDayIdx.has(idx) && recommendedDepthMm > 0) {
+      // Lâmina que o pivô realmente aplica nessa velocidade (ou a recomendada se sem velocidade)
+      let laminaBruta = recommendedDepthMm
+      if (pivot && recommendedSpeedPercent != null) {
+        laminaBruta = calcDepthForSpeed(pivot, recommendedSpeedPercent) ?? recommendedDepthMm
+      }
+      adcPostIrrig = Math.min(dry.cta, adcBeforeIrrig + laminaBruta * cuc)
+    }
+    // Também respeita irrigationByDay externo (se passado explicitamente)
+    if (irrigationByDay?.[idx] && irrigationByDay[idx] > 0) {
+      adcPostIrrig = Math.min(dry.cta, adcBeforeIrrig + irrigationByDay[idx] * cuc)
+    }
+
+    const fieldCapacityPercent = dry.cta > 0 ? (adcPostIrrig / dry.cta) * 100 : 0
 
     results.push({
-      date, das, cropStage, kc, etcAvg,
-      adcProjected, cta, cad, fieldCapacityPercent,
-      status, recommendedDepthMm, recommendedSpeedPercent,
-      isIrrigationDay,
+      date,
+      das: dry.das,
+      cropStage: dry.cropStage,
+      kc: dry.kc,
+      etcAvg: dry.etcAvg,
+      adcProjected: adcPostIrrig,
+      cta: dry.cta,
+      cad: dry.cad,
+      fieldCapacityPercent,
+      status: irrigateDayIdx.has(idx) && recommendedDepthMm > 0 ? 'vermelho' : status,
+      recommendedDepthMm,
+      recommendedSpeedPercent,
+      isIrrigationDay: irrigateDayIdx.has(idx) && recommendedDepthMm > 0,
     })
 
-    adcPrev = adcProjected
+    adcPrev = adcPostIrrig
   }
 
   return results
