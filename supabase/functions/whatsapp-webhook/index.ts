@@ -651,102 +651,157 @@ Regras:
       responseText = `📊 *Resumo solicitado*\n\nConsulte o app para o balanço hídrico completo.\nhttps://irrigaagro.com.br`
 
     } else {
-      // ── IA: Gemini Flash 2.5 interpreta linguagem natural ──
-      messageType = 'rain_report'
-      const pivotNames = subs.map(s => s.pivots?.name).filter(Boolean).join(', ')
+      // ── IA: Gemini com contexto real dos dados — chuva + perguntas livres ──
+      messageType = 'ai_assistant'
       const today = new Date().toISOString().slice(0, 10)
-
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
       const geminiKey = Deno.env.get('GEMINI_API_KEY')
-      let aiHandled = false
 
-      if (geminiKey && pivotNames) {
+      if (!geminiKey) {
+        responseText = `❓ Não entendi sua mensagem.\n\n📋 *Exemplos:*\n"chuva de 15mm no Valley"\nSTATUS — ver pivôs\nRESUMO — link para o app`
+      } else {
+        // Buscar dados reais dos pivôs para contexto
+        const pivotIds = subs.map(s => s.pivot_id)
+        const pivotNames = subs.map(s => s.pivots?.name).filter(Boolean).join(', ')
+
+        // Safras ativas
+        const { data: seasons } = await supabase
+          .from('seasons')
+          .select('id, pivot_id, planting_date, crops ( name, stage1_days, stage2_days, stage3_days, stage4_days )')
+          .in('pivot_id', pivotIds)
+          .eq('is_active', true)
+
+        const seasonByPivot: Record<string, any> = {}
+        const seasonIds: string[] = []
+        for (const s of seasons ?? []) {
+          seasonByPivot[s.pivot_id] = s
+          seasonIds.push(s.id)
+        }
+
+        // Últimos balanços hídricos (hoje + ontem)
+        const { data: mgmtRows } = seasonIds.length > 0
+          ? await supabase
+              .from('daily_management')
+              .select('season_id, date, field_capacity_percent, ctda, cta, etc_mm, eto_mm, kc, rainfall_mm, needs_irrigation, recommended_depth_mm, recommended_speed_percent')
+              .in('season_id', seasonIds)
+              .gte('date', yesterday)
+              .order('date', { ascending: false })
+          : { data: [] }
+
+        // Clima recente (ontem e anteantes)
+        const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)
+        const { data: weatherRows } = pivotIds.length > 0
+          ? await supabase
+              .from('weather_data')
+              .select('pivot_id, date, temp_max, temp_min, humidity_percent, wind_speed_ms, solar_radiation_wm2, eto_mm')
+              .in('pivot_id', pivotIds)
+              .gte('date', twoDaysAgo)
+              .order('date', { ascending: false })
+          : { data: [] }
+
+        // Montar contexto por pivô
+        const pivotContextLines: string[] = []
+        for (const sub of subs) {
+          const pivot = sub.pivots
+          if (!pivot) continue
+          const season = seasonByPivot[sub.pivot_id]
+          const crop = season?.crops
+          const mgmt = (mgmtRows ?? []).find((m: any) => m.season_id === season?.id && m.date === today)
+            ?? (mgmtRows ?? []).find((m: any) => m.season_id === season?.id)
+          const weather = (weatherRows ?? []).find((w: any) => w.pivot_id === sub.pivot_id && w.date === yesterday)
+            ?? (weatherRows ?? []).find((w: any) => w.pivot_id === sub.pivot_id)
+
+          let das = 0
+          if (season?.planting_date) {
+            das = Math.max(1, Math.round((new Date(today + 'T12:00:00').getTime() - new Date(season.planting_date + 'T12:00:00').getTime()) / 86400000) + 1)
+          }
+
+          // Fase fenológica
+          let faseStr = ''
+          if (crop && das > 0) {
+            const s1 = crop.stage1_days ?? 15
+            const s2 = crop.stage2_days ?? 35
+            const s3 = crop.stage3_days ?? 40
+            const fases = ['Inicial', 'Desenvolvimento', 'Floração', 'Maturação']
+            let fase = 3
+            if (das <= s1) fase = 0
+            else if (das <= s1 + s2) fase = 1
+            else if (das <= s1 + s2 + s3) fase = 2
+            faseStr = ` | Fase: ${fases[fase]} (F${fase + 1})`
+          }
+
+          const mgmtLine = mgmt
+            ? `CC: ${mgmt.field_capacity_percent?.toFixed(1)}% | ETo: ${mgmt.eto_mm?.toFixed(2)} mm/dia | ETc: ${mgmt.etc_mm?.toFixed(2)} mm/dia | Kc: ${mgmt.kc?.toFixed(2)} | Chuva: ${mgmt.rainfall_mm ?? 0} mm | Irrigar: ${mgmt.needs_irrigation ? `SIM (${mgmt.recommended_depth_mm?.toFixed(1)} mm, vel. ${mgmt.recommended_speed_percent}%)` : 'NÃO'} | Data registro: ${mgmt.date}`
+            : 'Sem registro de balanço hídrico'
+
+          const weatherDate = weather?.date ?? 'sem dados'
+          const weatherLine = weather
+            ? `Clima ${weatherDate}: Tmax ${weather.temp_max}°C | Tmin ${weather.temp_min}°C | UR ${weather.humidity_percent}% | Vento ${weather.wind_speed_ms} m/s | Rad ${weather.solar_radiation_wm2?.toFixed(0)} W/m² | ETo ${weather.eto_mm?.toFixed(2)} mm`
+            : 'Sem dados climáticos recentes'
+
+          pivotContextLines.push(
+            `Pivô: ${pivot.name}` +
+            (crop ? ` | Cultura: ${crop.name} | DAS: ${das}${faseStr}` : '') +
+            `\n  Balanço hídrico: ${mgmtLine}` +
+            `\n  ${weatherLine}`
+          )
+        }
+
+        const contexto = pivotContextLines.join('\n\n')
+
+        const systemPrompt = `Você é o assistente agrícola do IrrigaAgro, um sistema de manejo hídrico baseado no método FAO-56.
+
+REGRA PRINCIPAL: Responda SOMENTE perguntas relacionadas a irrigação, manejo hídrico, clima, culturas, balanço hídrico, evapotranspiração, fases fenológicas, energia elétrica dos pivôs e operação agrícola.
+Se a pergunta não tiver relação com agricultura/irrigação, responda: "Só consigo ajudar com informações sobre seus pivôs e manejo hídrico. 🌱"
+
+DADOS REAIS DOS PIVÔS DO USUÁRIO (hoje: ${today}):
+${contexto || 'Nenhum dado disponível'}
+
+INSTRUÇÕES:
+- Use os dados acima para responder com números reais
+- ETo = evapotranspiração de referência (demanda atmosférica)
+- ETc = evapotranspiração da cultura (ETo × Kc)
+- CC% = capacidade de campo atual do solo (0-100%)
+- Seja direto e objetivo — mensagem de WhatsApp
+- Use emojis com moderação
+- Não invente dados que não estão no contexto
+- Se perguntado sobre "ontem", use os dados do dia anterior disponíveis
+- Máximo 300 caracteres na resposta quando possível`
+
         try {
-          const prompt = `Você é um assistente agrícola. O usuário enviou uma mensagem pelo WhatsApp.
-Pivôs disponíveis: ${pivotNames}
-Data de hoje: ${today}
-
-Analise a mensagem e extraia registros de chuva se houver. Responda APENAS com JSON no formato:
-{
-  "tipo": "chuva" | "desconhecido",
-  "registros": [
-    { "pivo": "nome exato do pivô", "mm": número, "data": "YYYY-MM-DD" }
-  ],
-  "mensagem_erro": "string ou null"
-}
-
-Regras:
-- Se mencionar múltiplos pivôs, crie um registro para cada
-- Se mencionar "os dois" ou "ambos", aplique a todos os pivôs disponíveis
-- Se não especificar data, use hoje (${today})
-- Se não for sobre chuva, tipo = "desconhecido"
-- Nomes dos pivôs devem ser exatamente como listados acima
-
-Mensagem do usuário: "${textMessage}"`
-
           const geminiResp = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0, maxOutputTokens: 256 }
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: [{ role: 'user', parts: [{ text: textMessage }] }],
+                generationConfig: { temperature: 0.2, maxOutputTokens: 512 }
               })
             }
           )
 
           if (geminiResp.ok) {
             const geminiData = await geminiResp.json()
-            const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
-            const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+            const aiText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
 
-            if (jsonMatch) {
-              const parsed = JSON.parse(jsonMatch[0])
-
-              if (parsed.tipo === 'chuva' && parsed.registros?.length > 0) {
-                aiHandled = true
-                const confirmLines: string[] = []
-
-                for (const reg of parsed.registros) {
-                  const sub = subs.find(s =>
-                    s.pivots?.name?.toUpperCase() === reg.pivo?.toUpperCase()
-                  )
-                  if (!sub) continue
-
-                  await supabase.from('rain_reports').insert({
-                    contact_id: contact.id,
-                    pivot_id: sub.pivot_id,
-                    rainfall_mm: reg.mm,
-                    observation_date: reg.data || null,
-                    source: 'manual',
-                  })
-
-                  const dateLabel = reg.data && reg.data !== today
-                    ? ` em ${reg.data.split('-').reverse().join('/')}`
-                    : ''
-                  confirmLines.push(`✅ ${reg.mm}mm no pivô ${sub.pivots?.name}${dateLabel}`)
-                }
-
-                responseText = confirmLines.length > 0
-                  ? `🌧️ *Chuva registrada:*\n\n${confirmLines.join('\n')}`
-                  : `❌ Não encontrei os pivôs mencionados. Seus pivôs: ${pivotNames}`
-              }
+            if (aiText) {
+              // Verificar se é uma chuva disfarçada (Gemini pode detectar)
+              // Se o texto da IA menciona "registrado" ou contém mm, verificar se é comando de chuva
+              responseText = aiText
+            } else {
+              responseText = `❓ Não consegui processar sua pergunta. Tente reformular.`
             }
+          } else {
+            const errBody = await geminiResp.text()
+            console.error(`Gemini error ${geminiResp.status}:`, errBody.slice(0, 200))
+            responseText = `❓ Serviço temporariamente indisponível. Tente novamente em instantes.`
           }
         } catch (e) {
-          console.error('Gemini error:', e)
+          console.error('AI assistant error:', e)
+          responseText = `❓ Erro ao processar. Tente: CHUVA VALLEY 15 | STATUS | RESUMO`
         }
-      }
-
-      if (!aiHandled) {
-        responseText =
-          `❓ Não entendi sua mensagem.\n\n` +
-          `📋 *Exemplos do que posso fazer:*\n\n` +
-          `"chuva de 15mm no Valley"\n` +
-          `"choveu 20mm nos dois pivôs dia 07/04"\n` +
-          `*STATUS* — ver seus pivôs\n` +
-          `*RESUMO* — link para o app\n` +
-          `📸 *Foto* — registrar fatura de energia`
       }
     }
 
