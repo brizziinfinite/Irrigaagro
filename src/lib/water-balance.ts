@@ -612,7 +612,9 @@ export function calcProjection(params: {
       adcPostIrrig = Math.min(dry.cta, adcBeforeIrrig + irrigationByDay[idx] * cuc)
     }
 
-    const fieldCapacityPercent = dry.cta > 0 ? (adcPostIrrig / dry.cta) * 100 : 0
+    // FC% mostra o estado real do solo ANTES de irrigar — o que o operador vai encontrar.
+    // O adcPostIrrig é usado apenas para propagar o ADc nos dias seguintes.
+    const fieldCapacityPercent = dry.cta > 0 ? (adcBeforeIrrig / dry.cta) * 100 : 0
 
     results.push({
       date,

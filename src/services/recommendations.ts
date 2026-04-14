@@ -205,14 +205,17 @@ export async function buildPivotRecommendations(
         }
       }
 
+      const fc = Number(pivot.field_capacity ?? season.field_capacity ?? 32)
+      const wp = Number(pivot.wilting_point ?? season.wilting_point ?? 14)
+      const bd = Number(pivot.bulk_density ?? season.bulk_density ?? 1.4)
       const projection = calcProjection({
         crop,
         startDate: today,
         startDas: das,
         startAdc,
-        fieldCapacity: Number(pivot.field_capacity ?? season.field_capacity ?? 32),
-        wiltingPoint: Number(pivot.wilting_point ?? season.wilting_point ?? 14),
-        bulkDensity: Number(pivot.bulk_density ?? season.bulk_density ?? 1.4),
+        fieldCapacity: fc,
+        wiltingPoint: wp,
+        bulkDensity: bd,
         avgEto,
         pivot,
         days: 7,
