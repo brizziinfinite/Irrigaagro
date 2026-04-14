@@ -160,7 +160,7 @@ serve(async (_req) => {
       const { data: seasonDetails } = seasonIds.length > 0
         ? await supabase
             .from('seasons')
-            .select('id, pivot_id, planting_date, crops ( name )')
+            .select('id, pivot_id, planting_date, crops ( name, stage1_days, stage2_days, stage3_days, stage4_days )')
             .in('id', seasonIds)
         : { data: [] }
 
@@ -221,8 +221,23 @@ serve(async (_req) => {
           das = Math.floor((now.getTime() - plantedDate.getTime()) / (1000 * 60 * 60 * 24))
         }
 
-        const dasStr = das > 0 ? ` — ${das} DAS` : ''
-        const cropStr = cropName ? ` (${cropName}${dasStr})` : (das > 0 ? ` (${das} DAS)` : '')
+        // Fase fenológica
+        const crop = seasonInfo?.crops
+        const s1 = crop?.stage1_days ?? 15
+        const s2 = crop?.stage2_days ?? 35
+        const s3 = crop?.stage3_days ?? 40
+        const stageLabels = ['', 'Inicial', 'Desenvolvimento', 'Floração', 'Maturação']
+        let stageNum = 4
+        if (das > 0) {
+          if (das <= s1) stageNum = 1
+          else if (das <= s1 + s2) stageNum = 2
+          else if (das <= s1 + s2 + s3) stageNum = 3
+        }
+        const stageStr = das > 0 ? ` · F${stageNum} ${stageLabels[stageNum]}` : ''
+        const dasStr = das > 0 ? ` · ${das} DAS` : ''
+        const cropStr = cropName
+          ? ` (${cropName}${stageStr}${dasStr})`
+          : (das > 0 ? ` (${das} DAS)` : '')
 
         if (!mgmt) {
           pivotResults.push({ line: `🚜 *${pivoName}*${cropStr} — ⚫ Sem dados\n💧 CC: — · ETc: —\n👉 _Balanço será atualizado às 20h_`, priorityScore: -1 })
