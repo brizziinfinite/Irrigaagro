@@ -664,6 +664,68 @@ export async function GET(req: NextRequest) {
     } // end for dateToProcess
   }
 
+  // ── Retroatualização NASA: corrige plugfield_fallback dos últimos 14 dias ──
+  // Quando o cron rodou, a NASA ainda não tinha dado (latência ~8 dias).
+  // Aqui buscamos registros antigos ainda com rs_source='plugfield_fallback'
+  // e recalculamos ETo com Rs NASA se agora disponível.
+  const retroResults: Array<{ date: string; eto_old: number; eto_new: number }> = []
+  try {
+    const retroStart = daysAgo(today, 14)
+    const { data: staleRows } = await (supabase as any)
+      .from('weather_data')
+      .select('id, station_id, date, temp_max, temp_min, humidity_percent, wind_speed_ms')
+      .eq('rs_source', 'plugfield_fallback')
+      .gte('date', retroStart)
+      .lte('date', daysAgo(today, 2)) // não reprocessa D-1 (acabou de rodar)
+
+    // Pega coordenadas da estação via pivô
+    const { data: stationPivots } = await (supabase as any)
+      .from('pivots')
+      .select('latitude, longitude, farms!inner(weather_stations(id))')
+      .not('latitude', 'is', null)
+
+    const latByStation: Record<string, { lat: number; lon: number }> = {}
+    for (const p of stationPivots ?? []) {
+      const stIds = (p.farms?.weather_stations ?? []).map((s: { id: string }) => s.id)
+      for (const sid of stIds) {
+        latByStation[sid] = { lat: p.latitude, lon: p.longitude }
+      }
+    }
+
+    for (const row of staleRows ?? []) {
+      const coords = latByStation[row.station_id]
+      if (!coords) continue
+
+      const rsNasaMJ = await fetchRsFromNASA(coords.lat, coords.lon, row.date)
+      if (rsNasaMJ === null) continue // NASA ainda não tem
+
+      const doy = getDayOfYear(row.date)
+      const rgNasaWm2 = rsNasaMJ / 0.0864
+      const etoNew = calcETo(
+        row.temp_max, row.temp_min,
+        row.humidity_percent, row.wind_speed_ms,
+        rgNasaWm2, coords.lat, doy
+      )
+
+      const { data: oldRow } = await (supabase as any)
+        .from('weather_data').select('eto_mm').eq('id', row.id).single()
+      const etoOld = Number(oldRow?.eto_mm ?? 0)
+
+      await (supabase as any)
+        .from('weather_data')
+        .update({
+          solar_radiation_wm2: rgNasaWm2,
+          eto_mm: etoNew,
+          rs_source: 'nasa',
+        })
+        .eq('id', row.id)
+
+      retroResults.push({ date: row.date, eto_old: etoOld, eto_new: etoNew })
+    }
+  } catch (e) {
+    console.error('Retro NASA update error:', e)
+  }
+
   // ── Calibração retroativa (1x por execução) ──────────────────
   let calibration: CalibrationResult[] = []
   try {
@@ -683,6 +745,10 @@ export async function GET(req: NextRequest) {
     date: fetchDate,
     ok, skipped, errors,
     results,
+    retro_nasa: {
+      updated: retroResults.length,
+      details: retroResults,
+    },
     calibration: {
       updated: calUpdated,
       insufficient_data: calInsufficient,
