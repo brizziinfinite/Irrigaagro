@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumo Diário — IrrigaAgro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    min-height: 1350px;
+    background: #0b1020;
+    font-family: 'Inter', sans-serif;
+    color: #e2e8f0;
+    overflow: hidden;
+  }
+
+  .container {
+    width: 1080px;
+    min-height: 1350px;
+    background: linear-gradient(160deg, #0d1528 0%, #0b1020 40%, #0a0e1a 100%);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Glow decorativo */
+  .bg-glow {
+    position: absolute;
+    top: -120px;
+    left: -120px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(96,165,250,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bg-glow-2 {
+    position: absolute;
+    bottom: 200px;
+    right: -80px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(34,197,94,0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ────────── HEADER ────────── */
+  .header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 48px 64px 36px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-svg {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .logo-wordmark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-wordmark .irriga { color: #4ade80; }
+  .logo-wordmark .agro   { color: #60a5fa; }
+
+  .logo-tagline {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .header-meta {
+    text-align: right;
+  }
+
+  .header-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+  }
+
+  .header-farm {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-top: 4px;
+  }
+
+  .header-date {
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 2px;
+  }
+
+  /* ────────── STATS BAR ────────── */
+  .stats-bar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 0;
+    margin: 32px 64px 0;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .stat-item {
+    flex: 1;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .stat-item:last-child { border-right: none; }
+
+  .stat-value {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-top: 6px;
+  }
+
+  .stat-total .stat-value  { color: #60a5fa; }
+  .stat-ok    .stat-value  { color: #4ade80; }
+  .stat-warn  .stat-value  { color: #fbbf24; }
+  .stat-crit  .stat-value  { color: #f87171; }
+
+  /* ────────── PIVOTS SECTION ────────── */
+  .section-label {
+    position: relative;
+    z-index: 1;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    padding: 28px 64px 14px;
+  }
+
+  .pivots-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 0 64px;
+  }
+
+  /* Card gerado pelo motor de classificação */
+  .pivot-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pivot-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .pivot-card.ok::before     { background: linear-gradient(90deg, #4ade80, #22c55e); }
+  .pivot-card.atencao::before{ background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+  .pivot-card.critico::before{ background: linear-gradient(90deg, #f87171, #ef4444); }
+  .pivot-card.sem-dados::before { background: linear-gradient(90deg, #64748b, #475569); }
+
+  .pivot-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .pivot-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .pivot-farm {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    margin-top: 2px;
+  }
+
+  .pivot-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
+  .badge-ok     { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+  .badge-atencao{ background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .badge-critico{ background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+  .badge-sem-dados { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+
+  /* Barra de solo */
+  .soil-wrap {
+    margin-bottom: 14px;
+  }
+
+  .soil-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .soil-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .soil-value {
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .soil-bar-bg {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .soil-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .fill-ok     { background: linear-gradient(90deg, #22c55e, #4ade80); }
+  .fill-atencao{ background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .fill-critico{ background: linear-gradient(90deg, #ef4444, #f87171); }
+
+  /* Métricas do card */
+  .pivot-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  .metric {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metric-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .metric-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Alerta de irrigação dentro do card */
+  .pivot-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 12px;
+  }
+
+  .pivot-alert-icon { font-size: 14px; }
+
+  .pivot-alert-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f87171;
+  }
+
+  /* ────────── ALERTAS GLOBAIS ────────── */
+  .alerts-section {
+    position: relative;
+    z-index: 1;
+    padding: 24px 64px 0;
+  }
+
+  .alert-global {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+  }
+
+  .alert-global-icon { font-size: 18px; }
+
+  .alert-global-text {
+    font-size: 13px;
+    color: #fbbf24;
+    font-weight: 500;
+  }
+
+  /* ────────── PREVISÃO ────────── */
+  .forecast-section {
+    position: relative;
+    z-index: 1;
+    margin: 28px 64px 0;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 20px 24px;
+  }
+
+  .forecast-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 14px;
+  }
+
+  .forecast-days {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .forecast-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .forecast-emoji { font-size: 22px; }
+
+  .forecast-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    text-transform: capitalize;
+  }
+
+  .forecast-temp {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e2e8f0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .forecast-eto {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .forecast-rain {
+    font-size: 11px;
+    color: #60a5fa;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ────────── FOOTER ────────── */
+  .footer {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    padding: 28px 64px 48px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-cta {
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .footer-cta span {
+    color: #60a5fa;
+    font-weight: 600;
+  }
+
+  .footer-time {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="bg-glow"></div>
+  <div class="bg-glow-2"></div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-wrap">
+      <!-- Logo IrrigaAgro SVG inline -->
+      <svg class="logo-svg" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="dropGrad" x1="26" y1="4" x2="26" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#4ade80"/>
+            <stop offset="100%" stop-color="#38bdf8"/>
+          </linearGradient>
+          <linearGradient id="bar1Grad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#4ade80"/>
+            <stop offset="100%" stop-color="#22c55e"/>
+          </linearGradient>
+          <linearGradient id="bar2Grad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#60a5fa"/>
+            <stop offset="100%" stop-color="#3b82f6"/>
+          </linearGradient>
+          <linearGradient id="bar3Grad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#0ea5e9"/>
+          </linearGradient>
+          <clipPath id="dropClip">
+            <path d="M26 4C26 4 10 20 10 31C10 39.837 17.163 47 26 47C34.837 47 42 39.837 42 31C42 20 26 4 26 4Z"/>
+          </clipPath>
+        </defs>
+        <!-- Gota outline -->
+        <path d="M26 4C26 4 10 20 10 31C10 39.837 17.163 47 26 47C34.837 47 42 39.837 42 31C42 20 26 4 26 4Z"
+              stroke="url(#dropGrad)" stroke-width="2" fill="none"/>
+        <!-- Barras internas (dentro da gota) -->
+        <g clip-path="url(#dropClip)">
+          <rect x="15" y="34" width="5" height="10" rx="1.5" fill="url(#bar1Grad)" opacity="0.9"/>
+          <rect x="23" y="27" width="5" height="17" rx="1.5" fill="url(#bar2Grad)" opacity="0.9"/>
+          <rect x="31" y="30" width="5" height="14" rx="1.5" fill="url(#bar3Grad)" opacity="0.9"/>
+        </g>
+      </svg>
+      <div class="logo-text">
+        <div class="logo-wordmark">
+          <span class="irriga">Irriga</span><span class="agro">Agro</span>
+        </div>
+        <div class="logo-tagline">Irrigação Inteligente</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="header-title">Resumo Diário</div>
+      <div class="header-farm">{{fazenda}}</div>
+      <div class="header-date">{{data}}</div>
+    </div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item stat-total">
+      <div class="stat-value">{{total_pivos}}</div>
+      <div class="stat-label">Pivôs</div>
+    </div>
+    <div class="stat-item stat-ok">
+      <div class="stat-value">{{pivos_ok}}</div>
+      <div class="stat-label">OK</div>
+    </div>
+    <div class="stat-item stat-warn">
+      <div class="stat-value">{{pivos_atencao}}</div>
+      <div class="stat-label">Atenção</div>
+    </div>
+    <div class="stat-item stat-crit">
+      <div class="stat-value">{{pivos_critico}}</div>
+      <div class="stat-label">Crítico</div>
+    </div>
+  </div>
+
+  <!-- PIVOT CARDS -->
+  <div class="section-label">Status dos Pivôs</div>
+  <div class="pivots-grid">
+    {{pivots_html}}
+  </div>
+
+  <!-- ALERTAS GLOBAIS -->
+  {{#if alertas}}
+  <div class="alerts-section">
+    {{alertas}}
+  </div>
+  {{/if}}
+
+  <!-- PREVISÃO -->
+  {{#if previsao_html}}
+  <div class="forecast-section">
+    <div class="forecast-title">Previsão 4 dias</div>
+    <div class="forecast-days">
+      {{previsao_html}}
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-cta">
+      Registrar chuva? Responda: <span>CHUVA [PIVÔ] [mm]</span>
+    </div>
+    <div class="footer-time">{{hora_geracao}}</div>
+  </div>
+</div>
+</body>
+</html>
