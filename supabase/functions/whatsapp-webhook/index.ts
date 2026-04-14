@@ -126,7 +126,10 @@ serve(async (req) => {
 
     const hasImage: boolean = !!(data.message?.imageMessage)
     const imageCaption: string = data.message?.imageMessage?.caption || ''
-    const hasAudio: boolean = !!(data.message?.audioMessage || data.message?.pttMessage)
+    // Áudio só é processado como áudio se não houver texto (texto tem prioridade)
+    const hasAudio: boolean = !textMessage && !!(data.message?.audioMessage || data.message?.pttMessage)
+
+    console.log('ROUTING:', { messageType: data.messageType, hasAudio, hasImage, textLen: textMessage.length, msgKeys: data.message ? Object.keys(data.message) : [] })
 
     let responseText = ''
     let messageType = 'unknown'
@@ -175,7 +178,7 @@ Regras:
 - Nomes dos pivôs devem ser exatamente como listados acima`
 
           const geminiResp = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -281,13 +284,97 @@ Regras:
           responseText = `⚡ *Status dos seus pivôs:*\n\n${names}`
 
         } else {
-          const transcricaoLabel = transcricao ? `_"${transcricao}"_\n\n` : ''
-          responseText =
-            `🎙️ ${transcricaoLabel}❓ Não entendi o comando.\n\n` +
-            `Pode falar ou escrever:\n` +
-            `"choveu 15mm no Valley"\n` +
-            `"15mm nos dois pivôs dia 07/04"\n` +
-            `*STATUS* — ver seus pivôs`
+          // Pergunta livre por voz → Gemini assistente agrícola com contexto real
+          const userQuestion = transcricao || rawText
+          if (userQuestion) {
+            const pivotIds2 = subs.map(s => s.pivot_id)
+            const yesterday2 = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+            const twoDaysAgo2 = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)
+
+            const { data: seasons2 } = await supabase
+              .from('seasons')
+              .select('id, pivot_id, planting_date, crops ( name, stage1_days, stage2_days, stage3_days, stage4_days )')
+              .in('pivot_id', pivotIds2)
+              .eq('is_active', true)
+
+            const seasonByPivot2: Record<string, any> = {}
+            const seasonIds2: string[] = []
+            for (const s of seasons2 ?? []) { seasonByPivot2[s.pivot_id] = s; seasonIds2.push(s.id) }
+
+            const { data: mgmtRows2 } = seasonIds2.length > 0
+              ? await supabase.from('daily_management')
+                  .select('season_id, date, field_capacity_percent, ctda, cta, etc_mm, eto_mm, kc, rainfall_mm, needs_irrigation, recommended_depth_mm, recommended_speed_percent')
+                  .in('season_id', seasonIds2).gte('date', yesterday2).order('date', { ascending: false })
+              : { data: [] }
+
+            const { data: weatherRows2 } = pivotIds2.length > 0
+              ? await supabase.from('weather_data')
+                  .select('pivot_id, date, temp_max, temp_min, humidity_percent, wind_speed_ms, solar_radiation_wm2, eto_mm')
+                  .in('pivot_id', pivotIds2).gte('date', twoDaysAgo2).order('date', { ascending: false })
+              : { data: [] }
+
+            const pivotContextLines2: string[] = []
+            for (const sub of subs) {
+              const pivot = sub.pivots
+              if (!pivot) continue
+              const season = seasonByPivot2[sub.pivot_id]
+              const crop = season?.crops
+              const mgmt = (mgmtRows2 ?? []).find((m: any) => m.season_id === season?.id && m.date === today)
+                ?? (mgmtRows2 ?? []).find((m: any) => m.season_id === season?.id)
+              const weather = (weatherRows2 ?? []).find((w: any) => w.pivot_id === sub.pivot_id && w.date === yesterday2)
+                ?? (weatherRows2 ?? []).find((w: any) => w.pivot_id === sub.pivot_id)
+              let das2 = 0
+              if (season?.planting_date) das2 = Math.max(1, Math.round((new Date(today + 'T12:00:00').getTime() - new Date(season.planting_date + 'T12:00:00').getTime()) / 86400000) + 1)
+              let faseStr2 = ''
+              if (crop && das2 > 0) {
+                const s1 = crop.stage1_days ?? 15; const s2 = crop.stage2_days ?? 35; const s3 = crop.stage3_days ?? 40
+                const fases = ['Inicial', 'Desenvolvimento', 'Floração', 'Maturação']
+                let fase = 3
+                if (das2 <= s1) fase = 0; else if (das2 <= s1 + s2) fase = 1; else if (das2 <= s1 + s2 + s3) fase = 2
+                faseStr2 = ` | Fase: ${fases[fase]} (F${fase + 1})`
+              }
+              const mgmtLine2 = mgmt
+                ? `CC: ${mgmt.field_capacity_percent?.toFixed(1)}% | ETo: ${mgmt.eto_mm?.toFixed(2)} mm/dia | ETc: ${mgmt.etc_mm?.toFixed(2)} mm/dia | Kc: ${mgmt.kc?.toFixed(2)} | Chuva: ${mgmt.rainfall_mm ?? 0} mm | Irrigar: ${mgmt.needs_irrigation ? `SIM (${mgmt.recommended_depth_mm?.toFixed(1)} mm, vel. ${mgmt.recommended_speed_percent}%)` : 'NÃO'} | Data: ${mgmt.date}`
+                : 'Sem registro de balanço hídrico'
+              const weatherDate2 = weather?.date ?? 'sem dados'
+              const weatherLine2 = weather
+                ? `Clima ${weatherDate2}: Tmax ${weather.temp_max}°C | Tmin ${weather.temp_min}°C | UR ${weather.humidity_percent}% | Vento ${weather.wind_speed_ms} m/s | ETo ${weather.eto_mm?.toFixed(2)} mm`
+                : 'Sem dados climáticos recentes'
+              pivotContextLines2.push(`Pivô: ${pivot.name}` + (crop ? ` | Cultura: ${crop.name} | DAS: ${das2}${faseStr2}` : '') + `\n  ${mgmtLine2}\n  ${weatherLine2}`)
+            }
+
+            const systemPrompt2 = `Você é o assistente agrícola do IrrigaAgro, sistema de manejo hídrico FAO-56.
+REGRA: Responda SOMENTE perguntas sobre irrigação, manejo hídrico, clima, culturas, balanço hídrico, evapotranspiração, fases fenológicas, energia dos pivôs e operação agrícola. Para outros assuntos: "Só consigo ajudar com informações sobre seus pivôs e manejo hídrico. 🌱"
+DADOS DOS PIVÔS (hoje: ${today}):\n${pivotContextLines2.join('\n\n') || 'Sem dados'}
+INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres. Não invente dados.`
+
+            console.log('AI2 call: geminiKey present=', !!geminiKey, 'question=', userQuestion.slice(0, 80))
+            const aiResp2 = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  systemInstruction: { parts: [{ text: systemPrompt2 }] },
+                  contents: [{ role: 'user', parts: [{ text: userQuestion }] }],
+                  generationConfig: { temperature: 0.2, maxOutputTokens: 512 }
+                })
+              }
+            )
+            if (aiResp2.ok) {
+              const aiData2 = await aiResp2.json()
+              const aiText2 = aiData2.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+              responseText = aiText2
+                ? `🎙️ _"${transcricao}"_\n\n${aiText2}`
+                : `🎙️ _"${transcricao}"_\n\n❓ Não consegui responder. Tente reformular.`
+            } else {
+              const errBody2 = await aiResp2.text()
+              console.error(`Gemini AI2 error ${aiResp2.status}:`, errBody2.slice(0, 300))
+              responseText = `🎙️ _"${transcricao}"_\n\n❓ Serviço temporariamente indisponível.`
+            }
+          } else {
+            responseText = `🎙️ Não entendi o áudio. Tente novamente ou escreva:\nCHUVA VALLEY 15 | STATUS`
+          }
         }
 
       } catch (e) {
@@ -770,7 +857,7 @@ INSTRUÇÕES:
 
         try {
           const geminiResp = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

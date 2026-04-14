@@ -75,6 +75,7 @@ export async function fetchFromGoogleSheets(
     const iRadiation   = idx('radiation')
     const iRadiationC  = idx('radiationCount')
     const iRain      = idx('rainAccum')
+    const iEvapo     = idx('evapo')
 
     // Encontra a linha da data
     for (let i = 1; i < lines.length; i++) {
@@ -105,6 +106,10 @@ export async function fetchFromGoogleSheets(
         }
       }
 
+      // Campo evapo: ETo calculada pela estação Plugfield (mm/dia) — mais precisa que recalcular
+      const evapoRaw = iEvapo >= 0 ? parseNum(cols[iEvapo] ?? '') : NaN
+      const evapoPlugfield = (!isNaN(evapoRaw) && evapoRaw > 0) ? evapoRaw : null
+
       return {
         tempMax,
         tempMin,
@@ -113,6 +118,7 @@ export async function fetchFromGoogleSheets(
         solarRadiation,
         rainfall,
         source: 'google_sheets',
+        evapoPlugfield,
       }
     }
 
