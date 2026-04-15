@@ -635,12 +635,12 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
     )
   }
 
-  const COLS = '88px 38px 54px 54px 60px 54px 52px 54px 80px 56px'
+  const COLS = '88px 38px 54px 54px 54px 52px 54px 80px 56px'
 
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        {['Data', 'DAS', 'ETo', 'ETc', 'Kc', 'Chuva', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
+        {['Data', 'DAS', 'ETo', 'ETc', 'Chuva', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
           <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
       </div>
@@ -656,7 +656,6 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
             <span style={{ fontSize: 12, color: '#445566' }}>{r.das ?? '—'}</span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.etc_mm)}</span>
-            <span style={{ fontSize: 12, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.kc, 3)}</span>
             <span style={{ fontSize: 12, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall_mm)}</span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.ctda)}</span>
             <span style={{ fontSize: 12, color: cfg.color, fontFamily: 'var(--font-mono)' }}>{pct !== null ? `${fmtNum(pct, 0)}%` : '—'}</span>
@@ -1034,7 +1033,7 @@ export default function ManejoPage() {
               )}
               <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#8899aa' }}>DAS {das}</span>
               <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#8899aa' }}>
-                Fase {info.stage} · Kc {info.kc.toFixed(3)}
+                Fase {info.stage}
               </span>
               <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#8899aa', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <FlaskConical size={9} /> f = {info.fFactor.toFixed(2)}
@@ -1253,7 +1252,7 @@ export default function ManejoPage() {
                         onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'none'}
                         >
-                          LANÇAR<br/>ESFORÇO
+                          REGISTRAR<br/>MANEJO
                         </button>
                         <button style={{
                           flex: 1, background: '#00E5FF', padding: '16px',
@@ -1266,7 +1265,7 @@ export default function ManejoPage() {
                         onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'none'}
                         >
-                          REGISTRAR<br/>IRRIGAÇÃO
+                          LANÇAR<br/>IRRIGAÇÃO
                         </button>
                       </div>
                     </div>
@@ -1318,7 +1317,7 @@ export default function ManejoPage() {
                           onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
                           onMouseLeave={e => e.currentTarget.style.background = '#323236'}
                           >
-                             AJUSTAR ALVO<br/>PONTO C.C.
+                             CONFIGURAR<br/>PIVÔ
                           </button>
                         </Link>
                         <Link href="/precipitacoes" style={{ textDecoration: 'none' }}>
@@ -1330,7 +1329,7 @@ export default function ManejoPage() {
                           onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
                           onMouseLeave={e => e.currentTarget.style.background = '#323236'}
                           >
-                             CALENDÁRIO<br/>DE CHUVAS
+                             REGISTRAR<br/>CHUVAS
                           </button>
                         </Link>
                       </div>

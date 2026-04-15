@@ -107,6 +107,7 @@ export interface IrrigationSchedule {
   status: IrrigationScheduleStatus
   cancelled_reason: IrrigationCancelledReason | null
   notes: string | null
+  schedule_batch_id: string | null
   created_at: string
   updated_at: string
 }
@@ -125,6 +126,7 @@ export interface IrrigationScheduleInsert {
   status?: IrrigationScheduleStatus
   cancelled_reason?: IrrigationCancelledReason | null
   notes?: string | null
+  schedule_batch_id?: string | null
 }
 
 export type IrrigationScheduleUpdate = Partial<IrrigationScheduleInsert>
