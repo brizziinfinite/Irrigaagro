@@ -97,6 +97,7 @@ export interface IrrigationSchedule {
   company_id: string
   pivot_id: string
   season_id: string
+  sector_id: string | null
   date: string
   lamina_mm: number | null
   speed_percent: number | null
@@ -114,6 +115,7 @@ export interface IrrigationScheduleInsert {
   company_id: string
   pivot_id: string
   season_id: string
+  sector_id?: string | null
   date: string
   lamina_mm?: number | null
   speed_percent?: number | null

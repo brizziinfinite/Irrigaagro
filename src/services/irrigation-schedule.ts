@@ -67,17 +67,49 @@ export async function getScheduledIrrigationForDate(
   return data as IrrigationSchedule | null
 }
 
-/** Cria ou atualiza (upsert) um agendamento (pivot_id + date = unique) */
+/** Cria ou atualiza (upsert) um agendamento
+ *  Usa select + insert/update porque PostgREST não suporta partial unique indexes no onConflict.
+ */
 export async function upsertSchedule(
   input: IrrigationScheduleInsert,
 ): Promise<IrrigationSchedule> {
-  const { data, error } = await table()
-    .upsert({ ...input, updated_at: new Date().toISOString() }, { onConflict: 'pivot_id,date' })
-    .select()
-    .single()
+  const db = table()
 
-  if (error) throw new Error(`Falha ao salvar programação: ${error.message}`)
-  return data as IrrigationSchedule
+  // Busca registro existente pela chave natural
+  let query = db
+    .select('id')
+    .eq('pivot_id', input.pivot_id)
+    .eq('date', input.date)
+
+  if (input.sector_id != null) {
+    query = query.eq('sector_id', input.sector_id)
+  } else {
+    query = query.is('sector_id', null)
+  }
+
+  const { data: existing, error: findError } = await query.maybeSingle()
+  if (findError) throw new Error(`Falha ao buscar programação: ${findError.message}`)
+
+  const payload = { ...input, updated_at: new Date().toISOString() }
+
+  if (existing?.id) {
+    // Atualiza registro existente
+    const { data, error } = await table()
+      .update(payload)
+      .eq('id', existing.id)
+      .select()
+      .single()
+    if (error) throw new Error(`Falha ao atualizar programação: ${error.message}`)
+    return data as IrrigationSchedule
+  } else {
+    // Insere novo registro
+    const { data, error } = await table()
+      .insert(payload)
+      .select()
+      .single()
+    if (error) throw new Error(`Falha ao inserir programação: ${error.message}`)
+    return data as IrrigationSchedule
+  }
 }
 
 /** Cancela um agendamento com motivo */

@@ -1,4 +1,5 @@
 import type { Crop, DailyManagement, Farm, Pivot, Season } from '@/types/database'
+import { getManagementExternalData } from '@/services/management'
 import {
   calcADcWithExcess,
   calcCAD,
@@ -60,6 +61,108 @@ function parseOptionalNumber(value: string): number | null {
   if (!value.trim()) return null
   const parsed = Number.parseFloat(value)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+/**
+ * Projeta o ADc (mm) e % de campo até `targetDate`, partindo do último
+ * registro real de `daily_management`.
+ *
+ * Usa dados climáticos reais do banco quando disponíveis; cai para ETc
+ * média do último registro como fallback.
+ *
+ * Idêntico à lógica do dashboard (dashboard.ts linhas ~108-195) mas
+ * extraído para ser reutilizável pelo client-side (Lançamentos).
+ */
+export async function projectAdcToDate(params: {
+  lastManagement: DailyManagement | null
+  targetDate: string
+  crop: Crop
+  season: Season
+  farm: Farm
+  pivot: Pivot | null
+  history: DailyManagement[]
+}): Promise<{ adcMm: number; pct: number }> {
+  const { lastManagement, targetDate, crop, season, farm, pivot, history } = params
+
+  const das = calcDAS(season.planting_date!, targetDate)
+  const stageInfo = getStageInfoForDas(crop, das)
+  const CC = Number(pivot?.field_capacity ?? season.field_capacity ?? 32)
+  const PM = Number(pivot?.wilting_point  ?? season.wilting_point  ?? 14)
+  const Ds = Number(pivot?.bulk_density   ?? season.bulk_density   ?? 1.4)
+  const ctaToday = calcCTA(CC, PM, Ds, stageInfo.rootDepthCm)
+
+  if (!lastManagement?.ctda) {
+    // Sem histórico: parte do ADc inicial da safra
+    const adcMm = ctaToday * ((season.initial_adc_percent ?? 100) / 100)
+    const pct   = season.initial_adc_percent ?? 100
+    return { adcMm, pct }
+  }
+
+  if (lastManagement.date === targetDate) {
+    return {
+      adcMm: lastManagement.ctda,
+      pct:   lastManagement.field_capacity_percent ?? (ctaToday > 0 ? (lastManagement.ctda / ctaToday) * 100 : 0),
+    }
+  }
+
+  // Avança dia a dia com dados climáticos reais
+  const lastDate = lastManagement.date
+  const daysSinceRecord = Math.max(1, Math.round(
+    (new Date(targetDate + 'T12:00:00').getTime() - new Date(lastDate + 'T12:00:00').getTime()) / 86400000
+  ))
+  const daysToProcess = Math.min(daysSinceRecord, 14)
+  let runningAdc = lastManagement.ctda
+  let runningHistory = [...history]
+
+  const context = { season, farm, pivot, crop }
+
+  for (let d = 1; d <= daysToProcess; d++) {
+    const gapDate = new Date(lastDate + 'T12:00:00')
+    gapDate.setDate(gapDate.getDate() + d)
+    const gapDateStr = gapDate.toISOString().split('T')[0]
+
+    try {
+      const externalData = await getManagementExternalData(farm.id, pivot?.id ?? null, gapDateStr, pivot)
+      const climateSnapshot = externalData.weather ?? externalData.geolocationWeather
+
+      if (climateSnapshot) {
+        const result = computeResolvedManagementBalance({
+          context,
+          history: runningHistory,
+          date: gapDateStr,
+          tmax:      climateSnapshot.temp_max          != null ? String(climateSnapshot.temp_max)          : '',
+          tmin:      climateSnapshot.temp_min          != null ? String(climateSnapshot.temp_min)          : '',
+          humidity:  climateSnapshot.humidity_percent  != null ? String(climateSnapshot.humidity_percent)  : '',
+          wind:      climateSnapshot.wind_speed_ms     != null ? String(climateSnapshot.wind_speed_ms)     : '',
+          radiation: climateSnapshot.solar_radiation_wm2 != null ? String(climateSnapshot.solar_radiation_wm2) : '',
+          rainfall:    '',
+          actualDepth: '',
+          actualSpeed: '',
+          externalData,
+        })
+        if (result) {
+          runningAdc = result.adcNew
+          runningHistory = [
+            { ...lastManagement, date: gapDateStr, ctda: result.adcNew, field_capacity_percent: result.fieldCapacityPercent },
+            ...runningHistory,
+          ]
+          continue
+        }
+      }
+    } catch {
+      // fallback silencioso
+    }
+
+    // Fallback: usa ETc média do último registro
+    const avgEtc = lastManagement.etc_mm ?? 3
+    const gapDas = calcDAS(season.planting_date!, gapDateStr)
+    const gapStage = getStageInfoForDas(crop, gapDas)
+    const ctaGap = calcCTA(CC, PM, Ds, gapStage.rootDepthCm)
+    runningAdc = Math.max(0, Math.min(runningAdc - avgEtc, ctaGap))
+  }
+
+  const pct = ctaToday > 0 ? (runningAdc / ctaToday) * 100 : 0
+  return { adcMm: runningAdc, pct }
 }
 
 export function computeResolvedManagementBalance(

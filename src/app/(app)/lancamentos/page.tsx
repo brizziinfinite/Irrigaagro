@@ -12,14 +12,15 @@ import {
   upsertSchedule,
   cancelSchedule,
 } from '@/services/irrigation-schedule'
-import type { IrrigationSchedule, IrrigationCancelledReason, PivotSpeedEntry } from '@/types/database'
-import { calcDAS } from '@/lib/calculations/management-balance'
+import { listSectorsByPivotId } from '@/services/pivot-sectors'
+import type { IrrigationSchedule, IrrigationCancelledReason, PivotSpeedEntry, PivotSector } from '@/types/database'
+import { calcDAS, projectAdcToDate } from '@/lib/calculations/management-balance'
 import {
   getStageInfoForDas, calcCTA, calcCAD, calcEtc, calcADc,
 } from '@/lib/water-balance'
 import type { DailyManagement } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
-import { ClipboardList, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { ClipboardList, ChevronDown, ChevronUp, X, Copy } from 'lucide-react'
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -55,10 +56,36 @@ function entryFromTable(table: PivotSpeedEntry[], laminaMm: number): PivotSpeedE
   return candidates.length > 0 ? candidates[0] : sorted[0]
 }
 
+/** Dado um speed%, encontra a entrada mais próxima na tabela de velocidade */
+function entryFromSpeed(table: PivotSpeedEntry[], speedPct: number): PivotSpeedEntry | null {
+  if (!table.length || speedPct <= 0) return null
+  return table.reduce((best, cur) =>
+    Math.abs(cur.speed_percent - speedPct) < Math.abs(best.speed_percent - speedPct) ? cur : best
+  )
+}
+
 function calcEndTime(startTime: string, durationHours: number): string {
   if (!startTime || !durationHours) return ''
   const [hStr, mStr] = startTime.split(':')
   const totalMin = parseInt(hStr) * 60 + parseInt(mStr) + Math.round(durationHours * 60)
+  const h = Math.floor(totalMin / 60) % 24
+  const m = totalMin % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+/** Fração do setor em relação a 360° (ex: 0→180 = 0.5). Sem ângulos = 1 (volta completa) */
+function sectorFraction(sector: PivotSector | null): number {
+  if (!sector || sector.angle_start == null || sector.angle_end == null) return 1
+  let deg = sector.angle_end - sector.angle_start
+  if (deg <= 0) deg += 360
+  return deg / 360
+}
+
+/** Adiciona horas a um horário HH:MM — pode passar da meia-noite */
+function addHoursToTime(startTime: string, hours: number): string {
+  if (!startTime || !hours) return ''
+  const [hStr, mStr] = startTime.split(':')
+  const totalMin = parseInt(hStr) * 60 + parseInt(mStr) + Math.round(hours * 60)
   const h = Math.floor(totalMin / 60) % 24
   const m = totalMin % 60
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
@@ -77,37 +104,68 @@ interface DayEntry {
 
 type PivotGrid = Record<string, DayEntry> // date → entry
 
+// Para pivôs com setores: sectorId → date → DayEntry
+// sectorId '' (string vazia) representa o pivô completo (sem setores)
+type SectorGrid = Record<string, PivotGrid> // sectorId → PivotGrid
+
 interface PivotMeta {
   context: ManagementSeasonContext
   speedTable: PivotSpeedEntry[]
+  sectors: PivotSector[]       // setores do pivô (vazio = pivô sem setores)
   history: DailyManagement[]
-  currentPct: number | null   // % hoje (do último registro real)
+  currentPct: number | null    // % hoje (projetado com dados climáticos reais)
+  currentAdcMm: number         // ADc mm hoje (projetado, usado como ponto de partida do grid)
   ctaMm: number
   cadMm: number
 }
 
 // ─── Cálculo de % para um dia (acumulando grid dos dias anteriores) ──────────
 
-function adcForDate(meta: PivotMeta, date: string, pivotGrid: PivotGrid): number {
-  const { context, history, ctaMm } = meta
+function adcForDate(meta: PivotMeta, date: string, pivotGrid: PivotGrid, today: string): number {
+  const { context, history, ctaMm, currentAdcMm } = meta
   const { season, crop } = context
   if (ctaMm === 0) return 0
 
+  // Para "hoje" ou datas futuras, parte do ADc projetado (já calculado com dados climáticos reais).
+  // Para datas passadas no histórico (não deve acontecer no grid normal), usa o histórico.
+  const useProjected = date >= today
+  if (useProjected) {
+    const lastEto = history.find(h => h.eto_mm != null)?.eto_mm ?? 5
+    const CC = context.pivot?.field_capacity ?? season.field_capacity ?? 32
+    const PM = context.pivot?.wilting_point  ?? season.wilting_point  ?? 14
+    const Ds = context.pivot?.bulk_density   ?? season.bulk_density   ?? 1.4
+    let adc = currentAdcMm
+    let cursor = today
+    while (cursor < date) {
+      const das = season.planting_date ? calcDAS(season.planting_date, cursor) : 1
+      const stageInfo = crop ? getStageInfoForDas(crop, das) : null
+      const dasPrev = das - 1
+      const stageInfoPrev = crop && dasPrev > 0 ? getStageInfoForDas(crop, dasPrev) : stageInfo
+      const ctaCursor = stageInfo ? calcCTA(CC, PM, Ds, stageInfo.rootDepthCm) : ctaMm
+      const ctaPrev   = stageInfoPrev ? calcCTA(CC, PM, Ds, stageInfoPrev.rootDepthCm) : ctaCursor
+      const etc = calcEtc(lastEto, stageInfo?.kc ?? 1)
+      const cell = pivotGrid[cursor]
+      adc = calcADc(adc, cell ? (parseNum(cell.rainfall) ?? 0) : 0, cell ? (parseNum(cell.lamina) ?? 0) : 0, etc, ctaCursor, ctaPrev)
+      cursor = addDays(cursor, 1)
+    }
+    return adc
+  }
+
+  // Datas passadas: usa histórico real (fallback com lastEto fixo)
   const lastHistoric = history.find(h => h.date < date)
   let adc = lastHistoric?.ctda ?? (ctaMm * ((season.initial_adc_percent ?? 100) / 100))
   const lastEto = history.find(h => h.eto_mm != null)?.eto_mm ?? 5
-
   let cursor = lastHistoric ? addDays(lastHistoric.date, 1) : (season.planting_date ?? date)
   while (cursor < date) {
     const das = season.planting_date ? calcDAS(season.planting_date, cursor) : 1
     const stageInfo = crop ? getStageInfoForDas(crop, das) : null
     const dasPrevCursor = das - 1
     const stageInfoPrevCursor = crop && dasPrevCursor > 0 ? getStageInfoForDas(crop, dasPrevCursor) : stageInfo
-    const fieldCapacity = context.pivot?.field_capacity ?? context.season.field_capacity ?? 32
-    const wiltingPoint = context.pivot?.wilting_point ?? context.season.wilting_point ?? 14
-    const bulkDensity = context.pivot?.bulk_density ?? context.season.bulk_density ?? 1.4
-    const ctaCursor = stageInfo ? calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfo.rootDepthCm) : ctaMm
-    const ctaPrevCursor = stageInfoPrevCursor ? calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrevCursor.rootDepthCm) : ctaCursor
+    const CC = context.pivot?.field_capacity ?? season.field_capacity ?? 32
+    const PM = context.pivot?.wilting_point  ?? season.wilting_point  ?? 14
+    const Ds = context.pivot?.bulk_density   ?? season.bulk_density   ?? 1.4
+    const ctaCursor = stageInfo ? calcCTA(CC, PM, Ds, stageInfo.rootDepthCm) : ctaMm
+    const ctaPrevCursor = stageInfoPrevCursor ? calcCTA(CC, PM, Ds, stageInfoPrevCursor.rootDepthCm) : ctaCursor
     const etc = calcEtc(lastEto, stageInfo?.kc ?? 1)
     const cell = pivotGrid[cursor]
     adc = calcADc(adc, cell ? (parseNum(cell.rainfall) ?? 0) : 0, cell ? (parseNum(cell.lamina) ?? 0) : 0, etc, ctaCursor, ctaPrevCursor)
@@ -116,16 +174,27 @@ function adcForDate(meta: PivotMeta, date: string, pivotGrid: PivotGrid): number
   return adc
 }
 
-function pctForDate(meta: PivotMeta, date: string, pivotGrid: PivotGrid): number | null {
-  if (meta.ctaMm === 0) return null
-  return (adcForDate(meta, date, pivotGrid) / meta.ctaMm) * 100
+function pctForDate(meta: PivotMeta, date: string, pivotGrid: PivotGrid, today: string): number | null {
+  const { context } = meta
+  const { season, crop } = context
+  if (!crop || !season.planting_date) return meta.ctaMm > 0
+    ? (adcForDate(meta, date, pivotGrid, today) / meta.ctaMm) * 100
+    : null
+  const das = calcDAS(season.planting_date, date)
+  const stageInfo = getStageInfoForDas(crop, das)
+  const CC = context.pivot?.field_capacity ?? season.field_capacity ?? 32
+  const PM = context.pivot?.wilting_point  ?? season.wilting_point  ?? 14
+  const Ds = context.pivot?.bulk_density   ?? season.bulk_density   ?? 1.4
+  const ctaForDate = calcCTA(CC, PM, Ds, stageInfo.rootDepthCm)
+  if (ctaForDate === 0) return null
+  return (adcForDate(meta, date, pivotGrid, today) / ctaForDate) * 100
 }
 
-function projectedPct(meta: PivotMeta, date: string, pivotGrid: PivotGrid): number | null {
+function projectedPct(meta: PivotMeta, date: string, pivotGrid: PivotGrid, today: string): number | null {
   const { context, ctaMm } = meta
   const { season, crop } = context
   if (!crop || ctaMm === 0) return null
-  const adc = adcForDate(meta, date, pivotGrid)
+  const adc = adcForDate(meta, date, pivotGrid, today)
   const das = season.planting_date ? calcDAS(season.planting_date, date) : 1
   const stageInfo = getStageInfoForDas(crop, das)
   const dasPrevProj = das - 1
@@ -328,6 +397,198 @@ function CancelModal({
   )
 }
 
+// ─── Célula de dia para um setor ─────────────────────────────
+
+function DayCell({
+  date, today, entry, schedule, speedTable, threshold, meta, sectorGrid, sectorId, sector,
+  onUpdate, onCancel,
+}: {
+  date: string
+  today: string
+  entry: DayEntry
+  schedule: IrrigationSchedule | undefined
+  speedTable: PivotSpeedEntry[]
+  threshold: number
+  meta: PivotMeta
+  sectorGrid: PivotGrid
+  sectorId: string
+  sector: PivotSector | null
+  onUpdate: (date: string, field: keyof DayEntry, value: string | boolean) => void
+  onCancel: (schedule: IrrigationSchedule) => void
+}) {
+  const isToday    = date === today
+  const isPast     = date < today
+  const isCancelled = schedule?.status === 'cancelled'
+  const isPlanned   = schedule?.status === 'planned'
+  const dayPct  = pctForDate(meta, date, sectorGrid, today)
+  const projPct = projectedPct(meta, date, sectorGrid, today)
+  const hasEntry = entry.lamina !== '' || entry.rainfall !== ''
+  const projColor = pctColor(projPct, threshold)
+
+  // Fração do ângulo do setor: 180°/360° = 0.5, volta completa = 1
+  const fraction = sectorFraction(sector)
+
+  function sectorDuration(fullDurationHours: number): number {
+    return fullDurationHours * fraction
+  }
+
+  function handleLamina(v: string) {
+    onUpdate(date, 'lamina', v)
+    const mm = parseNum(v)
+    if (mm != null && mm > 0 && speedTable.length > 0) {
+      const te = entryFromTable(speedTable, mm)
+      if (te) {
+        onUpdate(date, 'speed', String(te.speed_percent))
+        onUpdate(date, 'speedAuto', true)
+        const startTime = entry.startTime
+        if (startTime) onUpdate(date, 'endTime', addHoursToTime(startTime, sectorDuration(te.duration_hours)))
+      }
+    } else if (v === '') {
+      onUpdate(date, 'speed', '')
+      onUpdate(date, 'speedAuto', true)
+      onUpdate(date, 'endTime', '')
+    }
+  }
+
+  function handleSpeed(v: string) {
+    onUpdate(date, 'speed', v)
+    const pct = parseNum(v)
+    if (pct != null && pct > 0 && speedTable.length > 0) {
+      const te = entryFromSpeed(speedTable, pct)
+      if (te) {
+        onUpdate(date, 'lamina', String(te.water_depth_mm))
+        onUpdate(date, 'speedAuto', true)
+        const startTime = entry.startTime
+        if (startTime) onUpdate(date, 'endTime', addHoursToTime(startTime, sectorDuration(te.duration_hours)))
+      }
+    } else {
+      onUpdate(date, 'speedAuto', false)
+    }
+  }
+
+  function handleStartTime(v: string) {
+    onUpdate(date, 'startTime', v)
+    if (!v) return
+    let fullDuration: number | null = null
+    const mm = parseNum(entry.lamina)
+    if (mm != null && mm > 0 && speedTable.length > 0) {
+      const te = entryFromTable(speedTable, mm)
+      fullDuration = te?.duration_hours ?? null
+    }
+    if (fullDuration == null) {
+      const pct = parseNum(entry.speed)
+      if (pct != null && pct > 0 && speedTable.length > 0) {
+        const te = entryFromSpeed(speedTable, pct)
+        fullDuration = te?.duration_hours ?? null
+      }
+    }
+    if (fullDuration != null) onUpdate(date, 'endTime', addHoursToTime(v, sectorDuration(fullDuration)))
+  }
+
+  return (
+    <div style={{
+      background: isCancelled
+        ? 'rgba(239,68,68,0.05)'
+        : isToday
+          ? 'rgba(0,147,208,0.08)'
+          : 'rgba(255,255,255,0.02)',
+      border: `1px solid ${isCancelled
+        ? 'rgba(239,68,68,0.2)'
+        : isToday
+          ? 'rgba(0,147,208,0.2)'
+          : 'rgba(255,255,255,0.06)'}`,
+      borderRadius: 10,
+      padding: '10px 8px',
+      display: 'flex', flexDirection: 'column', gap: 6,
+      opacity: isPast && !isToday ? 0.65 : 1,
+    }}>
+      {/* Dia header — só na primeira linha de setor (controlado externamente via prop) */}
+      <div style={{ textAlign: 'center', marginBottom: 2 }}>
+        <p style={{ fontSize: 9, fontWeight: 700, color: isToday ? '#0093D0' : '#445566', margin: 0, textTransform: 'uppercase' }}>
+          {isToday ? 'Hoje' : fmtWeekday(date)}
+        </p>
+        <p style={{ fontSize: 12, fontWeight: 700, color: isToday ? '#e2e8f0' : '#667788', margin: 0, fontFamily: 'var(--font-mono)' }}>
+          {fmtShort(date)}
+        </p>
+      </div>
+
+      {/* Barra d'água + % */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
+        <WaterBar
+          pct={dayPct}
+          projPct={hasEntry ? projPct : null}
+          threshold={threshold}
+          height={52}
+          width={16}
+        />
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ fontSize: 9, color: '#445566', margin: '0 0 1px', textTransform: 'uppercase', lineHeight: 1 }}>CC</p>
+          <span style={{ fontSize: 13, fontWeight: 800, color: pctColor(dayPct, threshold), fontFamily: 'var(--font-mono)', lineHeight: 1, display: 'block' }}>
+            {dayPct != null ? `${Math.round(dayPct)}%` : '—'}
+          </span>
+          {hasEntry && projPct != null && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: projColor, fontFamily: 'var(--font-mono)', display: 'block', marginTop: 1 }}>
+              →{Math.round(projPct)}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Campos */}
+      {isCancelled ? (
+        <div style={{ textAlign: 'center', padding: '8px 0' }}>
+          <p style={{ fontSize: 10, color: '#ef4444', margin: 0, fontWeight: 700 }}>Cancelado</p>
+          <p style={{ fontSize: 9, color: '#556677', margin: '2px 0 0' }}>
+            {schedule?.cancelled_reason ?? ''}
+          </p>
+        </div>
+      ) : (
+        <>
+          <MiniField label="Chuva mm" value={entry.rainfall}
+            onChange={v => onUpdate(date, 'rainfall', v)}
+            color="rgba(255,255,255,0.7)" />
+          <MiniField label="Lâmina mm" value={entry.lamina}
+            onChange={handleLamina}
+            color="#0093D0" bg="rgba(0,147,208,0.10)" border="rgba(0,147,208,0.25)" bold />
+          <MiniField
+            label={entry.speedAuto && entry.speed ? 'Vel % ↺' : 'Vel %'}
+            value={entry.speed}
+            onChange={handleSpeed}
+            color={entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa'}
+            bg={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.04)'}
+            border={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.08)'}
+          />
+          {/* Aviso quando não há tabela de velocidade cadastrada */}
+          {speedTable.length === 0 && (
+            <p style={{ fontSize: 8, color: '#556677', margin: '-2px 0 0', textAlign: 'center', lineHeight: 1.3 }}>
+              Cadastre tabela de vel. nos Pivôs
+            </p>
+          )}
+          <MiniField label="Início" type="time" value={entry.startTime}
+            onChange={handleStartTime}
+            color="#e2e8f0" bg="rgba(255,255,255,0.06)" border="rgba(255,255,255,0.12)" />
+          <MiniField label="Fim" type="time" value={entry.endTime}
+            readOnly color="#f59e0b" />
+
+          {/* Botão cancelar — só dias com schedule planned */}
+          {isPlanned && !isPast && (
+            <button
+              onClick={() => onCancel(schedule!)}
+              style={{
+                marginTop: 2, width: '100%', padding: '4px 0',
+                borderRadius: 5, border: '1px solid rgba(239,68,68,0.25)',
+                background: 'rgba(239,68,68,0.07)', color: '#ef4444',
+                fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              }}>
+              Cancelar
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Card de um pivô ─────────────────────────────────────────
 
 function PivotCard({
@@ -336,10 +597,10 @@ function PivotCard({
   meta: PivotMeta
   today: string
   schedules: IrrigationSchedule[]
-  onSave: (entries: { date: string; entry: DayEntry }[]) => Promise<void>
+  onSave: (entries: { date: string; sectorId: string | null; entry: DayEntry }[]) => Promise<void>
   onCancel: (schedule: IrrigationSchedule) => void
 }) {
-  const { context, ctaMm } = meta
+  const { context, ctaMm, sectors, speedTable } = meta
   const { pivot, farm, season, crop } = context
   const threshold = pivot?.alert_threshold_percent ?? 70
   const name = pivot?.name ?? season.name
@@ -347,18 +608,34 @@ function PivotCard({
   const [expanded, setExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Grid: 7 dias a partir de hoje
+  // IDs dos setores: se sem setores, usa [''] (string vazia = pivô completo)
+  const sectorIds: string[] = sectors.length > 0
+    ? sectors.map(s => s.id)
+    : ['']
+
+  // Grid por setor: sectorId → date → DayEntry
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))
   const emptyEntry = (): DayEntry => ({ rainfall: '', lamina: '', speed: '', speedAuto: false, startTime: '', endTime: '' })
-  const [grid, setGrid] = useState<PivotGrid>(() => Object.fromEntries(days.map(d => [d, emptyEntry()])))
 
-  // Pré-preencher grid com schedules existentes
+  const [sectorGrids, setSectorGrids] = useState<SectorGrid>(() =>
+    Object.fromEntries(sectorIds.map(sid => [
+      sid,
+      Object.fromEntries(days.map(d => [d, emptyEntry()])),
+    ]))
+  )
+
+  // Pré-preencher grids com schedules existentes
   useEffect(() => {
-    setGrid(prev => {
-      const next = { ...prev }
+    setSectorGrids(prev => {
+      const next: SectorGrid = {}
+      for (const sid of sectorIds) {
+        next[sid] = { ...(prev[sid] ?? Object.fromEntries(days.map(d => [d, emptyEntry()]))) }
+      }
       for (const s of schedules) {
-        if (next[s.date] !== undefined && s.status !== 'cancelled') {
-          next[s.date] = {
+        const sid = s.sector_id ?? ''
+        if (!next[sid]) continue
+        if (next[sid][s.date] !== undefined && s.status !== 'cancelled') {
+          next[sid][s.date] = {
             rainfall:  s.rainfall_mm  != null ? String(s.rainfall_mm)  : '',
             lamina:    s.lamina_mm    != null ? String(s.lamina_mm)    : '',
             speed:     s.speed_percent != null ? String(s.speed_percent) : '',
@@ -370,56 +647,91 @@ function PivotCard({
       }
       return next
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schedules])
 
-  function updateDay(date: string, field: keyof DayEntry, value: string | boolean) {
-    setGrid(prev => ({ ...prev, [date]: { ...prev[date], [field]: value } }))
+  function updateDayInSector(sectorId: string, date: string, field: keyof DayEntry, value: string | boolean) {
+    setSectorGrids(prev => ({
+      ...prev,
+      [sectorId]: {
+        ...prev[sectorId],
+        [date]: { ...prev[sectorId]?.[date], [field]: value },
+      },
+    }))
   }
 
-  function handleLamina(date: string, v: string) {
-    updateDay(date, 'lamina', v)
-    const mm = parseNum(v)
-    if (mm != null && mm > 0 && meta.speedTable.length > 0) {
-      const te = entryFromTable(meta.speedTable, mm)
-      if (te) {
-        updateDay(date, 'speed', String(te.speed_percent))
-        updateDay(date, 'speedAuto', true)
-        const startTime = grid[date]?.startTime
-        if (startTime) updateDay(date, 'endTime', calcEndTime(startTime, te.duration_hours))
+  /** Replica programação do primeiro setor para os seguintes,
+   *  encadeando horários: início do setor N+1 = fim do setor N */
+  function replicateFirstSector() {
+    if (sectorIds.length < 2) return
+    const source = sectorGrids[sectorIds[0]] ?? {}
+    setSectorGrids(prev => {
+      const next = { ...prev }
+      for (let i = 1; i < sectorIds.length; i++) {
+        const prevSectorGrid = next[sectorIds[i - 1]] ?? source
+        const thisSector = sectors.find(s => s.id === sectorIds[i]) ?? null
+        const newGrid: PivotGrid = {}
+        for (const date of days) {
+          const srcEntry = source[date] ?? emptyEntry()
+          const prevEntry = prevSectorGrid[date]
+          // Início deste setor = fim do setor anterior
+          const newStart = prevEntry?.endTime ?? srcEntry.startTime
+          // Recalcular fim com ângulo deste setor
+          let newEnd = ''
+          if (newStart) {
+            const mm = parseNum(srcEntry.lamina)
+            let fullDuration: number | null = null
+            if (mm != null && mm > 0 && speedTable.length > 0) {
+              const te = entryFromTable(speedTable, mm)
+              fullDuration = te?.duration_hours ?? null
+            }
+            if (fullDuration == null) {
+              const pct = parseNum(srcEntry.speed)
+              if (pct != null && pct > 0 && speedTable.length > 0) {
+                const te = entryFromSpeed(speedTable, pct)
+                fullDuration = te?.duration_hours ?? null
+              }
+            }
+            if (fullDuration != null) {
+              newEnd = addHoursToTime(newStart, fullDuration * sectorFraction(thisSector))
+            }
+          }
+          newGrid[date] = { ...srcEntry, startTime: newStart, endTime: newEnd }
+        }
+        next[sectorIds[i]] = newGrid
       }
-    } else if (v === '') {
-      updateDay(date, 'speed', '')
-      updateDay(date, 'speedAuto', true)
-      updateDay(date, 'endTime', '')
-    }
-  }
-
-  function handleStartTime(date: string, v: string) {
-    updateDay(date, 'startTime', v)
-    const mm = parseNum(grid[date]?.lamina ?? '')
-    if (mm != null && mm > 0 && meta.speedTable.length > 0) {
-      const te = entryFromTable(meta.speedTable, mm)
-      if (te && v) updateDay(date, 'endTime', calcEndTime(v, te.duration_hours))
-    }
+      return next
+    })
   }
 
   async function handleSave() {
-    const filled = days
-      .map(d => ({ date: d, entry: grid[d] }))
-      .filter(({ entry }) => entry.lamina !== '' || entry.rainfall !== '')
-    if (filled.length === 0) return
+    const entries: { date: string; sectorId: string | null; entry: DayEntry }[] = []
+    for (const sid of sectorIds) {
+      const grid = sectorGrids[sid] ?? {}
+      for (const d of days) {
+        const entry = grid[d]
+        if (entry && (entry.lamina !== '' || entry.rainfall !== '')) {
+          entries.push({ date: d, sectorId: sid === '' ? null : sid, entry })
+        }
+      }
+    }
+    if (entries.length === 0) return
     setSaving(true)
-    try { await onSave(filled) } finally { setSaving(false) }
+    try { await onSave(entries) } finally { setSaving(false) }
   }
 
   // Dados da fase atual
   const das = season.planting_date ? calcDAS(season.planting_date, today) : 1
   const stageInfo = crop ? getStageInfoForDas(crop, das) : null
-  const todayPct   = pctForDate(meta, today, grid)
+  // % campo: usa grid do primeiro setor para o card header
+  const firstGrid = sectorGrids[sectorIds[0]] ?? {}
+  const todayPct   = pctForDate(meta, today, firstGrid, today)
   const todayColor = pctColor(todayPct, threshold)
   const scheduledCount = days.filter(d =>
     schedules.some(sc => sc.date === d && sc.status === 'planned')
   ).length
+
+  const hasSectors = sectors.length > 0
 
   return (
     <div style={{
@@ -445,6 +757,15 @@ function PivotCard({
                 borderRadius: 99, padding: '1px 7px',
               }}>
                 {scheduledCount} prog.
+              </span>
+            )}
+            {hasSectors && (
+              <span style={{
+                fontSize: 9, fontWeight: 700, color: '#22c55e',
+                background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.22)',
+                borderRadius: 99, padding: '1px 7px',
+              }}>
+                {sectors.length} setores
               </span>
             )}
           </div>
@@ -484,128 +805,92 @@ function PivotCard({
         </div>
       </div>
 
-      {/* ── Conteúdo expandido: 7 dias ── */}
+      {/* ── Conteúdo expandido ── */}
       {expanded && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '14px 16px 16px' }}>
-          {/* Grid de dias */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 14 }}>
-            {days.map(date => {
-              const isToday = date === today
-              const isPast  = date < today
-              const entry   = grid[date]
-              const schedule = schedules.find(s => s.date === date)
-              const isCancelled = schedule?.status === 'cancelled'
-              const isPlanned   = schedule?.status === 'planned'
-              const dayPct  = pctForDate(meta, date, grid)
-              const projPct = projectedPct(meta, date, grid)
-              const hasEntry = entry.lamina !== '' || entry.rainfall !== ''
-              const projColor = pctColor(projPct, threshold)
-
-              return (
-                <div key={date} style={{
-                  background: isCancelled
-                    ? 'rgba(239,68,68,0.05)'
-                    : isToday
-                      ? 'rgba(0,147,208,0.08)'
-                      : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${isCancelled
-                    ? 'rgba(239,68,68,0.2)'
-                    : isToday
-                      ? 'rgba(0,147,208,0.2)'
-                      : 'rgba(255,255,255,0.06)'}`,
-                  borderRadius: 10,
-                  padding: '10px 8px',
-                  display: 'flex', flexDirection: 'column', gap: 6,
-                  opacity: isPast && !isToday ? 0.65 : 1,
+          {/* Botão replicar — só exibido quando há >1 setor */}
+          {hasSectors && sectors.length > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+              <button
+                onClick={replicateFirstSector}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '6px 12px', borderRadius: 8,
+                  border: '1px solid rgba(34,197,94,0.25)',
+                  background: 'rgba(34,197,94,0.08)',
+                  color: '#22c55e', fontSize: 11, fontWeight: 700, cursor: 'pointer',
                 }}>
-                  {/* Dia header */}
-                  <div style={{ textAlign: 'center', marginBottom: 2 }}>
-                    <p style={{ fontSize: 9, fontWeight: 700, color: isToday ? '#0093D0' : '#445566', margin: 0, textTransform: 'uppercase' }}>
-                      {isToday ? 'Hoje' : fmtWeekday(date)}
-                    </p>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: isToday ? '#e2e8f0' : '#667788', margin: 0, fontFamily: 'var(--font-mono)' }}>
-                      {fmtShort(date)}
-                    </p>
-                  </div>
+                <Copy size={12} />
+                Replicar {sectors[0].name} para todos
+              </button>
+            </div>
+          )}
 
-                  {/* Barra d'água + % */}
-                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
-                    <WaterBar
-                      pct={dayPct}
-                      projPct={hasEntry ? projPct : null}
-                      threshold={threshold}
-                      height={52}
-                      width={16}
-                    />
-                    <div style={{ textAlign: 'left' }}>
-                      <p style={{ fontSize: 9, color: '#445566', margin: '0 0 1px', textTransform: 'uppercase', lineHeight: 1 }}>CC</p>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: pctColor(dayPct, threshold), fontFamily: 'var(--font-mono)', lineHeight: 1, display: 'block' }}>
-                        {dayPct != null ? `${Math.round(dayPct)}%` : '—'}
-                      </span>
-                      {hasEntry && projPct != null && (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: projColor, fontFamily: 'var(--font-mono)', display: 'block', marginTop: 1 }}>
-                          →{Math.round(projPct)}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
+          {/* Grade por setor */}
+          {sectorIds.map((sid, sIdx) => {
+            const sector = sectors.find(s => s.id === sid) ?? null
+            const grid = sectorGrids[sid] ?? {}
+            const schedulesForSector = schedules.filter(s => (s.sector_id ?? '') === sid)
 
-                  {/* Campos */}
-                  {isCancelled ? (
-                    <div style={{ textAlign: 'center', padding: '8px 0' }}>
-                      <p style={{ fontSize: 10, color: '#ef4444', margin: 0, fontWeight: 700 }}>Cancelado</p>
-                      <p style={{ fontSize: 9, color: '#556677', margin: '2px 0 0' }}>
-                        {schedule?.cancelled_reason ?? ''}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <MiniField label="Chuva mm" value={entry.rainfall}
-                        onChange={v => updateDay(date, 'rainfall', v)}
-                        color="rgba(255,255,255,0.7)" />
-                      <MiniField label="Lâmina mm" value={entry.lamina}
-                        onChange={v => handleLamina(date, v)}
-                        color="#0093D0" bg="rgba(0,147,208,0.10)" border="rgba(0,147,208,0.25)" bold />
-                      <MiniField
-                        label={entry.speedAuto && entry.speed ? 'Vel % ↺' : 'Vel %'}
-                        value={entry.speed}
-                        onChange={v => { updateDay(date, 'speed', v); updateDay(date, 'speedAuto', false) }}
-                        color={entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa'}
-                        bg={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.04)'}
-                        border={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.08)'}
+            return (
+              <div key={sid} style={{ marginBottom: sIdx < sectorIds.length - 1 ? 16 : 0 }}>
+                {/* Cabeçalho do setor */}
+                {hasSectors && sector && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
+                    padding: '4px 0',
+                  }}>
+                    <div style={{
+                      width: 6, height: 6, borderRadius: '50%', background: '#22c55e', flexShrink: 0,
+                    }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Setor {sector.name}
+                    </span>
+                    {sector.area_ha != null && (
+                      <span style={{ fontSize: 10, color: '#445566' }}>{sector.area_ha.toFixed(1)} ha</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Grid de 7 dias */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
+                  {days.map(date => {
+                    const entry = grid[date] ?? emptyEntry()
+                    const schedule = schedulesForSector.find(s => s.date === date)
+                    return (
+                      <DayCell
+                        key={date}
+                        date={date}
+                        today={today}
+                        entry={entry}
+                        schedule={schedule}
+                        speedTable={speedTable}
+                        threshold={threshold}
+                        meta={meta}
+                        sectorGrid={grid}
+                        sectorId={sid}
+                        sector={sector}
+                        onUpdate={(d, field, value) => updateDayInSector(sid, d, field, value)}
+                        onCancel={onCancel}
                       />
-                      <MiniField label="Início" type="time" value={entry.startTime}
-                        onChange={v => handleStartTime(date, v)}
-                        color="#e2e8f0" bg="rgba(255,255,255,0.06)" border="rgba(255,255,255,0.12)" />
-                      <MiniField label="Fim" type="time" value={entry.endTime}
-                        readOnly color="#f59e0b" />
-
-                      {/* Botão cancelar — só dias com schedule planned */}
-                      {isPlanned && !isPast && (
-                        <button
-                          onClick={() => onCancel(schedule!)}
-                          style={{
-                            marginTop: 2, width: '100%', padding: '4px 0',
-                            borderRadius: 5, border: '1px solid rgba(239,68,68,0.25)',
-                            background: 'rgba(239,68,68,0.07)', color: '#ef4444',
-                            fontSize: 10, fontWeight: 700, cursor: 'pointer',
-                          }}>
-                          Cancelar
-                        </button>
-                      )}
-                    </>
-                  )}
+                    )
+                  })}
                 </div>
-              )
-            })}
-          </div>
+
+                {/* Separador entre setores */}
+                {hasSectors && sIdx < sectorIds.length - 1 && (
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', marginTop: 12 }} />
+                )}
+              </div>
+            )
+          })}
 
           {/* Botão Salvar */}
           <button
             onClick={handleSave}
             disabled={saving}
             style={{
-              width: '100%', padding: '12px 0', borderRadius: 10, border: 'none',
+              width: '100%', marginTop: 14, padding: '12px 0', borderRadius: 10, border: 'none',
               background: saving ? 'rgba(0,147,208,0.4)' : 'linear-gradient(135deg, #0093D0 0%, #0070a8 100%)',
               color: '#fff', fontSize: 14, fontWeight: 800, cursor: saving ? 'wait' : 'pointer',
               boxShadow: '0 2px 16px rgba(0,147,208,0.3)',
@@ -645,10 +930,12 @@ export default function LancamentosPage() {
       const contexts = await listActiveManagementSeasonContexts(undefined, company.id)
 
       const metaList: PivotMeta[] = await Promise.all(contexts.map(async ctx => {
-        const history = await listDailyManagementBySeason(ctx.season.id)
-        const { data: speedRows } = await (supabase as any)
-          .from('pivot_speed_table').select('*').eq('pivot_id', ctx.pivot?.id ?? '')
-        const speedTable: PivotSpeedEntry[] = speedRows ?? []
+        const [history, speedRows, sectors] = await Promise.all([
+          listDailyManagementBySeason(ctx.season.id),
+          (supabase as any).from('pivot_speed_table').select('*').eq('pivot_id', ctx.pivot?.id ?? ''),
+          ctx.pivot ? listSectorsByPivotId(ctx.pivot.id) : Promise.resolve([]),
+        ])
+        const speedTable: PivotSpeedEntry[] = speedRows.data ?? []
 
         const { season, crop } = ctx
         const das = season.planting_date ? calcDAS(season.planting_date, today) : 1
@@ -658,11 +945,26 @@ export default function LancamentosPage() {
         const Ds = ctx.pivot?.bulk_density   ?? season.bulk_density   ?? 1.4
         const ctaMm = stageInfo ? calcCTA(CC, PM, Ds, stageInfo.rootDepthCm) : 0
         const cadMm = stageInfo ? calcCAD(ctaMm, stageInfo.fFactor) : 0
-        const lastRecord = history.find(h => h.ctda != null)
-        const adcMm = lastRecord?.ctda ?? (ctaMm * ((season.initial_adc_percent ?? 100) / 100))
-        const currentPct = ctaMm > 0 ? (adcMm / ctaMm) * 100 : null
 
-        return { context: ctx, speedTable, history, currentPct, ctaMm, cadMm }
+        // Projeta ADc até hoje usando a mesma lógica do dashboard (dados climáticos reais)
+        let currentPct: number | null = null
+        let currentAdcMm = ctaMm * ((season.initial_adc_percent ?? 100) / 100)
+        if (crop && season.planting_date && ctx.farm) {
+          const lastRecord = history.find(h => h.ctda != null) ?? null
+          const projected = await projectAdcToDate({
+            lastManagement: lastRecord,
+            targetDate: today,
+            crop,
+            season,
+            farm: ctx.farm,
+            pivot: ctx.pivot ?? null,
+            history,
+          })
+          currentPct = projected.pct
+          currentAdcMm = projected.adcMm
+        }
+
+        return { context: ctx, speedTable, sectors, history, currentPct, currentAdcMm, ctaMm, cadMm }
       }))
 
       setMetas(metaList)
@@ -688,17 +990,18 @@ export default function LancamentosPage() {
   useEffect(() => { load() }, [load])
 
   // ── Salvar programação de um pivô ──
-  async function handleSave(meta: PivotMeta, entries: { date: string; entry: DayEntry }[]) {
+  async function handleSave(meta: PivotMeta, entries: { date: string; sectorId: string | null; entry: DayEntry }[]) {
     const pivotId  = meta.context.pivot?.id
     const seasonId = meta.context.season.id
     if (!pivotId || !company) return
 
     const saved: IrrigationSchedule[] = []
-    for (const { date, entry } of entries) {
+    for (const { date, sectorId, entry } of entries) {
       const s = await upsertSchedule({
         company_id:    company.id,
         pivot_id:      pivotId,
         season_id:     seasonId,
+        sector_id:     sectorId,
         date,
         lamina_mm:     parseNum(entry.lamina),
         speed_percent: parseNum(entry.speed),
@@ -711,7 +1014,9 @@ export default function LancamentosPage() {
     }
 
     setSchedulesByPivot(prev => {
-      const existing = (prev[pivotId] ?? []).filter(s => !saved.some(ns => ns.date === s.date))
+      const existing = (prev[pivotId] ?? []).filter(s =>
+        !saved.some(ns => ns.date === s.date && (ns.sector_id ?? null) === (s.sector_id ?? null))
+      )
       return { ...prev, [pivotId]: [...existing, ...saved] }
     })
   }

@@ -347,6 +347,23 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
         ))
       }
 
+      // Salva tabela de velocidade se os campos necessários estão preenchidos
+      const speedRows = previewTable
+      if (speedRows && speedRows.length > 0) {
+        const { createClient } = await import('@/lib/supabase/client')
+        const sb = createClient()
+        // Remove rows antigas e insere as novas (recalculadas)
+        await (sb as any).from('pivot_speed_table').delete().eq('pivot_id', pivotId)
+        await (sb as any).from('pivot_speed_table').insert(
+          speedRows.map(r => ({
+            pivot_id: pivotId,
+            speed_percent: r.speed_percent,
+            water_depth_mm: r.water_depth_mm,
+            duration_hours: r.duration_hours,
+          }))
+        )
+      }
+
       await onSaved()
       onClose()
     } catch (err) {
