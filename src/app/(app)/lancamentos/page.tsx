@@ -21,6 +21,7 @@ import {
 import type { DailyManagement } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { ClipboardList, ChevronDown, ChevronUp, X, Copy } from 'lucide-react'
+import { ScheduleHistory } from './ScheduleHistory'
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -1094,68 +1095,17 @@ export default function LancamentosPage() {
         </div>
       )}
 
-      {/* Print view — tabela resumida */}
-      <div className="print-only" style={{ display: 'none' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, borderBottom: '2px solid #0093D0', paddingBottom: 10 }}>
-          <svg width="36" height="36" viewBox="0 0 64 64" fill="none">
-            <defs>
-              <linearGradient id="pb" x1="8" y1="6" x2="36" y2="46" gradientUnits="userSpaceOnUse"><stop stopColor="#38BDF8"/><stop offset="1" stopColor="#0284C7"/></linearGradient>
-              <linearGradient id="pg" x1="28" y1="22" x2="54" y2="54" gradientUnits="userSpaceOnUse"><stop stopColor="#84CC16"/><stop offset="1" stopColor="#16A34A"/></linearGradient>
-            </defs>
-            <path d="M31.5 4C31.5 4 13 22.6 13 35.5C13 47.4 21.8 56 33 56C44.2 56 53 47.4 53 35.5C53 22.6 31.5 4 31.5 4Z" fill="url(#pb)"/>
-            <path d="M30 24C41.6 24 51 33.4 51 45C51 48.2 50.3 51.1 48.9 53.7H30V24Z" fill="url(#pg)" opacity="0.95"/>
-            <rect x="23" y="37" width="6" height="13" rx="1.5" fill="#0B1220" opacity="0.9"/>
-            <rect x="31" y="30" width="6" height="20" rx="1.5" fill="#0B1220" opacity="0.9"/>
-            <rect x="39" y="23" width="6" height="27" rx="1.5" fill="#0B1220" opacity="0.9"/>
-          </svg>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 900 }}>
-              <span style={{ color: '#0284C7' }}>Irriga</span><span style={{ color: '#16A34A', fontWeight: 300 }}>Agro</span>
-            </div>
-            <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Programação de Irrigação</div>
-          </div>
-          <div style={{ marginLeft: 'auto', fontSize: 11, color: '#888', textAlign: 'right' }}>
-            Emitido: {new Date().toLocaleString('pt-BR')}
-          </div>
+      {/* Histórico de programações + impressão + WhatsApp */}
+      {metas.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <ScheduleHistory
+            companyId={company.id}
+            today={today}
+            metas={metas.map(m => m.context)}
+            onSchedulesChanged={load}
+          />
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-          <thead>
-            <tr style={{ background: '#f0f4f8' }}>
-              <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '2px solid #0093D0' }}>Pivô / Fazenda</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Data</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Lâmina</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Vel %</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Início</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Fim</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {metas.flatMap((meta, mi) => {
-              const pivotId = meta.context.pivot?.id ?? ''
-              const ss = schedulesByPivot[pivotId] ?? []
-              return ss.map((s, si) => (
-                <tr key={s.id} style={{ background: mi % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                  {si === 0 && (
-                    <td rowSpan={ss.length} style={{ padding: '6px 8px', verticalAlign: 'top' }}>
-                      <strong>{meta.context.pivot?.name ?? '—'}</strong><br />
-                      <span style={{ color: '#666', fontSize: 10 }}>{meta.context.farm.name}</span>
-                    </td>
-                  )}
-                  <td style={{ textAlign: 'center', padding: '4px 6px' }}>{fmtShort(s.date)}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px', fontWeight: 700 }}>{s.lamina_mm ?? '—'} mm</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px' }}>{s.speed_percent ?? '—'}%</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px' }}>{s.start_time ?? '—'}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px' }}>{s.end_time ?? '—'}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px', color: s.status === 'cancelled' ? '#ef4444' : s.status === 'done' ? '#22c55e' : '#0093D0' }}>
-                    {s.status === 'cancelled' ? 'Cancelado' : s.status === 'done' ? 'Realizado' : 'Programado'}
-                  </td>
-                </tr>
-              ))
-            })}
-          </tbody>
-        </table>
-      </div>
+      )}
 
       <style>{`
         @media print {
