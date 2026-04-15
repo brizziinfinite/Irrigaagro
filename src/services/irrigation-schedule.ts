@@ -123,13 +123,22 @@ export async function cancelSchedule(
     cancelled_reason: reason,
     notes: notes ?? null,
   }
-  const { data, error } = await table()
+
+  // Timeout de 8s para evitar travamento caso a conexão feche
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Tempo esgotado. Verifique sua conexão e tente novamente.')), 8000)
+  )
+
+  const dbCall = table()
     .update({ ...update, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()
 
+  const { data, error } = await Promise.race([dbCall, timeout])
+
   if (error) throw new Error(`Falha ao cancelar programação: ${error.message}`)
+  if (!data) throw new Error('Sem resposta do servidor. Verifique se o registro ainda existe.')
   return data as IrrigationSchedule
 }
 

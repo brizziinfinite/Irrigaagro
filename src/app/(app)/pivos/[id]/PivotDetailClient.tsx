@@ -134,7 +134,6 @@ function SoilDiagramRich({
           { label: 'Fase', value: `${cropStage}ª (${das} dias)` },
           { label: 'Data', value: fmtDate(date) },
           { label: 'DAS', value: `${das}` },
-          { label: 'Kc', value: fmtNum(kc, 3) },
         ].map(({ label, value }) => (
           <div key={label}>
             <p style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>

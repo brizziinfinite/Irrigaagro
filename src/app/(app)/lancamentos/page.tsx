@@ -21,6 +21,8 @@ import {
 import type { DailyManagement } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { ClipboardList, ChevronDown, ChevronUp, X, Copy } from 'lucide-react'
+import { ScheduleHistory } from './ScheduleHistory'
+import type { BatchEditPayload } from './ScheduleHistory'
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -89,6 +91,16 @@ function addHoursToTime(startTime: string, hours: number): string {
   const h = Math.floor(totalMin / 60) % 24
   const m = totalMin % 60
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+/** Retorna true se endTime é no dia seguinte em relação a startTime (cruza meia-noite) */
+function crossesMidnight(startTime: string, endTime: string): boolean {
+  if (!startTime || !endTime) return false
+  const toMin = (t: string) => {
+    const [h, m] = t.split(':').map(Number)
+    return h * 60 + m
+  }
+  return toMin(endTime) < toMin(startTime)
 }
 
 // ─── Tipos ────────────────────────────────────────────────────
@@ -592,13 +604,15 @@ function DayCell({
 // ─── Card de um pivô ─────────────────────────────────────────
 
 function PivotCard({
-  meta, today, schedules, onSave, onCancel,
+  meta, today, schedules, onSave, onCancel, editBatch, onEditBatchDone,
 }: {
   meta: PivotMeta
   today: string
   schedules: IrrigationSchedule[]
-  onSave: (entries: { date: string; sectorId: string | null; entry: DayEntry }[]) => Promise<void>
+  onSave: (entries: { date: string; sectorId: string | null; entry: DayEntry }[], existingBatchId?: string) => Promise<void>
   onCancel: (schedule: IrrigationSchedule) => void
+  editBatch?: BatchEditPayload | null
+  onEditBatchDone?: () => void
 }) {
   const { context, ctaMm, sectors, speedTable } = meta
   const { pivot, farm, season, crop } = context
@@ -613,8 +627,11 @@ function PivotCard({
     ? sectors.map(s => s.id)
     : ['']
 
-  // Grid por setor: sectorId → date → DayEntry
-  const days = Array.from({ length: 7 }, (_, i) => addDays(today, i))
+  // Quando em modo edição de lote, usa as datas do lote; caso contrário, próximos 7 dias
+  const days = editBatch
+    ? Array.from(new Set(editBatch.schedules.map(s => s.date))).sort()
+    : Array.from({ length: 7 }, (_, i) => addDays(today, i))
+
   const emptyEntry = (): DayEntry => ({ rainfall: '', lamina: '', speed: '', speedAuto: false, startTime: '', endTime: '' })
 
   const [sectorGrids, setSectorGrids] = useState<SectorGrid>(() =>
@@ -624,12 +641,41 @@ function PivotCard({
     ]))
   )
 
-  // Pré-preencher grids com schedules existentes
+  // Quando editBatch muda: expande o card e pré-preenche com dados do lote
   useEffect(() => {
+    if (!editBatch) return
+    setExpanded(true)
+    setSectorGrids(() => {
+      const next: SectorGrid = {}
+      const batchDays = Array.from(new Set(editBatch.schedules.map(s => s.date))).sort()
+      for (const sid of sectorIds) {
+        next[sid] = Object.fromEntries(batchDays.map(d => [d, emptyEntry()]))
+      }
+      for (const s of editBatch.schedules) {
+        const sid = s.sector_id ?? ''
+        if (!next[sid]) continue
+        next[sid][s.date] = {
+          rainfall:  s.rainfall_mm   != null ? String(s.rainfall_mm)   : '',
+          lamina:    s.lamina_mm     != null ? String(s.lamina_mm)     : '',
+          speed:     s.speed_percent != null ? String(s.speed_percent) : '',
+          speedAuto: false,
+          startTime: s.start_time ?? '',
+          endTime:   s.end_time   ?? '',
+        }
+      }
+      return next
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editBatch])
+
+  // Pré-preencher grids com schedules existentes (modo normal, não edição)
+  useEffect(() => {
+    if (editBatch) return  // não sobrescreve quando em modo edição
     setSectorGrids(prev => {
       const next: SectorGrid = {}
+      const normalDays = Array.from({ length: 7 }, (_, i) => addDays(today, i))
       for (const sid of sectorIds) {
-        next[sid] = { ...(prev[sid] ?? Object.fromEntries(days.map(d => [d, emptyEntry()]))) }
+        next[sid] = { ...(prev[sid] ?? Object.fromEntries(normalDays.map(d => [d, emptyEntry()]))) }
       }
       for (const s of schedules) {
         const sid = s.sector_id ?? ''
@@ -661,7 +707,8 @@ function PivotCard({
   }
 
   /** Replica programação do primeiro setor para os seguintes,
-   *  encadeando horários: início do setor N+1 = fim do setor N */
+   *  encadeando horários: início do setor N+1 = fim do setor N.
+   *  Se o setor anterior cruza meia-noite, o próximo setor é lançado no DIA SEGUINTE. */
   function replicateFirstSector() {
     if (sectorIds.length < 2) return
     const source = sectorGrids[sectorIds[0]] ?? {}
@@ -674,8 +721,21 @@ function PivotCard({
         for (const date of days) {
           const srcEntry = source[date] ?? emptyEntry()
           const prevEntry = prevSectorGrid[date]
+
+          if (!prevEntry?.startTime && !srcEntry.lamina) {
+            // Sem dado no setor anterior neste dia — pula
+            continue
+          }
+
+          // Se o setor anterior cruza meia-noite, este setor entra no dia seguinte
+          const prevCrosses = prevEntry?.startTime && prevEntry?.endTime
+            ? crossesMidnight(prevEntry.startTime, prevEntry.endTime)
+            : false
+          const targetDate = prevCrosses ? addDays(date, 1) : date
+
           // Início deste setor = fim do setor anterior
           const newStart = prevEntry?.endTime ?? srcEntry.startTime
+
           // Recalcular fim com ângulo deste setor
           let newEnd = ''
           if (newStart) {
@@ -696,7 +756,8 @@ function PivotCard({
               newEnd = addHoursToTime(newStart, fullDuration * sectorFraction(thisSector))
             }
           }
-          newGrid[date] = { ...srcEntry, startTime: newStart, endTime: newEnd }
+
+          newGrid[targetDate] = { ...srcEntry, startTime: newStart, endTime: newEnd }
         }
         next[sectorIds[i]] = newGrid
       }
@@ -704,11 +765,23 @@ function PivotCard({
     })
   }
 
+  function handleClearAll() {
+    setSectorGrids(
+      Object.fromEntries(sectorIds.map(sid => [
+        sid,
+        Object.fromEntries(days.map(d => [d, emptyEntry()])),
+      ]))
+    )
+  }
+
   async function handleSave() {
     const entries: { date: string; sectorId: string | null; entry: DayEntry }[] = []
     for (const sid of sectorIds) {
       const grid = sectorGrids[sid] ?? {}
-      for (const d of days) {
+      const activeDays = editBatch
+        ? Array.from(new Set(editBatch.schedules.map(s => s.date))).sort()
+        : days
+      for (const d of activeDays) {
         const entry = grid[d]
         if (entry && (entry.lamina !== '' || entry.rainfall !== '')) {
           entries.push({ date: d, sectorId: sid === '' ? null : sid, entry })
@@ -717,7 +790,12 @@ function PivotCard({
     }
     if (entries.length === 0) return
     setSaving(true)
-    try { await onSave(entries) } finally { setSaving(false) }
+    try {
+      await onSave(entries, editBatch?.batchId)
+      onEditBatchDone?.()
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Dados da fase atual
@@ -781,9 +859,6 @@ function PivotCard({
             <Chip label="Fase" value={`${stageInfo.stage}ª`} color="#0093D0" />
           )}
           <Chip label="DAS" value={`${das}d`} color="#8899aa" />
-          {stageInfo && (
-            <Chip label="Kc" value={stageInfo.kc.toFixed(2)} color="#f59e0b" />
-          )}
           {season.planting_date && (
             <Chip label="Plantio" value={fmtShort(season.planting_date)} color="#556677" />
           )}
@@ -807,97 +882,397 @@ function PivotCard({
 
       {/* ── Conteúdo expandido ── */}
       {expanded && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '14px 16px 16px' }}>
-          {/* Botão replicar — só exibido quando há >1 setor */}
-          {hasSectors && sectors.length > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-              <button
-                onClick={replicateFirstSector}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  padding: '6px 12px', borderRadius: 8,
-                  border: '1px solid rgba(34,197,94,0.25)',
-                  background: 'rgba(34,197,94,0.08)',
-                  color: '#22c55e', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                }}>
-                <Copy size={12} />
-                Replicar {sectors[0].name} para todos
-              </button>
-            </div>
-          )}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '12px 16px 16px' }}>
 
-          {/* Grade por setor */}
+          {/* Tabela por setor */}
           {sectorIds.map((sid, sIdx) => {
             const sector = sectors.find(s => s.id === sid) ?? null
             const grid = sectorGrids[sid] ?? {}
             const schedulesForSector = schedules.filter(s => (s.sector_id ?? '') === sid)
+            const fraction = sectorFraction(sector)
+
+            function handleLaminaInline(date: string, v: string) {
+              updateDayInSector(sid, date, 'lamina', v)
+              const mm = parseNum(v)
+              const entry = grid[date] ?? emptyEntry()
+              if (mm != null && mm > 0 && speedTable.length > 0) {
+                const te = entryFromTable(speedTable, mm)
+                if (te) {
+                  updateDayInSector(sid, date, 'speed', String(te.speed_percent))
+                  updateDayInSector(sid, date, 'speedAuto', true)
+                  if (entry.startTime) updateDayInSector(sid, date, 'endTime', addHoursToTime(entry.startTime, te.duration_hours * fraction))
+                }
+              } else if (v === '') {
+                updateDayInSector(sid, date, 'speed', '')
+                updateDayInSector(sid, date, 'speedAuto', true)
+                updateDayInSector(sid, date, 'endTime', '')
+              }
+            }
+
+            function handleSpeedInline(date: string, v: string) {
+              updateDayInSector(sid, date, 'speed', v)
+              const pct = parseNum(v)
+              const entry = grid[date] ?? emptyEntry()
+              if (pct != null && pct > 0 && speedTable.length > 0) {
+                const te = entryFromSpeed(speedTable, pct)
+                if (te) {
+                  updateDayInSector(sid, date, 'lamina', String(te.water_depth_mm))
+                  updateDayInSector(sid, date, 'speedAuto', true)
+                  if (entry.startTime) updateDayInSector(sid, date, 'endTime', addHoursToTime(entry.startTime, te.duration_hours * fraction))
+                }
+              }
+            }
+
+            function handleStartInline(date: string, v: string) {
+              updateDayInSector(sid, date, 'startTime', v)
+              if (!v) return
+              const entry = grid[date] ?? emptyEntry()
+              let dur: number | null = null
+              const mm = parseNum(entry.lamina)
+              if (mm != null && mm > 0 && speedTable.length > 0) dur = entryFromTable(speedTable, mm)?.duration_hours ?? null
+              if (dur == null) {
+                const pct = parseNum(entry.speed)
+                if (pct != null && pct > 0 && speedTable.length > 0) dur = entryFromSpeed(speedTable, pct)?.duration_hours ?? null
+              }
+              if (dur != null) updateDayInSector(sid, date, 'endTime', addHoursToTime(v, dur * fraction))
+            }
+
+            const cellInput = (
+              value: string,
+              onChange: (v: string) => void,
+              opts: { type?: string; readOnly?: boolean; color?: string; bg?: string; placeholder?: string } = {}
+            ) => {
+              const isTime = opts.type === 'time'
+              const input = (
+                <input
+                  type={opts.type ?? 'number'}
+                  value={value}
+                  readOnly={opts.readOnly}
+                  placeholder={opts.placeholder ?? '—'}
+                  onChange={e => onChange(e.target.value)}
+                  style={{
+                    width: isTime ? 'auto' : '100%',
+                    padding: isTime ? '5px 2px' : '5px 4px',
+                    background: opts.readOnly ? 'transparent' : (opts.bg ?? 'rgba(255,255,255,0.05)'),
+                    border: 'none',
+                    borderRadius: 5, color: opts.color ?? '#8899aa',
+                    fontSize: 12, textAlign: 'center', fontFamily: 'var(--font-mono)',
+                    fontWeight: 600, boxSizing: 'border-box', outline: 'none',
+                    cursor: opts.readOnly ? 'default' : 'text',
+                  }}
+                />
+              )
+              if (isTime) {
+                return (
+                  <div style={{
+                    width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    background: opts.readOnly ? 'transparent' : (opts.bg ?? 'rgba(255,255,255,0.05)'),
+                    border: opts.readOnly ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 5, boxSizing: 'border-box',
+                  }}>
+                    {input}
+                  </div>
+                )
+              }
+              return (
+                <input
+                  type={opts.type ?? 'number'}
+                  value={value}
+                  readOnly={opts.readOnly}
+                  placeholder={opts.placeholder ?? '—'}
+                  onChange={e => onChange(e.target.value)}
+                  style={{
+                    width: '100%', padding: '5px 4px',
+                    background: opts.readOnly ? 'transparent' : (opts.bg ?? 'rgba(255,255,255,0.05)'),
+                    border: opts.readOnly ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 5, color: opts.color ?? '#8899aa',
+                    fontSize: 12, textAlign: 'center', fontFamily: 'var(--font-mono)',
+                    fontWeight: 600, boxSizing: 'border-box', outline: 'none',
+                    cursor: opts.readOnly ? 'default' : 'text',
+                  }}
+                />
+              )
+            }
 
             return (
               <div key={sid} style={{ marginBottom: sIdx < sectorIds.length - 1 ? 16 : 0 }}>
-                {/* Cabeçalho do setor */}
-                {hasSectors && sector && (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
-                    padding: '4px 0',
-                  }}>
-                    <div style={{
-                      width: 6, height: 6, borderRadius: '50%', background: '#22c55e', flexShrink: 0,
-                    }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Setor {sector.name}
-                    </span>
-                    {sector.area_ha != null && (
-                      <span style={{ fontSize: 10, color: '#445566' }}>{sector.area_ha.toFixed(1)} ha</span>
+                {/* Header do setor */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {hasSectors && sector && (
+                      <>
+                        <div style={{ width: 8, height: 8, borderRadius: 2, background: '#22c55e' }} />
+                        <span style={{ fontSize: 11, fontWeight: 800, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                          Setor {sector.name}
+                        </span>
+                        {sector.area_ha != null && (
+                          <span style={{ fontSize: 10, color: '#445566' }}>{sector.area_ha.toFixed(1)} ha</span>
+                        )}
+                      </>
+                    )}
+                    {!hasSectors && (
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa' }}>Programação dos dias</span>
                     )}
                   </div>
-                )}
+                  {/* Replicar — só no primeiro setor quando há mais de um */}
+                  {hasSectors && sIdx === 0 && sectors.length > 1 && (
+                    <button onClick={replicateFirstSector} style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '5px 10px', borderRadius: 7,
+                      border: '1px solid rgba(34,197,94,0.25)',
+                      background: 'rgba(34,197,94,0.08)',
+                      color: '#22c55e', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                    }}>
+                      <Copy size={11} /> Replicar {sector?.name} → todos
+                    </button>
+                  )}
+                </div>
 
-                {/* Grid de 7 dias */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
-                  {days.map(date => {
-                    const entry = grid[date] ?? emptyEntry()
-                    const schedule = schedulesForSector.find(s => s.date === date)
-                    return (
-                      <DayCell
-                        key={date}
-                        date={date}
-                        today={today}
-                        entry={entry}
-                        schedule={schedule}
-                        speedTable={speedTable}
-                        threshold={threshold}
-                        meta={meta}
-                        sectorGrid={grid}
-                        sectorId={sid}
-                        sector={sector}
-                        onUpdate={(d, field, value) => updateDayInSector(sid, d, field, value)}
-                        onCancel={onCancel}
-                      />
-                    )
-                  })}
+                {/* ── TABELA COMPACTA ── */}
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 520 }}>
+                    <thead>
+                      <tr>
+                        {/* Coluna de label */}
+                        <th style={{ width: 90, padding: '5px 8px', textAlign: 'left' }} />
+                        {days.map(date => {
+                          const isToday = date === today
+                          const isPast = date < today
+                          const sched = schedulesForSector.find(s => s.date === date)
+                          const isCancelled = sched?.status === 'cancelled'
+                          return (
+                            <th key={date} style={{
+                              padding: '5px 6px', textAlign: 'center', minWidth: 72,
+                              background: isToday
+                                ? 'rgba(34,197,94,0.10)'
+                                : isCancelled
+                                  ? 'rgba(239,68,68,0.06)'
+                                  : isPast ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)',
+                              borderRadius: '6px 6px 0 0',
+                              borderBottom: `2px solid ${isToday ? '#22c55e' : isCancelled ? '#ef4444' : 'rgba(255,255,255,0.07)'}`,
+                            }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                                <div style={{ fontSize: 9, fontWeight: 800, color: isToday ? '#22c55e' : '#445566', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                  {isToday ? 'Hoje' : fmtWeekday(date)}
+                                </div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: isToday ? '#e2e8f0' : isPast ? '#445566' : '#8899aa', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                                  {fmtShort(date)}
+                                </div>
+                                {isCancelled && (
+                                  <div style={{ fontSize: 8, color: '#ef4444', fontWeight: 700, marginTop: 1 }}>✕ cancel.</div>
+                                )}
+                              </div>
+                            </th>
+                          )
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Linha: % Campo (read-only, visual) */}
+                      <tr>
+                        <td style={{ padding: '5px 8px 2px' }}>
+                          <span style={{ fontSize: 9, color: '#445566', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>% Campo</span>
+                        </td>
+                        {days.map(date => {
+                          const entry = grid[date] ?? emptyEntry()
+                          const dayPct = pctForDate(meta, date, grid, today)
+                          const projPct = (entry.lamina !== '' || entry.rainfall !== '') ? projectedPct(meta, date, grid, today) : null
+                          const c = pctColor(dayPct, threshold)
+                          const pc = pctColor(projPct, threshold)
+                          return (
+                            <td key={date} style={{ padding: '4px 6px', textAlign: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                                <WaterBar pct={dayPct} projPct={projPct} threshold={threshold} height={28} width={8} />
+                                <div>
+                                  <div style={{ fontSize: 11, fontWeight: 800, color: c, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                                    {dayPct != null ? `${Math.round(dayPct)}%` : '—'}
+                                  </div>
+                                  {projPct != null && (
+                                    <div style={{ fontSize: 9, fontWeight: 700, color: pc, fontFamily: 'var(--font-mono)', lineHeight: 1, marginTop: 1 }}>
+                                      →{Math.round(projPct)}%
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          )
+                        })}
+                      </tr>
+
+                      {/* Linha: Chuva */}
+                      <tr>
+                        <td style={{ padding: '4px 8px' }}>
+                          <span style={{ fontSize: 9, color: '#22d3ee', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>🌧 Chuva mm</span>
+                        </td>
+                        {days.map(date => {
+                          const entry = grid[date] ?? emptyEntry()
+                          const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
+                          return (
+                            <td key={date} style={{ padding: '3px 6px' }}>
+                              {isCancelled ? <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div> :
+                                cellInput(entry.rainfall, v => updateDayInSector(sid, date, 'rainfall', v), { color: '#22d3ee', bg: 'rgba(34,211,238,0.07)', placeholder: '0' })}
+                            </td>
+                          )
+                        })}
+                      </tr>
+
+                      {/* Linha: Lâmina */}
+                      <tr>
+                        <td style={{ padding: '4px 8px' }}>
+                          <span style={{ fontSize: 9, color: '#22c55e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>💧 Lâmina mm</span>
+                        </td>
+                        {days.map(date => {
+                          const entry = grid[date] ?? emptyEntry()
+                          const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
+                          return (
+                            <td key={date} style={{ padding: '3px 6px' }}>
+                              {isCancelled ? <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div> :
+                                cellInput(entry.lamina, v => handleLaminaInline(date, v), { color: '#22c55e', bg: 'rgba(34,197,94,0.10)', placeholder: '0' })}
+                            </td>
+                          )
+                        })}
+                      </tr>
+
+                      {/* Linha: Velocidade */}
+                      <tr>
+                        <td style={{ padding: '4px 8px' }}>
+                          <span style={{ fontSize: 9, color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>⚙ Vel %</span>
+                        </td>
+                        {days.map(date => {
+                          const entry = grid[date] ?? emptyEntry()
+                          const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
+                          return (
+                            <td key={date} style={{ padding: '3px 6px' }}>
+                              {isCancelled ? <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div> :
+                                cellInput(entry.speed, v => handleSpeedInline(date, v), {
+                                  color: entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa',
+                                  bg: entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.04)',
+                                  placeholder: '—',
+                                })}
+                            </td>
+                          )
+                        })}
+                      </tr>
+
+                      {/* Linha: Início */}
+                      <tr>
+                        <td style={{ padding: '4px 8px' }}>
+                          <span style={{ fontSize: 9, color: '#e2e8f0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>▶ Início</span>
+                        </td>
+                        {days.map(date => {
+                          const entry = grid[date] ?? emptyEntry()
+                          const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
+                          return (
+                            <td key={date} style={{ padding: '3px 6px' }}>
+                              {isCancelled ? <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div> :
+                                cellInput(entry.startTime, v => handleStartInline(date, v), { type: 'time', color: '#e2e8f0', bg: 'rgba(255,255,255,0.07)' })}
+                            </td>
+                          )
+                        })}
+                      </tr>
+
+                      {/* Linha: Fim (read-only, calculado) */}
+                      <tr>
+                        <td style={{ padding: '4px 8px 8px' }}>
+                          <span style={{ fontSize: 9, color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>■ Fim</span>
+                        </td>
+                        {days.map(date => {
+                          const entry = grid[date] ?? emptyEntry()
+                          const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
+                          const nextDay = entry.startTime && entry.endTime
+                            ? (parseInt(entry.endTime.split(':')[0]) * 60 + parseInt(entry.endTime.split(':')[1])) <
+                              (parseInt(entry.startTime.split(':')[0]) * 60 + parseInt(entry.startTime.split(':')[1]))
+                            : false
+                          const sched = schedulesForSector.find(s => s.date === date)
+                          const isPlanned = sched?.status === 'planned'
+                          const isPastDate = date < today
+                          return (
+                            <td key={date} style={{ padding: '3px 6px 8px' }}>
+                              {isCancelled ? (
+                                <div style={{ textAlign: 'center', padding: '4px' }}>
+                                  <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 700 }}>✕</span>
+                                  {sched?.cancelled_reason && <div style={{ fontSize: 8, color: '#556677' }}>{sched.cancelled_reason}</div>}
+                                </div>
+                              ) : (
+                                <div>
+                                  <div style={{
+                                    padding: '5px 4px', textAlign: 'center',
+                                    color: entry.endTime ? '#f59e0b' : '#334455',
+                                    fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 600,
+                                  }}>
+                                    {entry.endTime || '—'}
+                                    {nextDay && <span style={{ fontSize: 8, color: '#f59e0b', marginLeft: 2 }}>+1d</span>}
+                                  </div>
+                                  {/* Botão cancelar inline */}
+                                  {isPlanned && !isPastDate && (
+                                    <button onClick={() => onCancel(sched!)} style={{
+                                      width: '100%', padding: '2px 0', marginTop: 2,
+                                      borderRadius: 4, border: '1px solid rgba(239,68,68,0.2)',
+                                      background: 'rgba(239,68,68,0.06)', color: '#ef4444',
+                                      fontSize: 9, fontWeight: 700, cursor: 'pointer',
+                                    }}>cancelar</button>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
                 {/* Separador entre setores */}
                 {hasSectors && sIdx < sectorIds.length - 1 && (
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', marginTop: 12 }} />
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '8px 0' }} />
                 )}
               </div>
             )
           })}
 
-          {/* Botão Salvar */}
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              width: '100%', marginTop: 14, padding: '12px 0', borderRadius: 10, border: 'none',
-              background: saving ? 'rgba(0,147,208,0.4)' : 'linear-gradient(135deg, #0093D0 0%, #0070a8 100%)',
-              color: '#fff', fontSize: 14, fontWeight: 800, cursor: saving ? 'wait' : 'pointer',
-              boxShadow: '0 2px 16px rgba(0,147,208,0.3)',
-              letterSpacing: '0.02em',
-            }}>
-            {saving ? 'Salvando programação…' : 'Salvar programação'}
-          </button>
+          {/* Nota de edição */}
+          {editBatch && (
+            <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 8 }}>
+              <p style={{ fontSize: 11, color: '#22c55e', margin: 0, fontWeight: 600 }}>
+                ✏️ Editando programação feita em {new Date(editBatch.schedules[0]?.created_at ?? '').toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+          )}
+
+          {/* Botão Salvar + Limpar */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            {editBatch ? (
+              <button onClick={onEditBatchDone} style={{
+                flex: 1, padding: '12px 0', borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'transparent', color: '#667788',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}>
+                Cancelar edição
+              </button>
+            ) : (
+              <button onClick={handleClearAll} style={{
+                flex: 1, padding: '12px 0', borderRadius: 10,
+                border: '1px solid rgba(239,68,68,0.25)',
+                background: 'rgba(239,68,68,0.06)', color: '#ef4444',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              }}>
+                Limpar tudo
+              </button>
+            )}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                flex: 2, padding: '12px 0', borderRadius: 10, border: 'none',
+                background: saving ? 'rgba(34,197,94,0.3)' : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                color: '#fff', fontSize: 14, fontWeight: 800, cursor: saving ? 'wait' : 'pointer',
+                boxShadow: '0 2px 16px rgba(34,197,94,0.25)',
+                letterSpacing: '0.02em',
+              }}>
+              {saving ? 'Salvando…' : editBatch ? '✓ Salvar alterações' : '✓ Salvar programação'}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -918,6 +1293,16 @@ export default function LancamentosPage() {
 
   // Modal de cancelamento
   const [cancelTarget, setCancelTarget] = useState<{ schedule: IrrigationSchedule; pivotName: string } | null>(null)
+
+  // Estado de edição de lote: qual pivô + dados do lote estão sendo editados
+  const [editBatch, setEditBatch] = useState<BatchEditPayload | null>(null)
+
+  // Toast de sucesso
+  const [successToast, setSuccessToast] = useState<string | null>(null)
+  function showSuccess(msg: string) {
+    setSuccessToast(msg)
+    setTimeout(() => setSuccessToast(null), 3500)
+  }
 
   useEffect(() => { setToday(toYMD(new Date())) }, [])
 
@@ -990,25 +1375,29 @@ export default function LancamentosPage() {
   useEffect(() => { load() }, [load])
 
   // ── Salvar programação de um pivô ──
-  async function handleSave(meta: PivotMeta, entries: { date: string; sectorId: string | null; entry: DayEntry }[]) {
+  async function handleSave(meta: PivotMeta, entries: { date: string; sectorId: string | null; entry: DayEntry }[], existingBatchId?: string) {
     const pivotId  = meta.context.pivot?.id
     const seasonId = meta.context.season.id
     if (!pivotId || !company) return
 
+    // Gera um UUID único para este lote de programação (ou reutiliza o existente ao editar)
+    const batchId = existingBatchId ?? crypto.randomUUID()
+
     const saved: IrrigationSchedule[] = []
     for (const { date, sectorId, entry } of entries) {
       const s = await upsertSchedule({
-        company_id:    company.id,
-        pivot_id:      pivotId,
-        season_id:     seasonId,
-        sector_id:     sectorId,
+        company_id:        company.id,
+        pivot_id:          pivotId,
+        season_id:         seasonId,
+        sector_id:         sectorId,
         date,
-        lamina_mm:     parseNum(entry.lamina),
-        speed_percent: parseNum(entry.speed),
-        start_time:    entry.startTime || null,
-        end_time:      entry.endTime   || null,
-        rainfall_mm:   parseNum(entry.rainfall),
-        status:        'planned',
+        lamina_mm:         parseNum(entry.lamina),
+        speed_percent:     parseNum(entry.speed),
+        start_time:        entry.startTime || null,
+        end_time:          entry.endTime   || null,
+        rainfall_mm:       parseNum(entry.rainfall),
+        status:            'planned',
+        schedule_batch_id: batchId,
       })
       saved.push(s)
     }
@@ -1019,6 +1408,8 @@ export default function LancamentosPage() {
       )
       return { ...prev, [pivotId]: [...existing, ...saved] }
     })
+
+    showSuccess(`Programação salva com sucesso! ${saved.length} dia(s) registrado(s).`)
   }
 
   // ── Cancelar programação ──
@@ -1039,6 +1430,25 @@ export default function LancamentosPage() {
 
   return (
     <div style={{ paddingBottom: 60 }}>
+      {/* Toast de sucesso */}
+      {successToast && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', gap: 10,
+          padding: '13px 22px', borderRadius: 10,
+          background: '#0a1f0e', border: '1px solid rgba(34,197,94,0.35)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+          fontSize: 14, fontWeight: 600, color: '#22c55e',
+          animation: 'fadeInUp 0.2s ease',
+        }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7.5" stroke="#22c55e" strokeWidth="1"/>
+            <path d="M4.5 8.5L7 11L11.5 5.5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          {successToast}
+        </div>
+      )}
+
       {/* Modal cancelamento */}
       {cancelTarget && (
         <CancelModal
@@ -1078,84 +1488,45 @@ export default function LancamentosPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {metas.map(meta => (
-            <PivotCard
-              key={meta.context.season.id}
-              meta={meta}
-              today={today}
-              schedules={schedulesByPivot[meta.context.pivot?.id ?? ''] ?? []}
-              onSave={entries => handleSave(meta, entries)}
-              onCancel={schedule => setCancelTarget({
-                schedule,
-                pivotName: meta.context.pivot?.name ?? meta.context.season.name,
-              })}
-            />
-          ))}
+          {metas.map(meta => {
+            const pivotId = meta.context.pivot?.id ?? ''
+            const isEditTarget = editBatch?.pivotId === pivotId
+            return (
+              <PivotCard
+                key={meta.context.season.id}
+                meta={meta}
+                today={today}
+                schedules={schedulesByPivot[pivotId] ?? []}
+                onSave={(entries, existingBatchId) => handleSave(meta, entries, existingBatchId)}
+                onCancel={schedule => setCancelTarget({
+                  schedule,
+                  pivotName: meta.context.pivot?.name ?? meta.context.season.name,
+                })}
+                editBatch={isEditTarget ? editBatch : null}
+                onEditBatchDone={() => setEditBatch(null)}
+              />
+            )
+          })}
         </div>
       )}
 
-      {/* Print view — tabela resumida */}
-      <div className="print-only" style={{ display: 'none' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, borderBottom: '2px solid #0093D0', paddingBottom: 10 }}>
-          <svg width="36" height="36" viewBox="0 0 64 64" fill="none">
-            <defs>
-              <linearGradient id="pb" x1="8" y1="6" x2="36" y2="46" gradientUnits="userSpaceOnUse"><stop stopColor="#38BDF8"/><stop offset="1" stopColor="#0284C7"/></linearGradient>
-              <linearGradient id="pg" x1="28" y1="22" x2="54" y2="54" gradientUnits="userSpaceOnUse"><stop stopColor="#84CC16"/><stop offset="1" stopColor="#16A34A"/></linearGradient>
-            </defs>
-            <path d="M31.5 4C31.5 4 13 22.6 13 35.5C13 47.4 21.8 56 33 56C44.2 56 53 47.4 53 35.5C53 22.6 31.5 4 31.5 4Z" fill="url(#pb)"/>
-            <path d="M30 24C41.6 24 51 33.4 51 45C51 48.2 50.3 51.1 48.9 53.7H30V24Z" fill="url(#pg)" opacity="0.95"/>
-            <rect x="23" y="37" width="6" height="13" rx="1.5" fill="#0B1220" opacity="0.9"/>
-            <rect x="31" y="30" width="6" height="20" rx="1.5" fill="#0B1220" opacity="0.9"/>
-            <rect x="39" y="23" width="6" height="27" rx="1.5" fill="#0B1220" opacity="0.9"/>
-          </svg>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 900 }}>
-              <span style={{ color: '#0284C7' }}>Irriga</span><span style={{ color: '#16A34A', fontWeight: 300 }}>Agro</span>
-            </div>
-            <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Programação de Irrigação</div>
-          </div>
-          <div style={{ marginLeft: 'auto', fontSize: 11, color: '#888', textAlign: 'right' }}>
-            Emitido: {new Date().toLocaleString('pt-BR')}
-          </div>
+      {/* Histórico de programações + impressão + WhatsApp */}
+      {metas.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <ScheduleHistory
+            companyId={company.id}
+            today={today}
+            metas={metas.map(m => m.context)}
+            sectorsMap={Object.fromEntries(metas.map(m => [m.context.pivot?.id ?? '', m.sectors]))}
+            onSchedulesChanged={load}
+            onEditBatch={payload => {
+              setEditBatch(payload)
+              // Scroll até o topo para o usuário ver o card de edição
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+          />
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-          <thead>
-            <tr style={{ background: '#f0f4f8' }}>
-              <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '2px solid #0093D0' }}>Pivô / Fazenda</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Data</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Lâmina</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Vel %</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Início</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Fim</th>
-              <th style={{ padding: '6px', borderBottom: '2px solid #0093D0' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {metas.flatMap((meta, mi) => {
-              const pivotId = meta.context.pivot?.id ?? ''
-              const ss = schedulesByPivot[pivotId] ?? []
-              return ss.map((s, si) => (
-                <tr key={s.id} style={{ background: mi % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                  {si === 0 && (
-                    <td rowSpan={ss.length} style={{ padding: '6px 8px', verticalAlign: 'top' }}>
-                      <strong>{meta.context.pivot?.name ?? '—'}</strong><br />
-                      <span style={{ color: '#666', fontSize: 10 }}>{meta.context.farm.name}</span>
-                    </td>
-                  )}
-                  <td style={{ textAlign: 'center', padding: '4px 6px' }}>{fmtShort(s.date)}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px', fontWeight: 700 }}>{s.lamina_mm ?? '—'} mm</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px' }}>{s.speed_percent ?? '—'}%</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px' }}>{s.start_time ?? '—'}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px' }}>{s.end_time ?? '—'}</td>
-                  <td style={{ textAlign: 'center', padding: '4px 6px', color: s.status === 'cancelled' ? '#ef4444' : s.status === 'done' ? '#22c55e' : '#0093D0' }}>
-                    {s.status === 'cancelled' ? 'Cancelado' : s.status === 'done' ? 'Realizado' : 'Programado'}
-                  </td>
-                </tr>
-              ))
-            })}
-          </tbody>
-        </table>
-      </div>
+      )}
 
       <style>{`
         @media print {
@@ -1166,6 +1537,10 @@ export default function LancamentosPage() {
         @media screen { .print-only { display: none !important; } }
         input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.4); }
         input:focus { outline: 1px solid rgba(0,147,208,0.5) !important; }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
       `}</style>
     </div>
   )

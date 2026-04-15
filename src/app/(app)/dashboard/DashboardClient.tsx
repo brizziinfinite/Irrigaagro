@@ -18,7 +18,7 @@ import {
   CheckCircle2, X, CalendarClock
 } from 'lucide-react'
 import { findRecommendedSpeed } from '@/lib/water-balance'
-import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Area, ReferenceLine } from 'recharts'
+import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Area, ReferenceLine, ReferenceDot } from 'recharts'
 
 const PivotMap = dynamic(
   () => import('./PivotMap').then(m => ({ default: m.PivotMap })),
@@ -470,82 +470,241 @@ export function DashboardClient({
         <EnergyBlock energyBills={energyBills} />
       </div>
 
-      {/* ⑤ Modal Top Gráfico de Projeção */}
+      {/* ⑤ Modal — Umidade do Solo (últimos dias) */}
       {selectedPivotPlotId && (() => {
-         const pivot = pivots.find(p => p.id === selectedPivotPlotId)
-         const ctx = contexts.find(c => c.season.pivot_id === selectedPivotPlotId)
-         if (!pivot) return null
-         
-         let trendData: Array<{ name: string; moisture: number }> = []
-         if (ctx) {
-           const history = historyBySeason[ctx.season.id] || []
-           trendData = history.slice(0, 10).reverse().map((d: any) => {
-              return {
-                name: d.date.slice(8, 10) + '/' + d.date.slice(5, 7),
-                moisture: d.field_capacity_percent != null ? parseFloat(d.field_capacity_percent.toFixed(1)) : 100
-              }
-           })
-         }
-         const threshold = pivot.alert_threshold_percent ?? 50
+        const pivot = pivots.find(p => p.id === selectedPivotPlotId)
+        const ctx = contexts.find(c => c.season.pivot_id === selectedPivotPlotId)
+        if (!pivot) return null
 
-         return (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedPivotPlotId(null)}>
-               <div style={{ width: '90%', maxWidth: 700, background: '#1c1c1e', borderRadius: 24, padding: '30px', boxShadow: '0 20px 60px rgba(0,0,0,0.6)', border: '1px solid #2A2A2E', position: 'relative' }} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => setSelectedPivotPlotId(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: '#8899aa', cursor: 'pointer' }}>
-                    <X size={20} />
-                  </button>
-                  <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{pivot.name}</h3>
-                  <p style={{ fontSize: 11, color: '#556677', marginBottom: 24 }}>Cockpit de Análise de Ponto de Murcha e Stress Hídrico (Últimos dias)</p>
-                  
-                  <div style={{ height: 320, width: '100%', position: 'relative' }}>
-                    {trendData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={trendData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorMoistureModal" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#CCFF00" stopOpacity={0.6}/>
-                            <stop offset="70%" stopColor="#00E5FF" stopOpacity={0.1}/>
-                            <stop offset="100%" stopColor="#0f1923" stopOpacity={0}/>
-                          </linearGradient>
-                          <filter id="glowModal" height="200%">
-                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                            <feMerge>
-                              <feMergeNode in="coloredBlur"/>
-                              <feMergeNode in="SourceGraphic"/>
-                            </feMerge>
-                          </filter>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2A2E" />
-                        <XAxis dataKey="name" tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} dy={10} />
-                        <YAxis tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} domain={[-10, 110]} />
-                        <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 13 }} 
-                          itemStyle={{ color: '#CCFF00' }}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="moisture" 
-                          stroke="#00E5FF" 
-                          strokeWidth={3}
-                          fillOpacity={1} 
-                          fill="url(#colorMoistureModal)" 
-                          style={{ filter: 'url(#glowModal)' }}
-                          activeDot={{ r: 6, fill: '#CCFF00', stroke: '#10151C', strokeWidth: 2 }}
-                        />
-                        <ReferenceLine y={100} stroke="#22c55e" strokeDasharray="3 3" strokeWidth={1} label={{ position: 'insideTopLeft', value: 'CAPACIDADE DE CAMPO (CC)', fill: '#22c55e', fontSize: 10, offset: 4 }} />
-                        <ReferenceLine y={threshold} stroke="#FF3366" strokeDasharray="4 4" strokeWidth={1} label={{ position: 'insideTopLeft', value: 'ALVO MÍNIMO / SEGURANÇA (%)', fill: '#FF3366', fontSize: 10, offset: 4 }} />
-                        <ReferenceLine y={0} stroke="#ef4444" strokeWidth={2} label={{ position: 'insideBottomLeft', value: 'PONTO DE MURCHA (PM) / Zero Hídrico', fill: '#ef4444', fontSize: 10, offset: 4 }} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#556677', fontSize: 13 }}>
-                        Nenhum dado consolidadado de umidade para gerar a projeção deste pivô.
+        const history = ctx ? (historyBySeason[ctx.season.id] ?? []) : []
+        const threshold = pivot.alert_threshold_percent ?? 70
+
+        // Valores reais de solo (% CC)
+        const ccPct = 100  // CC = 100% por definição
+        const pmPct = pivot.wilting_point != null && pivot.field_capacity != null && pivot.field_capacity > 0
+          ? Math.round((pivot.wilting_point / pivot.field_capacity) * 100)
+          : 0
+
+        const trendData = history.slice(0, 30).reverse().map((d: DailyManagement) => ({
+          name: d.date.slice(8, 10) + '/' + d.date.slice(5, 7),
+          moisture: d.field_capacity_percent != null ? parseFloat(d.field_capacity_percent.toFixed(1)) : null,
+        })).filter((d: { name: string; moisture: number | null }) => d.moisture !== null)
+
+        // Segmenta linha: normal vs crítico (abaixo do threshold)
+        const dataWithColor = trendData.map((d: { name: string; moisture: number | null }) => ({
+          ...d,
+          moistureOk:       (d.moisture ?? 0) >= threshold ? d.moisture : null,
+          moistureCritical: (d.moisture ?? 0) <  threshold ? d.moisture : null,
+        }))
+
+        return (
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => setSelectedPivotPlotId(null)}
+          >
+            <style>{`
+              @keyframes waterWave { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+              @keyframes tankWave  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+            `}</style>
+            <div
+              style={{ width: '92%', maxWidth: 780, background: '#10151c', borderRadius: 24, padding: '28px 32px 24px', boxShadow: '0 24px 80px rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button onClick={() => setSelectedPivotPlotId(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: '#556677', cursor: 'pointer', lineHeight: 0 }}>
+                <X size={18} />
+              </button>
+
+              {/* Header com mini tank */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
+                {/* Mini tank — igual ao Radar Tático */}
+                {(() => {
+                  const currentPct = lastManagementByPivot[pivot.id]?.field_capacity_percent ?? null
+                  const tc = currentPct === null ? '#334155'
+                    : currentPct >= 90 ? '#0093D0'
+                    : currentPct >= 80 ? '#22c55e'
+                    : currentPct >= 70 ? '#f59e0b'
+                    : '#ef4444'
+                  return (
+                    <div style={{
+                      width: 64, height: 70, borderRadius: 12,
+                      border: `1px solid ${tc}40`,
+                      background: 'rgba(5,10,18,0.85)',
+                      position: 'relative', overflow: 'hidden', flexShrink: 0,
+                      boxShadow: `0 0 18px ${tc}30, 0 4px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)`,
+                    }}>
+                      {[75, 50, 25].map(mark => (
+                        <div key={mark} style={{ position: 'absolute', left: 0, right: 0, bottom: `${mark}%`, height: 1, background: 'rgba(255,255,255,0.05)', zIndex: 1 }} />
+                      ))}
+                      {currentPct !== null && (
+                        <div style={{
+                          position: 'absolute', left: 0, right: 0, bottom: 0,
+                          height: `${Math.min(100, Math.max(0, currentPct))}%`,
+                          transition: 'height 1s cubic-bezier(0.4,0,0.2,1)',
+                          overflow: 'hidden', display: 'flex', flexDirection: 'column', zIndex: 2,
+                        }}>
+                          <div style={{ width: '200%', display: 'flex', animation: 'tankWave 2.5s linear infinite', flexShrink: 0, height: 12 }}>
+                            <svg viewBox="0 0 200 20" preserveAspectRatio="none" style={{ width: '50%', height: 12, display: 'block' }}>
+                              <path d="M0,20 L0,10 C40,18 60,2 100,10 C140,18 160,2 200,10 L200,20 Z" fill={tc} opacity="0.95"/>
+                            </svg>
+                            <svg viewBox="0 0 200 20" preserveAspectRatio="none" style={{ width: '50%', height: 12, display: 'block' }}>
+                              <path d="M0,20 L0,10 C40,18 60,2 100,10 C140,18 160,2 200,10 L200,20 Z" fill={tc} opacity="0.95"/>
+                            </svg>
+                          </div>
+                          <div style={{ flex: 1, background: `linear-gradient(to bottom, ${tc}55, ${tc}28)` }} />
+                        </div>
+                      )}
+                      <div style={{ position: 'absolute', inset: 0, zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: '#fff', fontFamily: 'var(--font-mono)', textShadow: '0 1px 6px rgba(0,0,0,0.9)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                          {currentPct !== null ? `${Math.round(currentPct)}%` : '—'}
+                        </span>
+                        <span style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>campo</span>
                       </div>
-                    )}
+                    </div>
+                  )
+                })()}
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{pivot.name}</h3>
+                  <p style={{ fontSize: 11, color: '#445566', margin: 0 }}>Umidade do Solo — Últimos {trendData.length} dias</p>
+                  {pivot.farms?.name && <p style={{ fontSize: 10, color: '#334455', margin: '3px 0 0' }}>{pivot.farms.name}</p>}
+                </div>
+              </div>
+
+              {/* Gráfico */}
+              <div style={{ height: 320, width: '100%', position: 'relative' }}>
+                {trendData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dataWithColor} margin={{ top: 16, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        {/* Gradiente normal — azul/ciano */}
+                        <linearGradient id="gradOk" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%"   stopColor="#00E5FF" stopOpacity={0.5}/>
+                          <stop offset="60%"  stopColor="#22c55e" stopOpacity={0.15}/>
+                          <stop offset="100%" stopColor="#10151c" stopOpacity={0}/>
+                        </linearGradient>
+                        {/* Gradiente crítico — vermelho */}
+                        <linearGradient id="gradCrit" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%"   stopColor="#ef4444" stopOpacity={0.5}/>
+                          <stop offset="100%" stopColor="#10151c" stopOpacity={0}/>
+                        </linearGradient>
+                        {/* Animação de água */}
+                        <linearGradient id="waterShimmer" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%"   stopColor="#00E5FF" stopOpacity={0}/>
+                          <stop offset="50%"  stopColor="#00E5FF" stopOpacity={0.12}/>
+                          <stop offset="100%" stopColor="#00E5FF" stopOpacity={0}/>
+                        </linearGradient>
+                        <filter id="glowOk">
+                          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                        <filter id="glowCrit">
+                          <feGaussianBlur stdDeviation="3" result="blur"/>
+                          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                      </defs>
+
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="name" tick={{ fill: '#445566', fontSize: 10 }} axisLine={false} tickLine={false} dy={8} />
+                      <YAxis tick={{ fill: '#445566', fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, (dataMax: number) => Math.max(110, Math.ceil(dataMax / 10) * 10 + 10)]} tickCount={7} />
+                      <RechartsTooltip
+                        contentStyle={{ backgroundColor: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
+                        labelStyle={{ color: '#8899aa', marginBottom: 4 }}
+                        formatter={(v: unknown) => [`${v}%`, 'Umidade']}
+                      />
+
+                      {/* Linha CC (100%) */}
+                      <ReferenceLine y={ccPct} stroke="#22c55e" strokeDasharray="4 3" strokeWidth={1.5}
+                        label={{ position: 'insideTopLeft', value: `CC — ${ccPct}%`, fill: '#22c55e', fontSize: 10, fontWeight: 700 }} />
+
+                      {/* Linha de segurança */}
+                      <ReferenceLine y={threshold} stroke="#f59e0b" strokeDasharray="5 4" strokeWidth={1.5}
+                        label={{ position: 'insideTopLeft', value: `Segurança — ${threshold}%`, fill: '#f59e0b', fontSize: 10, fontWeight: 700 }} />
+
+                      {/* Linha PM */}
+                      {pmPct > 0 && (
+                        <ReferenceLine y={pmPct} stroke="#ef4444" strokeWidth={2}
+                          label={{ position: 'insideBottomLeft', value: `PM — ${pmPct}%`, fill: '#ef4444', fontSize: 10, fontWeight: 700 }} />
+                      )}
+
+                      {/* Área normal (acima do threshold) */}
+                      <Area type="monotone" dataKey="moistureOk"
+                        stroke="#00E5FF" strokeWidth={2.5}
+                        fill="url(#gradOk)"
+                        style={{ filter: 'url(#glowOk)' }}
+                        dot={false} activeDot={{ r: 5, fill: '#00E5FF', stroke: '#10151c', strokeWidth: 2 }}
+                        connectNulls={false}
+                      />
+
+                      {/* Área crítica (abaixo do threshold) — vermelha */}
+                      <Area type="monotone" dataKey="moistureCritical"
+                        stroke="#ef4444" strokeWidth={2.5}
+                        fill="url(#gradCrit)"
+                        style={{ filter: 'url(#glowCrit)' }}
+                        dot={false} activeDot={{ r: 5, fill: '#ef4444', stroke: '#10151c', strokeWidth: 2 }}
+                        connectNulls={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#445566', fontSize: 13 }}>
+                    Nenhum dado de umidade registrado para este pivô.
                   </div>
-               </div>
+                )}
+
+                {/* Onda líquida animada — flutua na superfície da área preenchida */}
+                {trendData.length > 0 && (() => {
+                  // Usa a média dos dados para posicionar a onda no "nível médio" da água
+                  const validMoistures = trendData.map((d: { moisture: number | null }) => d.moisture).filter((v): v is number => v !== null)
+                  const avgMoisture = validMoistures.reduce((a, b) => a + b, 0) / validMoistures.length
+                  const yMax = Math.max(110, ...validMoistures) + 5
+                  // Mapeamento para pixels: margem top=16, bottom=30, total height=320
+                  const chartTop = 16
+                  const chartBottom = 30
+                  const chartH = 320 - chartTop - chartBottom
+                  const waveTop = chartTop + (1 - avgMoisture / yMax) * chartH
+                  const waveColor = avgMoisture >= threshold ? '#00E5FF' : '#ef4444'
+                  const waveEnc = encodeURIComponent(waveColor)
+                  return (
+                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+                      {/* Onda 1 */}
+                      <div style={{
+                        position: 'absolute',
+                        top: waveTop - 8,
+                        left: 0, width: '200%', height: 16,
+                        animation: 'waterWave 3s linear infinite',
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 16'%3E%3Cpath d='M0,8 C50,2 100,14 150,8 C200,2 250,14 300,8 C350,2 400,14 400,8 L400,16 L0,16 Z' fill='${waveEnc}' opacity='0.45'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'repeat-x', backgroundSize: '400px 16px',
+                      }} />
+                      {/* Onda 2 — contra-fase */}
+                      <div style={{
+                        position: 'absolute',
+                        top: waveTop - 4,
+                        left: 0, width: '200%', height: 10,
+                        animation: 'waterWave 2s linear infinite reverse',
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 10'%3E%3Cpath d='M0,5 C60,0 130,10 200,5 C270,0 340,10 400,5 L400,10 L0,10 Z' fill='${waveEnc}' opacity='0.22'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'repeat-x', backgroundSize: '400px 10px',
+                      }} />
+                    </div>
+                  )
+                })()}
+              </div>
+
+              {/* Legenda */}
+              <div style={{ display: 'flex', gap: 20, marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                {[
+                  { color: '#22c55e',  dash: true,  label: 'Capacidade de Campo (CC)' },
+                  { color: '#f59e0b',  dash: true,  label: `Limiar de Segurança (${threshold}%)` },
+                  { color: '#ef4444',  dash: false, label: 'Ponto de Murcha (PM)' },
+                  { color: '#00E5FF',  dash: false, label: 'Umidade atual' },
+                ].map(({ color, label }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ width: 16, height: 2, background: color, borderRadius: 2 }} />
+                    <span style={{ fontSize: 10, color: '#556677', fontWeight: 600 }}>{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-         )
+          </div>
+        )
       })()}
     </div>
   )

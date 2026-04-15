@@ -141,61 +141,34 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
         const popupHtml = `
           <div style="
             font-family: system-ui, sans-serif;
-            background: #0f1923;
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px;
-            padding: 14px 16px;
-            min-width: 200px;
+            background: #0c1117;
+            border: 1px solid ${col.fill}30;
+            border-radius: 10px;
+            padding: 8px 12px;
+            min-width: 160px;
             color: #e2e8f0;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.7);
           ">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-              <div style="
-                width:8px;height:8px;border-radius:50%;
-                background:${col.fill};
-                box-shadow:0 0 6px ${col.fill};
-              "></div>
-              <strong style="font-size:14px;">${pivot.name}</strong>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <div style="width:6px;height:6px;border-radius:50%;background:${col.fill};box-shadow:0 0 4px ${col.fill};flex-shrink:0;"></div>
+                <strong style="font-size:12px;color:#e2e8f0;">${pivot.name}</strong>
+              </div>
+              <span style="font-size:9px;font-weight:700;color:${col.fill};">${col.label}</span>
             </div>
-            <p style="font-size:11px;color:#556677;margin:0 0 10px;">${pivot.farm_name}</p>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
-              <div style="background:#0d1520;border-radius:8px;padding:8px;text-align:center;">
-                <div style="font-size:15px;font-weight:700;color:#e2e8f0;">${m?.eto_mm != null ? m.eto_mm.toFixed(1) : '—'}</div>
-                <div style="font-size:10px;color:#556677;">ETo (mm)</div>
-              </div>
-              <div style="background:#0d1520;border-radius:8px;padding:8px;text-align:center;">
-                <div style="font-size:15px;font-weight:700;color:#e2e8f0;">${m?.etc_mm != null ? m.etc_mm.toFixed(1) : '—'}</div>
-                <div style="font-size:10px;color:#556677;">ETc (mm)</div>
-              </div>
-              <div style="background:#0d1520;border-radius:8px;padding:8px;text-align:center;">
-                <div style="font-size:15px;font-weight:700;color:#e2e8f0;">${m?.rainfall_mm != null ? m.rainfall_mm.toFixed(1) : '—'}</div>
-                <div style="font-size:10px;color:#556677;">Chuva</div>
-              </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:10px;color:#445566;">
+              <span>ETo <b style="color:#8899aa;">${m?.eto_mm != null ? m.eto_mm.toFixed(1) : '—'}</b></span>
+              <span>ETc <b style="color:#8899aa;">${m?.etc_mm != null ? m.etc_mm.toFixed(1) : '—'}</b></span>
+              <span>🌧 <b style="color:#8899aa;">${m?.rainfall_mm != null ? m.rainfall_mm.toFixed(1) : '—'}</b></span>
             </div>
-
             <div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                <span style="font-size:10px;color:#556677;">Cap. Campo</span>
-                <span style="font-size:10px;font-weight:600;color:${barColor};">${pct !== null ? pct.toFixed(0) + '%' : '—'}</span>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:9px;color:#445566;">% Campo</span>
+                <span style="font-size:10px;font-weight:700;color:${barColor};">${pct !== null ? pct.toFixed(0) + '%' : '—'}</span>
               </div>
-              <div style="height:5px;background:#0d1520;border-radius:99px;overflow:hidden;">
+              <div style="height:3px;background:#0d1520;border-radius:99px;overflow:hidden;">
                 <div style="width:${barWidth}%;height:100%;background:${barColor};border-radius:99px;"></div>
               </div>
-            </div>
-
-            ${areaHa !== null ? `
-            <div style="margin-top:8px;font-size:11px;color:#556677;">
-              Área: <strong style="color:#8899aa;">${areaHa.toFixed(1)} ha</strong>
-            </div>
-            ` : ''}
-
-            <div style="
-              margin-top:10px;padding:4px 10px;border-radius:20px;
-              background:${col.fill}20;border:1px solid ${col.fill}40;
-              display:inline-flex;align-items:center;gap:5px;
-            ">
-              <span style="width:6px;height:6px;border-radius:50%;background:${col.fill};display:inline-block;"></span>
-              <span style="font-size:11px;font-weight:600;color:${col.fill};">${col.label}</span>
             </div>
           </div>
         `
@@ -246,7 +219,9 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
         marker.bindTooltip(popupHtml, {
           direction: 'top',
           className: 'irrigaagro-popup',
-          opacity: 1
+          opacity: 1,
+          offset: [0, -20],
+          sticky: false,
         })
         
         marker.on('click', () => {
@@ -267,7 +242,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
         }
       }
       if (allPoints.length > 1) {
-        map.fitBounds(L.latLngBounds(allPoints), { padding: [90, 90] })
+        map.fitBounds(L.latLngBounds(allPoints), { paddingTopLeft: [90, 160], paddingBottomRight: [90, 90] })
       }
     })
 
@@ -305,13 +280,14 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
   const farmLabel = farmNames.length === 1 ? farmNames[0] : farmNames.length > 1 ? `${farmNames.length} fazendas` : ''
 
   return (
-    <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)', background: '#0f1923' }}>
+    <div style={{ borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', background: '#0f1923', position: 'relative' }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '12px 18px',
         background: '#0d1520',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: '16px 16px 0 0',
       }}>
         <span style={{
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
@@ -351,6 +327,16 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
           background: #080e14 !important;
           font-family: system-ui, sans-serif !important;
         }
+        .leaflet-tooltip-pane {
+          overflow: visible !important;
+          z-index: 700 !important;
+        }
+        .leaflet-pane {
+          overflow: visible !important;
+        }
+        .irrigaagro-popup {
+          pointer-events: none;
+        }
         .leaflet-control-zoom a {
           background: #0f1923 !important;
           border-color: rgba(255,255,255,0.06) !important;
@@ -362,7 +348,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
         }
       `}</style>
 
-      <div ref={mapRef} style={{ height: 340, width: '100%' }} />
+      <div ref={mapRef} style={{ height: 340, width: '100%', borderRadius: '0 0 16px 16px', overflow: 'hidden' }} />
 
       {/* Legend overlay */}
       <div style={{
