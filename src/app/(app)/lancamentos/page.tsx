@@ -620,6 +620,7 @@ function DayCell({
 
 function PivotCard({
   meta, today, weekStart, readOnly, schedules, onSave, onCancel, editBatch, onEditBatchDone,
+  forceExpand, onForceExpandDone,
 }: {
   meta: PivotMeta
   today: string
@@ -630,6 +631,8 @@ function PivotCard({
   onCancel: (schedule: IrrigationSchedule) => void
   editBatch?: BatchEditPayload | null
   onEditBatchDone?: () => void
+  forceExpand?: boolean
+  onForceExpandDone?: () => void
 }) {
   const { context, ctaMm, sectors, speedTable } = meta
   const { pivot, farm, season, crop } = context
@@ -657,6 +660,14 @@ function PivotCard({
       Object.fromEntries(days.map(d => [d, emptyEntry()])),
     ]))
   )
+
+  // Quando forceExpand é ativado: abre o card (após reprogramar)
+  useEffect(() => {
+    if (!forceExpand) return
+    setExpanded(true)
+    onForceExpandDone?.()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceExpand])
 
   // Quando editBatch muda: expande o card e pré-preenche com dados do lote
   useEffect(() => {
@@ -1318,6 +1329,7 @@ export default function LancamentosPage() {
   const [today, setToday] = useState('')
   const [weekOffset, setWeekOffset] = useState(0) // 0 = semana atual, -1 = anterior, etc.
   const [historyKey, setHistoryKey] = useState(0)  // forçar rerender do ScheduleHistory
+  const [expandPivotId, setExpandPivotId] = useState<string | null>(null) // abre grid do pivô ao reprogramar
   const [metas, setMetas] = useState<PivotMeta[]>([])
   // schedules indexados por pivotId
   const [schedulesByPivot, setSchedulesByPivot] = useState<Record<string, IrrigationSchedule[]>>({})
@@ -1505,9 +1517,10 @@ export default function LancamentosPage() {
     const targetOffset = Math.floor(diffDays / 7)
     setWeekOffset(targetOffset)
 
-    // 5. Recarrega os dados (grid virá zerado — schedules da nova semana foram apagados)
+    // 5. Recarrega os dados e abre o grid do pivô automaticamente
     await load()
-    setHistoryKey(k => k + 1) // forçar ScheduleHistory a recarregar batches
+    setHistoryKey(k => k + 1)
+    setExpandPivotId(pivotId) // abre o grid do pivô reprogramado
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
     const hadDone = doneRows.length > 0
@@ -1671,6 +1684,8 @@ export default function LancamentosPage() {
                 })}
                 editBatch={isEditTarget ? editBatch : null}
                 onEditBatchDone={() => setEditBatch(null)}
+                forceExpand={expandPivotId === pivotId}
+                onForceExpandDone={() => setExpandPivotId(null)}
               />
             )
           })}
