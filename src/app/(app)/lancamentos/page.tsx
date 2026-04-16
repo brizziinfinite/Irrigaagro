@@ -20,7 +20,7 @@ import {
 } from '@/lib/water-balance'
 import type { DailyManagement } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
-import { ClipboardList, ChevronDown, ChevronUp, X, Copy } from 'lucide-react'
+import { ClipboardList, ChevronDown, ChevronUp, X, Copy, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { ScheduleHistory } from './ScheduleHistory'
 import type { BatchEditPayload } from './ScheduleHistory'
 
@@ -44,6 +44,21 @@ function fmtShort(ymd: string) {
 function fmtWeekday(ymd: string) {
   const d = new Date(ymd + 'T12:00:00')
   return d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
+}
+
+/** Retorna o YMD do início da semana (domingo) a partir de hoje + offsetSemanas */
+function getWeekStart(todayYmd: string, offsetWeeks: number): string {
+  const d = new Date(todayYmd + 'T12:00:00')
+  d.setDate(d.getDate() + offsetWeeks * 7)
+  return toYMD(d)
+}
+
+function fmtWeekRange(startYmd: string): string {
+  const from = new Date(startYmd + 'T12:00:00')
+  const to   = new Date(startYmd + 'T12:00:00')
+  to.setDate(to.getDate() + 6)
+  const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short' }
+  return `${from.toLocaleDateString('pt-BR', opts)} – ${to.toLocaleDateString('pt-BR', opts)}`
 }
 
 function parseNum(v: string): number | null {
@@ -604,10 +619,12 @@ function DayCell({
 // ─── Card de um pivô ─────────────────────────────────────────
 
 function PivotCard({
-  meta, today, schedules, onSave, onCancel, editBatch, onEditBatchDone,
+  meta, today, weekStart, readOnly, schedules, onSave, onCancel, editBatch, onEditBatchDone,
 }: {
   meta: PivotMeta
   today: string
+  weekStart: string
+  readOnly?: boolean
   schedules: IrrigationSchedule[]
   onSave: (entries: { date: string; sectorId: string | null; entry: DayEntry }[], existingBatchId?: string) => Promise<void>
   onCancel: (schedule: IrrigationSchedule) => void
@@ -627,10 +644,10 @@ function PivotCard({
     ? sectors.map(s => s.id)
     : ['']
 
-  // Quando em modo edição de lote, usa as datas do lote; caso contrário, próximos 7 dias
+  // Quando em modo edição de lote, usa as datas do lote; caso contrário, os 7 dias da semana exibida
   const days = editBatch
     ? Array.from(new Set(editBatch.schedules.map(s => s.date))).sort()
-    : Array.from({ length: 7 }, (_, i) => addDays(today, i))
+    : Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 
   const emptyEntry = (): DayEntry => ({ rainfall: '', lamina: '', speed: '', speedAuto: false, startTime: '', endTime: '' })
 
@@ -942,6 +959,8 @@ function PivotCard({
               onChange: (v: string) => void,
               opts: { type?: string; readOnly?: boolean; color?: string; bg?: string; placeholder?: string } = {}
             ) => {
+              // Em modo readOnly de semana passada, todos os inputs ficam read-only
+              if (readOnly) opts = { ...opts, readOnly: true }
               const isTime = opts.type === 'time'
               const input = (
                 <input
@@ -1014,8 +1033,8 @@ function PivotCard({
                       <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa' }}>Programação dos dias</span>
                     )}
                   </div>
-                  {/* Replicar — só no primeiro setor quando há mais de um */}
-                  {hasSectors && sIdx === 0 && sectors.length > 1 && (
+                  {/* Replicar — só no primeiro setor quando há mais de um, e não em readOnly */}
+                  {!readOnly && hasSectors && sIdx === 0 && sectors.length > 1 && (
                     <button onClick={replicateFirstSector} style={{
                       display: 'flex', alignItems: 'center', gap: 5,
                       padding: '5px 10px', borderRadius: 7,
@@ -1204,7 +1223,7 @@ function PivotCard({
                                     {nextDay && <span style={{ fontSize: 8, color: '#f59e0b', marginLeft: 2 }}>+1d</span>}
                                   </div>
                                   {/* Botão cancelar inline */}
-                                  {isPlanned && !isPastDate && (
+                                  {!readOnly && isPlanned && !isPastDate && (
                                     <button onClick={() => onCancel(sched!)} style={{
                                       width: '100%', padding: '2px 0', marginTop: 2,
                                       borderRadius: 4, border: '1px solid rgba(239,68,68,0.2)',
@@ -1240,39 +1259,52 @@ function PivotCard({
           )}
 
           {/* Botão Salvar + Limpar */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            {editBatch ? (
-              <button onClick={onEditBatchDone} style={{
-                flex: 1, padding: '12px 0', borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.08)',
-                background: 'transparent', color: '#667788',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}>
-                Cancelar edição
+          {readOnly ? (
+            <div style={{
+              marginTop: 14, padding: '10px 14px', borderRadius: 10,
+              background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <CalendarDays size={14} style={{ color: '#f59e0b', flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>
+                Semana passada — somente visualização. Para editar, use o Histórico abaixo.
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+              {editBatch ? (
+                <button onClick={onEditBatchDone} style={{
+                  flex: 1, padding: '12px 0', borderRadius: 10,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'transparent', color: '#667788',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}>
+                  Cancelar edição
+                </button>
+              ) : (
+                <button onClick={handleClearAll} style={{
+                  flex: 1, padding: '12px 0', borderRadius: 10,
+                  border: '1px solid rgba(239,68,68,0.25)',
+                  background: 'rgba(239,68,68,0.06)', color: '#ef4444',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}>
+                  Limpar tudo
+                </button>
+              )}
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  flex: 2, padding: '12px 0', borderRadius: 10, border: 'none',
+                  background: saving ? 'rgba(34,197,94,0.3)' : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                  color: '#fff', fontSize: 14, fontWeight: 800, cursor: saving ? 'wait' : 'pointer',
+                  boxShadow: '0 2px 16px rgba(34,197,94,0.25)',
+                  letterSpacing: '0.02em',
+                }}>
+                {saving ? 'Salvando…' : editBatch ? '✓ Salvar alterações' : '✓ Salvar programação'}
               </button>
-            ) : (
-              <button onClick={handleClearAll} style={{
-                flex: 1, padding: '12px 0', borderRadius: 10,
-                border: '1px solid rgba(239,68,68,0.25)',
-                background: 'rgba(239,68,68,0.06)', color: '#ef4444',
-                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-              }}>
-                Limpar tudo
-              </button>
-            )}
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              style={{
-                flex: 2, padding: '12px 0', borderRadius: 10, border: 'none',
-                background: saving ? 'rgba(34,197,94,0.3)' : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                color: '#fff', fontSize: 14, fontWeight: 800, cursor: saving ? 'wait' : 'pointer',
-                boxShadow: '0 2px 16px rgba(34,197,94,0.25)',
-                letterSpacing: '0.02em',
-              }}>
-              {saving ? 'Salvando…' : editBatch ? '✓ Salvar alterações' : '✓ Salvar programação'}
-            </button>
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1285,6 +1317,7 @@ export default function LancamentosPage() {
   const { company } = useAuth()
 
   const [today, setToday] = useState('')
+  const [weekOffset, setWeekOffset] = useState(0) // 0 = semana atual, -1 = anterior, etc.
   const [metas, setMetas] = useState<PivotMeta[]>([])
   // schedules indexados por pivotId
   const [schedulesByPivot, setSchedulesByPivot] = useState<Record<string, IrrigationSchedule[]>>({})
@@ -1305,6 +1338,10 @@ export default function LancamentosPage() {
   }
 
   useEffect(() => { setToday(toYMD(new Date())) }, [])
+
+  // weekStart = primeiro dia da semana exibida
+  const weekStart = today ? getWeekStart(today, weekOffset) : ''
+  const isPastWeek = weekOffset < 0
 
   const load = useCallback(async () => {
     if (!company || !today) return
@@ -1354,10 +1391,10 @@ export default function LancamentosPage() {
 
       setMetas(metaList)
 
-      // Buscar schedules dos próximos 7 dias
-      const from = today
-      const to   = addDays(today, 6)
-      const allSchedules = await listSchedulesByCompany(company.id, from, to)
+      // Buscar schedules da semana exibida
+      const weekFrom = getWeekStart(today, weekOffset)
+      const weekTo   = addDays(weekFrom, 6)
+      const allSchedules = await listSchedulesByCompany(company.id, weekFrom, weekTo)
       const byPivot: Record<string, IrrigationSchedule[]> = {}
       for (const s of allSchedules) {
         if (!byPivot[s.pivot_id]) byPivot[s.pivot_id] = []
@@ -1370,7 +1407,7 @@ export default function LancamentosPage() {
     } finally {
       setLoading(false)
     }
-  }, [company, today])
+  }, [company, today, weekOffset])
 
   useEffect(() => { load() }, [load])
 
@@ -1461,14 +1498,84 @@ export default function LancamentosPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <ClipboardList size={20} style={{ color: '#0093D0' }} />
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#e2e8f0', margin: 0, letterSpacing: '-0.02em' }}>
-            Lançamentos
-          </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ClipboardList size={20} style={{ color: '#0093D0' }} />
+            <h1 style={{ fontSize: 22, fontWeight: 900, color: '#e2e8f0', margin: 0, letterSpacing: '-0.02em' }}>
+              Lançamentos
+            </h1>
+            {isPastWeek && (
+              <span style={{
+                fontSize: 10, fontWeight: 700, color: '#f59e0b',
+                background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.25)',
+                borderRadius: 99, padding: '2px 9px',
+              }}>somente leitura</span>
+            )}
+          </div>
+
+          {/* Navegação de semana */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              onClick={() => setWeekOffset(o => o - 1)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 32, height: 32, borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.04)', color: '#8899aa',
+                cursor: 'pointer',
+              }}>
+              <ChevronLeft size={16} />
+            </button>
+
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '6px 14px', borderRadius: 9,
+              background: weekOffset === 0 ? 'rgba(0,147,208,0.08)' : 'rgba(245,158,11,0.06)',
+              border: `1px solid ${weekOffset === 0 ? 'rgba(0,147,208,0.25)' : 'rgba(245,158,11,0.2)'}`,
+            }}>
+              <CalendarDays size={13} style={{ color: weekOffset === 0 ? '#0093D0' : '#f59e0b' }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: weekOffset === 0 ? '#0093D0' : '#f59e0b', whiteSpace: 'nowrap' }}>
+                {weekOffset === 0 ? 'Esta semana' : weekOffset === -1 ? 'Semana passada' : `${Math.abs(weekOffset)} sem. atrás`}
+              </span>
+              {weekStart && (
+                <span style={{ fontSize: 11, color: '#445566' }}>
+                  {fmtWeekRange(weekStart)}
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={() => setWeekOffset(o => Math.min(o + 1, 0))}
+              disabled={weekOffset >= 0}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 32, height: 32, borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.04)',
+                color: weekOffset >= 0 ? '#223344' : '#8899aa',
+                cursor: weekOffset >= 0 ? 'not-allowed' : 'pointer',
+              }}>
+              <ChevronRight size={16} />
+            </button>
+
+            {weekOffset < 0 && (
+              <button
+                onClick={() => setWeekOffset(0)}
+                style={{
+                  padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                  border: '1px solid rgba(0,147,208,0.3)',
+                  background: 'rgba(0,147,208,0.08)', color: '#0093D0',
+                  cursor: 'pointer',
+                }}>
+                Hoje
+              </button>
+            )}
+          </div>
         </div>
-        <p style={{ fontSize: 13, color: '#445566', margin: 0 }}>
-          Clique em um pivô para programar irrigação nos próximos 7 dias
+        <p style={{ fontSize: 13, color: '#445566', margin: '6px 0 0' }}>
+          {isPastWeek
+            ? 'Visualizando semana anterior — inputs desabilitados'
+            : 'Clique em um pivô para programar irrigação'}
         </p>
       </div>
 
@@ -1496,6 +1603,8 @@ export default function LancamentosPage() {
                 key={meta.context.season.id}
                 meta={meta}
                 today={today}
+                weekStart={weekStart}
+                readOnly={isPastWeek}
                 schedules={schedulesByPivot[pivotId] ?? []}
                 onSave={(entries, existingBatchId) => handleSave(meta, entries, existingBatchId)}
                 onCancel={schedule => setCancelTarget({
