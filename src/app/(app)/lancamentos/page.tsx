@@ -1471,7 +1471,23 @@ export default function LancamentosPage() {
     const plannedRows = originalRows.filter(r => r.status === 'planned')
     await Promise.all(plannedRows.map(r => cancelSchedule(r.id, reason, notes)))
 
-    // 2. Deleta qualquer programação já existente para este pivô na nova semana
+    // 2. Zera actual_depth_mm no daily_management para dias marcados como 'done' que não foram irrigados
+    //    O cron vai recalcular na próxima madrugada sem a lâmina falsa
+    const doneRows = originalRows.filter(r => r.status === 'done')
+    if (doneRows.length > 0) {
+      const seasonId = metas.find(m => m.context.pivot?.id === pivotId)?.context.season.id
+      if (seasonId) {
+        const doneDates = doneRows.map(r => r.date)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any)
+          .from('daily_management')
+          .update({ actual_depth_mm: null, updated_at: new Date().toISOString() })
+          .eq('season_id', seasonId)
+          .in('date', doneDates)
+      }
+    }
+
+    // 3. Deleta qualquer programação já existente para este pivô na nova semana
     const weekFrom = newDate
     const weekTo   = addDays(newDate, 6)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1482,20 +1498,25 @@ export default function LancamentosPage() {
       .gte('date', weekFrom)
       .lte('date', weekTo)
 
-    // 3. Calcula o weekOffset para navegar até a semana da nova data
+    // 4. Calcula o weekOffset para navegar até a semana da nova data
     const newDateObj  = new Date(newDate + 'T12:00:00')
     const todayObj    = new Date(today   + 'T12:00:00')
     const diffDays    = Math.round((newDateObj.getTime() - todayObj.getTime()) / (1000 * 60 * 60 * 24))
     const targetOffset = Math.floor(diffDays / 7)
     setWeekOffset(targetOffset)
 
-    // 4. Recarrega os dados (grid virá zerado — schedules da nova semana foram apagados)
+    // 5. Recarrega os dados (grid virá zerado — schedules da nova semana foram apagados)
     await load()
     setHistoryKey(k => k + 1) // forçar ScheduleHistory a recarregar batches
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
+    const hadDone = doneRows.length > 0
     const fmtNewDate = new Date(newDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
-    showSuccess(`Lote cancelado. Semana de ${fmtNewDate} liberada — faça a nova programação.`)
+    showSuccess(
+      hadDone
+        ? `Lote cancelado. ${doneRows.length} registro(s) de irrigação removidos do balanço hídrico. Semana de ${fmtNewDate} liberada.`
+        : `Lote cancelado. Semana de ${fmtNewDate} liberada — faça a nova programação.`
+    )
   }
 
   if (!company || !today) return (
