@@ -1191,8 +1191,8 @@ function BatchCard({
 
         {/* Ações */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-          {/* Reprogramar — só aparece se houver dias planejados */}
-          {planned > 0 && onReschedule && (
+          {/* Reprogramar — aparece se houver dias planejados OU marcados como done (pivô não trabalhou) */}
+          {(planned > 0 || done > 0) && onReschedule && (
             <button
               onClick={() => setShowReschedule(true)}
               title="Cancelar e reprogramar para outra data"

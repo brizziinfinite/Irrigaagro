@@ -1467,9 +1467,9 @@ export default function LancamentosPage() {
     const pivotId = originalRows[0]?.pivot_id ?? ''
     const supabase = createClient()
 
-    // 1. Cancela todos os dias planejados do lote original
-    const plannedRows = originalRows.filter(r => r.status === 'planned')
-    await Promise.all(plannedRows.map(r => cancelSchedule(r.id, reason, notes)))
+    // 1. Cancela todos os dias do lote original que não foram cumpridos (planned ou done incorreto)
+    const activeRows = originalRows.filter(r => r.status === 'planned' || r.status === 'done')
+    await Promise.all(activeRows.map(r => cancelSchedule(r.id, reason, notes)))
 
     // 2. Deleta qualquer programação já existente para este pivô na nova semana
     const weekFrom = newDate
