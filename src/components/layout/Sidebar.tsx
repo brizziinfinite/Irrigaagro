@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Droplets,
@@ -16,6 +17,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { createClient } from '@/lib/supabase/client';
 import IrrigaAgroLogo from '@/components/branding/IrrigaAgroLogo';
 
 // SVG icon de pivô central — mockup aprovado
@@ -56,7 +58,22 @@ const CONFIGURACAO = [
 export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, signOut, company } = useAuth();
+  const [activeSeasonName, setActiveSeasonName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!company?.id) return;
+    const supabase = createClient();
+    supabase
+      .from('seasons')
+      .select('name, farms!inner(company_id)')
+      .eq('is_active', true)
+      .eq('farms.company_id', company.id)
+      .limit(1)
+      .then(({ data }) => {
+        setActiveSeasonName(data?.[0]?.name ?? null);
+      });
+  }, [company?.id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -169,9 +186,15 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#22c55e', margin: '0 0 3px' }}>
             Safra ativa
           </p>
-          <p style={{ fontSize: 11, color: '#8899aa', margin: 0 }}>
-            Verifique em <Link href="/safras" style={{ color: '#22c55e', textDecoration: 'none' }}>Safras</Link>
-          </p>
+          {activeSeasonName ? (
+            <p style={{ fontSize: 11, color: '#e2e8f0', margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {activeSeasonName}
+            </p>
+          ) : (
+            <p style={{ fontSize: 11, color: '#8899aa', margin: 0 }}>
+              Verifique em <Link href="/safras" style={{ color: '#22c55e', textDecoration: 'none' }}>Safras</Link>
+            </p>
+          )}
         </div>
 
         {/* User Profile */}
