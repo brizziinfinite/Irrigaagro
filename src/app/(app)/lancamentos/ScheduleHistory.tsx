@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, History, CheckCircle, XCircle, Clock, Trash2, MessageCircle, Printer, ChevronDown, ChevronUp, Pencil, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -1123,7 +1124,7 @@ function BatchCard({
 
   return (
     <>
-    {showReschedule && (
+    {showReschedule && typeof document !== 'undefined' && createPortal(
       <RescheduleModal
         rows={rows}
         pivotName={pivotName}
@@ -1133,7 +1134,8 @@ function BatchCard({
           onReschedule?.(payload)
         }}
         onClose={() => setShowReschedule(false)}
-      />
+      />,
+      document.body
     )}
     <div style={{
       background: 'rgba(255,255,255,0.02)',
