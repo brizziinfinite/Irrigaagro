@@ -688,11 +688,10 @@ function PivotCard({
   // Pré-preencher grids com schedules existentes (modo normal, não edição)
   useEffect(() => {
     if (editBatch) return  // não sobrescreve quando em modo edição
-    setSectorGrids(prev => {
+    setSectorGrids(() => {
       const next: SectorGrid = {}
-      const normalDays = Array.from({ length: 7 }, (_, i) => addDays(today, i))
       for (const sid of sectorIds) {
-        next[sid] = { ...(prev[sid] ?? Object.fromEntries(normalDays.map(d => [d, emptyEntry()]))) }
+        next[sid] = Object.fromEntries(days.map(d => [d, emptyEntry()]))
       }
       for (const s of schedules) {
         const sid = s.sector_id ?? ''
@@ -711,7 +710,7 @@ function PivotCard({
       return next
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schedules])
+  }, [schedules, weekStart])
 
   function updateDayInSector(sectorId: string, date: string, field: keyof DayEntry, value: string | boolean) {
     setSectorGrids(prev => ({
