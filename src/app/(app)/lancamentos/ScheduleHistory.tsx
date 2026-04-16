@@ -959,6 +959,9 @@ function RescheduleModal({
   const [notes, setNotes] = useState('')
   const [newDate, setNewDate] = useState(addDays(today, 1))
 
+  // Se o lote já está todo cancelado, não precisa pedir motivo novamente
+  const alreadyCancelled = rows.every(r => r.status === 'cancelled')
+
   const REASONS = [
     { value: 'quebra' as IrrigationCancelledReason, label: '🔧 Dano mecânico',            color: '#f59e0b' },
     { value: 'outro'  as IrrigationCancelledReason, label: '⚡ Falta de energia / Outro', color: '#8899aa' },
@@ -991,7 +994,7 @@ function RescheduleModal({
               }}>
                 <RefreshCw size={15} style={{ color: '#f59e0b' }} />
               </div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Cancelar + Reprogramar</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>{alreadyCancelled ? 'Reprogramar' : 'Cancelar + Reprogramar'}</p>
             </div>
             <p style={{ fontSize: 12, color: '#445566', margin: 0, paddingLeft: 40 }}>{pivotName}</p>
           </div>
@@ -1000,34 +1003,35 @@ function RescheduleModal({
           </button>
         </div>
 
-        {/* Motivo */}
-        <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>Motivo do cancelamento</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 18 }}>
-          {REASONS.map(r => (
-            <button key={r.value} onClick={() => setReason(r.value)} style={{
-              padding: '9px 14px', borderRadius: 9, textAlign: 'left',
-              border: `1px solid ${reason === r.value ? r.color : 'rgba(255,255,255,0.07)'}`,
-              background: reason === r.value ? `${r.color}15` : 'rgba(255,255,255,0.02)',
-              color: reason === r.value ? r.color : '#667788',
-              fontSize: 13, fontWeight: reason === r.value ? 700 : 400, cursor: 'pointer',
-            }}>
-              {r.label}
-            </button>
-          ))}
-        </div>
+        {/* Motivo + Observação — só quando há dias ainda não cancelados */}
+        {!alreadyCancelled && (<>
+          <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>Motivo do cancelamento</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 18 }}>
+            {REASONS.map(r => (
+              <button key={r.value} onClick={() => setReason(r.value)} style={{
+                padding: '9px 14px', borderRadius: 9, textAlign: 'left',
+                border: `1px solid ${reason === r.value ? r.color : 'rgba(255,255,255,0.07)'}`,
+                background: reason === r.value ? `${r.color}15` : 'rgba(255,255,255,0.02)',
+                color: reason === r.value ? r.color : '#667788',
+                fontSize: 13, fontWeight: reason === r.value ? 700 : 400, cursor: 'pointer',
+              }}>
+                {r.label}
+              </button>
+            ))}
+          </div>
 
-        {/* Observação */}
-        <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>Observação (opcional)</p>
-        <textarea
-          value={notes} onChange={e => setNotes(e.target.value)}
-          placeholder="Ex: falta de energia das 22h às 04h..."
-          rows={2}
-          style={{
-            width: '100%', padding: '8px 10px', borderRadius: 8, resize: 'none', marginBottom: 18,
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-            color: '#e2e8f0', fontSize: 12, fontFamily: 'inherit', boxSizing: 'border-box',
-          }}
-        />
+          <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>Observação (opcional)</p>
+          <textarea
+            value={notes} onChange={e => setNotes(e.target.value)}
+            placeholder="Ex: falta de energia das 22h às 04h..."
+            rows={2}
+            style={{
+              width: '100%', padding: '8px 10px', borderRadius: 8, resize: 'none', marginBottom: 18,
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+              color: '#e2e8f0', fontSize: 12, fontFamily: 'inherit', boxSizing: 'border-box',
+            }}
+          />
+        </>)}
 
         {/* Nova data de início da semana */}
         <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>
@@ -1191,8 +1195,8 @@ function BatchCard({
 
         {/* Ações */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-          {/* Reprogramar — aparece se houver dias planejados OU marcados como done (pivô não trabalhou) */}
-          {(planned > 0 || done > 0) && onReschedule && (
+          {/* Reprogramar — aparece para qualquer lote não totalmente vazio (pode reprogramar mesmo cancelado) */}
+          {(planned > 0 || done > 0 || cancelled > 0) && onReschedule && (
             <button
               onClick={() => setShowReschedule(true)}
               title="Cancelar e reprogramar para outra data"
