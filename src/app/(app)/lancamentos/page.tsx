@@ -661,6 +661,14 @@ function PivotCard({
     ]))
   )
 
+  // Dia extra: se qualquer setor tem o último dia cruzando meia-noite, adiciona D+1 para todos
+  const lastDay = days[days.length - 1]
+  const pivotExtraDay = sectorIds.some(sid => {
+    const e = sectorGrids[sid]?.[lastDay] ?? emptyEntry()
+    return e.startTime && e.endTime && crossesMidnight(e.startTime, e.endTime)
+  }) ? addDays(lastDay, 1) : null
+  const displayDays = pivotExtraDay ? [...days, pivotExtraDay] : days
+
   // Quando forceExpand é ativado: abre o card (após reprogramar)
   useEffect(() => {
     if (!forceExpand) return
@@ -918,6 +926,7 @@ function PivotCard({
             const schedulesForSector = schedules.filter(s => (s.sector_id ?? '') === sid)
             const fraction = sectorFraction(sector)
 
+
             function handleLaminaInline(date: string, v: string) {
               updateDayInSector(sid, date, 'lamina', v)
               const mm = parseNum(v)
@@ -1064,11 +1073,31 @@ function PivotCard({
                       <tr>
                         {/* Coluna de label */}
                         <th style={{ width: 90, padding: '5px 8px', textAlign: 'left' }} />
-                        {days.map(date => {
+                        {displayDays.map(date => {
+                          const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
                           const isToday = date === today
                           const isPast = date < today
                           const sched = schedulesForSector.find(s => s.date === date)
                           const isCancelled = sched?.status === 'cancelled'
+                          if (isExtraDay) {
+                            return (
+                              <th key={date} style={{
+                                padding: '5px 6px', textAlign: 'center', minWidth: 72,
+                                background: 'rgba(245,158,11,0.06)',
+                                borderRadius: '6px 6px 0 0',
+                                borderBottom: '2px solid rgba(245,158,11,0.3)',
+                              }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                                  <div style={{ fontSize: 9, fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                    {fmtWeekday(date)}
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                                    {fmtShort(date)}
+                                  </div>
+                                </div>
+                              </th>
+                            )
+                          }
                           return (
                             <th key={date} style={{
                               padding: '5px 6px', textAlign: 'center', minWidth: 72,
@@ -1102,7 +1131,13 @@ function PivotCard({
                         <td style={{ padding: '5px 8px 2px' }}>
                           <span style={{ fontSize: 9, color: '#445566', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>% Campo</span>
                         </td>
-                        {days.map(date => {
+                        {displayDays.map(date => {
+                          const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
+                          if (isExtraDay) return (
+                            <td key={date} style={{ padding: '4px 6px', textAlign: 'center', background: 'rgba(245,158,11,0.03)' }}>
+                              <div style={{ fontSize: 11, color: '#334455' }}>—</div>
+                            </td>
+                          )
                           const entry = grid[date] ?? emptyEntry()
                           const dayPct = pctForDate(meta, date, grid, today)
                           const projPct = (entry.lamina !== '' || entry.rainfall !== '') ? projectedPct(meta, date, grid, today) : null
@@ -1133,7 +1168,13 @@ function PivotCard({
                         <td style={{ padding: '4px 8px' }}>
                           <span style={{ fontSize: 9, color: '#22d3ee', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>🌧 Chuva mm</span>
                         </td>
-                        {days.map(date => {
+                        {displayDays.map(date => {
+                          const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
+                          if (isExtraDay) return (
+                            <td key={date} style={{ padding: '3px 6px', background: 'rgba(245,158,11,0.03)' }}>
+                              <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div>
+                            </td>
+                          )
                           const entry = grid[date] ?? emptyEntry()
                           const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
                           return (
@@ -1150,7 +1191,13 @@ function PivotCard({
                         <td style={{ padding: '4px 8px' }}>
                           <span style={{ fontSize: 9, color: '#22c55e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>💧 Lâmina mm</span>
                         </td>
-                        {days.map(date => {
+                        {displayDays.map(date => {
+                          const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
+                          if (isExtraDay) return (
+                            <td key={date} style={{ padding: '3px 6px', background: 'rgba(245,158,11,0.03)' }}>
+                              <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div>
+                            </td>
+                          )
                           const entry = grid[date] ?? emptyEntry()
                           const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
                           return (
@@ -1167,7 +1214,13 @@ function PivotCard({
                         <td style={{ padding: '4px 8px' }}>
                           <span style={{ fontSize: 9, color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>⚙ Vel %</span>
                         </td>
-                        {days.map(date => {
+                        {displayDays.map(date => {
+                          const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
+                          if (isExtraDay) return (
+                            <td key={date} style={{ padding: '3px 6px', background: 'rgba(245,158,11,0.03)' }}>
+                              <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div>
+                            </td>
+                          )
                           const entry = grid[date] ?? emptyEntry()
                           const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
                           return (
@@ -1188,13 +1241,14 @@ function PivotCard({
                         <td style={{ padding: '4px 8px' }}>
                           <span style={{ fontSize: 9, color: '#e2e8f0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>▶ Início</span>
                         </td>
-                        {days.map(date => {
+                        {displayDays.map(date => {
+                          const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
                           const entry = grid[date] ?? emptyEntry()
                           const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
                           return (
-                            <td key={date} style={{ padding: '3px 6px' }}>
+                            <td key={date} style={{ padding: '3px 6px', background: isExtraDay ? 'rgba(245,158,11,0.03)' : undefined }}>
                               {isCancelled ? <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div> :
-                                cellInput(entry.startTime, v => handleStartInline(date, v), { type: 'time', color: '#e2e8f0', bg: 'rgba(255,255,255,0.07)' })}
+                                cellInput(entry.startTime, v => handleStartInline(date, v), { type: 'time', color: isExtraDay ? '#f59e0b' : '#e2e8f0', bg: isExtraDay ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.07)' })}
                             </td>
                           )
                         })}
@@ -1205,18 +1259,19 @@ function PivotCard({
                         <td style={{ padding: '4px 8px 8px' }}>
                           <span style={{ fontSize: 9, color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>■ Fim</span>
                         </td>
-                        {days.map(date => {
+                        {displayDays.map(date => {
+                          const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
                           const entry = grid[date] ?? emptyEntry()
-                          const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
-                          const nextDay = entry.startTime && entry.endTime
+                          const isCancelled = !isExtraDay && schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
+                          const nextDay = !isExtraDay && entry.startTime && entry.endTime
                             ? (parseInt(entry.endTime.split(':')[0]) * 60 + parseInt(entry.endTime.split(':')[1])) <
                               (parseInt(entry.startTime.split(':')[0]) * 60 + parseInt(entry.startTime.split(':')[1]))
                             : false
-                          const sched = schedulesForSector.find(s => s.date === date)
+                          const sched = !isExtraDay ? schedulesForSector.find(s => s.date === date) : undefined
                           const isPlanned = sched?.status === 'planned'
                           const isPastDate = date < today
                           return (
-                            <td key={date} style={{ padding: '3px 6px 8px' }}>
+                            <td key={date} style={{ padding: '3px 6px 8px', background: isExtraDay ? 'rgba(245,158,11,0.03)' : undefined }}>
                               {isCancelled ? (
                                 <div style={{ textAlign: 'center', padding: '4px' }}>
                                   <span style={{ fontSize: 9, color: '#ef4444', fontWeight: 700 }}>✕</span>
