@@ -1317,6 +1317,7 @@ export default function LancamentosPage() {
 
   const [today, setToday] = useState('')
   const [weekOffset, setWeekOffset] = useState(0) // 0 = semana atual, -1 = anterior, etc.
+  const [historyKey, setHistoryKey] = useState(0)  // forçar rerender do ScheduleHistory
   const [metas, setMetas] = useState<PivotMeta[]>([])
   // schedules indexados por pivotId
   const [schedulesByPivot, setSchedulesByPivot] = useState<Record<string, IrrigationSchedule[]>>({})
@@ -1490,6 +1491,7 @@ export default function LancamentosPage() {
 
     // 4. Recarrega os dados (grid virá zerado — schedules da nova semana foram apagados)
     await load()
+    setHistoryKey(k => k + 1) // forçar ScheduleHistory a recarregar batches
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
     const fmtNewDate = new Date(newDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
@@ -1658,6 +1660,7 @@ export default function LancamentosPage() {
       {metas.length > 0 && (
         <div style={{ marginTop: 16 }}>
           <ScheduleHistory
+            key={historyKey}
             companyId={company.id}
             today={today}
             metas={metas.map(m => m.context)}
