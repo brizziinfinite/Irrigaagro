@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { X, History, CheckCircle, XCircle, Clock, Trash2, MessageCircle, Printer, ChevronDown, ChevronUp, Pencil } from 'lucide-react'
+import { X, History, CheckCircle, XCircle, Clock, Trash2, MessageCircle, Printer, ChevronDown, ChevronUp, Pencil, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import {
   listSchedulesByCompany,
@@ -96,6 +96,13 @@ export interface BatchEditPayload {
   schedules: IrrigationSchedule[]
 }
 
+export interface ReschedulePayload {
+  originalRows: IrrigationSchedule[]   // lote original a ser cancelado
+  newDate: string                       // nova data de início escolhida
+  reason: IrrigationCancelledReason     // motivo do cancelamento
+  notes: string
+}
+
 interface Props {
   companyId: string
   today: string
@@ -103,6 +110,7 @@ interface Props {
   sectorsMap?: Record<string, PivotSector[]>   // pivotId → setores
   onSchedulesChanged: () => void
   onEditBatch?: (payload: BatchEditPayload) => void
+  onReschedule?: (payload: ReschedulePayload) => void
 }
 
 // ─── Modal de cancelamento inline ─────────────────────────────
@@ -935,25 +943,217 @@ function PrintLayout({
   )
 }
 
+// ─── Modal Cancelar + Reprogramar ─────────────────────────────
+
+function RescheduleModal({
+  rows, pivotName, sectorsMap, today,
+  onConfirm, onClose,
+}: {
+  rows: IrrigationSchedule[]
+  pivotName: string
+  sectorsMap?: Record<string, PivotSector[]>
+  today: string
+  onConfirm: (payload: ReschedulePayload) => void
+  onClose: () => void
+}) {
+  const [reason, setReason] = useState<IrrigationCancelledReason>('quebra')
+  const [notes, setNotes] = useState('')
+  const [newDate, setNewDate] = useState(addDays(today, 1))
+
+  const REASONS = [
+    { value: 'quebra' as IrrigationCancelledReason,  label: '🔧 Dano mecânico', color: '#f59e0b' },
+    { value: 'chuva'  as IrrigationCancelledReason,  label: '🌧 Chuva',          color: '#22d3ee' },
+    { value: 'outro'  as IrrigationCancelledReason,  label: '⚡ Falta de energia / Outro', color: '#8899aa' },
+  ]
+
+  // Calcula o preview dos setores na nova data, mantendo encadeamento
+  const pivotId = rows[0]?.pivot_id ?? ''
+  const sectors = sectorsMap?.[pivotId] ?? []
+
+  // Agrupa por setor, ordena pelo horário de início
+  const rowsBySector = new Map<string | null, IrrigationSchedule>()
+  for (const r of rows) {
+    // Pega a linha de cada setor (pode ter múltiplas datas — pega a primeira planejada)
+    if (!rowsBySector.has(r.sector_id ?? null) && r.status !== 'cancelled') {
+      rowsBySector.set(r.sector_id ?? null, r)
+    }
+  }
+
+  // Preview encadeado: mesmo horário original na nova data
+  const previewLines = Array.from(rowsBySector.entries()).map(([sectorId, r]) => {
+    const sectorName = sectorId
+      ? (sectors.find(s => s.id === sectorId)?.name ?? 'Setor')
+      : null
+    return {
+      sectorName,
+      lamina: r.lamina_mm,
+      speed: r.speed_percent,
+      start: r.start_time,
+      end: r.end_time,
+    }
+  })
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 2000,
+      background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+    }} onClick={onClose}>
+      <div style={{
+        background: '#0f1923', border: '1px solid rgba(255,255,255,0.10)',
+        borderRadius: 16, padding: 28, width: 420, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto',
+      }} onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 9,
+                background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <RefreshCw size={15} style={{ color: '#f59e0b' }} />
+              </div>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Cancelar + Reprogramar</p>
+            </div>
+            <p style={{ fontSize: 12, color: '#445566', margin: 0, paddingLeft: 40 }}>{pivotName}</p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#445566', cursor: 'pointer', padding: 4, flexShrink: 0 }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Motivo */}
+        <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>Motivo do cancelamento</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 18 }}>
+          {REASONS.map(r => (
+            <button key={r.value} onClick={() => setReason(r.value)} style={{
+              padding: '9px 14px', borderRadius: 9, textAlign: 'left',
+              border: `1px solid ${reason === r.value ? r.color : 'rgba(255,255,255,0.07)'}`,
+              background: reason === r.value ? `${r.color}15` : 'rgba(255,255,255,0.02)',
+              color: reason === r.value ? r.color : '#667788',
+              fontSize: 13, fontWeight: reason === r.value ? 700 : 400, cursor: 'pointer',
+            }}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Observação */}
+        <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>Observação (opcional)</p>
+        <textarea
+          value={notes} onChange={e => setNotes(e.target.value)}
+          placeholder="Ex: falta de energia das 22h às 04h..."
+          rows={2}
+          style={{
+            width: '100%', padding: '8px 10px', borderRadius: 8, resize: 'none', marginBottom: 18,
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+            color: '#e2e8f0', fontSize: 12, fontFamily: 'inherit', boxSizing: 'border-box',
+          }}
+        />
+
+        {/* Nova data */}
+        <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>Nova data de início</p>
+        <input
+          type="date"
+          value={newDate}
+          min={today}
+          onChange={e => setNewDate(e.target.value)}
+          style={{
+            width: '100%', padding: '9px 12px', borderRadius: 8, marginBottom: 18,
+            background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.25)',
+            color: '#e2e8f0', fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
+            boxSizing: 'border-box', outline: 'none', cursor: 'pointer',
+          }}
+        />
+
+        {/* Preview */}
+        {previewLines.length > 0 && (
+          <>
+            <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>
+              Preview — {new Date(newDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })}
+            </p>
+            <div style={{
+              background: 'rgba(0,147,208,0.04)', border: '1px solid rgba(0,147,208,0.12)',
+              borderRadius: 10, padding: '10px 12px', marginBottom: 20,
+              display: 'flex', flexDirection: 'column', gap: 6,
+            }}>
+              {previewLines.map((line, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {line.sectorName && (
+                    <span style={{
+                      fontSize: 9, fontWeight: 800, color: '#22c55e',
+                      background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.2)',
+                      borderRadius: 4, padding: '1px 6px', flexShrink: 0,
+                    }}>
+                      {line.sectorName}
+                    </span>
+                  )}
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                    {line.lamina != null ? `${line.lamina}mm` : '—'}
+                  </span>
+                  {line.speed != null && (
+                    <span style={{ fontSize: 11, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{line.speed}%</span>
+                  )}
+                  {line.start && (
+                    <span style={{ fontSize: 11, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>
+                      {line.start}{line.end ? ` → ${line.end}` : ''}
+                    </span>
+                  )}
+                </div>
+              ))}
+              <p style={{ fontSize: 10, color: '#445566', margin: '4px 0 0', fontStyle: 'italic' }}>
+                Você poderá ajustar os valores antes de salvar.
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* Botões */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={onClose} style={{
+            flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)',
+            background: 'transparent', color: '#667788', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}>Voltar</button>
+          <button
+            onClick={() => onConfirm({ originalRows: rows, newDate, reason, notes })}
+            style={{
+              flex: 2, padding: '10px', borderRadius: 8, border: 'none',
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+              color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}>
+            <RefreshCw size={13} /> Cancelar e Reprogramar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Card de um lote de programação ───────────────────────────
 
 function BatchCard({
-  batchId, rows, metas, today,
+  batchId, rows, metas, today, sectorsMap,
   onCancelRow, onConfirmRow, onDeleteBatch,
-  onEdit, onPrint, onWhatsApp,
+  onEdit, onPrint, onWhatsApp, onReschedule,
 }: {
   batchId: string
   rows: IrrigationSchedule[]
   metas: ManagementSeasonContext[]
   today: string
+  sectorsMap?: Record<string, PivotSector[]>
   onCancelRow: (s: IrrigationSchedule) => void
   onConfirmRow: (s: IrrigationSchedule) => void
   onDeleteBatch: (rows: IrrigationSchedule[]) => void
   onEdit: (rows: IrrigationSchedule[]) => void
   onPrint: (rows: IrrigationSchedule[]) => void
   onWhatsApp: (rows: IrrigationSchedule[]) => void
+  onReschedule?: (payload: ReschedulePayload) => void
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [showReschedule, setShowReschedule] = useState(false)
 
   // Informações do lote
   const pivotId   = rows[0]?.pivot_id ?? ''
@@ -977,6 +1177,20 @@ function BatchCard({
   const color = statusColor(st)
 
   return (
+    <>
+    {showReschedule && (
+      <RescheduleModal
+        rows={rows}
+        pivotName={pivotName}
+        sectorsMap={sectorsMap}
+        today={today}
+        onConfirm={payload => {
+          setShowReschedule(false)
+          onReschedule?.(payload)
+        }}
+        onClose={() => setShowReschedule(false)}
+      />
+    )}
     <div style={{
       background: 'rgba(255,255,255,0.02)',
       border: `1px solid ${expanded ? 'rgba(0,147,208,0.2)' : 'rgba(255,255,255,0.05)'}`,
@@ -1037,6 +1251,21 @@ function BatchCard({
 
         {/* Ações */}
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+          {/* Reprogramar — só aparece se houver dias planejados */}
+          {planned > 0 && onReschedule && (
+            <button
+              onClick={() => setShowReschedule(true)}
+              title="Cancelar e reprogramar para outra data"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '6px 10px', borderRadius: 7,
+                border: '1px solid rgba(245,158,11,0.35)',
+                background: 'rgba(245,158,11,0.08)', color: '#f59e0b',
+                fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>
+              <RefreshCw size={11} /> Reprogramar
+            </button>
+          )}
           <button
             onClick={() => onEdit(rows)}
             title="Editar programação"
@@ -1193,13 +1422,14 @@ function BatchCard({
         </div>
       )}
     </div>
+    </>
   )
 }
 
 // ─── Componente principal: Histórico ──────────────────────────
 
 export function ScheduleHistory({
-  companyId, today, metas, sectorsMap, onSchedulesChanged, onEditBatch,
+  companyId, today, metas, sectorsMap, onSchedulesChanged, onEditBatch, onReschedule,
 }: Props) {
   const [schedules, setSchedules] = useState<IrrigationSchedule[]>([])
   const [loading, setLoading] = useState(false)
@@ -1464,6 +1694,7 @@ export function ScheduleHistory({
                     rows={rows}
                     metas={metas}
                     today={today}
+                    sectorsMap={sectorsMap}
                     onCancelRow={s => setCancelTarget(s)}
                     onConfirmRow={handleConfirmRow}
                     onDeleteBatch={handleDeleteBatch}
@@ -1476,6 +1707,7 @@ export function ScheduleHistory({
                     }}
                     onPrint={handlePrint}
                     onWhatsApp={rows => setWhatsappRows(rows)}
+                    onReschedule={onReschedule}
                   />
                 ))}
               </div>

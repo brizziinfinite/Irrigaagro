@@ -22,7 +22,7 @@ import type { DailyManagement } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { ClipboardList, ChevronDown, ChevronUp, X, Copy, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { ScheduleHistory } from './ScheduleHistory'
-import type { BatchEditPayload } from './ScheduleHistory'
+import type { BatchEditPayload, ReschedulePayload } from './ScheduleHistory'
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -1460,6 +1460,53 @@ export default function LancamentosPage() {
     setCancelTarget(null)
   }
 
+  // ── Cancelar + Reprogramar ──
+  async function handleReschedule(payload: ReschedulePayload) {
+    const { originalRows, newDate, reason, notes } = payload
+
+    // 1. Cancela todos os dias planejados do lote
+    const plannedRows = originalRows.filter(r => r.status === 'planned')
+    await Promise.all(plannedRows.map(r => cancelSchedule(r.id, reason, notes)))
+
+    // 2. Calcula o weekOffset para a semana da nova data
+    const newDateObj = new Date(newDate + 'T12:00:00')
+    const todayObj   = new Date(today + 'T12:00:00')
+    const diffDays   = Math.round((newDateObj.getTime() - todayObj.getTime()) / (1000 * 60 * 60 * 24))
+    const targetOffset = Math.floor(diffDays / 7)
+    setWeekOffset(targetOffset)
+
+    // 3. Monta o payload de edição com os valores originais mas na nova data
+    // Cada setor/dia do lote original vira uma nova entrada na nova data (ou dias subsequentes)
+    // Agrupa por setor, mantém ordem de início
+    const rowsBySector = new Map<string | null, IrrigationSchedule>()
+    for (const r of originalRows.filter(r => r.status !== 'cancelled')) {
+      if (!rowsBySector.has(r.sector_id ?? null)) rowsBySector.set(r.sector_id ?? null, r)
+    }
+
+    // Monta schedules "fantasma" com a nova data para pré-preencher o grid
+    const newBatchSchedules: IrrigationSchedule[] = Array.from(rowsBySector.values()).map((r, idx) => ({
+      ...r,
+      id: `prefill-${idx}`,
+      date: newDate,
+      status: 'planned' as const,
+      schedule_batch_id: null,
+      created_at: new Date().toISOString(),
+    }))
+
+    // 4. Abre o card no modo edição com os dados pré-preenchidos
+    const pivotId = originalRows[0]?.pivot_id ?? ''
+    setEditBatch({
+      batchId: '',   // novo lote — será gerado ao salvar
+      pivotId,
+      schedules: newBatchSchedules,
+    })
+
+    // 5. Recarrega os dados e rola para o topo
+    await load()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    showSuccess(`Lote cancelado. Grid pré-preenchido para ${new Date(newDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}. Ajuste e salve.`)
+  }
+
   if (!company || !today) return (
     <div style={{ padding: 40, textAlign: 'center', color: '#445566', fontSize: 13 }}>Carregando…</div>
   )
@@ -1629,9 +1676,9 @@ export default function LancamentosPage() {
             onSchedulesChanged={load}
             onEditBatch={payload => {
               setEditBatch(payload)
-              // Scroll até o topo para o usuário ver o card de edição
               window.scrollTo({ top: 0, behavior: 'smooth' })
             }}
+            onReschedule={handleReschedule}
           />
         </div>
       )}
