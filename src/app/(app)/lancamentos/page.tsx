@@ -1463,48 +1463,37 @@ export default function LancamentosPage() {
   // ── Cancelar + Reprogramar ──
   async function handleReschedule(payload: ReschedulePayload) {
     const { originalRows, newDate, reason, notes } = payload
+    const pivotId = originalRows[0]?.pivot_id ?? ''
+    const supabase = createClient()
 
-    // 1. Cancela todos os dias planejados do lote
+    // 1. Cancela todos os dias planejados do lote original
     const plannedRows = originalRows.filter(r => r.status === 'planned')
     await Promise.all(plannedRows.map(r => cancelSchedule(r.id, reason, notes)))
 
-    // 2. Calcula o weekOffset para a semana da nova data
-    const newDateObj = new Date(newDate + 'T12:00:00')
-    const todayObj   = new Date(today + 'T12:00:00')
-    const diffDays   = Math.round((newDateObj.getTime() - todayObj.getTime()) / (1000 * 60 * 60 * 24))
+    // 2. Deleta qualquer programação já existente para este pivô na nova semana
+    const weekFrom = newDate
+    const weekTo   = addDays(newDate, 6)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('irrigation_schedule')
+      .delete()
+      .eq('pivot_id', pivotId)
+      .gte('date', weekFrom)
+      .lte('date', weekTo)
+
+    // 3. Calcula o weekOffset para navegar até a semana da nova data
+    const newDateObj  = new Date(newDate + 'T12:00:00')
+    const todayObj    = new Date(today   + 'T12:00:00')
+    const diffDays    = Math.round((newDateObj.getTime() - todayObj.getTime()) / (1000 * 60 * 60 * 24))
     const targetOffset = Math.floor(diffDays / 7)
     setWeekOffset(targetOffset)
 
-    // 3. Monta o payload de edição com os valores originais mas na nova data
-    // Cada setor/dia do lote original vira uma nova entrada na nova data (ou dias subsequentes)
-    // Agrupa por setor, mantém ordem de início
-    const rowsBySector = new Map<string | null, IrrigationSchedule>()
-    for (const r of originalRows.filter(r => r.status !== 'cancelled')) {
-      if (!rowsBySector.has(r.sector_id ?? null)) rowsBySector.set(r.sector_id ?? null, r)
-    }
-
-    // Monta schedules "fantasma" com a nova data para pré-preencher o grid
-    const newBatchSchedules: IrrigationSchedule[] = Array.from(rowsBySector.values()).map((r, idx) => ({
-      ...r,
-      id: `prefill-${idx}`,
-      date: newDate,
-      status: 'planned' as const,
-      schedule_batch_id: null,
-      created_at: new Date().toISOString(),
-    }))
-
-    // 4. Abre o card no modo edição com os dados pré-preenchidos
-    const pivotId = originalRows[0]?.pivot_id ?? ''
-    setEditBatch({
-      batchId: '',   // novo lote — será gerado ao salvar
-      pivotId,
-      schedules: newBatchSchedules,
-    })
-
-    // 5. Recarrega os dados e rola para o topo
+    // 4. Recarrega os dados (grid virá zerado — schedules da nova semana foram apagados)
     await load()
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    showSuccess(`Lote cancelado. Grid pré-preenchido para ${new Date(newDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}. Ajuste e salve.`)
+
+    const fmtNewDate = new Date(newDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })
+    showSuccess(`Lote cancelado. Semana de ${fmtNewDate} liberada — faça a nova programação.`)
   }
 
   if (!company || !today) return (

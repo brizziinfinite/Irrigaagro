@@ -946,12 +946,11 @@ function PrintLayout({
 // ─── Modal Cancelar + Reprogramar ─────────────────────────────
 
 function RescheduleModal({
-  rows, pivotName, sectorsMap, today,
+  rows, pivotName, today,
   onConfirm, onClose,
 }: {
   rows: IrrigationSchedule[]
   pivotName: string
-  sectorsMap?: Record<string, PivotSector[]>
   today: string
   onConfirm: (payload: ReschedulePayload) => void
   onClose: () => void
@@ -961,37 +960,14 @@ function RescheduleModal({
   const [newDate, setNewDate] = useState(addDays(today, 1))
 
   const REASONS = [
-    { value: 'quebra' as IrrigationCancelledReason,  label: '🔧 Dano mecânico', color: '#f59e0b' },
-    { value: 'chuva'  as IrrigationCancelledReason,  label: '🌧 Chuva',          color: '#22d3ee' },
-    { value: 'outro'  as IrrigationCancelledReason,  label: '⚡ Falta de energia / Outro', color: '#8899aa' },
+    { value: 'quebra' as IrrigationCancelledReason, label: '🔧 Dano mecânico',            color: '#f59e0b' },
+    { value: 'outro'  as IrrigationCancelledReason, label: '⚡ Falta de energia / Outro', color: '#8899aa' },
+    { value: 'chuva'  as IrrigationCancelledReason, label: '🌧 Chuva',                    color: '#22d3ee' },
   ]
 
-  // Calcula o preview dos setores na nova data, mantendo encadeamento
-  const pivotId = rows[0]?.pivot_id ?? ''
-  const sectors = sectorsMap?.[pivotId] ?? []
-
-  // Agrupa por setor, ordena pelo horário de início
-  const rowsBySector = new Map<string | null, IrrigationSchedule>()
-  for (const r of rows) {
-    // Pega a linha de cada setor (pode ter múltiplas datas — pega a primeira planejada)
-    if (!rowsBySector.has(r.sector_id ?? null) && r.status !== 'cancelled') {
-      rowsBySector.set(r.sector_id ?? null, r)
-    }
-  }
-
-  // Preview encadeado: mesmo horário original na nova data
-  const previewLines = Array.from(rowsBySector.entries()).map(([sectorId, r]) => {
-    const sectorName = sectorId
-      ? (sectors.find(s => s.id === sectorId)?.name ?? 'Setor')
-      : null
-    return {
-      sectorName,
-      lamina: r.lamina_mm,
-      speed: r.speed_percent,
-      start: r.start_time,
-      end: r.end_time,
-    }
-  })
+  const fmtPreview = newDate
+    ? new Date(newDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })
+    : ''
 
   return (
     <div style={{
@@ -1001,7 +977,7 @@ function RescheduleModal({
     }} onClick={onClose}>
       <div style={{
         background: '#0f1923', border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 16, padding: 28, width: 420, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto',
+        borderRadius: 16, padding: 28, width: 400, maxWidth: '95vw',
       }} onClick={e => e.stopPropagation()}>
 
         {/* Header */}
@@ -1019,7 +995,7 @@ function RescheduleModal({
             </div>
             <p style={{ fontSize: 12, color: '#445566', margin: 0, paddingLeft: 40 }}>{pivotName}</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#445566', cursor: 'pointer', padding: 4, flexShrink: 0 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#445566', cursor: 'pointer', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
@@ -1053,61 +1029,26 @@ function RescheduleModal({
           }}
         />
 
-        {/* Nova data */}
-        <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>Nova data de início</p>
+        {/* Nova data de início da semana */}
+        <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>
+          Novo dia de início da programação
+        </p>
         <input
           type="date"
           value={newDate}
           min={today}
           onChange={e => setNewDate(e.target.value)}
           style={{
-            width: '100%', padding: '9px 12px', borderRadius: 8, marginBottom: 18,
+            width: '100%', padding: '9px 12px', borderRadius: 8, marginBottom: 8,
             background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.25)',
             color: '#e2e8f0', fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
             boxSizing: 'border-box', outline: 'none', cursor: 'pointer',
           }}
         />
-
-        {/* Preview */}
-        {previewLines.length > 0 && (
-          <>
-            <p style={{ fontSize: 10, color: '#6a8090', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>
-              Preview — {new Date(newDate + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })}
-            </p>
-            <div style={{
-              background: 'rgba(0,147,208,0.04)', border: '1px solid rgba(0,147,208,0.12)',
-              borderRadius: 10, padding: '10px 12px', marginBottom: 20,
-              display: 'flex', flexDirection: 'column', gap: 6,
-            }}>
-              {previewLines.map((line, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {line.sectorName && (
-                    <span style={{
-                      fontSize: 9, fontWeight: 800, color: '#22c55e',
-                      background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.2)',
-                      borderRadius: 4, padding: '1px 6px', flexShrink: 0,
-                    }}>
-                      {line.sectorName}
-                    </span>
-                  )}
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
-                    {line.lamina != null ? `${line.lamina}mm` : '—'}
-                  </span>
-                  {line.speed != null && (
-                    <span style={{ fontSize: 11, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{line.speed}%</span>
-                  )}
-                  {line.start && (
-                    <span style={{ fontSize: 11, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>
-                      {line.start}{line.end ? ` → ${line.end}` : ''}
-                    </span>
-                  )}
-                </div>
-              ))}
-              <p style={{ fontSize: 10, color: '#445566', margin: '4px 0 0', fontStyle: 'italic' }}>
-                Você poderá ajustar os valores antes de salvar.
-              </p>
-            </div>
-          </>
+        {fmtPreview && (
+          <p style={{ fontSize: 11, color: '#445566', margin: '0 0 20px', fontStyle: 'italic' }}>
+            O grid abrirá zerado a partir de <strong style={{ color: '#0093D0' }}>{fmtPreview}</strong>. Programações existentes nessa semana serão removidas.
+          </p>
         )}
 
         {/* Botões */}
@@ -1124,7 +1065,7 @@ function RescheduleModal({
               color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}>
-            <RefreshCw size={13} /> Cancelar e Reprogramar
+            <RefreshCw size={13} /> Confirmar
           </button>
         </div>
       </div>
@@ -1182,7 +1123,6 @@ function BatchCard({
       <RescheduleModal
         rows={rows}
         pivotName={pivotName}
-        sectorsMap={sectorsMap}
         today={today}
         onConfirm={payload => {
           setShowReschedule(false)
