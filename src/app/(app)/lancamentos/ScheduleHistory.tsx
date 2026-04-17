@@ -534,11 +534,14 @@ function PrintLayout({
             <rect x="52" y="38" width="10" height="46" rx="2.5" fill="url(#bar3G)" />
           </svg>
           <div style={{ lineHeight: 1.1 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1, whiteSpace: 'nowrap' }}>
               <span style={{ color: '#0074a6' }}>Irriga</span><span style={{ color: '#16a34a' }}>Agro</span>
             </div>
-            <div style={{ fontSize: 8, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0', marginTop: 3, fontWeight: 500 }}>
-              Irrigação Inteligente
+            <div style={{
+              fontSize: 8, color: '#94a3b8', letterSpacing: '0',
+              marginTop: 2, fontWeight: 400, whiteSpace: 'nowrap',
+            }}>
+              irrigação inteligente
             </div>
           </div>
         </div>
