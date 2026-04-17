@@ -1185,7 +1185,15 @@ export function ScheduleHistory({
   function handlePrintConfirm() {
     setPrintPreview(false)
     setTimeout(() => {
+      // Gera nome do arquivo: "Programação Fazenda X - DD-MM-YYYY"
+      const farms = Array.from(new Set(
+        (printRows ?? []).map(r => metas.find(m => m.pivot?.id === r.pivot_id)?.farm?.name).filter(Boolean)
+      )).join(', ')
+      const date = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-')
+      const prevTitle = document.title
+      document.title = `Programação${farms ? ' ' + farms : ''} - ${date}`
       window.print()
+      document.title = prevTitle
       setPrintRows(null)
     }, 120)
   }
