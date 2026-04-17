@@ -1480,8 +1480,25 @@ export function ScheduleHistory({
 
       {/* Estilos de impressão */}
       <style>{`
-        @media print { .print-only { display: block !important; } }
         @media screen { .print-only { display: none !important; } }
+        @media print {
+          /* Esconde absolutamente tudo */
+          * { visibility: hidden !important; }
+          /* Mostra só o print-only e seus filhos */
+          .print-only,
+          .print-only * { visibility: visible !important; }
+          /* Posiciona no topo da página */
+          .print-only {
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            background: white !important;
+            padding: 24px !important;
+            box-sizing: border-box !important;
+          }
+        }
       `}</style>
     </>
   )
