@@ -497,35 +497,64 @@ function PrintLayout({
     >
       {/* ── Cabeçalho ── */}
       <div style={{
-        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-        borderBottom: '2px solid #111', paddingBottom: 8, marginBottom: 20,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '2.5px solid #0074a6', paddingBottom: 10, marginBottom: 22,
+        gap: 12,
       }}>
-        {/* Logo + nome do sistema */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="28" height="34" viewBox="0 0 84 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M42 4 C42 4 8 44 8 64 C8 83 23 96 42 96 C61 96 76 83 76 64 C76 44 42 4 42 4 Z"
-              stroke="#0074a6" strokeWidth="5" fill="none" strokeLinejoin="round" />
-            <rect x="22" y="62" width="10" height="22" rx="2" fill="#22c55e" />
-            <rect x="37" y="50" width="10" height="34" rx="2" fill="#0093d0" />
-            <rect x="52" y="38" width="10" height="46" rx="2" fill="#38bdf8" />
+        {/* Logo IrrigaAgro — ícone + wordmark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <svg width="40" height="48" viewBox="0 0 84 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="dropG" x1="42" y1="0" x2="42" y2="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#38bdf8" />
+                <stop offset="100%" stopColor="#0074a6" />
+              </linearGradient>
+              <linearGradient id="bar1G" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stopColor="#4ade80" />
+                <stop offset="100%" stopColor="#16a34a" />
+              </linearGradient>
+              <linearGradient id="bar2G" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stopColor="#38bdf8" />
+                <stop offset="100%" stopColor="#0093d0" />
+              </linearGradient>
+              <linearGradient id="bar3G" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stopColor="#7dd3fc" />
+                <stop offset="100%" stopColor="#38bdf8" />
+              </linearGradient>
+            </defs>
+            {/* Contorno da gota */}
+            <path
+              d="M42 4 C42 4 8 44 8 64 C8 83 23 96 42 96 C61 96 76 83 76 64 C76 44 42 4 42 4 Z"
+              stroke="url(#dropG)" strokeWidth="4" fill="rgba(56,189,248,0.06)"
+              strokeLinejoin="round"
+            />
+            {/* Barras internas */}
+            <rect x="22" y="62" width="10" height="22" rx="2.5" fill="url(#bar1G)" />
+            <rect x="37" y="50" width="10" height="34" rx="2.5" fill="url(#bar2G)" />
+            <rect x="52" y="38" width="10" height="46" rx="2.5" fill="url(#bar3G)" />
           </svg>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#0074a6', letterSpacing: '-0.3px' }}>
-            Irriga<span style={{ color: '#22c55e' }}>Agro</span>
-          </span>
+          <div style={{ lineHeight: 1.1 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1 }}>
+              <span style={{ color: '#0074a6' }}>Irriga</span><span style={{ color: '#16a34a' }}>Agro</span>
+            </div>
+            <div style={{ fontSize: 7.5, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em', marginTop: 2, fontWeight: 500 }}>
+              Irrigação Inteligente
+            </div>
+          </div>
         </div>
 
         {/* Fazenda */}
-        <div style={{ fontSize: 11, textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: '#334155' }}>
           <strong>Fazenda:</strong> {farms.join(', ') || '—'}
         </div>
 
         {/* Data da programação */}
-        <div style={{ fontSize: 11 }}>
-          Data da Programação: {now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+        <div style={{ fontSize: 11, color: '#334155' }}>
+          Data da Programação: <strong>{now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</strong>
         </div>
 
         {/* Título */}
-        <div style={{ fontSize: 13, fontWeight: 700 }}>
+        <div style={{ fontSize: 13, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.2px', flexShrink: 0 }}>
           Programação de Irrigação
         </div>
       </div>
@@ -1131,8 +1160,12 @@ export function ScheduleHistory({
   }
 
   const [printPreview, setPrintPreview] = useState(false)
+  const [printSelectedPivots, setPrintSelectedPivots] = useState<Set<string>>(new Set())
 
   function handlePrint(rows: IrrigationSchedule[]) {
+    // Seleciona todos os pivôs por padrão
+    const ids = Array.from(new Set(rows.map(r => r.pivot_id)))
+    setPrintSelectedPivots(new Set(ids))
     setPrintRows(rows)
     setPrintPreview(true)
   }
@@ -1149,6 +1182,9 @@ export function ScheduleHistory({
     setPrintPreview(false)
     setPrintRows(null)
   }
+
+  // Filtra os schedules pelos pivôs selecionados no preview
+  const printRowsFiltered = printRows?.filter(r => printSelectedPivots.has(r.pivot_id)) ?? []
 
   // Aplicar filtro de pivô
   const filtered = schedules.filter(s => filterPivotId === 'all' || s.pivot_id === filterPivotId)
@@ -1199,55 +1235,112 @@ export function ScheduleHistory({
       )}
 
       {/* Layout de impressão — hidden para @media print */}
-      {printRows && !printPreview && <PrintLayout schedules={printRows} metas={metas} sectorsMap={sectorsMap} />}
+      {printRows && !printPreview && <PrintLayout schedules={printRowsFiltered} metas={metas} sectorsMap={sectorsMap} />}
 
       {/* Modal de preview antes de imprimir */}
-      {printRows && printPreview && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 3000,
-          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', padding: '20px 16px',
-          overflowY: 'auto',
-        }}>
-          {/* Toolbar do preview */}
-          <div style={{
-            width: '100%', maxWidth: 860,
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: 16, flexShrink: 0,
-          }}>
-            <div>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>Preview de impressão</p>
-              <p style={{ margin: 0, fontSize: 11, color: '#667788' }}>Verifique antes de imprimir</p>
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={handlePrintClose} style={{
-                padding: '9px 18px', borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.12)', background: 'transparent',
-                color: '#8899aa', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}>Fechar</button>
-              <button onClick={handlePrintConfirm} style={{
-                padding: '9px 18px', borderRadius: 8, border: 'none',
-                background: '#16a34a', color: '#fff',
-                fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}>
-                <Printer size={14} /> Imprimir
-              </button>
-            </div>
-          </div>
+      {printRows && printPreview && (() => {
+        // Pivôs únicos disponíveis neste lote
+        const availPivots = Array.from(new Set(printRows.map(r => r.pivot_id)))
+          .map(pid => ({ id: pid, name: metas.find(m => m.pivot?.id === pid)?.pivot?.name ?? pid }))
 
-          {/* Folha simulada */}
+        return (
           <div style={{
-            width: '100%', maxWidth: 860,
-            background: '#fff', borderRadius: 4,
-            padding: '32px 36px',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+            position: 'fixed', inset: 0, zIndex: 3000,
+            background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', padding: '20px 16px',
+            overflowY: 'auto',
           }}>
-            <PrintLayout schedules={printRows} metas={metas} sectorsMap={sectorsMap} inline />
+            {/* Toolbar do preview */}
+            <div style={{
+              width: '100%', maxWidth: 860,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: 16, flexShrink: 0, flexWrap: 'wrap', gap: 12,
+            }}>
+              {/* Título + seletor de pivôs */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>Preview de impressão</p>
+                  <p style={{ margin: 0, fontSize: 11, color: '#667788' }}>Selecione os pivôs a incluir</p>
+                </div>
+
+                {/* Checkboxes de pivôs — só aparece se tiver mais de 1 */}
+                {availPivots.length > 1 && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {availPivots.map(p => {
+                      const selected = printSelectedPivots.has(p.id)
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => setPrintSelectedPivots(prev => {
+                            const next = new Set(prev)
+                            selected ? next.delete(p.id) : next.add(p.id)
+                            return next
+                          })}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 7,
+                            padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
+                            border: `1px solid ${selected ? 'rgba(0,147,208,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                            background: selected ? 'rgba(0,147,208,0.12)' : 'rgba(255,255,255,0.03)',
+                            color: selected ? '#0093D0' : '#667788',
+                            fontSize: 12, fontWeight: selected ? 700 : 400, transition: 'all 0.15s',
+                          }}>
+                          {/* Checkbox visual */}
+                          <span style={{
+                            width: 14, height: 14, borderRadius: 4, flexShrink: 0,
+                            border: `2px solid ${selected ? '#0093D0' : '#445566'}`,
+                            background: selected ? '#0093D0' : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {selected && (
+                              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                                <polyline points="1.5,5 4,7.5 8.5,2" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </span>
+                          {p.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Botões Fechar / Imprimir */}
+              <div style={{ display: 'flex', gap: 10, alignSelf: 'flex-start' }}>
+                <button onClick={handlePrintClose} style={{
+                  padding: '9px 18px', borderRadius: 8,
+                  border: '1px solid rgba(255,255,255,0.12)', background: 'transparent',
+                  color: '#8899aa', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}>Fechar</button>
+                <button
+                  onClick={handlePrintConfirm}
+                  disabled={printSelectedPivots.size === 0}
+                  style={{
+                    padding: '9px 18px', borderRadius: 8, border: 'none',
+                    background: printSelectedPivots.size === 0 ? '#1a3a2a' : '#16a34a',
+                    color: printSelectedPivots.size === 0 ? '#334433' : '#fff',
+                    fontSize: 13, fontWeight: 700,
+                    cursor: printSelectedPivots.size === 0 ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                  <Printer size={14} /> Imprimir
+                </button>
+              </div>
+            </div>
+
+            {/* Folha simulada */}
+            <div style={{
+              width: '100%', maxWidth: 860,
+              background: '#fff', borderRadius: 4,
+              padding: '32px 36px',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+            }}>
+              <PrintLayout schedules={printRowsFiltered} metas={metas} sectorsMap={sectorsMap} inline />
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Seção */}
       <div style={{
@@ -1286,28 +1379,46 @@ export function ScheduleHistory({
         {/* Conteúdo */}
         {expanded && (
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '14px 16px 16px' }}>
-            {/* Filtro de pivô */}
-            {pivotOptions.length > 1 && (
-              <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-                <select
-                  value={filterPivotId}
-                  onChange={e => setFilterPivotId(e.target.value)}
-                  style={{
-                    padding: '5px 10px', borderRadius: 8,
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    background: '#0d1520', color: '#8899aa',
-                    fontSize: 11, cursor: 'pointer', outline: 'none',
-                  }}>
-                  <option value="all">Todos os pivôs</option>
-                  {pivotOptions.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+            {/* Filtro de pivô + botão imprimir tudo */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {pivotOptions.length > 1 && (
+                  <select
+                    value={filterPivotId}
+                    onChange={e => setFilterPivotId(e.target.value)}
+                    style={{
+                      padding: '5px 10px', borderRadius: 8,
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: '#0d1520', color: '#8899aa',
+                      fontSize: 11, cursor: 'pointer', outline: 'none',
+                    }}>
+                    <option value="all">Todos os pivôs</option>
+                    {pivotOptions.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                )}
                 <span style={{ fontSize: 11, color: '#445566' }}>
                   {batches.length} programação(ões)
                 </span>
               </div>
-            )}
+
+              {/* Botão imprimir tudo — junta todos os schedules filtrados */}
+              {filtered.length > 0 && (
+                <button
+                  onClick={() => handlePrint(filtered)}
+                  title="Imprimir programação de todos os pivôs visíveis"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 12px', borderRadius: 8,
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'rgba(255,255,255,0.04)', color: '#8899aa',
+                    fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                  }}>
+                  <Printer size={12} /> Imprimir tudo
+                </button>
+              )}
+            </div>
 
             {/* Lista de lotes */}
             {loading ? (
