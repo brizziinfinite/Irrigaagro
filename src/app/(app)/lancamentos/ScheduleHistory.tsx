@@ -409,41 +409,18 @@ function WhatsAppModal({
   )
 }
 
-// ─── Layout de impressão ───────────────────────────────────────
+// ─── Layout de impressão — estilo Valley ──────────────────────
 
-// Paleta de cores por pivô — baseada nas cores reais do sistema IrrigaAgro
-// Verde principal, depois âmbar, ciano, roxo...
-const PIVOT_COLORS = [
-  { bg: '#16a34a', light: '#dcfce7', text: '#14532d', border: '#86efac' },
-  { bg: '#d97706', light: '#fef3c7', text: '#78350f', border: '#fcd34d' },
-  { bg: '#0891b2', light: '#cffafe', text: '#164e63', border: '#67e8f9' },
-  { bg: '#7c3aed', light: '#ede9fe', text: '#3b0764', border: '#c4b5fd' },
-  { bg: '#be185d', light: '#fce7f3', text: '#831843', border: '#f9a8d4' },
-  { bg: '#0f766e', light: '#ccfbf1', text: '#134e4a', border: '#5eead4' },
-]
-
-// Detecta se o horário "fim" passou da meia-noite comparado com "início"
-function crossesMidnight(start: string, end: string): boolean {
-  if (!start || !end) return false
+// Calcula duração entre dois horários HH:MM, com suporte a virada de meia-noite
+function calcDuration(start: string | null, end: string | null): string {
+  if (!start || !end) return ''
   const [sh, sm] = start.split(':').map(Number)
   const [eh, em] = end.split(':').map(Number)
-  return eh * 60 + em < sh * 60 + sm
-}
-
-function fmtTime(time: string | null, start?: string | null): React.ReactNode {
-  if (!time) return <span style={{ color: '#cbd5e1' }}>—</span>
-  const nextDay = start ? crossesMidnight(start, time) : false
-  return (
-    <span>
-      {time}
-      {nextDay && <span style={{ fontSize: 8, color: '#f59e0b', fontWeight: 800, marginLeft: 2 }}>+1d</span>}
-    </span>
-  )
-}
-
-function weekdayAbbr(ymd: string): string {
-  const d = new Date(ymd + 'T12:00:00')
-  return d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase()
+  let totalMin = eh * 60 + em - (sh * 60 + sm)
+  if (totalMin <= 0) totalMin += 24 * 60
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
 function fmtDayMonth(ymd: string): string {
@@ -451,9 +428,36 @@ function fmtDayMonth(ymd: string): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
-function fmtMonthYear(ymd: string): string {
-  const d = new Date(ymd + 'T12:00:00')
-  return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+// Estilo de célula da tabela — borda fina, padding compacto
+const TD: React.CSSProperties = {
+  border: '1px solid #999',
+  padding: '4px 8px',
+  textAlign: 'center',
+  fontSize: 10,
+  color: '#111',
+  background: '#fff',
+}
+
+const TH_DATE: React.CSSProperties = {
+  border: '1px solid #999',
+  padding: '4px 8px',
+  textAlign: 'center',
+  fontSize: 10,
+  fontWeight: 700,
+  color: '#111',
+  background: '#f5f5f5',
+  minWidth: 52,
+}
+
+const TH_LABEL: React.CSSProperties = {
+  border: '1px solid #999',
+  padding: '4px 8px',
+  textAlign: 'left',
+  fontSize: 10,
+  fontWeight: 400,
+  color: '#333',
+  background: '#fff',
+  whiteSpace: 'nowrap',
 }
 
 function PrintLayout({
@@ -462,483 +466,164 @@ function PrintLayout({
   schedules: IrrigationSchedule[]
   metas: ManagementSeasonContext[]
   sectorsMap?: Record<string, PivotSector[]>
-  inline?: boolean   // quando true, aparece em tela (preview); quando false, só no @media print
+  inline?: boolean
 }) {
   if (schedules.length === 0) return null
 
   const now = new Date()
 
-  // Organizar por pivô
-  const byPivot = new Map<string, IrrigationSchedule[]>()
-  for (const s of [...schedules].sort((a, b) => a.date.localeCompare(b.date))) {
-    const arr = byPivot.get(s.pivot_id) ?? []
-    arr.push(s)
-    byPivot.set(s.pivot_id, arr)
-  }
-
   // Datas únicas ordenadas
   const allDates = Array.from(new Set(schedules.map(s => s.date))).sort()
 
   // Pivôs únicos na ordem de aparição
-  const pivotIds = Array.from(byPivot.keys())
+  const pivotIds = Array.from(new Set(schedules.map(s => s.pivot_id)))
 
-  // Nome do setor dado um sector_id
-  function sectorName(pivotId: string, sectorId: string | null): string {
-    if (!sectorId) return '—'
-    const sectors = sectorsMap?.[pivotId] ?? []
-    return sectors.find(s => s.id === sectorId)?.name ?? 'Setor'
-  }
-
-  // Fazendas únicas nesta programação
+  // Fazendas únicas
   const farms = Array.from(new Set(
     pivotIds.map(pid => metas.find(m => m.pivot?.id === pid)?.farm?.name).filter(Boolean)
   )) as string[]
 
-  // Período
-  const periodFrom = allDates[0]
-  const periodTo   = allDates[allDates.length - 1]
-
-  // Meses abrangidos (para o header do calendário)
-  const months = Array.from(new Set(allDates.map(d => fmtMonthYear(d))))
+  // Nome do setor dado um sector_id
+  function sectorLabel(pivotId: string, sectorId: string | null): string {
+    if (!sectorId) return ''
+    const sectors = sectorsMap?.[pivotId] ?? []
+    return sectors.find(s => s.id === sectorId)?.name ?? ''
+  }
 
   return (
-    <div className={inline ? undefined : 'print-only'} style={{ display: inline ? 'block' : 'none', fontFamily: "'Segoe UI', Arial, sans-serif" }}>
-
-      {/* ══════════════════════════════════════════════════
-          CABEÇALHO
-      ══════════════════════════════════════════════════ */}
+    <div
+      className={inline ? undefined : 'print-only'}
+      style={{ display: inline ? 'block' : 'none', fontFamily: 'Arial, sans-serif', color: '#111' }}
+    >
+      {/* ── Cabeçalho ── */}
       <div style={{
-        display: 'flex', alignItems: 'stretch',
-        marginBottom: 20,
-        borderRadius: 8, overflow: 'hidden',
-        border: '1.5px solid #16a34a',
+        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+        borderBottom: '2px solid #111', paddingBottom: 8, marginBottom: 20,
       }}>
-        {/* Faixa verde esquerda com logo IrrigaAgro */}
-        <div style={{
-          background: 'linear-gradient(160deg, #14532d 0%, #16a34a 60%, #22c55e 100%)',
-          padding: '16px 20px',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-          minWidth: 140, gap: 6,
-        }}>
-          {/* Ícone gota com barras — idêntico ao IrrigaAgroLogo.tsx */}
-          <svg width="38" height="45" viewBox="0 0 84 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="pdropStroke" x1="42" y1="0" x2="42" y2="100" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#4ade80" />
-                <stop offset="100%" stopColor="#38bdf8" />
-              </linearGradient>
-              <linearGradient id="pbar1g" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stopColor="#4ade80" />
-                <stop offset="100%" stopColor="#22c55e" />
-              </linearGradient>
-              <linearGradient id="pbar2g" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stopColor="#38bdf8" />
-                <stop offset="100%" stopColor="#22c55e" />
-              </linearGradient>
-              <linearGradient id="pbar3g" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-                <stop offset="0%" stopColor="#60a5fa" />
-                <stop offset="100%" stopColor="#38bdf8" />
-              </linearGradient>
-            </defs>
+        {/* Logo + nome do sistema */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width="28" height="34" viewBox="0 0 84 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M42 4 C42 4 8 44 8 64 C8 83 23 96 42 96 C61 96 76 83 76 64 C76 44 42 4 42 4 Z"
-              stroke="url(#pdropStroke)" strokeWidth="3.5" fill="none" strokeLinejoin="round" />
-            <rect x="22" y="62" width="10" height="22" rx="2.5" fill="url(#pbar1g)" />
-            <rect x="37" y="50" width="10" height="34" rx="2.5" fill="url(#pbar2g)" />
-            <rect x="52" y="38" width="10" height="46" rx="2.5" fill="url(#pbar3g)" />
+              stroke="#0074a6" strokeWidth="5" fill="none" strokeLinejoin="round" />
+            <rect x="22" y="62" width="10" height="22" rx="2" fill="#22c55e" />
+            <rect x="37" y="50" width="10" height="34" rx="2" fill="#0093d0" />
+            <rect x="52" y="38" width="10" height="46" rx="2" fill="#38bdf8" />
           </svg>
-          {/* Wordmark */}
-          <div style={{ lineHeight: 1, whiteSpace: 'nowrap' }}>
-            <span style={{ fontSize: 16, fontWeight: 700, color: '#4ade80', letterSpacing: '-0.01em' }}>Irriga</span>
-            <span style={{ fontSize: 16, fontWeight: 700, color: '#60a5fa', letterSpacing: '-0.01em' }}>Agro</span>
-          </div>
-          <div style={{ fontSize: 7.5, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.16em' }}>
-            Irrigação Inteligente
-          </div>
-        </div>
-
-        {/* Conteúdo principal */}
-        <div style={{ flex: 1, padding: '14px 18px', background: '#f8fdf8' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#14532d', marginBottom: 4, letterSpacing: '-0.3px' }}>
-            Programação de Irrigação
-          </div>
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <div>
-              <span style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Fazenda(s)</span>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#14532d' }}>{farms.join(', ') || '—'}</div>
-            </div>
-            <div>
-              <span style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Período</span>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#14532d' }}>
-                {periodFrom === periodTo ? fmtDate(periodFrom) : `${fmtDate(periodFrom)} a ${fmtDate(periodTo)}`}
-              </div>
-            </div>
-            <div>
-              <span style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Pivôs</span>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#14532d' }}>{pivotIds.length}</div>
-            </div>
-            <div>
-              <span style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Dias programados</span>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#14532d' }}>{allDates.length}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Data de emissão */}
-        <div style={{
-          padding: '14px 16px', background: '#f0fdf4',
-          borderLeft: '1px solid #bbf7d0',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end', minWidth: 140,
-        }}>
-          <div style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 2 }}>Emitido em</div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#14532d' }}>
-            {now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-          </div>
-          <div style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>
-            {now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-          </div>
-          <div style={{ fontSize: 9, color: '#94a3b8', marginTop: 6 }}>irrigaagro.com.br</div>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════
-          SEÇÃO 1 — CALENDÁRIO VISUAL
-      ══════════════════════════════════════════════════ */}
-      <div style={{ marginBottom: 22, pageBreakInside: 'avoid' }}>
-
-        {/* Título da seção */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <div style={{ width: 4, height: 18, background: '#16a34a', borderRadius: 2 }} />
-          <span style={{ fontSize: 11, fontWeight: 800, color: '#14532d', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Calendário de Operação — {months.join(' / ')}
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#0074a6', letterSpacing: '-0.3px' }}>
+            Irriga<span style={{ color: '#22c55e' }}>Agro</span>
           </span>
         </div>
 
-        {/* Legenda de pivôs */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-          {pivotIds.map((pid, i) => {
-            const meta = metas.find(m => m.pivot?.id === pid)
-            const color = PIVOT_COLORS[i % PIVOT_COLORS.length]
-            return (
-              <div key={pid} style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '3px 8px', borderRadius: 4,
-                background: color.light, border: `1px solid ${color.bg}`,
-              }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: color.bg }} />
-                <span style={{ fontSize: 9, fontWeight: 700, color: color.text }}>
-                  {meta?.pivot?.name ?? pid.slice(0, 6)}
-                </span>
-              </div>
-            )
-          })}
+        {/* Fazenda */}
+        <div style={{ fontSize: 11, textAlign: 'center' }}>
+          <strong>Fazenda:</strong> {farms.join(', ') || '—'}
         </div>
 
-        {/* Grade calendário: linhas = dias, colunas = pivôs/setores */}
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 9.5 }}>
-            <thead>
-              <tr>
-                {/* Coluna de data */}
-                <th style={{
-                  width: 82, padding: '6px 8px', textAlign: 'left',
-                  background: '#f1f5f9', borderBottom: '2px solid #16a34a',
-                  fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#64748b', fontWeight: 700,
-                }}>
-                  Data
-                </th>
-                {/* Uma coluna por pivô (ou setor se tiver) */}
-                {pivotIds.flatMap((pid, pi) => {
-                  const pivotMeta = metas.find(m => m.pivot?.id === pid)
-                  const pivotName = pivotMeta?.pivot?.name ?? '—'
-                  const sectors = sectorsMap?.[pid] ?? []
-                  const color = PIVOT_COLORS[pi % PIVOT_COLORS.length]
-                  if (sectors.length === 0) {
-                    return [(
-                      <th key={pid} style={{
-                        padding: '6px 6px', textAlign: 'center',
-                        background: color.bg, borderBottom: '2px solid ' + color.bg,
-                        color: '#fff', fontSize: 8, fontWeight: 800, letterSpacing: '0.05em',
-                        borderLeft: '2px solid white',
-                      }}>
-                        {pivotName}
-                      </th>
-                    )]
-                  }
-                  return sectors.map((sec, si) => (
-                    <th key={`${pid}-${sec.id}`} style={{
-                      padding: '6px 6px', textAlign: 'center',
-                      background: si === 0 ? color.bg : color.bg + 'cc',
-                      borderBottom: '2px solid ' + color.bg,
-                      color: '#fff', fontSize: 8, fontWeight: 800, letterSpacing: '0.05em',
-                      borderLeft: '2px solid white',
-                    }}>
-                      {pivotName}<br />
-                      <span style={{ opacity: 0.85, fontWeight: 600 }}>{sec.name}</span>
-                    </th>
-                  ))
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {allDates.map((date, di) => {
-                const isEven = di % 2 === 0
-                return (
-                  <tr key={date} style={{ background: isEven ? '#fff' : '#f8fdf8' }}>
-                    {/* Data */}
-                    <td style={{
-                      padding: '7px 8px', borderBottom: '1px solid #e2e8f0',
-                      borderRight: '1px solid #e2e8f0',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                        <span style={{
-                          fontSize: 8, fontWeight: 800, color: '#94a3b8',
-                          background: '#f1f5f9', padding: '1px 4px', borderRadius: 3,
-                          textTransform: 'uppercase', letterSpacing: '0.05em',
-                        }}>
-                          {weekdayAbbr(date)}
-                        </span>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: '#1e293b' }}>
-                          {fmtDayMonth(date)}
-                        </span>
-                      </div>
-                    </td>
-                    {/* Células por pivô/setor */}
-                    {pivotIds.flatMap((pid, pi) => {
-                      const color = PIVOT_COLORS[pi % PIVOT_COLORS.length]
-                      const pivotRows = byPivot.get(pid) ?? []
-                      const sectors = sectorsMap?.[pid] ?? []
+        {/* Data da programação */}
+        <div style={{ fontSize: 11 }}>
+          Data da Programação: {now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+        </div>
 
-                      if (sectors.length === 0) {
-                        // Pivô sem setores
-                        const s = pivotRows.find(r => r.date === date && !r.sector_id)
-                        return [(
-                          <td key={pid} style={{
-                            padding: '5px 6px', textAlign: 'center',
-                            borderBottom: '1px solid #e2e8f0', borderLeft: '2px solid ' + color.light,
-                          }}>
-                            {s && s.status !== 'cancelled' ? (
-                              <div style={{
-                                background: color.light, border: `1px solid ${color.bg}40`,
-                                borderRadius: 4, padding: '3px 5px',
-                              }}>
-                                {s.start_time && (
-                                  <div style={{ fontSize: 9, fontWeight: 700, color: color.text, lineHeight: 1.3 }}>
-                                    {s.start_time}{s.end_time ? <> → {fmtTime(s.end_time, s.start_time)}</> : ''}
-                                  </div>
-                                )}
-                                <div style={{ fontSize: 9, fontWeight: 800, color: color.bg }}>
-                                  {s.lamina_mm != null ? `${s.lamina_mm}mm` : ''}
-                                  {s.speed_percent != null ? ` · ${s.speed_percent}%` : ''}
-                                </div>
-                                {s.status === 'done' && (
-                                  <div style={{ fontSize: 8, color: '#16a34a', fontWeight: 700 }}>✓ realizado</div>
-                                )}
-                              </div>
-                            ) : s?.status === 'cancelled' ? (
-                              <div style={{ fontSize: 8, color: '#ef444460', textDecoration: 'line-through' }}>cancelado</div>
-                            ) : (
-                              <div style={{ color: '#e2e8f0', fontSize: 10 }}>—</div>
-                            )}
-                          </td>
-                        )]
-                      }
-
-                      return sectors.map(sec => {
-                        const s = pivotRows.find(r => r.date === date && r.sector_id === sec.id)
-                        return (
-                          <td key={`${pid}-${sec.id}`} style={{
-                            padding: '5px 6px', textAlign: 'center',
-                            borderBottom: '1px solid #e2e8f0', borderLeft: '2px solid ' + color.light,
-                          }}>
-                            {s && s.status !== 'cancelled' ? (
-                              <div style={{
-                                background: color.light, border: `1px solid ${color.bg}40`,
-                                borderRadius: 4, padding: '3px 5px',
-                              }}>
-                                {s.start_time && (
-                                  <div style={{ fontSize: 9, fontWeight: 700, color: color.text, lineHeight: 1.3 }}>
-                                    {s.start_time}{s.end_time ? <> → {fmtTime(s.end_time, s.start_time)}</> : ''}
-                                  </div>
-                                )}
-                                <div style={{ fontSize: 9, fontWeight: 800, color: color.bg }}>
-                                  {s.lamina_mm != null ? `${s.lamina_mm}mm` : ''}
-                                  {s.speed_percent != null ? ` · ${s.speed_percent}%` : ''}
-                                </div>
-                                {s.status === 'done' && (
-                                  <div style={{ fontSize: 8, color: '#16a34a', fontWeight: 700 }}>✓ realizado</div>
-                                )}
-                              </div>
-                            ) : s?.status === 'cancelled' ? (
-                              <div style={{ fontSize: 8, color: '#ef444460', textDecoration: 'line-through' }}>cancelado</div>
-                            ) : (
-                              <div style={{ color: '#e2e8f0', fontSize: 10 }}>—</div>
-                            )}
-                          </td>
-                        )
-                      })
-                    })}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        {/* Título */}
+        <div style={{ fontSize: 13, fontWeight: 700 }}>
+          Programação de Irrigação
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════
-          SEÇÃO 2 — DETALHAMENTO POR PIVÔ
-      ══════════════════════════════════════════════════ */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, marginTop: 4 }}>
-        <div style={{ width: 4, height: 18, background: '#16a34a', borderRadius: 2 }} />
-        <span style={{ fontSize: 11, fontWeight: 800, color: '#14532d', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-          Detalhamento por Pivô
-        </span>
-      </div>
-
-      {pivotIds.map((pivotId, pi) => {
+      {/* ── Uma tabela por pivô+setor ── */}
+      {pivotIds.flatMap(pivotId => {
         const meta = metas.find(m => m.pivot?.id === pivotId)
         const pivotName = meta?.pivot?.name ?? '—'
-        const farmName  = meta?.farm?.name  ?? ''
-        const seasonName = meta?.season?.name ?? ''
-        const rows = byPivot.get(pivotId) ?? []
-        const color = PIVOT_COLORS[pi % PIVOT_COLORS.length]
-        const totalLamina = rows.reduce((s, r) => s + (r.lamina_mm ?? 0), 0)
-        const activeDays  = rows.filter(r => r.status !== 'cancelled').length
+        const cropName  = meta?.crop?.name ?? ''
+        const sectors = sectorsMap?.[pivotId] ?? []
 
-        return (
-          <div key={pivotId} style={{ marginBottom: 18, pageBreakInside: 'avoid' }}>
-            {/* Cabeçalho do pivô */}
-            <div style={{
-              display: 'flex', alignItems: 'center',
-              background: `linear-gradient(90deg, ${color.bg} 0%, ${color.bg}cc 100%)`,
-              borderRadius: '6px 6px 0 0', padding: '8px 14px',
-              gap: 12,
-            }}>
-              {/* Ícone pivô */}
-              <svg width="22" height="22" viewBox="0 0 64 64" fill="none" style={{ flexShrink: 0 }}>
-                <circle cx="32" cy="32" r="28" fill="rgba(255,255,255,0.15)" />
-                <circle cx="32" cy="32" r="4" fill="white" />
-                <line x1="32" y1="32" x2="55" y2="20" stroke="white" strokeWidth="3" strokeLinecap="round" />
-                <line x1="32" y1="28" x2="32" y2="8" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3" />
-              </svg>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 900, color: '#fff', letterSpacing: '-0.3px' }}>{pivotName}</div>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', marginTop: 1 }}>
-                  {farmName}{seasonName ? ` · ${seasonName}` : ''}
-                </div>
-              </div>
-              {/* KPIs do pivô */}
-              <div style={{ display: 'flex', gap: 14 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Dias ativos</div>
-                  <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{activeDays}</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total lâmina</div>
-                  <div style={{ fontSize: 16, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{totalLamina.toFixed(0)}<span style={{ fontSize: 9 }}>mm</span></div>
-                </div>
-              </div>
-            </div>
+        // Se tem setores, uma tabela por setor; se não, uma tabela para o pivô inteiro
+        const groups: Array<{ sectorId: string | null; label: string }> = sectors.length > 0
+          ? sectors.map(sec => ({ sectorId: sec.id, label: `${pivotName} ${sec.name}${cropName ? ' · ' + cropName : ''}` }))
+          : [{ sectorId: null, label: `${pivotName}${cropName ? ' · ' + cropName : ''}` }]
 
-            {/* Tabela de detalhe */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, border: `1px solid ${color.bg}40`, borderTop: 'none' }}>
-              <thead>
-                <tr style={{ background: color.light }}>
-                  {['Data', 'Dia', 'Setor', 'Lâmina', 'Velocidade', 'Início', 'Fim', 'Chuva', 'Status'].map(h => (
-                    <th key={h} style={{
-                      padding: '5px 8px', textAlign: 'center',
-                      fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.06em',
-                      color: color.text, fontWeight: 800, borderBottom: `1.5px solid ${color.bg}60`,
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((s, i) => {
-                  const isCancelled = s.status === 'cancelled'
-                  const isDone = s.status === 'done'
-                  const rowBg = isCancelled ? '#fff5f5' : i % 2 === 0 ? '#fff' : color.light + '50'
-                  const statusColor = isCancelled ? '#ef4444' : isDone ? '#16a34a' : color.bg
-                  const secName = sectorName(pivotId, s.sector_id)
-                  return (
-                    <tr key={s.id} style={{ background: rowBg, borderBottom: `1px solid ${color.bg}20`, opacity: isCancelled ? 0.5 : 1 }}>
-                      <td style={{ padding: '5px 8px', textAlign: 'center', fontWeight: 700, color: '#1e293b' }}>
-                        {fmtDate(s.date)}
-                      </td>
-                      <td style={{ padding: '5px 8px', textAlign: 'center' }}>
-                        <span style={{
-                          fontSize: 8, fontWeight: 800, color: '#64748b',
-                          background: '#f1f5f9', padding: '1px 4px', borderRadius: 3,
-                          textTransform: 'uppercase',
-                        }}>
-                          {weekdayAbbr(s.date)}
-                        </span>
-                      </td>
-                      <td style={{ padding: '5px 8px', textAlign: 'center' }}>
-                        {secName !== '—' ? (
-                          <span style={{
-                            fontSize: 9, fontWeight: 800, color: color.text,
-                            background: color.light, padding: '1px 6px', borderRadius: 3,
-                            border: `1px solid ${color.bg}40`,
-                          }}>
-                            {secName}
-                          </span>
-                        ) : (
-                          <span style={{ color: '#cbd5e1', fontSize: 9 }}>—</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '5px 8px', textAlign: 'center', fontWeight: 800, color: color.bg, fontSize: 11 }}>
-                        {s.lamina_mm != null ? `${s.lamina_mm} mm` : <span style={{ color: '#cbd5e1' }}>—</span>}
-                      </td>
-                      <td style={{ padding: '5px 8px', textAlign: 'center', color: '#f59e0b', fontWeight: 700 }}>
-                        {s.speed_percent != null ? `${s.speed_percent}%` : <span style={{ color: '#cbd5e1' }}>—</span>}
-                      </td>
-                      <td style={{ padding: '5px 8px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
-                        {s.start_time ?? <span style={{ color: '#cbd5e1' }}>—</span>}
-                      </td>
-                      <td style={{ padding: '5px 8px', textAlign: 'center', fontFamily: 'monospace', fontWeight: 600, color: '#334155' }}>
-                        {fmtTime(s.end_time, s.start_time)}
-                      </td>
-                      <td style={{ padding: '5px 8px', textAlign: 'center', color: '#0891b2', fontWeight: 600 }}>
-                        {s.rainfall_mm != null && s.rainfall_mm > 0 ? `${s.rainfall_mm} mm` : <span style={{ color: '#cbd5e1' }}>—</span>}
-                      </td>
-                      <td style={{ padding: '5px 8px', textAlign: 'center' }}>
-                        <span style={{
-                          display: 'inline-block', padding: '2px 7px', borderRadius: 3,
-                          fontSize: 8, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em',
-                          color: statusColor,
-                          background: isCancelled ? '#fee2e2' : isDone ? '#dcfce7' : color.light,
-                          border: `1px solid ${statusColor}40`,
-                        }}>
-                          {isCancelled ? 'Cancelado' : isDone ? '✓ Realizado' : 'Programado'}
-                        </span>
-                      </td>
+        return groups.map(({ sectorId, label }) => {
+          // Somente dias com irrigação não cancelada para este grupo
+          const rowsByDate = new Map<string, IrrigationSchedule>()
+          for (const s of schedules) {
+            if (s.pivot_id !== pivotId) continue
+            if (sectorId !== null && s.sector_id !== sectorId) continue
+            if (sectorId === null && sectors.length > 0 && s.sector_id != null) continue
+            if (s.status === 'cancelled') continue
+            rowsByDate.set(s.date, s)
+          }
+
+          // 5 linhas de métricas — cada uma extrai um valor diferente do registro
+          const METRICS: { label: string; getValue: (s: IrrigationSchedule) => string }[] = [
+            { label: 'Irrigação (mm)',  getValue: s => s.lamina_mm != null ? String(s.lamina_mm) : '' },
+            { label: 'Velocidade (%)', getValue: s => s.speed_percent != null ? String(s.speed_percent) : '' },
+            { label: 'Duração (h)',    getValue: s => calcDuration(s.start_time, s.end_time) },
+            { label: 'Hora Inicial (h)', getValue: s => s.start_time ?? '' },
+            { label: 'Hora Final (h)', getValue: s => s.end_time ?? '' },
+          ]
+
+          return (
+            <div key={`${pivotId}-${sectorId ?? 'all'}`} style={{ marginBottom: 24, pageBreakInside: 'avoid' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                {/* Linha de cabeçalho com datas */}
+                <thead>
+                  <tr>
+                    {/* Coluna nome — ocupada pelo rowspan abaixo, aqui só espaço */}
+                    <th style={{ border: '1px solid #999', background: '#f5f5f5', width: 160 }} />
+                    <th style={{ border: '1px solid #999', background: '#f5f5f5', width: 120, fontSize: 9, color: '#888', fontWeight: 400, padding: '3px 8px', textAlign: 'left' }}>
+                      Parâmetro
+                    </th>
+                    {allDates.map(date => (
+                      <th key={date} style={TH_DATE}>{fmtDayMonth(date)}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {METRICS.map((metric, mi) => (
+                    <tr key={metric.label}>
+                      {/* Célula do nome do pivô/setor: só na 1ª linha, com rowspan */}
+                      {mi === 0 && (
+                        <td
+                          rowSpan={METRICS.length}
+                          style={{
+                            border: '1px solid #999',
+                            padding: '6px 10px',
+                            verticalAlign: 'middle',
+                            background: '#f5f5f5',
+                            textAlign: 'center',
+                            fontSize: 10,
+                            fontWeight: 700,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {label}
+                        </td>
+                      )}
+                      {/* Label da métrica */}
+                      <td style={{ ...TH_LABEL }}>{metric.label}</td>
+                      {/* Valores por data */}
+                      {allDates.map(date => {
+                        const s = rowsByDate.get(date)
+                        return <td key={date} style={TD}>{s ? metric.getValue(s) : ''}</td>
+                      })}
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        })
       })}
 
-      {/* ══════════════════════════════════════════════════
-          RODAPÉ
-      ══════════════════════════════════════════════════ */}
+      {/* Rodapé simples */}
       <div style={{
-        marginTop: 16, paddingTop: 10,
-        borderTop: '2px solid #e2e8f0',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginTop: 8, paddingTop: 6,
+        borderTop: '1px solid #ccc',
+        display: 'flex', justifyContent: 'space-between',
+        fontSize: 8, color: '#888',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 18, height: 18, background: '#16a34a', borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="10" height="10" viewBox="0 0 64 64" fill="none">
-              <path d="M31.5 4C31.5 4 13 22.6 13 35.5C13 47.4 21.8 56 33 56C44.2 56 53 47.4 53 35.5C53 22.6 31.5 4 31.5 4Z" fill="white"/>
-            </svg>
-          </div>
-          <span style={{ fontSize: 9, color: '#64748b', fontWeight: 600 }}>IrrigaAgro — Sistema de Gestão de Irrigação</span>
-        </div>
-        <span style={{ fontSize: 9, color: '#94a3b8' }}>www.irrigaagro.com.br</span>
+        <span>{now.toLocaleDateString('pt-BR')}</span>
+        <span>www.irrigaagro.com.br</span>
       </div>
     </div>
   )
