@@ -537,7 +537,7 @@ function PrintLayout({
             <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1 }}>
               <span style={{ color: '#0074a6' }}>Irriga</span><span style={{ color: '#16a34a' }}>Agro</span>
             </div>
-            <div style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2, fontWeight: 500 }}>
+            <div style={{ fontSize: 8, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0', marginTop: 3, fontWeight: 500 }}>
               Irrigação Inteligente
             </div>
           </div>
@@ -567,11 +567,11 @@ function PrintLayout({
         const sectors = sectorsMap?.[pivotId] ?? []
 
         // Se tem setores, uma tabela por setor; se não, uma tabela para o pivô inteiro
-        const groups: Array<{ sectorId: string | null; label: string }> = sectors.length > 0
-          ? sectors.map(sec => ({ sectorId: sec.id, label: `${pivotName} Setor ${sec.name}${cropName ? ' · ' + cropName : ''}` }))
-          : [{ sectorId: null, label: `${pivotName}${cropName ? ' · ' + cropName : ''}` }]
+        const groups: Array<{ sectorId: string | null; pivotLine: string; sectorLine: string; crop: string }> = sectors.length > 0
+          ? sectors.map(sec => ({ sectorId: sec.id, pivotLine: pivotName, sectorLine: `Setor ${sec.name}`, crop: cropName }))
+          : [{ sectorId: null, pivotLine: pivotName, sectorLine: '', crop: cropName }]
 
-        return groups.map(({ sectorId, label }) => {
+        return groups.map(({ sectorId, pivotLine, sectorLine, crop }) => {
           // Somente dias com irrigação não cancelada para este grupo
           const rowsByDate = new Map<string, IrrigationSchedule>()
           for (const s of schedules) {
@@ -591,8 +591,9 @@ function PrintLayout({
             { label: 'Hora Final (h)', getValue: s => s.end_time ?? '' },
           ]
 
+          const groupKey = `${pivotId}-${sectorId ?? 'all'}`
           return (
-            <div key={`${pivotId}-${sectorId ?? 'all'}`} style={{ marginBottom: 24, pageBreakInside: 'avoid' }}>
+            <div key={groupKey} style={{ marginBottom: 24, pageBreakInside: 'avoid' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 {/* Linha de cabeçalho com datas */}
                 <thead>
@@ -616,16 +617,24 @@ function PrintLayout({
                           rowSpan={METRICS.length}
                           style={{
                             border: '1px solid #999',
-                            padding: '6px 10px',
+                            padding: '8px 10px',
                             verticalAlign: 'middle',
                             background: '#f5f5f5',
                             textAlign: 'center',
-                            fontSize: 10,
-                            fontWeight: 700,
-                            lineHeight: 1.5,
+                            lineHeight: 1.4,
                           }}
                         >
-                          {label}
+                          {/* Linha 1: nome do pivô (grande) + setor (menor) */}
+                          <div>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#111' }}>{pivotLine}</span>
+                            {sectorLine && (
+                              <span style={{ fontSize: 9, fontWeight: 600, color: '#444', marginLeft: 4 }}>{sectorLine}</span>
+                            )}
+                          </div>
+                          {/* Linha 2: safra/cultura (mesmo tamanho do setor) */}
+                          {crop && (
+                            <div style={{ fontSize: 9, fontWeight: 400, color: '#666', marginTop: 2 }}>{crop}</div>
+                          )}
                         </td>
                       )}
                       {/* Label da métrica */}
