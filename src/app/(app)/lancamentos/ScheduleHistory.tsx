@@ -538,8 +538,8 @@ function PrintLayout({
               <span style={{ color: '#0074a6' }}>Irriga</span><span style={{ color: '#16a34a' }}>Agro</span>
             </div>
             <div style={{
-              fontSize: 8, color: '#94a3b8', letterSpacing: '0',
-              marginTop: 2, fontWeight: 400, whiteSpace: 'nowrap',
+              fontSize: 9, color: '#94a3b8', letterSpacing: '0.01em',
+              marginTop: 2, fontWeight: 400, textAlign: 'center',
             }}>
               irrigação inteligente
             </div>
