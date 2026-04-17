@@ -537,7 +537,7 @@ function PrintLayout({
             <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1 }}>
               <span style={{ color: '#0074a6' }}>Irriga</span><span style={{ color: '#16a34a' }}>Agro</span>
             </div>
-            <div style={{ fontSize: 7.5, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.18em', marginTop: 2, fontWeight: 500 }}>
+            <div style={{ fontSize: 9, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2, fontWeight: 500 }}>
               Irrigação Inteligente
             </div>
           </div>
@@ -568,7 +568,7 @@ function PrintLayout({
 
         // Se tem setores, uma tabela por setor; se não, uma tabela para o pivô inteiro
         const groups: Array<{ sectorId: string | null; label: string }> = sectors.length > 0
-          ? sectors.map(sec => ({ sectorId: sec.id, label: `${pivotName} ${sec.name}${cropName ? ' · ' + cropName : ''}` }))
+          ? sectors.map(sec => ({ sectorId: sec.id, label: `${pivotName} Setor ${sec.name}${cropName ? ' · ' + cropName : ''}` }))
           : [{ sectorId: null, label: `${pivotName}${cropName ? ' · ' + cropName : ''}` }]
 
         return groups.map(({ sectorId, label }) => {
