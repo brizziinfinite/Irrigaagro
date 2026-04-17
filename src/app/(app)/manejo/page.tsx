@@ -635,12 +635,12 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
     )
   }
 
-  const COLS = '88px 38px 54px 54px 54px 52px 54px 80px 56px'
+  const COLS = '88px 38px 54px 54px 54px 60px 52px 54px 80px 56px'
 
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        {['Data', 'DAS', 'ETo', 'ETc', 'Chuva', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
+        {['Data', 'DAS', 'ETo', 'ETc', 'Chuva', 'Lâmina', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
           <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
       </div>
@@ -650,6 +650,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
         const status: IrrigationStatus = pct === null ? 'verde' : pct >= warningPct ? 'verde' : pct >= threshold ? 'amarelo' : 'vermelho'
         const cfg = STATUS_CONFIG[status as IrrigationStatus]
         const StatusIcon = cfg.icon
+        const lamina = r.actual_depth_mm ?? null
         return (
           <div key={r.id} style={{ display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', borderBottom: i < records.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent', alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: '#8899aa' }}>{fmtDate(r.date)}</span>
@@ -657,6 +658,9 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.etc_mm)}</span>
             <span style={{ fontSize: 12, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall_mm)}</span>
+            <span style={{ fontSize: 12, color: lamina !== null && lamina > 0 ? '#00E5FF' : '#334455', fontFamily: 'var(--font-mono)', fontWeight: lamina !== null && lamina > 0 ? 700 : 400 }}>
+              {lamina !== null && lamina > 0 ? `${fmtNum(lamina)} mm` : '—'}
+            </span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.ctda)}</span>
             <span style={{ fontSize: 12, color: cfg.color, fontFamily: 'var(--font-mono)' }}>{pct !== null ? `${fmtNum(pct, 0)}%` : '—'}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
