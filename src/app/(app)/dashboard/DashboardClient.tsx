@@ -7,6 +7,7 @@ import type { PivotDiagnostic } from '@/services/pivot-diagnostics'
 import type { ManagementSeasonContext } from '@/services/management'
 import type { Pivot, Season, DailyManagement, EnergyBill } from '@/types/database'
 import { DecisionCard } from './DecisionCard'
+import { KpiCards } from './KpiCards'
 import { EnergyBlock } from './EnergyBlock'
 import { CriticalPivots } from './CriticalPivots'
 import { RecommendationsMatrix } from './RecommendationsMatrix'
@@ -203,7 +204,18 @@ export function DashboardClient({
         </Link>
       </div>
 
-      {/* ② Recomendações Operacionais — sempre visível */}
+      {/* ② Bloco principal de decisão — protagonista */}
+      <DecisionCard
+        pivots={pivots}
+        activeSeasons={activeSeasons}
+        lastManagementByPivot={lastManagementByPivot}
+        summary={summary}
+      />
+
+      {/* ③ KPIs resumidos */}
+      <KpiCards summary={summary} lastManagementBySeason={lastManagementBySeason} />
+
+      {/* ④ Recomendações Operacionais — sempre visível */}
       {(() => {
         // Calcula projeção para cada pivô ativo usando dados do banco (sem fetch externo)
         interface PivotRec {
@@ -408,7 +420,7 @@ export function DashboardClient({
         )
       })()}
 
-      {/* ③ Hero Section: Mapa + Radar Tático */}
+      {/* ⑤ Hero Section: Mapa + Radar Tático */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
         {/* Mapa do Parque */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -452,7 +464,7 @@ export function DashboardClient({
         </div>
       </div>
 
-      {/* ④ Recomendações Secundárias */}
+      {/* ⑥ Recomendações Secundárias */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, marginTop: 20 }}>
         <RecommendationsMatrix
           contexts={contexts}
@@ -476,7 +488,7 @@ export function DashboardClient({
         <EnergyBlock energyBills={energyBills} />
       </div>
 
-      {/* ⑤ Modal — Umidade do Solo (últimos dias) */}
+      {/* ⑦ Modal — Umidade do Solo (últimos dias) */}
       {selectedPivotPlotId && (() => {
         const pivot = pivots.find(p => p.id === selectedPivotPlotId)
         const ctx = contexts.find(c => c.season.pivot_id === selectedPivotPlotId)
