@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { ManagementSeasonContext } from '@/services/management'
 import {
@@ -89,6 +89,11 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
   const [selectedPivotId, setSelectedPivotId] = useState<'all' | string>('all')
   const [toastMsg, setToastMsg] = useState<string | null>(null)
 
+  // Chaves estáveis para deps do useEffect — evita loop infinito com objetos recriados a cada render
+  const contextsKey = useMemo(() => contexts.map(c => c.season?.id).join(','), [contexts])
+  const mgmtKey = useMemo(() => Object.entries(lastMgmtBySeasonId).map(([k,v]) => `${k}:${v?.date}`).join(','), [lastMgmtBySeasonId])
+  const adcKey = useMemo(() => JSON.stringify(currentAdcBySeasonId ?? {}), [currentAdcBySeasonId])
+
   // Build 7-day header dates
   const forecastDays: string[] = []
   for (let i = 1; i <= 7; i++) {
@@ -124,8 +129,9 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
 
     load()
     return () => { cancelled = true }
+  // contextsKey/mgmtKey/adcKey são strings derivadas dos objetos — stable deps sem loop infinito
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [today])
+  }, [today, contextsKey, mgmtKey, adcKey])
 
   const filtered = selectedPivotId === 'all'
     ? recommendations
@@ -171,6 +177,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
     backdropFilter: 'blur(12px)',
     padding: 0,
     overflow: 'hidden',
+    minWidth: 0,
   }
 
   return (

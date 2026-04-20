@@ -18,7 +18,7 @@ import {
 } from '@/services/pivot-diagnostics'
 import { listWeatherDataByStation } from '@/services/weather-data'
 import type { WeatherData } from '@/types/database'
-import { isSuperAdmin } from '@/lib/super-admin'
+// isSuperAdmin removido do cliente — verificação feita via /api/auth/is-super-admin
 
 function formatDate(value: string): string {
   return new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR')
@@ -286,7 +286,14 @@ export default function PivotDiagnosticsPage() {
   const [etoHistory, setEtoHistory] = useState<WeatherData[]>([])
   const [etoHistoryLoading, setEtoHistoryLoading] = useState(false)
 
-  const superAdmin = isSuperAdmin(user?.email)
+  const [superAdmin, setSuperAdmin] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth/is-super-admin')
+      .then(r => r.json())
+      .then((d: { superAdmin: boolean }) => setSuperAdmin(d.superAdmin))
+      .catch(() => setSuperAdmin(false))
+  }, [])
 
   useEffect(() => {
     if (authLoading) return

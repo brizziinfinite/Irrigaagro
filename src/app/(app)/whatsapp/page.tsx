@@ -445,7 +445,7 @@ export default function WhatsAppPage() {
                             const key = (field: string) => `${contact.id}-${pivot.id}-${field}`
                             return (
                               <div key={pivot.id} style={{
-                                display: 'flex', alignItems: 'center', gap: 10,
+                                display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
                                 background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
                                 borderRadius: 8, padding: '10px 12px',
                               }}>

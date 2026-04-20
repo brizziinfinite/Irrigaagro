@@ -102,6 +102,8 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
       flexDirection: 'column',
       gap: 16,
       height: '100%',
+      minWidth: 0,
+      overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

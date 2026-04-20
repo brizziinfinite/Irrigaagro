@@ -899,7 +899,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           </div>
 
           {/* Seletor de fonte */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8 }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: 8 }}>
             {([
               { value: 'plugfield',     label: 'Plugfield',     icon: Radio,     desc: 'Estação física — API direta' },
               { value: 'nasa',          label: 'NASA POWER',    icon: Satellite, desc: 'Por coordenada — gratuito' },

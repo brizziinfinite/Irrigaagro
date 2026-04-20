@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { PivotDiagnostic } from '@/services/pivot-diagnostics'
 import type { ManagementSeasonContext } from '@/services/management'
 import type { Pivot, Season, DailyManagement, EnergyBill } from '@/types/database'
@@ -156,6 +156,12 @@ export function DashboardClient({
 }: Props) {
   const [selectedPivotPlotId, setSelectedPivotPlotId] = useState<string | null>(null)
 
+  // today memoizado para não recriar string a cada render (violação da REGRA #3)
+  const today = useMemo(() => {
+    const n = new Date()
+    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`
+  }, [])
+
   if (!hasPivots) return <Onboarding />
 
   const activePivotIds = new Set(activeSeasons.map(s => s.pivot_id).filter((id): id is string => id !== null))
@@ -179,9 +185,9 @@ export function DashboardClient({
       `}} />
 
       {/* ① Título simples e Ação Primária */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.02em', margin: 0 }}>Command Center</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
+          <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.02em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Command Center</h1>
           <p style={{ fontSize: 13, color: '#8899aa', marginTop: 4 }}>
             {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
           </p>
@@ -337,7 +343,7 @@ export function DashboardClient({
 
                   return (
                     <div key={rec.pivotId} style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
+                      display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
                       padding: '10px 18px',
                       borderBottom: i < recs.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                       background: isUrgent ? 'rgba(239,68,68,0.04)' : 'transparent',
@@ -345,7 +351,7 @@ export function DashboardClient({
                       <Icon size={14} style={{ color, flexShrink: 0 }} />
 
                       {/* Nome do pivô */}
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', minWidth: 110 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', flex: '0 0 auto', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {rec.pivotName}
                       </span>
 
@@ -403,7 +409,7 @@ export function DashboardClient({
       })()}
 
       {/* ③ Hero Section: Mapa + Radar Tático */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 2fr) minmax(320px, 1fr)', gap: 20 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
         {/* Mapa do Parque */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -431,7 +437,7 @@ export function DashboardClient({
         </div>
 
         {/* Radar Tático: Lista de Pivôs por prioridade */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#e2e8f0' }}>
               Radar Tático
@@ -452,10 +458,10 @@ export function DashboardClient({
           contexts={contexts}
           lastMgmtBySeasonId={lastManagementBySeason}
           currentAdcBySeasonId={currentAdcBySeasonId}
-          today={(() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}` })()}
+          today={today}
         />
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(400px, 2fr)', gap: 16 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4">
           <SoilGaugesBlock
             pivots={pivots}
             lastManagementByPivot={lastManagementByPivot}

@@ -280,7 +280,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
   const farmLabel = farmNames.length === 1 ? farmNames[0] : farmNames.length > 1 ? `${farmNames.length} fazendas` : ''
 
   return (
-    <div style={{ borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', background: '#0f1923', position: 'relative' }}>
+    <div style={{ borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', background: '#0f1923', position: 'relative', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
@@ -303,7 +303,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
           <span style={{ fontSize: 10, color: '#556677' }}>{pivotsWithCoords.length} pivô{pivotsWithCoords.length !== 1 ? 's' : ''} no mapa</span>
         </div>
       </div>
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', overflow: 'hidden' }}>
       {/* CSS: pulse animation + popup style */}
       <style>{`
         @keyframes irrigaPulse {

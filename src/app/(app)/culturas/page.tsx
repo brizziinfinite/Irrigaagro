@@ -424,15 +424,15 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
               ))}
             </div>
           )}
-          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden', overflowX: 'auto' }}>
             {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', background: '#0d1520', padding: '8px 14px', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', minWidth: 320, background: '#0d1520', padding: '8px 14px', gap: 8 }}>
               {['Fase', 'Descrição', 'Dias', 'Fator f', 'Kc'].map(h => (
                 <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
               ))}
             </div>
             {stageRows.map((row, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', minWidth: 320, padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#0093D0' }}>Fase {i + 1}</span>
                 <span style={{ fontSize: 12, color: '#8899aa' }}>{['Inicial', 'Desenvolvimento', 'Médio', 'Final'][i]} <span style={{ color: '#556677', fontSize: 10 }}>{row.hint ? `(${row.hint})` : ''}</span></span>
                 <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
@@ -452,6 +452,7 @@ export default function CulturasPage() {
   const { company, loading: authLoading } = useAuth()
   const [crops, setCrops] = useState<Crop[]>([])
   const [loading, setLoading] = useState(true)
+  const [pageError, setPageError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCrop, setEditingCrop] = useState<Crop | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -464,9 +465,12 @@ export default function CulturasPage() {
     }
 
     setLoading(true)
+    setPageError(null)
     try {
       const data = await listCropsByCompany(company.id)
       setCrops(data)
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : 'Falha ao carregar culturas.')
     } finally {
       setLoading(false)
     }
@@ -483,6 +487,8 @@ export default function CulturasPage() {
     try {
       await deleteCrop(id)
       await loadCrops()
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : 'Falha ao excluir cultura.')
     } finally {
       setDeletingId(null)
     }
@@ -526,6 +532,12 @@ export default function CulturasPage() {
             Nova Cultura
           </button>
         </div>
+
+        {pageError && (
+          <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444', fontSize: 13 }}>
+            {pageError}
+          </div>
+        )}
 
         {authLoading || loading ? (
           <div className="flex items-center justify-center py-20">

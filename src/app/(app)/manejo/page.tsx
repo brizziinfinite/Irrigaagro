@@ -443,8 +443,9 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
         </div>
       )}
 
-      {/* Linhas */}
-      <div style={{ padding: '14px 20px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* Linhas — scroll horizontal no mobile */}
+      <div style={{ overflowX: 'auto' }}>
+      <div style={{ minWidth: 420, padding: '14px 20px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {days.map((day, i) => {
           const cfg = STATUS_CONFIG[day.status]
           const StatusIcon = cfg.icon
@@ -599,6 +600,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
           )
         })}
       </div>
+      </div>{/* fim overflowX:auto */}
 
       <div style={{ padding: '8px 20px 10px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -639,7 +641,8 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
 
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ overflowX: 'auto' }}>
+      <div style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         {['Data', 'DAS', 'ETo', 'ETc', 'Chuva', 'Lâmina', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
           <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
@@ -652,7 +655,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
         const StatusIcon = cfg.icon
         const lamina = r.actual_depth_mm ?? null
         return (
-          <div key={r.id} style={{ display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', borderBottom: i < records.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent', alignItems: 'center' }}>
+          <div key={r.id} style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', borderBottom: i < records.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent', alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: '#8899aa' }}>{fmtDate(r.date)}</span>
             <span style={{ fontSize: 12, color: '#445566' }}>{r.das ?? '—'}</span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
@@ -671,25 +674,26 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
               <button
                 onClick={() => onEdit(r)}
                 title="Editar registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px 5px', borderRadius: 5, color: '#445566', lineHeight: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#445566', lineHeight: 0 }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#0093D0')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#445566')}
               >
-                <Edit2 size={12} />
+                <Edit2 size={14} />
               </button>
               <button
                 onClick={() => onDelete(r)}
                 title="Excluir registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px 5px', borderRadius: 5, color: '#445566', lineHeight: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#445566', lineHeight: 0 }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#445566')}
               >
-                <Trash2 size={12} />
+                <Trash2 size={14} />
               </button>
             </div>
           </div>
         )
       })}
+      </div>
     </div>
   )
 }
@@ -868,6 +872,7 @@ export default function ManejoPage() {
     setIrrigEnd(record.irrigation_end ?? '')
     setDepthAutoFilled(false)
     setEditingRecord(record)
+    setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -882,6 +887,7 @@ export default function ManejoPage() {
 
   async function handleDelete(record: DailyManagement) {
     if (!selectedSeason) return
+    if (!confirm(`Excluir o registro de ${fmtDate(record.date)}? Esta ação não pode ser desfeita.`)) return
     setSaving(true); setSaveMsg(null); setError(null)
     try {
       const supabase = createClient()
@@ -1074,9 +1080,7 @@ export default function ManejoPage() {
       )}
 
       {/* ── MANEJO MAIN LAYOUT: GAUGE + TRENDS (TABLET VIEW) ── */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: 24, alignItems: 'stretch', minHeight: '600px'
-      }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-6 items-stretch">
         
         {/* Lado Esquerdo - Gauge Radial */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
@@ -1166,7 +1170,7 @@ export default function ManejoPage() {
               const etcDiariaStr = calcResult.etc.toFixed(1)
               const capMaxPivotStr = rec.maxDepthMm != null ? rec.maxDepthMm.toFixed(1) : '—'
               const capWarning = (rec.maxDepthMm != null && calcResult.etc > rec.maxDepthMm)
-              const targetThresholdLine = 100 - (selectedSeason?.pivots?.alert_threshold_percent ?? 50)
+              const targetThresholdLine = selectedSeason?.pivots?.alert_threshold_percent ?? 70
 
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%', minWidth: 0 }}>
@@ -1218,7 +1222,7 @@ export default function ManejoPage() {
                   </div>
 
                   {/* === PAINÉIS 2 & 3: SCHEDULE + WATER USAGE === */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1.1fr) minmax(250px, 1fr)', gap: 24 }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
                     {/* Bloco Schedule */}
                     <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', minWidth: 0 }}>
@@ -1265,7 +1269,13 @@ export default function ManejoPage() {
                           boxShadow: '0 4px 20px rgba(0,229,255,0.25)', cursor: 'pointer', transition: 'all 0.2s',
                           textAlign: 'center', lineHeight: 1.2
                         }}
-                        onClick={() => { setShowForm(true); setActualDepth('10'); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }) }}
+                        onClick={() => {
+                          setShowForm(true)
+                          // Pré-preenche com a lâmina recomendada pelo cálculo, não um valor fixo
+                          const recDepth = calcResult?.recommendedDepthMm
+                          if (recDepth && recDepth > 0) setActualDepth(recDepth.toFixed(1))
+                          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+                        }}
                         onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'none'}
                         >
@@ -1372,8 +1382,8 @@ export default function ManejoPage() {
         {showForm && (
           <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* Fonte climática + data — linha única */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 200px', gap: 16, alignItems: 'start' }}>
+            {/* Fonte climática + data — empilhado no mobile, lado a lado no desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 items-start">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Dados Climáticos</label>
                 {weatherLoading && (

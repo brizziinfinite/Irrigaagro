@@ -860,7 +860,7 @@ function PivotCard({
         style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', userSelect: 'none' }}
       >
         {/* Nome + fazenda */}
-        <div style={{ flex: '0 0 180px', minWidth: 0 }}>
+        <div style={{ flex: '1 1 140px', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>{name}</span>
             {scheduledCount > 0 && (
@@ -885,8 +885,8 @@ function PivotCard({
           <span style={{ fontSize: 10, color: '#445566' }}>{farm.name}</span>
         </div>
 
-        {/* Chips de info agronômica */}
-        <div style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* Chips de info agronômica — ocultos em mobile, visíveis a partir de sm */}
+        <div className="hidden sm:flex" style={{ gap: 8, flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
           {crop && (
             <Chip label="Cultura" value={crop.name} color="#22c55e" />
           )}

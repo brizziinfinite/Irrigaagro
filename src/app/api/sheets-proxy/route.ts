@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 /**
  * Proxy server-side para Google Sheets.
@@ -8,6 +10,18 @@ import { NextRequest, NextResponse } from 'next/server'
  * GET /api/sheets-proxy?sid=ID&gid=GID&pub=1
  */
 export async function GET(req: NextRequest) {
+  // Verificar autenticação
+  const cookieStore = await cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+  )
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+  }
+
   const { searchParams } = req.nextUrl
   const sid = searchParams.get('sid')
   const gid = searchParams.get('gid') ?? '0'
@@ -15,6 +29,10 @@ export async function GET(req: NextRequest) {
 
   if (!sid || !/^[a-zA-Z0-9_-]+$/.test(sid)) {
     return NextResponse.json({ error: 'sid inválido' }, { status: 400 })
+  }
+
+  if (!/^\d+$/.test(gid)) {
+    return NextResponse.json({ error: 'gid inválido' }, { status: 400 })
   }
 
   const targetUrl = pub

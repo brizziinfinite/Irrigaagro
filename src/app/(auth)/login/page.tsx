@@ -244,14 +244,16 @@ export default function LoginPage() {
       {/* ═══════════════════════════════════════════ */}
       {/*  RIGHT PANEL — Auth form                   */}
       {/* ═══════════════════════════════════════════ */}
-      <div style={{
-        width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column',
-        justifyContent: 'center', padding: '48px 40px',
-        borderLeft: '1px solid rgba(255,255,255,0.05)',
-        background: 'rgba(8,14,20,0.6)',
-        backdropFilter: 'blur(20px)',
-        position: 'relative', zIndex: 1,
-      }}>
+      <div
+        className="px-5 py-8 sm:px-10 sm:py-12"
+        style={{
+          width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column',
+          justifyContent: 'center',
+          borderLeft: '1px solid rgba(255,255,255,0.05)',
+          background: 'rgba(8,14,20,0.6)',
+          backdropFilter: 'blur(20px)',
+          position: 'relative', zIndex: 1,
+        }}>
 
         {/* Mobile logo */}
         <div style={{ marginBottom: 40, display: 'flex', justifyContent: 'center' }} className="mobile-logo">

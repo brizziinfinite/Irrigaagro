@@ -90,7 +90,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
       background: '#0f1923',
       border: '1px solid rgba(255,255,255,0.06)',
       borderRadius: 16,
-      overflow: 'hidden',
+      overflow: 'clip',
     }}>
       {/* Header + filtros */}
       <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -121,10 +121,14 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
         </div>
       </div>
 
+      {/* Wrapper com scroll horizontal para mobile */}
+      <div style={{ overflowX: 'auto' }}>
+
       {/* Tabela header — 7 colunas */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: GRID_COLS,
+        minWidth: 500,
         padding: '8px 16px',
         background: '#141e2b',
         borderBottom: '1px solid rgba(255,255,255,0.04)',
@@ -163,6 +167,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
                 style={{
                   display: 'grid',
                   gridTemplateColumns: GRID_COLS,
+                  minWidth: 500,
                   padding: '10px 16px',
                   borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   alignItems: 'center',
@@ -228,6 +233,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
           })
         )}
       </div>
+      </div>{/* fim overflowX:auto */}
     </div>
   )
 }

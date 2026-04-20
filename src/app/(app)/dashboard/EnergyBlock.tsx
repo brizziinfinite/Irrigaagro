@@ -151,8 +151,8 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
         <span style={{ fontSize: 10, color: '#556677' }}>{periodoLabel}</span>
       </div>
 
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+      {/* KPI Cards — 2 colunas no mobile, 4 no desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
         {kpiCards.map(({ label, value, sub, color }) => (
           <div key={label} style={{
             background: 'rgba(255,255,255,0.02)',
@@ -183,8 +183,8 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
         ))}
       </div>
 
-      {/* Distribuição + Evolução */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 14 }}>
+      {/* Distribuição + Evolução — empilhado no mobile, lado a lado no desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-3.5">
         {/* Distribuição */}
         <div style={{
           background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '16px 18px',

@@ -62,7 +62,9 @@ function batchStatus(rows: IrrigationSchedule[]): string {
   if (rows.every(r => r.status === 'done')) return 'done'
   if (rows.every(r => r.status === 'cancelled')) return 'cancelled'
   if (rows.some(r => r.status === 'planned')) return 'planned'
-  return 'done'
+  // Mix de done + cancelled: usa 'done' só se há pelo menos um realizado
+  if (rows.some(r => r.status === 'done')) return 'done'
+  return 'cancelled'
 }
 
 // ─── tipos ────────────────────────────────────────────────────
@@ -430,33 +432,59 @@ function fmtDayMonth(ymd: string): string {
 
 // Estilo de célula da tabela — borda fina, padding compacto
 const TD: React.CSSProperties = {
-  border: '1px solid #999',
-  padding: '4px 8px',
+  border: '1px solid #c8cfd8',
+  padding: '5px 8px',
   textAlign: 'center',
-  fontSize: 10,
+  fontSize: 11,
   color: '#111',
   background: '#fff',
 }
 
-const TH_DATE: React.CSSProperties = {
-  border: '1px solid #999',
-  padding: '4px 8px',
+const TD_FILLED: React.CSSProperties = {
+  border: '1px solid #c8cfd8',
+  padding: '5px 8px',
   textAlign: 'center',
-  fontSize: 10,
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#0f172a',
+  background: '#f0f7ff',
+}
+
+// Data sem irrigação — flat, levemente apagada
+const TH_DATE: React.CSSProperties = {
+  border: '1px solid #0074a6',
+  padding: '5px 8px',
+  textAlign: 'center',
+  fontSize: 11,
   fontWeight: 700,
-  color: '#111',
-  background: '#f5f5f5',
+  color: '#fff',
+  background: '#0074a6',
   minWidth: 52,
+  opacity: 0.85,
+}
+
+// Data COM irrigação — 3D
+const TH_DATE_ACTIVE: React.CSSProperties = {
+  border: '1px solid #005d88',
+  padding: '5px 8px',
+  textAlign: 'center',
+  fontSize: 11,
+  fontWeight: 700,
+  color: '#fff',
+  minWidth: 52,
+  opacity: 1,
+  background: 'linear-gradient(180deg, #0093d0 0%, #0074a6 50%, #005d88 100%)',
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.2), 0 2px 5px rgba(0,93,136,0.4), 0 4px 8px rgba(0,93,136,0.2)',
 }
 
 const TH_LABEL: React.CSSProperties = {
-  border: '1px solid #999',
-  padding: '4px 8px',
+  border: '1px solid #c8cfd8',
+  padding: '5px 10px',
   textAlign: 'left',
   fontSize: 10,
-  fontWeight: 400,
-  color: '#333',
-  background: '#fff',
+  fontWeight: 500,
+  color: '#222',
+  background: '#f8fafc',
   whiteSpace: 'nowrap',
 }
 
@@ -497,13 +525,15 @@ function PrintLayout({
     >
       {/* ── Cabeçalho ── */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
         borderBottom: '2.5px solid #0074a6', paddingBottom: 10, marginBottom: 22,
         gap: 12,
       }}>
         {/* Logo IrrigaAgro — ícone + wordmark */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <svg width="40" height="48" viewBox="0 0 84 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="40" height="48" viewBox="0 0 84 100" fill="none" xmlns="http://www.w3.org/2000/svg"
+            style={{ filter: 'drop-shadow(0 1px 0 rgba(0,80,130,0.3)) drop-shadow(0 2px 0 rgba(0,80,130,0.2)) drop-shadow(0 3px 5px rgba(0,0,0,0.18))' }}
+          >
             <defs>
               <linearGradient id="dropG" x1="42" y1="0" x2="42" y2="100" gradientUnits="userSpaceOnUse">
                 <stop offset="0%" stopColor="#38bdf8" />
@@ -534,7 +564,9 @@ function PrintLayout({
             <rect x="52" y="38" width="10" height="46" rx="2.5" fill="url(#bar3G)" />
           </svg>
           <div style={{ lineHeight: 1.1 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1, whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1, whiteSpace: 'nowrap',
+              textShadow: '0 1px 0 rgba(0,0,0,0.15), 0 2px 0 rgba(0,0,0,0.10), 0 3px 4px rgba(0,0,0,0.12)',
+            }}>
               <span style={{ color: '#0074a6' }}>Irriga</span><span style={{ color: '#16a34a' }}>Agro</span>
             </div>
             <div style={{
@@ -586,69 +618,103 @@ function PrintLayout({
           }
 
           // 5 linhas de métricas — cada uma extrai um valor diferente do registro
-          const METRICS: { label: string; getValue: (s: IrrigationSchedule) => string }[] = [
-            { label: 'Irrigação (mm)',  getValue: s => s.lamina_mm != null ? String(s.lamina_mm) : '' },
-            { label: 'Velocidade (%)', getValue: s => s.speed_percent != null ? String(s.speed_percent) : '' },
-            { label: 'Duração (h)',    getValue: s => calcDuration(s.start_time, s.end_time) },
-            { label: 'Hora Inicial (h)', getValue: s => s.start_time ?? '' },
-            { label: 'Hora Final (h)', getValue: s => s.end_time ?? '' },
+          const METRICS: { label: string; unit: string; getValue: (s: IrrigationSchedule) => string }[] = [
+            { label: 'Irrigação (mm)',    unit: 'mm', getValue: s => s.lamina_mm != null ? String(s.lamina_mm) : '' },
+            { label: 'Velocidade (%)',    unit: '%',  getValue: s => s.speed_percent != null ? String(s.speed_percent) : '' },
+            { label: 'Duração (h)',       unit: 'h',  getValue: s => calcDuration(s.start_time, s.end_time) },
+            { label: 'Hora Inicial (h)',  unit: '',   getValue: s => s.start_time ?? '' },
+            { label: 'Hora Final (h)',    unit: '',   getValue: s => s.end_time ?? '' },
           ]
 
           const groupKey = `${pivotId}-${sectorId ?? 'all'}`
           return (
-            <div key={groupKey} style={{ marginBottom: 24, pageBreakInside: 'avoid' }}>
+            <div key={groupKey} style={{ marginBottom: 30, pageBreakInside: 'avoid' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 {/* Linha de cabeçalho com datas */}
                 <thead>
                   <tr>
                     {/* Coluna nome — ocupada pelo rowspan abaixo, aqui só espaço */}
-                    <th style={{ border: '1px solid #999', background: '#f5f5f5', width: 160 }} />
-                    <th style={{ border: '1px solid #999', background: '#f5f5f5', width: 120, fontSize: 9, color: '#888', fontWeight: 400, padding: '3px 8px', textAlign: 'left' }}>
+                    <th style={{ border: '1px solid #c8cfd8', background: '#edf2f7', width: 160 }} />
+                    <th style={{ border: '1px solid #c8cfd8', background: '#edf2f7', width: 120, fontSize: 10, color: '#555', fontWeight: 600, padding: '5px 10px', textAlign: 'left', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                       Parâmetro
                     </th>
-                    {allDates.map(date => (
-                      <th key={date} style={TH_DATE}>{fmtDayMonth(date)}</th>
-                    ))}
+                    {allDates.map(date => {
+                      const dow = new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase()
+                      const hasIrrigation = rowsByDate.has(date)
+                      return (
+                        <th key={date} style={hasIrrigation ? TH_DATE_ACTIVE : TH_DATE}>
+                          {fmtDayMonth(date)}
+                          <span style={{ display: 'block', fontSize: 8, fontWeight: 400, opacity: 0.8, marginTop: 2 }}>{dow}</span>
+                        </th>
+                      )
+                    })}
                   </tr>
                 </thead>
                 <tbody>
-                  {METRICS.map((metric, mi) => (
+                  {METRICS.map((metric, mi) => {
+                    const isMain = mi === 0
+                    const isEven = mi % 2 === 0
+                    const rowBg = isMain ? '#f0f7ff' : isEven ? '#fafbfc' : '#fff'
+                    return (
                     <tr key={metric.label}>
                       {/* Célula do nome do pivô/setor: só na 1ª linha, com rowspan */}
                       {mi === 0 && (
                         <td
                           rowSpan={METRICS.length}
                           style={{
-                            border: '1px solid #999',
-                            padding: '8px 10px',
+                            border: '1px solid #c8cfd8',
+                            borderLeft: '4px solid #0074a6',
+                            padding: '10px 12px',
                             verticalAlign: 'middle',
-                            background: '#f5f5f5',
                             textAlign: 'center',
-                            lineHeight: 1.4,
+                            lineHeight: 1.5,
+                            background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f2fb 100%)',
+                            boxShadow: 'inset 2px 0 6px rgba(0,116,166,0.08)',
                           }}
                         >
-                          {/* Linha 1: nome do pivô (grande) + setor (menor) */}
                           <div>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: '#111' }}>{pivotLine}</span>
+                            <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>{pivotLine}</span>
                             {sectorLine && (
-                              <span style={{ fontSize: 9, fontWeight: 600, color: '#444', marginLeft: 4 }}>{sectorLine}</span>
+                              <span style={{ fontSize: 10, fontWeight: 600, color: '#0074a6', marginLeft: 5 }}>{sectorLine}</span>
                             )}
                           </div>
-                          {/* Linha 2: safra/cultura (mesmo tamanho do setor) */}
                           {crop && (
-                            <div style={{ fontSize: 9, fontWeight: 400, color: '#666', marginTop: 2 }}>{crop}</div>
+                            <div style={{ fontSize: 10, fontWeight: 400, color: '#64748b', marginTop: 3 }}>{crop}</div>
                           )}
                         </td>
                       )}
-                      {/* Label da métrica */}
-                      <td style={{ ...TH_LABEL }}>{metric.label}</td>
+                      {/* Label da métrica com zebra */}
+                      <td style={{ ...TH_LABEL, background: rowBg, fontWeight: isMain ? 700 : 500, color: isMain ? '#0f172a' : '#222' }}>
+                        {metric.label}
+                      </td>
                       {/* Valores por data */}
                       {allDates.map(date => {
                         const s = rowsByDate.get(date)
-                        return <td key={date} style={TD}>{s ? metric.getValue(s) : ''}</td>
+                        const val = s ? metric.getValue(s) : ''
+                        if (!val) return <td key={date} style={{ ...TD, background: rowBg }}>—</td>
+                        if (isMain) {
+                          return (
+                            <td key={date} style={{
+                              ...TD_FILLED,
+                              border: '1px solid #2563eb',
+                              background: 'linear-gradient(180deg, #bfdbfe 0%, #93c5fd 55%, #60a5fa 100%)',
+                              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -2px 0 rgba(0,0,0,0.15), 0 2px 5px rgba(37,99,235,0.35), 0 4px 8px rgba(37,99,235,0.15)',
+                            }}>
+                              <span style={{ fontWeight: 700, fontSize: 12, color: '#1e3a8a' }}>{val}</span>
+                              <span style={{ fontSize: 9, color: '#3b82f6', marginLeft: 2 }}>{metric.unit}</span>
+                            </td>
+                          )
+                        }
+                        return (
+                          <td key={date} style={{ ...TD_FILLED, background: '#f0f7ff' }}>
+                            <span style={{ fontWeight: 700, color: '#0f172a' }}>{val}</span>
+                            {metric.unit && <span style={{ fontSize: 9, color: '#94a3b8', marginLeft: 2 }}>{metric.unit}</span>}
+                          </td>
+                        )
                       })}
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -656,15 +722,15 @@ function PrintLayout({
         })
       })}
 
-      {/* Rodapé simples */}
+      {/* Rodapé */}
       <div style={{
-        marginTop: 8, paddingTop: 6,
-        borderTop: '1px solid #ccc',
-        display: 'flex', justifyContent: 'space-between',
-        fontSize: 8, color: '#888',
+        marginTop: 16, paddingTop: 8,
+        borderTop: '2px solid #e2e8f0',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        fontSize: 9, color: '#94a3b8',
       }}>
-        <span>{now.toLocaleDateString('pt-BR')}</span>
-        <span>www.irrigaagro.com.br</span>
+        <span>Emitido em {now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+        <span style={{ color: '#0074a6', fontWeight: 600 }}>www.irrigaagro.com.br</span>
       </div>
     </div>
   )

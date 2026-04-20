@@ -1420,7 +1420,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
         <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
 
         {/* Right: Bar chart */}
-        <div style={{ flex: '0 0 350px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Média mensal</p>
             <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>

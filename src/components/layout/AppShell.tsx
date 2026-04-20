@@ -22,16 +22,18 @@ export function AppShell({ user, children }: AppShellProps) {
         <Sidebar user={user} />
       </div>
 
-      {/* Drawer mobile */}
+      {/* Drawer mobile — overlay escuro + sidebar deslizando da esquerda */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
           <button
             className="absolute inset-0"
             style={{ background: 'rgb(0 0 0 / 0.6)' }}
             aria-label="Fechar menu"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative h-full w-60 shadow-2xl">
+          {/* Drawer — mesma largura que o sidebar desktop (260px) */}
+          <div className="relative h-full w-[260px] shadow-2xl">
             <Sidebar user={user} onNavigate={() => setMobileOpen(false)} />
             <button
               className="absolute top-4 right-[-44px] rounded-xl p-2"
@@ -51,9 +53,10 @@ export function AppShell({ user, children }: AppShellProps) {
           user={user}
           onMenuClick={() => setMobileOpen(true)}
         />
+        {/* padding responsivo: compacto no mobile, espaçoso no desktop */}
         <main
-          className="flex-1 overflow-auto"
-          style={{ background: 'var(--color-surface-bg)', padding: '28px 40px' }}
+          className="flex-1 overflow-auto px-4 py-4 md:px-8 md:py-7 lg:px-10 lg:py-7"
+          style={{ background: 'var(--color-surface-bg)' }}
         >
           {children}
         </main>

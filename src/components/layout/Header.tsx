@@ -64,18 +64,19 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
         {/* Empresa ativa */}
         {company && (
           <span
-            className="px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap"
+            className="hidden sm:inline-block px-3 py-2 rounded-xl text-sm font-medium max-w-[160px] truncate"
             style={{
               border: '1px solid var(--color-surface-border)',
               background: 'var(--color-surface-elevated)',
               color: 'var(--color-text-secondary)',
             }}
+            title={company.name}
           >
             {company.name}
           </span>
         )}
 
-        {/* Notificações */}
+        {/* Notificações — badge removido até feature ser implementada */}
         <button
           className="relative p-2 rounded-xl transition-colors"
           style={{
@@ -88,7 +89,6 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
           onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)'}
         >
           <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />
         </button>
       </div>
     </header>

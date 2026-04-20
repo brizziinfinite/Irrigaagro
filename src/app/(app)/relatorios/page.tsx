@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import type { Season, Crop, Pivot, DailyManagement, EnergyBill } from '@/types/database'
@@ -302,20 +302,20 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
           </div>
         ))}
         {rows.map((r, i) => (
-          <>
-            <div key={`l${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+          <React.Fragment key={r.label}>
+            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>{r.label}</span>
             </div>
-            <div key={`c${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
               <span style={{ fontSize: 13, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.consumption)}</span>
             </div>
-            <div key={`ir${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
               <span style={{ fontSize: 13, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.irrigation)}</span>
             </div>
-            <div key={`ra${i}`} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
               <span style={{ fontSize: 13, color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall)}</span>
             </div>
-          </>
+          </React.Fragment>
         ))}
       </div>
     </div>
@@ -1175,7 +1175,7 @@ export default function RelatoriosPage() {
           </div>
 
           {/* ── SEÇÃO 3: Consumo por período ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <PeriodTable last7={kpis.last7} last10={kpis.last10} last15={kpis.last15} />
 
             {/* Eficiência de irrigação */}
