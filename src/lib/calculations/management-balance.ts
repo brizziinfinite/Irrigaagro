@@ -123,7 +123,9 @@ export async function projectAdcToDate(params: {
 
     try {
       const externalData = await getManagementExternalData(farm.id, pivot?.id ?? null, gapDateStr, pivot)
-      const climateSnapshot = externalData.weather ?? externalData.geolocationWeather
+      // Usa APENAS weather_data do banco — ignora geolocationWeather (Open-Meteo ao vivo)
+      // para garantir projeção determinística entre reloads
+      const climateSnapshot = externalData.weather
 
       if (climateSnapshot) {
         const result = computeResolvedManagementBalance({
@@ -138,7 +140,7 @@ export async function projectAdcToDate(params: {
           rainfall:    '',
           actualDepth: '',
           actualSpeed: '',
-          externalData,
+          externalData: { ...externalData, geolocationWeather: null },
         })
         if (result) {
           runningAdc = result.adcNew
@@ -153,8 +155,14 @@ export async function projectAdcToDate(params: {
       // fallback silencioso
     }
 
-    // Fallback: usa ETc média do último registro
-    const avgEtc = lastManagement.etc_mm ?? 3
+    // Fallback determinístico: ETc média dos últimos registros válidos
+    const recentEtcValues = history
+      .filter((m: DailyManagement) => m.etc_mm != null && m.etc_mm > 0)
+      .slice(0, 3)
+      .map((m: DailyManagement) => m.etc_mm!)
+    const avgEtc = recentEtcValues.length > 0
+      ? recentEtcValues.reduce((a, b) => a + b, 0) / recentEtcValues.length
+      : 3
     const gapDas = calcDAS(season.planting_date!, gapDateStr)
     const gapStage = getStageInfoForDas(crop, gapDas)
     const ctaGap = calcCTA(CC, PM, Ds, gapStage.rootDepthCm)
@@ -197,12 +205,25 @@ export function computeResolvedManagementBalance(
 
   if (tempMax == null || tempMin == null) return null
 
+  // Validação de range — rejeita dados de sensores defeituosos
+  if (tempMax < -20 || tempMax > 60) return null
+  if (tempMin < -30 || tempMin > 55) return null
+  if (tempMax < tempMin) return null // sensor invertido
+
+  // Clamp valores secundários a ranges plausíveis (fallback para default se absurdo)
+  const humidityClamped = humidityValue != null && humidityValue >= 5 && humidityValue <= 100
+    ? humidityValue : 60
+  const windClamped = windValue != null && windValue >= 0 && windValue <= 25
+    ? windValue : 2
+  const radiationClamped = radiationValue != null && radiationValue >= 0 && radiationValue <= 500
+    ? radiationValue : 200
+
   const weatherInput: WeatherInput = {
     tempMax,
     tempMin,
-    humidity: humidityValue ?? 60,
-    windSpeed: windValue ?? 2,
-    solarRadiation: radiationValue ?? 200,
+    humidity: humidityClamped,
+    windSpeed: windClamped,
+    solarRadiation: radiationClamped,
     altitude: farm.altitude ?? 650,
     latitude: pivot?.latitude ?? undefined,
     date,
