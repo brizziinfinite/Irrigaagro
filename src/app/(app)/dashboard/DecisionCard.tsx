@@ -125,15 +125,36 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
               )}
             </div>
           )}
-          <p style={{ fontSize: 12, fontWeight: 600, color: '#687b8d', marginTop: 4, lineHeight: 1.5 }}>
-            {noPivots
-              ? 'Configure uma safra para iniciar o monitoramento.'
-              : needsIrrigation
-                ? urgentNames.length <= 3
-                  ? urgentNames.join(', ')
-                  : `${urgentNames.slice(0, 2).join(', ')} e mais ${urgentNames.length - 2}`
+          {needsIrrigation && !noPivots ? (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6, alignItems: 'center' }}>
+              {criticoNames.map(name => (
+                <span key={name} style={{
+                  fontSize: 12, fontWeight: 700,
+                  color: '#ef4444',
+                  textShadow: '0 0 12px rgba(239,68,68,0.7)',
+                  letterSpacing: '0.01em',
+                }}>
+                  {name}
+                </span>
+              ))}
+              {atencaoNames.map(name => (
+                <span key={name} style={{
+                  fontSize: 12, fontWeight: 700,
+                  color: '#f59e0b',
+                  textShadow: '0 0 12px rgba(245,158,11,0.7)',
+                  letterSpacing: '0.01em',
+                }}>
+                  {name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, fontWeight: 600, color: '#687b8d', marginTop: 4, lineHeight: 1.5 }}>
+              {noPivots
+                ? 'Configure uma safra para iniciar o monitoramento.'
                 : `${ok} pivô${ok > 1 ? 's' : ''} com umidade adequada · ${summary.handledToday} manejo(s) hoje`}
-          </p>
+            </p>
+          )}
         </div>
       </div>
 
