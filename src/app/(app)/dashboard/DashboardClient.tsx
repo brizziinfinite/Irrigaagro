@@ -7,6 +7,7 @@ import type { PivotDiagnostic } from '@/services/pivot-diagnostics'
 import type { ManagementSeasonContext } from '@/services/management'
 import type { Pivot, Season, DailyManagement, EnergyBill } from '@/types/database'
 import { DecisionCard } from './DecisionCard'
+import { KpiCards } from './KpiCards'
 import { EnergyBlock } from './EnergyBlock'
 import { CriticalPivots } from './CriticalPivots'
 import { RecommendationsMatrix } from './RecommendationsMatrix'
@@ -179,7 +180,7 @@ export function DashboardClient({
   const activePivots = summary.activePivots
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 60, animation: 'fadeIn 0.4s ease-in-out' }}>
+    <div className="mx-auto w-full" style={{ maxWidth: 1400, display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 60, animation: 'fadeIn 0.4s ease-in-out' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}} />
@@ -203,7 +204,18 @@ export function DashboardClient({
         </Link>
       </div>
 
-      {/* ② Recomendações Operacionais — sempre visível */}
+      {/* ② Bloco principal de decisão — protagonista */}
+      <DecisionCard
+        pivots={pivots}
+        activeSeasons={activeSeasons}
+        lastManagementByPivot={lastManagementByPivot}
+        summary={summary}
+      />
+
+      {/* ③ KPIs resumidos */}
+      <KpiCards summary={summary} lastManagementBySeason={lastManagementBySeason} />
+
+      {/* ④ Recomendações Operacionais — sempre visível */}
       {(() => {
         // Calcula projeção para cada pivô ativo usando dados do banco (sem fetch externo)
         interface PivotRec {
@@ -408,8 +420,8 @@ export function DashboardClient({
         )
       })()}
 
-      {/* ③ Hero Section: Mapa + Radar Tático */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
+      {/* ⑤ Hero Section: Mapa + Radar Tático */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         {/* Mapa do Parque */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -452,16 +464,16 @@ export function DashboardClient({
         </div>
       </div>
 
-      {/* ④ Recomendações Secundárias */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, marginTop: 20 }}>
+      {/* ⑥ Recomendações Secundárias */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}>
         <RecommendationsMatrix
           contexts={contexts}
           lastMgmtBySeasonId={lastManagementBySeason}
           currentAdcBySeasonId={currentAdcBySeasonId}
           today={today}
         />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4">
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
           <SoilGaugesBlock
             pivots={pivots}
             lastManagementByPivot={lastManagementByPivot}
@@ -476,7 +488,7 @@ export function DashboardClient({
         <EnergyBlock energyBills={energyBills} />
       </div>
 
-      {/* ⑤ Modal — Umidade do Solo (últimos dias) */}
+      {/* ⑦ Modal — Umidade do Solo (últimos dias) */}
       {selectedPivotPlotId && (() => {
         const pivot = pivots.find(p => p.id === selectedPivotPlotId)
         const ctx = contexts.find(c => c.season.pivot_id === selectedPivotPlotId)
