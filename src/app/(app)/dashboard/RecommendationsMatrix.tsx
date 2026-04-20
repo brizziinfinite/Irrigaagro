@@ -170,8 +170,8 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
   }
 
   const cardStyle: React.CSSProperties = {
-    background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
-    border: '1px solid rgba(255,255,255,0.03)',
+    background: 'linear-gradient(145deg, rgba(18,24,32,0.97), rgba(13,18,26,0.98))',
+    border: '1px solid rgba(255,255,255,0.05)',
     borderRadius: 20,
     boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
     backdropFilter: 'blur(12px)',
@@ -185,9 +185,9 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
       {/* ─── Header ─── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
-        gap: 10, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.03)',
+        gap: 10, padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,0.05)',
       }}>
-        <span style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#e2e8f0' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#556677' }}>
           Recomendações 7 dias
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -197,7 +197,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
             onChange={e => setSelectedPivotId(e.target.value)}
             style={{
               background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
-              color: '#8899aa', fontSize: 11, padding: '5px 10px', cursor: 'pointer',
+              color: '#7788aa', fontSize: 11, padding: '5px 10px', cursor: 'pointer',
               appearance: 'none', paddingRight: 24,
             }}
           >
@@ -212,8 +212,8 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
             onClick={handleShare}
             title="Compartilhar"
             style={{
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
-              color: '#8899aa', fontSize: 11, padding: '5px 10px', cursor: 'pointer',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
+              color: '#7788aa', fontSize: 11, padding: '5px 10px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 5,
             }}
           >
@@ -279,30 +279,30 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
 
                   return (
                     <th key={date} style={{
-                      padding: '10px 6px',
+                      padding: '12px 6px',
                       textAlign: 'center',
-                      borderBottom: '1px solid rgba(255,255,255,0.03)',
-                      borderRight: '1px solid rgba(255,255,255,0.03)',
-                      background: 'rgba(22, 27, 33, 0.4)',
+                      borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      borderRight: '1px solid rgba(255,255,255,0.04)',
+                      background: 'rgba(16,22,30,0.5)',
                       minWidth: 72,
                     }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                        <span style={{ fontSize: 9, color: '#445566', textTransform: 'capitalize' }}>{weekday}</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{dayLabel}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                        <span style={{ fontSize: 9, color: '#445566', textTransform: 'capitalize', fontWeight: 600, letterSpacing: '0.05em' }}>{weekday}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#7788aa', fontFamily: 'var(--font-mono)' }}>{dayLabel}</span>
                         {forecast ? (
                           <>
                             <WeatherIconSvg icon={forecast.icon} size={16} />
                             {forecast.rainfall > 0 && (
-                              <span style={{ fontSize: 9, color: '#60a5fa', fontFamily: 'var(--font-mono)' }}>
+                              <span style={{ fontSize: 9, color: '#60a5fa', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
                                 {forecast.rainfall.toFixed(0)}mm
                               </span>
                             )}
                             {forecast.rainfall === 0 && (
-                              <span style={{ fontSize: 9, color: '#445566' }}>0mm</span>
+                              <span style={{ fontSize: 9, color: '#334455' }}>0mm</span>
                             )}
                           </>
                         ) : (
-                          <span style={{ fontSize: 9, color: '#445566' }}>—</span>
+                          <span style={{ fontSize: 9, color: '#334455' }}>—</span>
                         )}
                       </div>
                     </th>
@@ -314,7 +314,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: 32, textAlign: 'center', color: '#445566', fontSize: 13 }}>
+                  <td colSpan={8} style={{ padding: 36, textAlign: 'center', color: '#445566', fontSize: 13 }}>
                     Nenhuma safra ativa com dados suficientes.
                   </td>
                 </tr>
@@ -326,17 +326,17 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                   {/* Pivot name — sticky */}
                   <td style={{
                     position: 'sticky', left: 0, zIndex: 1,
-                    background: 'rgba(15, 19, 24, 0.95)',
-                    borderRight: '1px solid rgba(255,255,255,0.03)',
-                    padding: '10px 16px',
+                    background: 'rgba(13,18,26,0.98)',
+                    borderRight: '1px solid rgba(255,255,255,0.04)',
+                    padding: '13px 18px',
                     backdropFilter: 'blur(12px)',
                   }}>
                     <Link href={`/pivos/${rec.pivotId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', margin: 0, whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: '#c8d4e0', margin: 0, whiteSpace: 'nowrap' }}>
                         {rec.pivotName}
                       </p>
                     </Link>
-                    <p style={{ fontSize: 10, color: '#445566', margin: 0, marginTop: 2, whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 10, color: '#445566', margin: 0, marginTop: 3, whiteSpace: 'nowrap' }}>
                       {rec.farmName}
                     </p>
                     {rec.lastUpdated && (
@@ -351,8 +351,8 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                     const day = rec.projection.find(p => p.date === date)
                     if (!day) {
                       return (
-                        <td key={date} style={{ padding: '8px 4px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.03)' }}>
-                          <span style={{ fontSize: 10, color: '#334455' }}>—</span>
+                        <td key={date} style={{ padding: '8px 4px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.04)' }}>
+                          <span style={{ fontSize: 10, color: '#2a3444' }}>—</span>
                         </td>
                       )
                     }
@@ -362,22 +362,22 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
 
                     return (
                       <td key={date} style={{
-                        padding: '6px 4px',
+                        padding: '7px 4px',
                         textAlign: 'center',
-                        borderRight: di < 6 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                        borderRight: di < 6 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                       }}>
                         <div style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                          padding: '6px 4px', borderRadius: 8,
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                          padding: '7px 5px', borderRadius: 9,
                           background: colors.bg,
                           border: `1px solid ${colors.border}`,
-                          margin: '0 2px',
+                          margin: '0 3px',
                         }}>
                           {/* % campo */}
                           <span style={{
                             fontSize: 12, fontWeight: 800, color: colors.text,
                             fontFamily: 'var(--font-mono)', lineHeight: 1,
-                            textShadow: `0 0 8px ${colors.text}60`
+                            textShadow: `0 0 8px ${colors.text}50`
                           }}>
                             {Math.round(day.fieldCapacityPercent)}%
                           </span>
@@ -385,7 +385,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                           {/* Lâmina */}
                           {needsIrr ? (
                             <>
-                              <span style={{ fontSize: 9, color: '#e2e8f0', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                              <span style={{ fontSize: 9, color: '#c8d4e0', fontFamily: 'var(--font-mono)', lineHeight: 1, fontWeight: 600 }}>
                                 {day.recommendedDepthMm.toFixed(1)}mm
                               </span>
                               {day.recommendedSpeedPercent != null && (
@@ -395,7 +395,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                               )}
                             </>
                           ) : (
-                            <span style={{ fontSize: 8, color: colors.text, opacity: 0.6 }}>—</span>
+                            <span style={{ fontSize: 8, color: colors.text, opacity: 0.5 }}>—</span>
                           )}
                         </div>
                       </td>
@@ -411,8 +411,8 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
       {/* ─── Legend ─── */}
       {!loading && (
         <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: 12, padding: '10px 18px',
-          borderTop: '1px solid rgba(255,255,255,0.04)',
+          display: 'flex', flexWrap: 'wrap', gap: 14, padding: '12px 22px',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
         }}>
           {[
             { status: 'verde',    label: 'OK'          },
@@ -422,9 +422,9 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
           ].map(({ status, label }) => {
             const c = STATUS_COLORS[status as keyof typeof STATUS_COLORS]
             return (
-              <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.text, display: 'inline-block', flexShrink: 0 }} />
-                <span style={{ fontSize: 10, color: '#556677' }}>{label}</span>
+              <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.text, display: 'inline-block', flexShrink: 0, boxShadow: `0 0 6px ${c.text}60` }} />
+                <span style={{ fontSize: 10, color: '#556677', fontWeight: 500 }}>{label}</span>
               </div>
             )
           })}

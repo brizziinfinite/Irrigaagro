@@ -49,26 +49,26 @@ export function HistoryBlock({ historyBySeason }: HistoryBlockProps) {
 
   return (
     <div style={{
-      background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
+      background: 'linear-gradient(145deg, rgba(18,24,32,0.97), rgba(13,18,26,0.98))',
       backdropFilter: 'blur(12px)',
-      border: '1px solid rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.05)',
       boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       borderRadius: 20,
-      padding: 24,
+      padding: '26px 24px',
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
         <span style={{
-          fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#e2e8f0',
+          fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+          letterSpacing: '0.09em', color: '#556677',
         }}>
           Histórico Operacional (7d)
         </span>
         {!hasData && (
-          <span style={{ fontSize: 10, color: '#556677' }}>Aguardando registros</span>
+          <span style={{ fontSize: 11, color: '#334455', fontWeight: 500 }}>Aguardando registros</span>
         )}
       </div>
 

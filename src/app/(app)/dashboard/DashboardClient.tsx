@@ -180,7 +180,7 @@ export function DashboardClient({
   const activePivots = summary.activePivots
 
   return (
-    <div className="mx-auto w-full" style={{ maxWidth: 1400, display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 60, animation: 'fadeIn 0.4s ease-in-out' }}>
+    <div className="mx-auto w-full" style={{ maxWidth: 1400, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 72, animation: 'fadeIn 0.4s ease-in-out' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}} />
@@ -188,17 +188,18 @@ export function DashboardClient({
       {/* ① Título simples e Ação Primária */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0 }}>
-          <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.02em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Command Center</h1>
-          <p style={{ fontSize: 13, color: '#8899aa', marginTop: 4 }}>
+          <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Command Center</h1>
+          <p style={{ fontSize: 13, color: '#556677', marginTop: 5, fontWeight: 500 }}>
             {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
           </p>
         </div>
         <Link href="/manejo" style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          padding: '10px 18px', borderRadius: 12, fontSize: 13, fontWeight: 700,
+          padding: '11px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
           background: 'linear-gradient(135deg, #005A8C, #0093D0)',
           color: '#fff', textDecoration: 'none', flexShrink: 0,
-          boxShadow: '0 4px 16px rgba(0,147,208,0.4)',
+          boxShadow: '0 4px 18px rgba(0,147,208,0.4)',
+          letterSpacing: '0.01em',
         }}>
           <Droplets size={14} /> Manejo Diário
         </Link>
@@ -306,25 +307,30 @@ export function DashboardClient({
 
         return (
           <div style={{
-            background: '#0f1923', border: `1px solid ${borderColor}`, borderRadius: 16,
-            overflow: 'hidden', boxShadow: urgentCount > 0 ? '0 0 20px rgba(239,68,68,0.08)' : '0 4px 20px rgba(0,0,0,0.2)',
+            background: 'linear-gradient(145deg, rgba(16,21,28,0.97), rgba(12,17,23,0.98))',
+            border: `1px solid ${borderColor}`,
+            borderRadius: 18,
+            overflow: 'hidden',
+            boxShadow: urgentCount > 0
+              ? '0 0 30px rgba(239,68,68,0.1), 0 8px 32px rgba(0,0,0,0.4)'
+              : '0 8px 32px rgba(0,0,0,0.35)',
           }}>
             {/* Header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 18px', background: headerBg,
+              padding: '14px 20px', background: headerBg,
               borderBottom: `1px solid ${borderColor}`,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CalendarClock size={14} style={{ color: headerColor }} />
-                <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#e2e8f0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <CalendarClock size={15} style={{ color: headerColor }} />
+                <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#c8d4e0' }}>
                   Recomendações de Irrigação
                 </span>
                 {urgentCount > 0 && (
                   <span style={{
-                    fontSize: 9, fontWeight: 800, color: '#ef4444',
+                    fontSize: 10, fontWeight: 800, color: '#ef4444',
                     background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
-                    borderRadius: 6, padding: '2px 7px', textTransform: 'uppercase', letterSpacing: '0.05em',
+                    borderRadius: 99, padding: '3px 9px', textTransform: 'uppercase', letterSpacing: '0.05em',
                   }}>
                     {urgentCount} irrigar hoje
                   </span>
@@ -332,18 +338,18 @@ export function DashboardClient({
               </div>
               {summary.pivotsWithClimateFallback > 0 && (
                 <Link href="/diagnostico-pivo" style={{
-                  fontSize: 10, color: '#556677', textDecoration: 'none',
+                  fontSize: 11, color: '#445566', textDecoration: 'none',
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}>
-                  <Info size={10} /> {summary.pivotsWithClimateFallback} fallback climático
+                  <Info size={11} /> {summary.pivotsWithClimateFallback} fallback climático
                 </Link>
               )}
             </div>
 
             {/* Linhas */}
             {!hasAnything ? (
-              <div style={{ padding: '16px 18px' }}>
-                <p style={{ fontSize: 12, color: '#556677' }}>Nenhum pivô ativo com dados de balanço.</p>
+              <div style={{ padding: '20px 22px' }}>
+                <p style={{ fontSize: 12, color: '#445566', fontWeight: 500 }}>Nenhum pivô ativo com dados de balanço.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -355,15 +361,15 @@ export function DashboardClient({
 
                   return (
                     <div key={rec.pivotId} style={{
-                      display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-                      padding: '10px 18px',
+                      display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                      padding: '13px 20px',
                       borderBottom: i < recs.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                      background: isUrgent ? 'rgba(239,68,68,0.04)' : 'transparent',
+                      background: isUrgent ? 'rgba(239,68,68,0.05)' : 'transparent',
                     }}>
-                      <Icon size={14} style={{ color, flexShrink: 0 }} />
+                      <Icon size={15} style={{ color, flexShrink: 0 }} />
 
                       {/* Nome do pivô */}
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', flex: '0 0 auto', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#d8e4f0', flex: '0 0 auto', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {rec.pivotName}
                       </span>
 
@@ -371,15 +377,15 @@ export function DashboardClient({
                       {rec.pct != null && (
                         <span style={{
                           fontSize: 11, fontFamily: 'var(--font-mono)', color: color,
-                          background: `${color}15`, border: `1px solid ${color}30`,
-                          borderRadius: 4, padding: '1px 5px', flexShrink: 0,
+                          background: `${color}12`, border: `1px solid ${color}28`,
+                          borderRadius: 6, padding: '2px 7px', flexShrink: 0, fontWeight: 700,
                         }}>
                           {Math.round(rec.pct)}%
                         </span>
                       )}
 
                       {/* Recomendação */}
-                      <span style={{ fontSize: 12, color: isUrgent ? '#e2e8f0' : '#8899aa', flex: 1 }}>
+                      <span style={{ fontSize: 12, color: isUrgent ? '#c8d4e0' : '#556677', flex: 1, fontWeight: isUrgent ? 600 : 400 }}>
                         {isUrgent
                           ? 'Irrigar hoje'
                           : rec.daysAway === 1 ? 'Irrigar amanhã'
@@ -388,7 +394,7 @@ export function DashboardClient({
 
                       {/* Lâmina */}
                       {(rec.laminaToday ?? rec.laminaProjected ?? 0) > 0 && (
-                        <span style={{ fontSize: 11, color: '#e2e8f0', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                        <span style={{ fontSize: 12, color: '#c8d4e0', fontFamily: 'var(--font-mono)', flexShrink: 0, fontWeight: 600 }}>
                           {(rec.laminaToday ?? rec.laminaProjected ?? 0).toFixed(1)} mm
                         </span>
                       )}
@@ -398,18 +404,21 @@ export function DashboardClient({
                         <span style={{
                           fontSize: 11, fontWeight: 700, color: '#0093D0',
                           fontFamily: 'var(--font-mono)',
-                          background: 'rgba(0,147,208,0.1)', border: '1px solid rgba(0,147,208,0.2)',
-                          borderRadius: 4, padding: '2px 7px', flexShrink: 0,
+                          background: 'rgba(0,147,208,0.1)', border: '1px solid rgba(0,147,208,0.22)',
+                          borderRadius: 6, padding: '3px 8px', flexShrink: 0,
                         }}>
                           {rec.speedToday ?? rec.speedProjected}%
                         </span>
                       )}
 
                       <Link href="/manejo" style={{
-                        fontSize: 10, color: '#556677', textDecoration: 'none',
-                        display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0,
+                        fontSize: 11, color: '#445566', textDecoration: 'none',
+                        display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+                        padding: '4px 8px', borderRadius: 6,
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.06)',
                       }}>
-                        Manejo <ArrowRight size={10} />
+                        Manejo <ArrowRight size={11} />
                       </Link>
                     </div>
                   )
@@ -423,14 +432,15 @@ export function DashboardClient({
       {/* ⑤ Hero Section: Mapa + Radar Tático */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         {/* Mapa do Parque */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#e2e8f0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#556677' }}>
               Planta da Fazenda
             </span>
-            <span style={{ fontSize: 12, color: '#8899aa' }}>Visão espacial instantânea</span>
-            <span style={{ fontSize: 11, color: '#445566', marginLeft: 4 }}>·</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#445566' }}>
+            <span style={{ fontSize: 11, color: '#334455' }}>·</span>
+            <span style={{ fontSize: 11, color: '#8899aa' }}>Visão espacial instantânea</span>
+            <span style={{ fontSize: 11, color: '#334455', marginLeft: 4 }}>·</span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: '#445566' }}>
               {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
             </span>
           </div>
@@ -448,12 +458,14 @@ export function DashboardClient({
           }))} />
         </div>
 
-        {/* Radar Tático: Lista de Pivôs por prioridade */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#e2e8f0' }}>
+        {/* Radar Tático */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#556677' }}>
               Radar Tático
             </span>
+            <span style={{ fontSize: 11, color: '#334455' }}>·</span>
+            <span style={{ fontSize: 11, color: '#445566' }}>Prioridade por pivô</span>
           </div>
           <CriticalPivots
             pivots={pivots}
@@ -465,7 +477,7 @@ export function DashboardClient({
       </div>
 
       {/* ⑥ Recomendações Secundárias */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 28 }}>
         <RecommendationsMatrix
           contexts={contexts}
           lastMgmtBySeasonId={lastManagementBySeason}
