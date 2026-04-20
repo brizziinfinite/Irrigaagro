@@ -515,7 +515,7 @@ export function DashboardClient({
           ? Math.round((pivot.wilting_point / pivot.field_capacity) * 100)
           : 0
 
-        const trendData = history.slice(0, 30).reverse().map((d: DailyManagement) => ({
+        const trendData = history.slice(-30).map((d: DailyManagement) => ({
           name: d.date.slice(8, 10) + '/' + d.date.slice(5, 7),
           moisture: d.field_capacity_percent != null ? parseFloat(d.field_capacity_percent.toFixed(1)) : null,
         })).filter((d: { name: string; moisture: number | null }) => d.moisture !== null)
