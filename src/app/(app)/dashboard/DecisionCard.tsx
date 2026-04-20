@@ -22,18 +22,23 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
   let criticos = 0
   let atencao = 0
   let ok = 0
+  const criticoNames: string[] = []
+  const atencaoNames: string[] = []
 
   for (const pivot of pivots) {
     if (!activePivotIds.has(pivot.id)) continue
     const m = lastManagementByPivot[pivot.id]
     const threshold = pivot.alert_threshold_percent ?? 70
-    const warningPct = threshold * 1.15  // ×1,15 alinhado ao getIrrigationStatus
+    const warningPct = threshold * 1.15
     const pct = m?.field_capacity_percent ?? null
     if (pct === null) { ok++; continue }
-    if (pct < threshold) criticos++
-    else if (pct < warningPct) atencao++
+    if (pct < threshold) { criticos++; criticoNames.push(pivot.name) }
+    else if (pct < warningPct) { atencao++; atencaoNames.push(pivot.name) }
     else ok++
   }
+
+  // Nomes dos pivôs que precisam de ação
+  const urgentNames = [...criticoNames, ...atencaoNames]
 
   const needsIrrigation = criticos > 0 || atencao > 0
   const noPivots = summary.activePivots === 0
@@ -58,15 +63,16 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
     : noPivots ? 'none' : '0 0 20px rgba(0, 229, 255, 0.4)'
 
   return (
-    <div className="p-4 sm:p-6" style={{
+    <div style={{
       background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
       border: `1px solid rgba(255,255,255,0.03)`,
       borderTop: `1px solid ${mainColor}40`,
       borderRadius: 20,
+      padding: '20px 24px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      gap: 12,
+      gap: 16,
       flexWrap: 'wrap',
       boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       backdropFilter: 'blur(12px)',
@@ -119,18 +125,20 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
               )}
             </div>
           )}
-          <p style={{ fontSize: 12, fontWeight: 600, color: '#687b8d', marginTop: 4 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: '#687b8d', marginTop: 4, lineHeight: 1.5 }}>
             {noPivots
               ? 'Configure uma safra para iniciar o monitoramento.'
               : needsIrrigation
-                ? `${criticos + atencao} de ${summary.activePivots} pivô${summary.activePivots > 1 ? 's' : ''} precisa${criticos + atencao > 1 ? 'm' : ''} de irrigação`
+                ? urgentNames.length <= 3
+                  ? urgentNames.join(', ')
+                  : `${urgentNames.slice(0, 2).join(', ')} e mais ${urgentNames.length - 2}`
                 : `${ok} pivô${ok > 1 ? 's' : ''} com umidade adequada · ${summary.handledToday} manejo(s) hoje`}
           </p>
         </div>
       </div>
 
       {/* Cyberpunk Glow CTA */}
-      <Link href="/manejo" className="w-full sm:w-auto justify-center" style={{
+      <Link href="/manejo" style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '11px 20px', borderRadius: 12, fontSize: 13, fontWeight: 800,
         textTransform: 'uppercase', letterSpacing: '0.04em',
