@@ -56,7 +56,7 @@ export function AppShell({ user, children }: AppShellProps) {
         {/* padding responsivo: compacto no mobile, espaçoso no desktop */}
         <main
           className="flex-1 overflow-auto px-4 py-4 md:px-8 md:py-7 lg:px-10 lg:py-7"
-          style={{ background: 'var(--color-surface-bg)' }}
+          style={{ background: 'var(--color-surface-bg)', padding: '24px 28px' }}
         >
           {children}
         </main>

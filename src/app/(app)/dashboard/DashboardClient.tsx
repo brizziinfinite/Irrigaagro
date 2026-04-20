@@ -180,7 +180,7 @@ export function DashboardClient({
   const activePivots = summary.activePivots
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 60, animation: 'fadeIn 0.4s ease-in-out' }}>
+    <div className="mx-auto w-full" style={{ maxWidth: 1400, display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 60, animation: 'fadeIn 0.4s ease-in-out' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}} />
@@ -421,7 +421,7 @@ export function DashboardClient({
       })()}
 
       {/* ⑤ Hero Section: Mapa + Radar Tático */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         {/* Mapa do Parque */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -465,15 +465,15 @@ export function DashboardClient({
       </div>
 
       {/* ⑥ Recomendações Secundárias */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, marginTop: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}>
         <RecommendationsMatrix
           contexts={contexts}
           lastMgmtBySeasonId={lastManagementBySeason}
           currentAdcBySeasonId={currentAdcBySeasonId}
           today={today}
         />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4">
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
           <SoilGaugesBlock
             pivots={pivots}
             lastManagementByPivot={lastManagementByPivot}
