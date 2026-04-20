@@ -72,26 +72,23 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
       backdropFilter: 'blur(12px)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
-        {/* Glow Icon Container */}
-        <div className="w-10 h-10 sm:w-[52px] sm:h-[52px]" style={{
-          borderRadius: 12, flexShrink: 0,
+        {/* Glow Icon Container — oculto no mobile para dar espaço ao texto */}
+        <div className="hidden sm:flex w-[52px] h-[52px]" style={{
+          borderRadius: 14, flexShrink: 0,
           background: `${mainColor}1A`,
           border: `1px solid ${mainColor}40`,
           boxShadow: `inset 0 0 16px ${mainColor}20, 0 0 16px ${mainColor}20`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          alignItems: 'center', justifyContent: 'center',
         }}>
-          <Icon size={20} className="sm:hidden" style={{ color: mainColor, filter: `drop-shadow(0 0 6px ${mainColor})` }} />
-          <Icon size={26} className="hidden sm:block" style={{ color: mainColor, filter: `drop-shadow(0 0 6px ${mainColor})` }} />
+          <Icon size={26} style={{ color: mainColor, filter: `drop-shadow(0 0 6px ${mainColor})` }} />
         </div>
 
         {/* Deep Typography */}
         <div style={{ minWidth: 0 }}>
-          {/* Título — nowrap + ellipsis para não overflow */}
-          <span className="text-base sm:text-xl" style={{
+          <span className="text-lg sm:text-xl" style={{
             display: 'block', fontWeight: 900, color: mainColor,
             letterSpacing: '-0.02em', lineHeight: 1.2,
             textShadow: textShadowGlow,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {noPivots ? 'SEM SAFRA ATIVA' : needsIrrigation ? 'IRRIGAR HOJE: SIM' : 'IRRIGAR HOJE: NÃO'}
           </span>

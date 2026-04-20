@@ -53,13 +53,12 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
       {cards.map(({ label, value, unit, subtitle, color, Icon }) => (
-        <div key={label} style={{
+        <div key={label} className="p-4 sm:p-5" style={{
           background: '#0f1923',
           border: '1px solid rgba(255,255,255,0.06)',
           borderRadius: 16,
-          padding: '22px 24px 20px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <span style={{
@@ -81,8 +80,7 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{
-              fontSize: 36,
+            <span className="text-3xl sm:text-4xl" style={{
               fontWeight: 800,
               fontFamily: 'var(--font-mono)',
               color,
@@ -90,7 +88,7 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
             }}>
               {value}
             </span>
-            <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500 }}>{unit}</span>
+            <span style={{ fontSize: 11, color: '#8899aa', fontWeight: 500 }}>{unit}</span>
           </div>
           <p style={{ fontSize: 11, color: '#556677', marginTop: 6 }}>{subtitle}</p>
         </div>
