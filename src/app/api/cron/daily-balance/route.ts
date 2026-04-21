@@ -290,9 +290,14 @@ export async function GET(req: NextRequest) {
         try {
           const schedule = await getScheduledIrrigationForDate(pivot.id, processDate, supabase)
           if (schedule?.lamina_mm != null && schedule.lamina_mm > 0) {
-            scheduledIrrigationMm = schedule.lamina_mm
-            scheduledIrrigationId = schedule.id
-            scheduledIrrigationStatus = schedule.status
+            // Só contabiliza lâmina no turno de conclusão (diurno: start < end)
+            // Turno noturno (start > end = cruza meia-noite) é saída — não contabilizar
+            const isNightDeparture = schedule.start_time && schedule.end_time && schedule.start_time > schedule.end_time
+            if (!isNightDeparture) {
+              scheduledIrrigationMm = schedule.lamina_mm
+              scheduledIrrigationId = schedule.id
+              scheduledIrrigationStatus = schedule.status
+            }
           }
         } catch {
           // Falha silenciosa — continua sem lâmina agendada

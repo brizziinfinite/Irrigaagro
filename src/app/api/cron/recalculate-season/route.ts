@@ -82,7 +82,12 @@ async function recalculateSeason(
       let scheduledMm: number | null = null
       try {
         const schedule = await getScheduledIrrigationForDate(pivot.id, dateStr, supabase)
-        if (schedule?.lamina_mm != null && schedule.lamina_mm > 0) scheduledMm = schedule.lamina_mm
+        if (schedule?.lamina_mm != null && schedule.lamina_mm > 0) {
+          // Só contabiliza lâmina no turno de conclusão (diurno: start < end)
+          // Turno noturno (start > end = cruza meia-noite) é saída — não contabilizar
+          const isNightDeparture = schedule.start_time && schedule.end_time && schedule.start_time > schedule.end_time
+          if (!isNightDeparture) scheduledMm = schedule.lamina_mm
+        }
       } catch { /* silencioso */ }
 
       const result = computeResolvedManagementBalance({
