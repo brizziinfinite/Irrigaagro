@@ -818,6 +818,31 @@ export default function ManejoPage() {
     return () => { cancelled = true }
   }, [selectedSeason, date, editingRecord])
 
+  // ─── Pré-preenche irrigação a partir de registro existente (cron) ──
+  // Quando já existe um registro gravado pelo cron para a data selecionada,
+  // o formulário deve refletir os dados reais — evita divergência entre
+  // dashboard (usa banco) e manejo (recalcula ao vivo com formulário vazio).
+  useEffect(() => {
+    if (editingRecord) return  // modo edição manual, não sobrescreve
+    const todayRecord = history.find(r => r.date === date)
+    if (todayRecord) {
+      if (todayRecord.actual_depth_mm != null && todayRecord.actual_depth_mm > 0) {
+        setActualDepth(String(todayRecord.actual_depth_mm))
+        setDepthAutoFilled(true)
+      } else {
+        setActualDepth('')
+      }
+      if (todayRecord.actual_speed_percent != null && todayRecord.actual_speed_percent > 0) {
+        setActualSpeed(String(todayRecord.actual_speed_percent))
+      } else {
+        setActualSpeed('')
+      }
+    } else {
+      setActualDepth('')
+      setActualSpeed('')
+    }
+  }, [history, date, editingRecord])
+
   const das = useMemo(() => {
     if (!selectedSeason?.planting_date || !date) return null
     return calcDAS(selectedSeason.planting_date, date)
