@@ -53,46 +53,60 @@ export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {cards.map(({ label, value, unit, subtitle, color, Icon }) => (
         <div key={label} style={{
-          background: '#0f1923',
+          background: 'linear-gradient(145deg, rgba(18,24,32,0.95), rgba(13,18,26,0.98))',
           border: '1px solid rgba(255,255,255,0.06)',
+          borderTop: `1px solid ${color}25`,
           borderRadius: 16,
-          padding: '20px 20px 18px',
+          padding: '22px 22px 18px',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
+          {/* Ambient glow */}
+          <div style={{
+            position: 'absolute', top: -20, right: -20, width: 80, height: 80,
+            borderRadius: '50%', pointerEvents: 'none',
+            background: `radial-gradient(circle, ${color}10 0%, transparent 70%)`,
+          }} />
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
             <span style={{
               fontSize: 10,
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: '#556677',
+              letterSpacing: '0.09em',
+              color: '#445566',
               lineHeight: 1.4,
             }}>
               {label}
             </span>
             <div style={{
-              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: `${color}18`,
-              border: `1px solid ${color}30`,
+              width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+              background: `${color}15`,
+              border: `1px solid ${color}28`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <Icon size={14} style={{ color }} />
+              <Icon size={15} style={{ color }} />
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap' }}>
             <span className="text-3xl sm:text-4xl" style={{
               fontWeight: 800,
               fontFamily: 'var(--font-mono)',
               color,
               lineHeight: 1,
+              letterSpacing: '-0.02em',
+              textShadow: `0 0 20px ${color}40`,
             }}>
               {value}
             </span>
-            <span style={{ fontSize: 11, color: '#8899aa', fontWeight: 500 }}>{unit}</span>
+            <span style={{ fontSize: 12, color: '#556677', fontWeight: 500 }}>{unit}</span>
           </div>
-          <p style={{ fontSize: 11, color: '#556677', marginTop: 8, lineHeight: 1.4 }}>{subtitle}</p>
+
+          <p style={{ fontSize: 11, color: '#445566', marginTop: 10, lineHeight: 1.4, fontWeight: 500 }}>{subtitle}</p>
         </div>
       ))}
     </div>

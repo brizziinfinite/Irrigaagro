@@ -92,15 +92,17 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
 
   return (
     <div style={{
-      background: 'rgba(15, 25, 35, 0.65)',
+      background: 'linear-gradient(145deg, rgba(14,20,28,0.97), rgba(10,15,22,0.98))',
       backdropFilter: 'blur(16px)',
-      border: urgentCount > 0 ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.06)',
-      boxShadow: urgentCount > 0 ? '0 0 20px rgba(239,68,68,0.1)' : '0 4px 20px rgba(0,0,0,0.2)',
-      borderRadius: 16,
-      padding: 20,
+      border: urgentCount > 0 ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(255,255,255,0.06)',
+      boxShadow: urgentCount > 0
+        ? '0 0 28px rgba(239,68,68,0.12), 0 8px 32px rgba(0,0,0,0.45)'
+        : '0 8px 32px rgba(0,0,0,0.35)',
+      borderRadius: 18,
+      padding: '22px 20px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 16,
+      gap: 18,
       height: '100%',
       minWidth: 0,
       overflow: 'hidden',
@@ -162,9 +164,16 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
             return (
               <div key={pivot.id} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '12px 16px', borderRadius: 12,
-                background: status === 'ok' ? 'rgba(255,255,255,0.02)' : s.bg,
+                padding: '13px 16px', borderRadius: 13,
+                background: status === 'critico'
+                  ? 'rgba(239,68,68,0.07)'
+                  : status === 'atencao'
+                    ? 'rgba(245,158,11,0.06)'
+                    : 'rgba(255,255,255,0.02)',
                 border: `1px solid ${s.border}`,
+                boxShadow: status === 'critico'
+                  ? 'inset 0 0 20px rgba(239,68,68,0.06)'
+                  : 'none',
                 transition: 'transform 0.2s',
                 cursor: 'pointer',
                 gap: 10,

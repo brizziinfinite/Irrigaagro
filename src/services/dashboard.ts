@@ -121,13 +121,23 @@ export async function getDashboardDataForUser(
       currentAdc = lastManagement.ctda
       currentPct = lastManagement.field_capacity_percent ?? 100
     } else {
-      // Último registro é de dias anteriores: avança dia a dia com dados climáticos reais
+      // Último registro é de dias anteriores: avança dia a dia usando APENAS dados do banco.
+      // NUNCA chama APIs externas aqui — o cron é responsável por buscar dados e gravar.
+      // Isso garante que o dashboard mostra valores determinísticos e estáveis entre reloads.
       const lastDate = lastManagement.date
       const daysSinceRecord = Math.max(1, Math.round(
         (new Date(today + 'T12:00:00').getTime() - new Date(lastDate + 'T12:00:00').getTime()) / 86400000
       ))
 
-      // Limita a 14 dias para não sobrecarregar o dashboard
+      // ETc fallback: média dos últimos 3 registros com ETc válido (mais estável que só o último)
+      const recentEtcValues = history
+        .filter((m: DailyManagement) => m.etc_mm != null && m.etc_mm > 0)
+        .slice(0, 3)
+        .map((m: DailyManagement) => m.etc_mm!)
+      const avgEtc = recentEtcValues.length > 0
+        ? recentEtcValues.reduce((a, b) => a + b, 0) / recentEtcValues.length
+        : 3
+
       const daysToProcess = Math.min(daysSinceRecord, 14)
       let runningAdc = lastManagement.ctda
       let runningHistory = [...history]
@@ -137,11 +147,16 @@ export async function getDashboardDataForUser(
         gapDate.setDate(gapDate.getDate() + d)
         const gapDateStr = gapDate.toISOString().split('T')[0]
 
+        // Busca dados climáticos APENAS do banco (weather_data + rainfall_records)
+        // Irrigação NÃO é incluída na projeção — só entra no balanço quando o
+        // agricultor confirma via Lançamentos e o cron processa (padrão FAO-56:
+        // Ii deve ser a lâmina realmente aplicada, não a planejada)
         try {
           const externalData = await getManagementExternalData(
             farm.id, pivot?.id ?? null, gapDateStr, pivot, client
           )
-          const climateSnapshot = externalData.weather ?? externalData.geolocationWeather
+          // Usa APENAS weather_data do banco — ignora geolocationWeather (Open-Meteo ao vivo)
+          const climateSnapshot = externalData.weather
 
           if (climateSnapshot) {
             const result = computeResolvedManagementBalance({
@@ -156,11 +171,10 @@ export async function getDashboardDataForUser(
               rainfall: '',
               actualDepth: '',
               actualSpeed: '',
-              externalData,
+              externalData: { ...externalData, geolocationWeather: null },
             })
             if (result) {
               runningAdc = result.adcNew
-              // Adiciona ao histórico simulado para o próximo dia usar como adcPrev
               runningHistory = [
                 { ...lastManagement, date: gapDateStr, ctda: result.adcNew, field_capacity_percent: result.fieldCapacityPercent },
                 ...runningHistory,
@@ -169,11 +183,10 @@ export async function getDashboardDataForUser(
             }
           }
         } catch {
-          // Falha silenciosa — fallback para ETc média
+          // Falha ao buscar dados do banco — usa fallback ETc
         }
 
-        // Fallback: usa ETc média do último registro
-        const avgEtc = lastManagement.etc_mm ?? 3
+        // Fallback determinístico: apenas ETc (sem irrigação)
         const stageInfo = getStageInfoForDas(crop, calcDAS(season.planting_date, gapDateStr))
         const cta = calcCTA(
           Number(pivot?.field_capacity ?? season.field_capacity ?? 32),

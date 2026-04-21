@@ -285,10 +285,14 @@ export async function GET(req: NextRequest) {
 
         // Busca lâmina aplicada/planejada no Lançamentos para esta data
         let scheduledIrrigationMm: number | null = null
+        let scheduledIrrigationId: string | null = null
+        let scheduledIrrigationStatus: string | null = null
         try {
           const schedule = await getScheduledIrrigationForDate(pivot.id, processDate, supabase)
           if (schedule?.lamina_mm != null && schedule.lamina_mm > 0) {
             scheduledIrrigationMm = schedule.lamina_mm
+            scheduledIrrigationId = schedule.id
+            scheduledIrrigationStatus = schedule.status
           }
         } catch {
           // Falha silenciosa — continua sem lâmina agendada
@@ -402,6 +406,20 @@ export async function GET(req: NextRequest) {
         }
 
         await upsertDailyManagementRecord(payload, supabase)
+
+        // Confirma lançamento planned → done (padrão "schedule + confirm exceptions")
+        // O cron assume que irrigação programada aconteceu. Se não aconteceu,
+        // o agricultor cancela/edita o lançamento antes do próximo cron.
+        if (scheduledIrrigationId && scheduledIrrigationStatus === 'planned') {
+          try {
+            await (supabase as any)
+              .from('irrigation_schedule')
+              .update({ status: 'done', updated_at: new Date().toISOString() })
+              .eq('id', scheduledIrrigationId)
+          } catch {
+            // Não falha o balanço se não conseguir atualizar o status
+          }
+        }
 
         const etoRoute =
           result.etoSource === 'weather_corrected' ? 'estação corrigida'

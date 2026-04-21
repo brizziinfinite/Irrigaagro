@@ -59,21 +59,21 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
 
   return (
     <div style={{
-      background: 'linear-gradient(145deg, rgba(22, 27, 33, 0.9), rgba(15, 19, 24, 0.95))',
-      border: '1px solid rgba(255,255,255,0.03)',
+      background: 'linear-gradient(145deg, rgba(18,24,32,0.97), rgba(13,18,26,0.98))',
+      border: '1px solid rgba(255,255,255,0.05)',
       boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       backdropFilter: 'blur(12px)',
       borderRadius: 20,
-      padding: '24px 20px',
+      padding: '26px 22px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 16,
+      gap: 18,
       height: '100%',
     }}>
       {/* Header */}
       <span style={{
-        fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
-        letterSpacing: '0.06em', color: '#e2e8f0',
+        fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+        letterSpacing: '0.09em', color: '#556677',
       }}>
         Umidade do Solo
       </span>
