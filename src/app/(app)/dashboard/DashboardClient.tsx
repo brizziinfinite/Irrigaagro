@@ -494,6 +494,9 @@ export function DashboardClient({
           <HistoryBlock
             historyBySeason={historyBySeason}
             activeSeasons={activeSeasons}
+            pivots={pivots}
+            lastManagementByPivot={lastManagementByPivot}
+            activePivotIds={activePivotIds}
           />
         </div>
 
