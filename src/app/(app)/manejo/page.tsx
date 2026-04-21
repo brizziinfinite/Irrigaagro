@@ -1503,9 +1503,18 @@ export default function ManejoPage() {
         )}
       </div>
 
-      {/* ── Seção de Histórico e Timeline (Oculta em Accordion Premium) ── */}
+      {/* ── Gráfico Balanço Hídrico — sempre visível se há histórico ── */}
+      {history.length >= 2 && (
+        <WaterBalanceChart
+          history={history}
+          threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70}
+          pivotName={selectedSeason?.pivots?.name ?? undefined}
+        />
+      )}
+
+      {/* ── Seção de Histórico (Accordion) ── */}
       <div style={{ marginTop: 8 }}>
-        <button 
+        <button
           onClick={() => setShowHistoryTab(!showHistoryTab)}
           style={{
             width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1556,14 +1565,6 @@ export default function ManejoPage() {
           </div>
         )}
       </div>
-
-      {/* ── Timeline Balanço Hídrico — sempre visível se há histórico ── */}
-      {history.length >= 2 && (
-        <WaterBalanceChart
-          history={history}
-          threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70}
-        />
-      )}
 
     </div>
   )

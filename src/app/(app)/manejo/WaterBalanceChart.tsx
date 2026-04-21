@@ -10,6 +10,7 @@ import type { DailyManagement } from '@/types/database'
 interface Props {
   history: DailyManagement[]
   threshold?: number
+  pivotName?: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,7 +71,7 @@ function CustomTooltip({ active, payload, label, threshold }: any) {
   )
 }
 
-export default function WaterBalanceChart({ history, threshold = 70 }: Props) {
+export default function WaterBalanceChart({ history, threshold = 70, pivotName }: Props) {
   if (history.length < 2) return null
 
   const data = [...history]
@@ -101,6 +102,11 @@ export default function WaterBalanceChart({ history, threshold = 70 }: Props) {
       <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <BarChart2 size={14} style={{ color: '#0093D0' }} />
         <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>Balanço Hídrico — Últimos 30 dias</span>
+        {pivotName && (
+          <span style={{ fontSize: 11, color: '#0093D0', background: 'rgba(0,147,208,0.10)', border: '1px solid rgba(0,147,208,0.2)', borderRadius: 6, padding: '2px 8px' }}>
+            {pivotName}
+          </span>
+        )}
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
             <div style={{ width: 10, height: 3, background: '#f59e0b', borderRadius: 2 }} /> ETo
