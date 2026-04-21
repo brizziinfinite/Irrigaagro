@@ -10,7 +10,6 @@ import {
 } from '@/services/management'
 import { listPivotsByFarmIds } from '@/services/pivots'
 import { listEnergyBillsByPivotIds } from '@/services/energy-bills'
-import { getScheduledIrrigationForDate } from '@/services/irrigation-schedule'
 import type { TypedSupabaseClient } from '@/services/base'
 import type { DailyManagement, EnergyBill, Pivot, Season } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
@@ -148,21 +147,10 @@ export async function getDashboardDataForUser(
         gapDate.setDate(gapDate.getDate() + d)
         const gapDateStr = gapDate.toISOString().split('T')[0]
 
-        // Busca irrigação programada (Lançamentos) para este dia
-        let scheduledIrrigationMm: number | null = null
-        try {
-          if (pivot?.id) {
-            const schedule = await getScheduledIrrigationForDate(pivot.id, gapDateStr, client)
-            if (schedule?.lamina_mm != null && schedule.lamina_mm > 0) {
-              scheduledIrrigationMm = schedule.lamina_mm
-            }
-          }
-        } catch {
-          // Falha silenciosa — continua sem lâmina agendada
-        }
-
         // Busca dados climáticos APENAS do banco (weather_data + rainfall_records)
-        // Sem chamada a Open-Meteo/NASA — só dados já persistidos pelo cron
+        // Irrigação NÃO é incluída na projeção — só entra no balanço quando o
+        // agricultor confirma via Lançamentos e o cron processa (padrão FAO-56:
+        // Ii deve ser a lâmina realmente aplicada, não a planejada)
         try {
           const externalData = await getManagementExternalData(
             farm.id, pivot?.id ?? null, gapDateStr, pivot, client
@@ -181,7 +169,7 @@ export async function getDashboardDataForUser(
               wind: climateSnapshot.wind_speed_ms != null ? String(climateSnapshot.wind_speed_ms) : '',
               radiation: climateSnapshot.solar_radiation_wm2 != null ? String(climateSnapshot.solar_radiation_wm2) : '',
               rainfall: '',
-              actualDepth: scheduledIrrigationMm != null ? String(scheduledIrrigationMm) : '',
+              actualDepth: '',
               actualSpeed: '',
               externalData: { ...externalData, geolocationWeather: null },
             })
@@ -198,7 +186,7 @@ export async function getDashboardDataForUser(
           // Falha ao buscar dados do banco — usa fallback ETc
         }
 
-        // Fallback determinístico: ETc média dos últimos 3 registros + irrigação programada
+        // Fallback determinístico: apenas ETc (sem irrigação)
         const stageInfo = getStageInfoForDas(crop, calcDAS(season.planting_date, gapDateStr))
         const cta = calcCTA(
           Number(pivot?.field_capacity ?? season.field_capacity ?? 32),
@@ -206,8 +194,7 @@ export async function getDashboardDataForUser(
           Number(pivot?.bulk_density ?? season.bulk_density ?? 1.4),
           stageInfo.rootDepthCm
         )
-        const irrigMm = scheduledIrrigationMm ?? 0
-        runningAdc = Math.max(0, Math.min(runningAdc - avgEtc + irrigMm, cta))
+        runningAdc = Math.max(0, Math.min(runningAdc - avgEtc, cta))
       }
 
       currentAdc = runningAdc
