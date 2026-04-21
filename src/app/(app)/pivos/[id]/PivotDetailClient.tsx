@@ -450,6 +450,17 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
             contentStyle={{ backgroundColor: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
             labelStyle={{ color: '#8899aa', marginBottom: 4 }}
             cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+            formatter={(value, name) => {
+              const v = typeof value === 'number' ? value.toFixed(1) : value
+              const labels: Record<string, string> = {
+                irrigation: 'Irrigação (mm)',
+                rainfall: 'Precipitação (mm)',
+                excess: 'Excesso (mm)',
+                moisture: 'Umidade (%)',
+                stageChange: 'Mudança de fase',
+              }
+              return [v, labels[String(name)] ?? name]
+            }}
           />
           <defs>
             <linearGradient id="moistureGradient" x1="0" y1="1" x2="0" y2="0">

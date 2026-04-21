@@ -1152,8 +1152,8 @@ export default function ManejoPage() {
                  }
               })
               const totalWater7d = waterUsageData.reduce((acc, curr) => acc + curr.usage, 0)
-              const efficiency = 94 // Dummy/estático de Mockup UX
-              const tgtWater = totalWater7d > 0 ? totalWater7d * 1.1 : 15 // Target fixo se vazio
+              // ETc acumulada dos últimos 7 dias = demanda real da cultura
+              const totalEtc7d = history.slice(0, 7).reduce((acc: number, h: any) => acc + (h.etc_mm ?? 0), 0)
 
               // 3. ANÁLISE PREDITIVA PARA O AGRICULTOR (Dias até próxima rega & Limites)
               const progReal = projection.find(p => p.isIrrigationDay)
@@ -1292,7 +1292,7 @@ export default function ManejoPage() {
                         <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Consumo de Água (7D)</h3>
                         <div style={{ fontSize: 11, color: '#A0AAB4', textTransform: 'uppercase', textAlign: 'right' }}>
                           <div>Total Aplicado: <strong style={{ color: '#fff' }}>{totalWater7d.toFixed(1)} mm</strong></div>
-                          <div style={{ marginTop: 2 }}>Alvo: <span style={{ color: '#8899aa'}}>{tgtWater.toFixed(1)} mm</span></div>
+                          <div style={{ marginTop: 2 }}>Demanda ETc: <span style={{ color: '#8899aa'}}>{totalEtc7d.toFixed(1)} mm</span></div>
                         </div>
                       </div>
 
@@ -1308,10 +1308,12 @@ export default function ManejoPage() {
                                    </feMerge>
                                 </filter>
                              </defs>
-                             <Tooltip 
-                               contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 12 }} 
+                             <Tooltip
+                               contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 12 }}
                                itemStyle={{ color: '#00E5FF' }}
                                cursor={{ fill: 'rgba(0, 229, 255, 0.05)' }}
+                               formatter={(value: unknown) => [`${Number(value).toFixed(1)} mm`, 'Água aplicada']}
+                               labelFormatter={(label: unknown) => `Dia ${label}`}
                              />
                              <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fill: '#556677', fontSize: 10}} dy={5} />
                              <Bar dataKey="usage" radius={[4, 4, 0, 0]} maxBarSize={28} style={{ filter: 'url(#barGlow)' }}>
