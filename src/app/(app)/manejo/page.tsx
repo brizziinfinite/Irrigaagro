@@ -840,15 +840,16 @@ export default function ManejoPage() {
     if (!calcResult || !selectedSeason?.crops || !das || !date) { setProjection([]); setBaseProjection([]); setAvgEto(null); return }
     const baseEto = calcResult.eto
     setAvgEto(baseEto)
+    const pvt = selectedSeason.pivots
     const baseParams = {
       crop: selectedSeason.crops!,
       startDate: date, startDas: das,
       startAdc: calcResult.adcNew,
-      fieldCapacity: Number(selectedSeason.field_capacity ?? 32),
-      wiltingPoint: Number(selectedSeason.wilting_point ?? 14),
-      bulkDensity: Number(selectedSeason.bulk_density ?? 1.4),
+      fieldCapacity: Number(pvt?.field_capacity ?? selectedSeason.field_capacity ?? 32),
+      wiltingPoint: Number(pvt?.wilting_point ?? selectedSeason.wilting_point ?? 14),
+      bulkDensity: Number(pvt?.bulk_density ?? selectedSeason.bulk_density ?? 1.4),
       avgEto: baseEto,
-      pivot: selectedSeason.pivots ?? null,
+      pivot: pvt ?? null,
       days: 7,
     }
     const base = calcProjection(baseParams)
