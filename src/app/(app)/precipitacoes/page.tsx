@@ -1309,11 +1309,11 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
         </div>
       </div>
 
-      {/* Table + Chart — side by side */}
-      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      {/* Table + Chart — stacked vertically */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        {/* Left: Table */}
-        <div style={{ flex: '1 1 420px', overflowX: 'auto', overflowY: 'visible' }}>
+        {/* Table */}
+        <div style={{ width: '100%', overflowX: 'auto', overflowY: 'visible' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: '3px', minWidth: 420, width: '100%' }}>
             <thead>
               <tr>
@@ -1416,11 +1416,8 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
           </table>
         </div>
 
-        {/* Divider */}
-        <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />
-
-        {/* Right: Bar chart */}
-        <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {/* Bar chart */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Média mensal</p>
             <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>
@@ -1451,13 +1448,13 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
 
             {/* Bars */}
             <div style={{
-              height: 310, display: 'flex', alignItems: 'flex-end', gap: 6,
+              height: 180, display: 'flex', alignItems: 'flex-end', gap: 6,
               paddingLeft: 32, paddingRight: 8, position: 'relative',
             }}>
               {avgByMonth.map((avg, mi) => {
                 const intensity = barIntensity(avg)
                 const isHov = hoveredMonth === mi
-                const barH = Math.max(intensity * 288, avg > 0 ? 4 : 0)
+                const barH = Math.max(intensity * 160, avg > 0 ? 4 : 0)
 
                 return (
                   <div
