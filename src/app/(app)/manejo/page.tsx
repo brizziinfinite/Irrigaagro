@@ -1177,47 +1177,74 @@ export default function ManejoPage() {
                   
                   {/* === PAINEL 1: TENDÊNCIA DE UMIDADE === */}
                   <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px 24px 14px 24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', flex: 1, minHeight: 280, position: 'relative' }}>
-                    <h3 style={{ fontSize: 12, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      Tendência de Umidade do Solo (7 Dias)
-                    </h3>
-                    
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <h3 style={{ fontSize: 12, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Projeção 7 dias — sem irrigação
+                      </h3>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {[
+                          { color: '#22c55e', label: `Seguro >${Math.round(targetThresholdLine * 1.15)}%` },
+                          { color: '#f59e0b', label: `Atenção ${targetThresholdLine}–${Math.round(targetThresholdLine * 1.15)}%` },
+                          { color: '#ef4444', label: `Crítico <${targetThresholdLine}%` },
+                        ].map(z => (
+                          <span key={z.label} style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: `${z.color}15`, border: `1px solid ${z.color}30`, color: z.color, fontWeight: 600 }}>
+                            {z.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
                     <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={trendData} margin={{ top: 20, right: 0, left: -25, bottom: 0 }}>
+                        <AreaChart data={trendData} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
                           <defs>
-                            <linearGradient id="colorMoisture" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#CCFF00" stopOpacity={0.6}/>
-                              <stop offset="70%" stopColor="#00E5FF" stopOpacity={0.1}/>
-                              <stop offset="100%" stopColor="#0f1923" stopOpacity={0}/>
+                            <linearGradient id="colorMoisture" x1="0" y1="1" x2="0" y2="0">
+                              <stop offset="0%" stopColor="#ef4444" stopOpacity={0.25}/>
+                              <stop offset={`${targetThresholdLine}%`} stopColor="#ef4444" stopOpacity={0.15}/>
+                              <stop offset={`${targetThresholdLine}%`} stopColor="#22c55e" stopOpacity={0.12}/>
+                              <stop offset="100%" stopColor="#22c55e" stopOpacity={0.08}/>
                             </linearGradient>
-                            <filter id="glow" height="200%">
-                              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                              <feMerge>
-                                <feMergeNode in="coloredBlur"/>
-                                <feMergeNode in="SourceGraphic"/>
-                              </feMerge>
-                            </filter>
+                            <linearGradient id="strokeMoisture" x1="0" y1="1" x2="0" y2="0">
+                              <stop offset="0%" stopColor="#ef4444"/>
+                              <stop offset={`${targetThresholdLine}%`} stopColor="#ef4444"/>
+                              <stop offset={`${targetThresholdLine}%`} stopColor="#22c55e"/>
+                              <stop offset="100%" stopColor="#22c55e"/>
+                            </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2A2E" />
-                          <XAxis dataKey="name" tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} dy={10} />
-                          <YAxis tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} domain={[(dataMin: number) => Math.max(0, Math.floor(dataMin / 10) * 10 - 10), 110]} />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
+                          <XAxis dataKey="name" tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
+                          <YAxis tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 110]} tickFormatter={(v: number) => `${v}%`} />
+
+                          {/* Zonas de solo */}
+                          <ReferenceArea y1={Math.round(targetThresholdLine * 1.15)} y2={110} fill="rgba(34,197,94,0.04)" />
+                          <ReferenceArea y1={targetThresholdLine} y2={Math.round(targetThresholdLine * 1.15)} fill="rgba(245,158,11,0.04)" />
+                          <ReferenceArea y1={0} y2={targetThresholdLine} fill="rgba(239,68,68,0.06)" />
+
+                          {/* Linhas de referência */}
+                          <ReferenceLine y={100} stroke="#22c55e" strokeDasharray="4 4" strokeWidth={1} opacity={0.3} label={{ position: 'insideTopRight', value: 'CC 100%', fill: '#22c55e', fontSize: 9 }} />
+                          <ReferenceLine y={Math.round(targetThresholdLine * 1.15)} stroke="#22c55e" strokeDasharray="2 6" strokeWidth={1} opacity={0.25} />
+                          <ReferenceLine y={targetThresholdLine} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} label={{ position: 'insideBottomLeft', value: `Segurança ${targetThresholdLine}%`, fill: '#f59e0b', fontSize: 9, fontWeight: 700 }} />
+
                           <Tooltip
-                            contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 13 }}
-                            itemStyle={{ color: '#CCFF00' }}
-                            formatter={(value: unknown) => [`${value}%`, 'Umidade']}
+                            contentStyle={{ backgroundColor: '#10151C', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
+                            formatter={(value: unknown) => {
+                              const v = Number(value)
+                              const zone = v >= targetThresholdLine * 1.15 ? 'Seguro' : v >= targetThresholdLine ? 'Atenção' : 'Crítico'
+                              const zoneColor = v >= targetThresholdLine * 1.15 ? '#22c55e' : v >= targetThresholdLine ? '#f59e0b' : '#ef4444'
+                              return [`${v}% — ${zone}`, 'Umidade']
+                            }}
                           />
                           <Area
                             type="monotone"
                             dataKey="moisture"
                             name="Umidade"
-                            stroke="#00E5FF"
+                            stroke="url(#strokeMoisture)"
                             strokeWidth={3}
                             fillOpacity={1}
                             fill="url(#colorMoisture)"
-                            style={{ filter: 'url(#glow)' }}
-                            activeDot={{ r: 6, fill: '#CCFF00', stroke: '#10151C', strokeWidth: 2 }}
+                            dot={{ r: 4, fill: '#0f1923', strokeWidth: 2 }}
+                            activeDot={{ r: 6, fill: '#CCFF00', stroke: '#0f1923', strokeWidth: 2 }}
                           />
-                          <ReferenceLine y={targetThresholdLine} stroke="#FF3366" strokeDasharray="4 4" strokeWidth={1} label={{ position: 'insideTopLeft', value: `Alvo mínimo — ${targetThresholdLine}%`, fill: '#FF3366', fontSize: 10, offset: 10 }} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
