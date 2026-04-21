@@ -117,10 +117,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setLoading(true)
 
-        // Get current session
+        // Timeout de 8s para evitar loading infinito quando o auth lock trava
+        // (bug conhecido do Supabase GoTrue com React Strict Mode)
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Auth session timeout — recarregue a página')), 8000)
+        )
+
         const {
           data: { session: currentSession },
-        } = await supabase.auth.getSession()
+        } = await Promise.race([sessionPromise, timeoutPromise])
 
         if (currentSession?.user) {
           const authUser: AuthUser = {
