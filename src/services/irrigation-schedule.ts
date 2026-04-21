@@ -153,3 +153,24 @@ export async function confirmSchedule(id: string): Promise<IrrigationSchedule> {
   if (error) throw new Error(`Falha ao confirmar programação: ${error.message}`)
   return data as IrrigationSchedule
 }
+
+/**
+ * Busca todas as irrigações confirmadas (done) ou pendentes (planned) de uma empresa
+ * para um intervalo de datas — usado na tela de confirmação batch.
+ */
+export async function listSchedulesForConfirmation(
+  companyId: string,
+  from: string,
+  to: string,
+): Promise<IrrigationSchedule[]> {
+  const { data, error } = await table()
+    .select('*')
+    .eq('company_id', companyId)
+    .gte('date', from)
+    .lte('date', to)
+    .in('status', ['done', 'planned'])
+    .order('date', { ascending: false })
+
+  if (error) throw new Error(`Falha ao buscar confirmações: ${error.message}`)
+  return (data ?? []) as IrrigationSchedule[]
+}

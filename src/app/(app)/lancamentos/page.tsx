@@ -9,6 +9,7 @@ import {
 import type { ManagementSeasonContext } from '@/services/management'
 import {
   listSchedulesByCompany,
+  listSchedulesForConfirmation,
   upsertSchedule,
   cancelSchedule,
 } from '@/services/irrigation-schedule'
@@ -338,6 +339,248 @@ function MiniField({
           outline: 'none',
         }}
       />
+    </div>
+  )
+}
+
+// ─── Confirmação diária batch ─────────────────────────────────
+
+interface ConfirmRow {
+  schedule: IrrigationSchedule
+  pivotName: string
+  plannedMm: number | null
+  editedMm: string
+  saving: boolean
+  confirmed: boolean
+}
+
+function ConfirmacaoDiaria({
+  companyId,
+  metas,
+  today,
+  onConfirmed,
+}: {
+  companyId: string
+  metas: PivotMeta[]
+  today: string
+  onConfirmed: () => void
+}) {
+  const [rows, setRows] = useState<ConfirmRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  // D-1 e hoje
+  function yesterday(ymd: string) {
+    const d = new Date(ymd + 'T12:00:00')
+    d.setDate(d.getDate() - 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+
+  useEffect(() => {
+    if (!today) return
+    setLoading(true)
+    const from = yesterday(today)
+    listSchedulesForConfirmation(companyId, from, today).then(schedules => {
+      const built: ConfirmRow[] = schedules.map(s => {
+        const meta = metas.find(m => m.context.pivot?.id === s.pivot_id)
+        return {
+          schedule: s,
+          pivotName: meta?.context.pivot?.name ?? s.pivot_id,
+          plannedMm: s.lamina_mm,
+          editedMm: s.lamina_mm != null ? String(s.lamina_mm) : '',
+          saving: false,
+          confirmed: s.status === 'done',
+        }
+      })
+      setRows(built)
+    }).finally(() => setLoading(false))
+  }, [companyId, today, metas])
+
+  if (loading || rows.length === 0) return null
+
+  const pending = rows.filter(r => !r.confirmed)
+  const done    = rows.filter(r => r.confirmed)
+
+  async function confirmRow(idx: number) {
+    const row = rows[idx]
+    const mm = parseFloat(row.editedMm.replace(',', '.'))
+    const actualMm = isFinite(mm) && mm >= 0 ? mm : row.plannedMm
+
+    setRows(prev => prev.map((r, i) => i === idx ? { ...r, saving: true } : r))
+
+    try {
+      const supabase = createClient()
+
+      // 1. Atualiza status no irrigation_schedule
+      await (supabase as any)
+        .from('irrigation_schedule')
+        .update({ status: 'done', updated_at: new Date().toISOString() })
+        .eq('id', row.schedule.id)
+
+      // 2. Atualiza actual_depth_mm no daily_management (safra + data)
+      const meta = metas.find(m => m.context.pivot?.id === row.schedule.pivot_id)
+      if (meta && actualMm != null) {
+        await (supabase as any)
+          .from('daily_management')
+          .update({ actual_depth_mm: actualMm, updated_at: new Date().toISOString() })
+          .eq('season_id', meta.context.season.id)
+          .eq('date', row.schedule.date)
+      }
+
+      setRows(prev => prev.map((r, i) =>
+        i === idx ? { ...r, saving: false, confirmed: true, editedMm: String(actualMm ?? '') } : r
+      ))
+    } catch {
+      setRows(prev => prev.map((r, i) => i === idx ? { ...r, saving: false } : r))
+    }
+  }
+
+  async function confirmAll() {
+    setSaving(true)
+    for (let i = 0; i < rows.length; i++) {
+      if (!rows[i].confirmed) await confirmRow(i)
+    }
+    setSaving(false)
+    onConfirmed()
+  }
+
+  function statusBadge(row: ConfirmRow) {
+    if (row.confirmed) return { label: 'Confirmado', color: '#22c55e', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.25)' }
+    const d = new Date(row.schedule.date + 'T12:00:00')
+    const t = new Date(today + 'T12:00:00')
+    if (d < t) return { label: 'Pendente', color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.25)' }
+    return { label: 'Hoje', color: '#0093D0', bg: 'rgba(0,147,208,0.10)', border: 'rgba(0,147,208,0.25)' }
+  }
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #0a1628 0%, #0d1e2e 100%)',
+      border: pending.length > 0 ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(34,197,94,0.2)',
+      borderRadius: 16, padding: 20, marginBottom: 24,
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 30, height: 30, borderRadius: 9,
+            background: pending.length > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(34,197,94,0.15)',
+            border: `1px solid ${pending.length > 0 ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)'}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M9 11l3 3L22 4" stroke={pending.length > 0 ? '#f59e0b' : '#22c55e'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke={pending.length > 0 ? '#f59e0b' : '#22c55e'} strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>Confirmar irrigações</div>
+            <div style={{ fontSize: 11, color: '#556677', marginTop: 1 }}>
+              {pending.length > 0
+                ? `${pending.length} pendente${pending.length > 1 ? 's' : ''} de confirmação`
+                : 'Todas confirmadas'}
+            </div>
+          </div>
+        </div>
+        {pending.length > 1 && (
+          <button
+            onClick={confirmAll}
+            disabled={saving}
+            style={{
+              padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+              background: saving ? 'rgba(245,158,11,0.08)' : 'rgba(245,158,11,0.15)',
+              border: '1px solid rgba(245,158,11,0.35)',
+              color: '#f59e0b', cursor: saving ? 'not-allowed' : 'pointer',
+            }}>
+            {saving ? 'Confirmando…' : `✓ Confirmar todas (${pending.length})`}
+          </button>
+        )}
+      </div>
+
+      {/* Linhas */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {rows.map((row, idx) => {
+          const badge = statusBadge(row)
+          const d = new Date(row.schedule.date + 'T12:00:00')
+          const fmtDate = d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+          return (
+            <div key={row.schedule.id} style={{
+              display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+              padding: '10px 14px', borderRadius: 10,
+              background: row.confirmed ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${row.confirmed ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)'}`,
+              opacity: row.confirmed ? 0.7 : 1,
+              transition: 'all 0.2s',
+            }}>
+              {/* Status badge */}
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99,
+                color: badge.color, background: badge.bg, border: `1px solid ${badge.border}`,
+                whiteSpace: 'nowrap',
+              }}>{badge.label}</span>
+
+              {/* Data + Pivô */}
+              <div style={{ flex: 1, minWidth: 100 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>{row.pivotName}</div>
+                <div style={{ fontSize: 10, color: '#556677' }}>{fmtDate}</div>
+              </div>
+
+              {/* Lâmina planejada */}
+              <div style={{ textAlign: 'right', minWidth: 70 }}>
+                <div style={{ fontSize: 10, color: '#445566' }}>Planejado</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#8899aa', fontVariantNumeric: 'tabular-nums' }}>
+                  {row.plannedMm != null ? `${row.plannedMm} mm` : '—'}
+                </div>
+              </div>
+
+              {/* Input lâmina real */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#445566', marginBottom: 3 }}>Real (mm)</div>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={row.editedMm}
+                    disabled={row.confirmed}
+                    onChange={e => setRows(prev => prev.map((r, i) => i === idx ? { ...r, editedMm: e.target.value } : r))}
+                    style={{
+                      width: 70, height: 30, borderRadius: 7, textAlign: 'center',
+                      fontSize: 12, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
+                      background: row.confirmed ? 'rgba(34,197,94,0.08)' : 'rgba(0,147,208,0.08)',
+                      border: `1px solid ${row.confirmed ? 'rgba(34,197,94,0.2)' : 'rgba(0,147,208,0.25)'}`,
+                      color: row.confirmed ? '#22c55e' : '#e2e8f0',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                {/* Botão confirmar */}
+                {!row.confirmed && (
+                  <button
+                    onClick={() => confirmRow(idx)}
+                    disabled={row.saving}
+                    style={{
+                      padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                      background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
+                      color: '#22c55e', cursor: row.saving ? 'not-allowed' : 'pointer',
+                      marginTop: 18, whiteSpace: 'nowrap',
+                    }}>
+                    {row.saving ? '…' : '✓'}
+                  </button>
+                )}
+                {row.confirmed && (
+                  <div style={{ marginTop: 18 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.4)" strokeWidth="1.5"/>
+                      <path d="M7 12l3.5 3.5L17 8" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -1704,6 +1947,16 @@ export default function LancamentosPage() {
             : 'Clique em um pivô para programar irrigação'}
         </p>
       </div>
+
+      {/* Confirmação diária */}
+      {!loading && metas.length > 0 && today && (
+        <ConfirmacaoDiaria
+          companyId={company.id}
+          metas={metas}
+          today={today}
+          onConfirmed={load}
+        />
+      )}
 
       {/* Error */}
       {pageError && (

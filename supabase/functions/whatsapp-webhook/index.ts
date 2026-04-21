@@ -708,6 +708,14 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
             .eq('season_id', season_id)
             .eq('date', today)
 
+          // Marcar irrigation_schedule como done + atualizar lâmina real
+          await supabase
+            .from('irrigation_schedule')
+            .update({ status: 'done', lamina_mm: laminaMm, updated_at: new Date().toISOString() })
+            .eq('pivot_id', pivot_id)
+            .eq('date', today)
+            .in('status', ['planned', 'done'])
+
           // Marcar pendência como resolvida
           await supabase
             .from('whatsapp_messages_log')
