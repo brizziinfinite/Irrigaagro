@@ -760,7 +760,9 @@ export default function ManejoPage() {
     try {
       const data = await listDailyManagementBySeason(seasonId)
       setHistory(data.slice(0, 30))
-    } catch {
+    } catch (err) {
+      console.error('[manejo] loadHistory falhou:', err)
+      setError('Falha ao carregar histórico. Tente recarregar a página.')
       setHistory([])
     }
   }, [])
