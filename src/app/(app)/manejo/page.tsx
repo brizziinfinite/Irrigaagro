@@ -1200,22 +1200,24 @@ export default function ManejoPage() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A2A2E" />
                           <XAxis dataKey="name" tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} dy={10} />
-                          <YAxis tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} domain={[50, 100]} />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 13 }} 
+                          <YAxis tick={{ fill: '#8899aa', fontSize: 11 }} axisLine={false} tickLine={false} domain={[(dataMin: number) => Math.max(0, Math.floor(dataMin / 10) * 10 - 10), 110]} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 13 }}
                             itemStyle={{ color: '#CCFF00' }}
+                            formatter={(value: unknown) => [`${value}%`, 'Umidade']}
                           />
-                          <Area 
-                            type="monotone" 
-                            dataKey="moisture" 
-                            stroke="#00E5FF" 
+                          <Area
+                            type="monotone"
+                            dataKey="moisture"
+                            name="Umidade"
+                            stroke="#00E5FF"
                             strokeWidth={3}
-                            fillOpacity={1} 
-                            fill="url(#colorMoisture)" 
+                            fillOpacity={1}
+                            fill="url(#colorMoisture)"
                             style={{ filter: 'url(#glow)' }}
                             activeDot={{ r: 6, fill: '#CCFF00', stroke: '#10151C', strokeWidth: 2 }}
                           />
-                          <ReferenceLine y={targetThresholdLine} stroke="#FF3366" strokeDasharray="4 4" strokeWidth={1} label={{ position: 'insideTopLeft', value: 'ALVO MÍNIMO (%)', fill: '#FF3366', fontSize: 10, offset: 10 }} />
+                          <ReferenceLine y={targetThresholdLine} stroke="#FF3366" strokeDasharray="4 4" strokeWidth={1} label={{ position: 'insideTopLeft', value: `Alvo mínimo — ${targetThresholdLine}%`, fill: '#FF3366', fontSize: 10, offset: 10 }} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
