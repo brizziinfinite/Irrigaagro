@@ -781,7 +781,9 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
 
   const { adc: adcNew, excessMm, peakReachedCta } = calcADcWithExcess(adcPrev, rainfall, irrigation, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
-  const fieldCapacityPercent = peakReachedCta ? 100 : (cta > 0 ? (adcNew / cta) * 100 : 0)
+  // FC% real ao final do dia (pós-ETc) — valor que o agricultor encontra no campo
+  // peakReachedCta indica que passou por CC durante o dia, mas o valor exibido é o pós-ETc
+  const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
   const irrigationTargetPct = pivot?.irrigation_target_percent ?? null
   const status = getIrrigationStatus(adcNew, cad, isIrrigating)
