@@ -33,6 +33,22 @@ async function sendWhatsApp(phone: string, text: string) {
   })
 }
 
+async function sendWhatsAppImage(phone: string, imageUrl: string, caption: string) {
+  return fetch(`${EVOLUTION_API_URL}/message/sendMedia/${EVOLUTION_INSTANCE}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': EVOLUTION_API_KEY!,
+    },
+    body: JSON.stringify({
+      number: phone,
+      mediatype: 'image',
+      media: imageUrl,
+      caption,
+    }),
+  })
+}
+
 async function interpretWithGPT(transcricao: string, openaiKey: string, pivotNames: string, today: string): Promise<string> {
   const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -82,6 +98,71 @@ async function downloadMedia(messageId: string): Promise<{ base64: string; mimeT
   }
 }
 
+// ─── Monta mensagem de escala de umidade para o agricultor ───────────────────
+function buildSoilScaleMessage(pivotName: string, seasonName: string | null, soilTexture: string): string {
+  // Instruções práticas por textura — linguagem de campo
+  const guide: Record<string, { gesto: string; escala: string[] }> = {
+    'arenoso': {
+      gesto: 'Pegue um punhado de terra seca da profundidade e *aperte na mão fechada por 3 segundos*.',
+      escala: [
+        '🟫 *1 — SECO:* Escorre entre os dedos, não forma bolinha. Pó solto.',
+        '🟤 *2 — POUCO ÚMIDO:* Forma bolinha frágil que esfarela fácil.',
+        '🟢 *3 — ÚMIDO (ideal):* Bolinha que mantém a forma na mão aberta.',
+        '💧 *4 — MUITO ÚMIDO:* Mão fica molhada, terra escorrega.',
+        '🌊 *5 — ENCHARCADO:* Água sai ao apertar. Terra brilhante.',
+      ],
+    },
+    'franco-arenoso': {
+      gesto: 'Retire uma amostra a *30 cm*, aperte na mão e abra devagar.',
+      escala: [
+        '🟫 *1 — SECO:* Não gruda, escorre, cor clara/pálida.',
+        '🟤 *2 — POUCO ÚMIDO:* Forma bolinha que racha ao dobrar.',
+        '🟢 *3 — ÚMIDO (ideal):* Bolinha firme, levemente fria na mão.',
+        '💧 *4 — MUITO ÚMIDO:* Deixa mancha úmida na palma.',
+        '🌊 *5 — ENCHARCADO:* Escorrega entre os dedos, brilhante.',
+      ],
+    },
+    'franco': {
+      gesto: 'Retire uma amostra a *30 cm* e tente fazer uma *fita* entre o polegar e o indicador.',
+      escala: [
+        '🟫 *1 — SECO:* Torrão quebra fácil, não molda, cor desbotada.',
+        '🟤 *2 — POUCO ÚMIDO:* Molda com dificuldade, fita não forma.',
+        '🟢 *3 — ÚMIDO (ideal):* Fita curta de 1-3 cm antes de quebrar.',
+        '💧 *4 — MUITO ÚMIDO:* Fita de 3-5 cm, superfície levemente brilhante.',
+        '🌊 *5 — ENCHARCADO:* Fita longa e brilhante. Água visível.',
+      ],
+    },
+    'franco-argiloso': {
+      gesto: 'Retire uma amostra a *30 cm* e tente fazer uma *fita* entre o polegar e o indicador.',
+      escala: [
+        '🟫 *1 — SECO:* Solo duro, trincado, rachaduras visíveis.',
+        '🟤 *2 — POUCO ÚMIDO:* Firme, quebra com esforço, não forma fita.',
+        '🟢 *3 — ÚMIDO (ideal):* Fita de 5-8 cm, plástico, não brilha.',
+        '💧 *4 — MUITO ÚMIDO:* Fita longa e brilhante, escorregadio.',
+        '🌊 *5 — ENCHARCADO:* Muito escorregadio, água sai ao apertar.',
+      ],
+    },
+    'argiloso': {
+      gesto: 'Retire uma amostra a *30 cm* e tente fazer uma *fita* entre o polegar e o indicador.',
+      escala: [
+        '🟫 *1 — SECO:* Muito duro, rachaduras, impossível moldar.',
+        '🟤 *2 — POUCO ÚMIDO:* Duro, difícil de moldar, fita curta.',
+        '🟢 *3 — ÚMIDO (ideal):* Fita longa (>8 cm), levemente brilhante.',
+        '💧 *4 — MUITO ÚMIDO:* Fita longa e brilhante, muito escorregadio.',
+        '🌊 *5 — ENCHARCADO:* Extremamente escorregadio. Água na superfície.',
+      ],
+    },
+  }
+
+  const info = guide[soilTexture] ?? guide['franco']
+  const header = `🌱 *${pivotName}*${seasonName ? ` — ${seasonName}` : ''}`
+
+  return `${header}\n\n${info.gesto}\n\n` +
+    `${info.escala.join('\n')}\n\n` +
+    `_Solo: ${soilTexture}_\n\n` +
+    `*Qual numero descreve melhor o seu solo agora?* (1 a 5)`
+}
+
 // ─── Formata resposta do diagnóstico para WhatsApp ───────────────────────────
 // deno-lint-ignore no-explicit-any
 function formatDiagnosisResponse(result: any, pivotName: string, aiAnalysis: any): string {
@@ -102,8 +183,10 @@ function formatDiagnosisResponse(result: any, pivotName: string, aiAnalysis: any
   }
   const action = actionText[result.action] ?? 'Monitorar.'
 
+  const fcRaw = result.estimated_fc_percent ?? result.percent_available
+  const fcPercent = fcRaw != null ? Math.round(Number(fcRaw)) : '?'
   let msg = `${emoji} *Solo — ${pivotName}*\n`
-  msg += `💧 *${result.estimated_fc_percent}% da CC*\n\n`
+  msg += `💧 *${fcPercent}% da CC*\n\n`
   msg += `🕒 ${action}\n`
 
   if (result.recommended_irrigation_mm > 0) {
@@ -209,15 +292,17 @@ serve(async (req) => {
 Pivôs disponíveis: ${pivotNames || 'nenhum cadastrado'}
 Data de hoje: ${today}
 
-Transcreva o áudio e extraia registros de chuva se houver. Responda APENAS com JSON:
+Transcreva o áudio e classifique o tipo. Responda APENAS com JSON:
 {
   "transcricao": "texto do que foi dito",
-  "tipo": "chuva" | "status" | "resumo" | "desconhecido",
+  "tipo": "chuva" | "diagnostico" | "status" | "resumo" | "desconhecido",
   "registros": [
     { "pivo": "nome exato do pivô", "mm": número, "data": "YYYY-MM-DD" }
   ]
 }
 Regras:
+- Se mencionar chuva/milímetros/mm → tipo "chuva"
+- Se mencionar diagnóstico/umidade do solo/testar solo/verificar solo → tipo "diagnostico"
 - Se mencionar "os dois" ou "ambos", aplique a todos os pivôs disponíveis
 - Se não especificar data, use hoje (${today})
 - Nomes dos pivôs devem ser exatamente como listados acima`
@@ -323,6 +408,34 @@ Regras:
           responseText = lines.length > 0
             ? `🎙️ ${transcricaoLabel}🌧️ *Resultado:*\n\n${lines.join('\n')}`
             : `🎙️ ${transcricaoLabel}❌ Não encontrei os pivôs mencionados.\nSeus pivôs: ${pivotNames}`
+
+        } else if (parsed.tipo === 'diagnostico') {
+          // Áudio pediu diagnóstico — inicia fluxo de seleção de pivô
+          const pivotList = subs.map((s, i) => `${i + 1} — ${s.pivots?.name}`).join('\n')
+          if (subs.length === 1) {
+            const foundSub = subs[0]
+            const { data: pivotFull } = await supabase.from('pivots').select('soil_texture').eq('id', foundSub.pivot_id).single()
+            const soilTexture = pivotFull?.soil_texture ?? 'franco'
+            const { data: activeSeason } = await supabase.from('seasons').select('id, name').eq('pivot_id', foundSub.pivot_id).eq('is_active', true).limit(1).single()
+            await supabase.from('whatsapp_sessions').upsert({
+              phone_number: phone, company_id: contact.company_id,
+              current_flow: 'soil_diagnosis', flow_step: 'awaiting_behavior',
+              context: { pivot_id: foundSub.pivot_id, pivot_name: foundSub.pivots?.name, soil_texture: soilTexture, season_id: activeSeason?.id ?? null },
+              last_interaction: new Date().toISOString(),
+              expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+            }, { onConflict: 'phone_number' })
+            const SCALE_IMAGE_URL3 = 'https://wvwjbzpnujmyvzvadctp.supabase.co/storage/v1/object/public/soil-diagnosis-photos/scale/soil-moisture-scale.png'
+            await sendWhatsAppImage(phone, SCALE_IMAGE_URL3, 'Escala de umidade do solo')
+            responseText = buildSoilScaleMessage(foundSub.pivots?.name ?? 'Pivô', activeSeason?.name ?? null, soilTexture)
+          } else {
+            await supabase.from('whatsapp_sessions').upsert({
+              phone_number: phone, company_id: contact.company_id,
+              current_flow: 'soil_diagnosis', flow_step: 'awaiting_pivot_selection',
+              context: {}, last_interaction: new Date().toISOString(),
+              expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+            }, { onConflict: 'phone_number' })
+            responseText = `🌱 *Diagnóstico Manual do Solo*\n\nQual pivô?\n\n${pivotList}\n\nResponda com o número (1, 2...)`
+          }
 
         } else if (parsed.tipo === 'status') {
           const names = subs.map(s => `📍 ${s.pivots?.name}`).join('\n') || 'Nenhum pivô cadastrado'
@@ -535,8 +648,7 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
     const msg = textMessage.toUpperCase().trim()
     const today = new Date().toISOString().slice(0, 10)
 
-    // ── ROTA 3: MÁQUINA DE ESTADOS — Diagnóstico do Solo ──────────────────────
-    // Busca sessão ativa para este telefone
+    // ── BUSCA SESSÃO ATIVA — feita ANTES de qualquer handler ──────────────────
     const { data: session } = await supabase
       .from('whatsapp_sessions')
       .select('*')
@@ -546,8 +658,14 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
     const sessionExpired = session && new Date(session.expires_at) < new Date()
     const activeSession = session && !sessionExpired && session.current_flow === 'soil_diagnosis'
 
-    // Detecta comando de início: "diagnóstico", "diagnostico", "diag", "solo"
-    const isDiagnosisStart = /diag[nó]?[os]?t?i?c?o?|diag\s+piv[oô]|umidade\s+solo|solo\s+piv/i.test(textMessage)
+    // Se há sessão ativa de diagnóstico, QUALQUER mensagem vai para a máquina de estados
+    // (evita que "3", "4", "pular" sejam capturados por outros handlers)
+    const diagnosisHandled = activeSession || false
+
+    // Detecta comando de início: "diagnóstico", "diagnostico", "diag solo", "umidade solo", etc.
+    const isDiagnosisStart = /diagn[oó]stico|diagn[oó]stic|diagn[oó]sti|diagn[oó]st|diag\s+solo|diag\s+piv[oô]|umidade\s+solo|solo\s+piv|solo\s+diag/i.test(textMessage)
+
+    // ── ROTA 3: MÁQUINA DE ESTADOS — Diagnóstico do Solo ──────────────────────
 
     // ── 3a. Início do fluxo ────────────────────────────────────────────────
     if (!activeSession && isDiagnosisStart) {
@@ -566,7 +684,17 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
 
       if (!foundSub) {
         const pivotList = subs.map((s, i) => `${i + 1} — ${s.pivots?.name}`).join('\n')
-        responseText = `🌱 *Diagnóstico Manual do Solo*\n\nQual pivô?\n\n${pivotList}\n\nResponda: *diagnóstico pivô [nome]*`
+        responseText = `🌱 *Diagnóstico Manual do Solo*\n\nQual pivô?\n\n${pivotList}\n\nResponda com o *número* (1, 2...) ou *diagnóstico pivô [nome]*`
+        // Cria sessão aguardando seleção de pivô
+        await supabase.from('whatsapp_sessions').upsert({
+          phone_number: phone,
+          company_id: contact.company_id,
+          current_flow: 'soil_diagnosis',
+          flow_step: 'awaiting_pivot_selection',
+          context: {},
+          last_interaction: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        }, { onConflict: 'phone_number' })
       } else {
         // Busca textura cadastrada ou usa padrão
         const { data: pivotFull } = await supabase
@@ -602,19 +730,46 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
           expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         }, { onConflict: 'phone_number' })
 
-        const textureDescriptions: Record<string, string[]> = {
-          'arenoso':         ['Escorre entre os dedos, não forma bolinha', 'Bolinha frágil, desfaz facilmente', 'Bolinha que mantém forma', 'Molhado, cobre a palma da mão', 'Água livre ao apertar'],
-          'franco-arenoso':  ['Seco, escorre entre dedos', 'Bolinha frágil que racha', 'Bolinha firme, levemente úmido', 'Deixa umidade na mão', 'Escorrega entre os dedos'],
-          'franco':          ['Torrão seco que quebra facilmente', 'Bolinha quebradiça, não molda bem', 'Bolinha firme, fita curta (1-2 cm)', 'Fita média (3-5 cm), levemente brilhante', 'Fita longa e brilhante, água visível'],
-          'franco-argiloso': ['Duro, trincado', 'Firme, quebra com esforço', 'Plástico, fita de 5-8 cm', 'Fita longa, brilhante, escorregadio', 'Muito escorregadio, água visível'],
-          'argiloso':        ['Muito duro, rachaduras visíveis', 'Duro, difícil de moldar', 'Plástico, fita > 8 cm', 'Escorregadio, fita longa e brilhante', 'Extremamente escorregadio, água na superfície'],
-        }
-        const opts = textureDescriptions[soilTexture] ?? textureDescriptions['franco']
-
-        responseText = `🌱 *${foundSub.pivots?.name}*${activeSeason ? ` — ${activeSeason.name}` : ''}\n\nColete solo a *30 cm* de profundidade, aperte na mão e escolha:\n\n1️⃣ ${opts[0]}\n2️⃣ ${opts[1]}\n3️⃣ ${opts[2]}\n4️⃣ ${opts[3]}\n5️⃣ ${opts[4]}\n\nResponda só com o número *1 a 5*.`
+        const SCALE_IMAGE_URL = 'https://wvwjbzpnujmyvzvadctp.supabase.co/storage/v1/object/public/soil-diagnosis-photos/scale/soil-moisture-scale.png'
+        await sendWhatsAppImage(phone, SCALE_IMAGE_URL, 'Escala de umidade do solo — metodo FAO/USDA')
+        responseText = buildSoilScaleMessage(foundSub.pivots?.name ?? 'Pivô', activeSeason?.name ?? null, soilTexture)
       }
 
-    // ── 3b. Aguardando score (1-5) ─────────────────────────────────────────
+    // ── 3b. Seleção de pivô por número ────────────────────────────────────
+    } else if (activeSession && session.flow_step === 'awaiting_pivot_selection') {
+      messageType = 'soil_diagnosis'
+      const numMatch = msg.match(/^([1-9]\d*)$/)
+      const idx = numMatch ? parseInt(numMatch[1]) - 1 : -1
+      const byName = subs.find(s => s.pivots?.name?.toUpperCase().includes(msg))
+
+      const chosenSub = (idx >= 0 && idx < subs.length) ? subs[idx] : (byName ?? null)
+
+      if (!chosenSub) {
+        const pivotList = subs.map((s, i) => `${i + 1} — ${s.pivots?.name}`).join('\n')
+        responseText = `❌ Opção inválida.\n\n${pivotList}\n\nResponda com o número (1, 2...)`
+      } else {
+        const { data: pivotFull } = await supabase.from('pivots').select('soil_texture').eq('id', chosenSub.pivot_id).single()
+        const soilTexture = pivotFull?.soil_texture ?? 'franco'
+        const { data: activeSeason } = await supabase.from('seasons').select('id, name').eq('pivot_id', chosenSub.pivot_id).eq('is_active', true).limit(1).single()
+
+        await supabase.from('whatsapp_sessions').update({
+          flow_step: 'awaiting_behavior',
+          context: {
+            pivot_id: chosenSub.pivot_id,
+            pivot_name: chosenSub.pivots?.name,
+            soil_texture: soilTexture,
+            season_id: activeSeason?.id ?? null,
+          },
+          last_interaction: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        }).eq('phone_number', phone)
+
+        const SCALE_IMAGE_URL2 = 'https://wvwjbzpnujmyvzvadctp.supabase.co/storage/v1/object/public/soil-diagnosis-photos/scale/soil-moisture-scale.png'
+        await sendWhatsAppImage(phone, SCALE_IMAGE_URL2, 'Escala de umidade do solo — metodo FAO/USDA')
+        responseText = buildSoilScaleMessage(chosenSub.pivots?.name ?? 'Pivô', activeSeason?.name ?? null, soilTexture)
+      }
+
+    // ── 3c. Aguardando score (1-5) ─────────────────────────────────────────
     } else if (activeSession && session.flow_step === 'awaiting_behavior') {
       messageType = 'soil_diagnosis'
       const scoreMatch = msg.match(/^[1-5]$/)

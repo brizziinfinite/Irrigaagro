@@ -177,7 +177,7 @@ serve(async (req) => {
     // ── 1. Buscar dados do pivô ──────────────────────────────────────────────
     const { data: pivot, error: pivotErr } = await supabase
       .from('pivots')
-      .select('id, name, alert_threshold_percent, field_capacity, wilting_point, bulk_density, f_factor, flow_rate_m3h, time_360_h, length_m')
+      .select('id, name, alert_threshold_percent, irrigation_target_percent, field_capacity, wilting_point, bulk_density, f_factor, flow_rate_m3h, time_360_h, length_m')
       .eq('id', pivot_id)
       .single()
 
@@ -213,6 +213,9 @@ serve(async (req) => {
 
     const estimated_fc_percent = scoreToFcPercent(effectiveScore)
     const threshold = pivot.alert_threshold_percent ?? DEFAULT_THRESHOLD
+    // Alvo de reposição: irrigation_target_percent (ex: 80%) ou 100% se não configurado
+    // Mesmo comportamento do sistema web (calcRecommendedIrrigation)
+    const irrigationTargetPct: number = pivot.irrigation_target_percent ?? 100
 
     // ── 4. Calcular déficit e recomendação ──────────────────────────────────
     const cc = pivot.field_capacity ?? null
@@ -228,9 +231,13 @@ serve(async (req) => {
       // CTA (Capacidade Total de Água) para a profundidade amostrada
       cta = ((cc - pm) / 100) * ds * depth * 10   // mm
       const currentWater = (estimated_fc_percent / 100) * cta
-      const targetWater = (threshold / 100) * cta
-      total_smd_mm = Math.max(0, Math.round((targetWater - currentWater) * 10) / 10)
-      recommended_irrigation_mm = total_smd_mm > 0 ? total_smd_mm : 0
+      const thresholdWater = (threshold / 100) * cta
+      // Solo abaixo do limiar → repõe até o alvo (irrigation_target_percent)
+      if (currentWater < thresholdWater) {
+        const targetWater = (irrigationTargetPct / 100) * cta
+        recommended_irrigation_mm = Math.max(0, Math.round((targetWater - currentWater) * 10) / 10)
+      }
+      total_smd_mm = Math.max(0, Math.round((thresholdWater - currentWater) * 10) / 10)
     } else {
       // Sem parâmetros de solo — estimativa simplificada
       total_smd_mm = Math.max(0, Math.round((threshold - estimated_fc_percent) * 0.3))
