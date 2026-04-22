@@ -1,0 +1,313 @@
+{
+  "name": "IrrigaAgro — WhatsApp Diagnóstico Solo",
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "Webhook Inbound",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "path": "whatsapp-inbound",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "irrigaagro-whatsapp-inbound"
+    },
+    {
+      "id": "node-parse",
+      "name": "Parse Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "parameters": {
+        "jsCode": "// Extrai campos do payload Evolution API\nconst body = $input.item.json.body ?? $input.item.json;\nconst data = body.data ?? body;\n\nconst remoteJid = data.key?.remoteJid ?? '';\nconst phone = remoteJid.replace('@s.whatsapp.net', '');\nconst fromMe = data.key?.fromMe ?? false;\nconst messageId = data.key?.id ?? '';\nconst messageType = data.messageType ?? '';\n\nconst textMessage =\n  data.message?.conversation ||\n  data.message?.extendedTextMessage?.text ||\n  data.message?.imageMessage?.caption ||\n  '';\n\nconst hasImage = !!(data.message?.imageMessage);\nconst hasAudio = !textMessage && !!(data.message?.audioMessage || data.message?.pttMessage);\n\n// Detecta intenção de diagnóstico\nconst isDiagnosisIntent = /diag[nó]?[os]?t?i?c?o?|diag\\s+piv[oô]|umidade\\s+solo|solo\\s+piv/i.test(textMessage);\n\n// Extrai nome/número do pivô\nconst pivotMatch = textMessage.match(/piv[oô]?\\s*([a-zA-Z0-9\\s]+)/i);\nconst pivotHint = (pivotMatch?.[1] ?? '').trim().toUpperCase();\n\nreturn [{\n  json: {\n    phone,\n    fromMe,\n    messageId,\n    messageType,\n    textMessage,\n    msgUpper: textMessage.toUpperCase().trim(),\n    hasImage,\n    hasAudio,\n    isDiagnosisIntent,\n    pivotHint,\n    rawData: data\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-filter-fromme",
+      "name": "Filtrar fromMe",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [640, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-fromme",
+              "leftValue": "={{ $json.fromMe }}",
+              "rightValue": false,
+              "operator": { "type": "boolean", "operation": "equal" }
+            },
+            {
+              "id": "cond-phone",
+              "leftValue": "={{ $json.phone }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-get-session",
+      "name": "Buscar Sessão",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [840, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/whatsapp_sessions?phone_number=eq.{{ $json.phone }}&select=*",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-merge-context",
+      "name": "Mesclar Mensagem + Sessão",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1040, 300],
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-route",
+      "name": "Roteamento por Estado",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [1240, 300],
+      "parameters": {
+        "mode": "expression",
+        "output": "={{ (() => {\n  const msg = $('Parse Message').item.json;\n  const sessions = $('Buscar Sessão').item.json;\n  const session = Array.isArray(sessions) ? sessions[0] : null;\n  const expired = session && new Date(session.expires_at) < new Date();\n  const active = session && !expired && session.current_flow === 'soil_diagnosis';\n  \n  if (!active && msg.isDiagnosisIntent) return 'diagnosis_start';\n  if (active && session.flow_step === 'awaiting_behavior' && /^[1-5]$/.test(msg.msgUpper)) return 'handle_behavior';\n  if (active && session.flow_step === 'awaiting_photo' && msg.hasImage) return 'handle_photo';\n  if (active && session.flow_step === 'awaiting_photo' && /pular|sem foto/i.test(msg.textMessage)) return 'handle_skip';\n  if (session && expired && session.current_flow === 'soil_diagnosis') return 'session_expired';\n  return 'other';\n})() }}",
+        "rules": {
+          "values": [
+            { "outputKey": "diagnosis_start" },
+            { "outputKey": "handle_behavior" },
+            { "outputKey": "handle_photo" },
+            { "outputKey": "handle_skip" },
+            { "outputKey": "session_expired" },
+            { "outputKey": "other" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-diagnosis-start",
+      "name": "Início Diagnóstico",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 100],
+      "parameters": {
+        "jsCode": "// Busca pivô pelo hint extraído\nconst pivotHint = $('Parse Message').item.json.pivotHint;\nconst phone = $('Parse Message').item.json.phone;\n\n// Retorna para o próximo node buscar o pivô no Supabase\nreturn [{ json: { phone, pivotHint, action: 'fetch_pivot' } }];"
+      }
+    },
+    {
+      "id": "node-fetch-pivot",
+      "name": "Buscar Pivô",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1640, 100],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pivots?name=ilike.*{{ encodeURIComponent($json.pivotHint) }}*&select=id,name,soil_texture,alert_threshold_percent&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-upsert-session-start",
+      "name": "Criar Sessão",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1840, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/whatsapp_sessions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"phone_number\": \"{{ $('Parse Message').item.json.phone }}\",\n  \"current_flow\": \"soil_diagnosis\",\n  \"flow_step\": \"awaiting_behavior\",\n  \"context\": {\n    \"pivot_id\": \"{{ $('Buscar Pivô').item.json[0]?.id }}\",\n    \"pivot_name\": \"{{ $('Buscar Pivô').item.json[0]?.name }}\",\n    \"soil_texture\": \"{{ $('Buscar Pivô').item.json[0]?.soil_texture ?? 'franco' }}\"\n  },\n  \"last_interaction\": \"{{ new Date().toISOString() }}\",\n  \"expires_at\": \"{{ new Date(Date.now() + 10*60*1000).toISOString() }}\"\n}"
+      }
+    },
+    {
+      "id": "node-handle-behavior",
+      "name": "Salvar Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 280],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/whatsapp_sessions?phone_number=eq.{{ $('Parse Message').item.json.phone }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"flow_step\": \"awaiting_photo\",\n  \"context\": {{ JSON.stringify({ ...$('Buscar Sessão').item.json[0]?.context, behavior_range: parseInt($('Parse Message').item.json.msgUpper) }) }},\n  \"last_interaction\": \"{{ new Date().toISOString() }}\",\n  \"expires_at\": \"{{ new Date(Date.now() + 10*60*1000).toISOString() }}\"\n}"
+      }
+    },
+    {
+      "id": "node-download-photo",
+      "name": "Download Foto Evolution",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 460],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/chat/getBase64FromMediaMessage/{{ $env.EVOLUTION_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={ \"message\": { \"key\": { \"id\": \"{{ $('Parse Message').item.json.messageId }}\" } } }"
+      }
+    },
+    {
+      "id": "node-gemini-photo",
+      "name": "Gemini Analisa Foto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1640, 460],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"contents\": [{\n    \"parts\": [\n      { \"text\": \"Analise esta amostra de solo. O agricultor classificou como {{ $('Buscar Sessão').item.json[0]?.context?.behavior_range }}/5 (1=seco, 5=encharcado). Responda APENAS com JSON: {\\\"estimated_behavior_range\\\": <1-5>, \\\"agrees_with_user_assessment\\\": <true/false>, \\\"confidence\\\": <0-100>, \\\"visible_color\\\": \\\"<claro_seco|medio|escuro_umido>\\\"}\" },\n      { \"inline_data\": { \"mime_type\": \"image/jpeg\", \"data\": \"{{ $('Download Foto Evolution').item.json.base64 }}\" } }\n    ]\n  }],\n  \"generationConfig\": { \"temperature\": 0.2, \"responseMimeType\": \"application/json\", \"maxOutputTokens\": 256 }\n}"
+      }
+    },
+    {
+      "id": "node-call-diagnose",
+      "name": "Chamar diagnose-soil",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1840, 380],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/functions/v1/diagnose-soil",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"pivot_id\": \"{{ $('Buscar Sessão').item.json[0]?.context?.pivot_id }}\",\n  \"season_id\": \"{{ $('Buscar Sessão').item.json[0]?.context?.season_id ?? null }}\",\n  \"sample_depth_cm\": 30,\n  \"soil_texture\": \"{{ $('Buscar Sessão').item.json[0]?.context?.soil_texture ?? 'franco' }}\",\n  \"behavior_range\": {{ $('Buscar Sessão').item.json[0]?.context?.behavior_range }},\n  \"photo_url\": null,\n  \"ai_analysis\": null,\n  \"source\": \"whatsapp\",\n  \"company_id\": \"{{ $('Buscar Sessão').item.json[0]?.company_id }}\"\n}"
+      }
+    },
+    {
+      "id": "node-reset-session",
+      "name": "Reset Sessão",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2040, 380],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/whatsapp_sessions?phone_number=eq.{{ $('Parse Message').item.json.phone }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={ \"current_flow\": null, \"flow_step\": null, \"context\": {}, \"last_interaction\": \"{{ new Date().toISOString() }}\" }"
+      }
+    },
+    {
+      "id": "node-send-wa",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2240, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"number\": \"{{ $('Parse Message').item.json.phone }}\",\n  \"text\": \"{{ $json.response_text }}\"\n}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Inbound": { "main": [[{ "node": "Parse Message", "type": "main", "index": 0 }]] },
+    "Parse Message": { "main": [[{ "node": "Filtrar fromMe", "type": "main", "index": 0 }]] },
+    "Filtrar fromMe": { "main": [[{ "node": "Buscar Sessão", "type": "main", "index": 0 }]] },
+    "Buscar Sessão": { "main": [[{ "node": "Roteamento por Estado", "type": "main", "index": 0 }]] },
+    "Roteamento por Estado": {
+      "main": [
+        [{ "node": "Início Diagnóstico", "type": "main", "index": 0 }],
+        [{ "node": "Salvar Score", "type": "main", "index": 0 }],
+        [{ "node": "Download Foto Evolution", "type": "main", "index": 0 }],
+        [{ "node": "Chamar diagnose-soil", "type": "main", "index": 0 }],
+        [{ "node": "Enviar WhatsApp", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Início Diagnóstico": { "main": [[{ "node": "Buscar Pivô", "type": "main", "index": 0 }]] },
+    "Buscar Pivô": { "main": [[{ "node": "Criar Sessão", "type": "main", "index": 0 }]] },
+    "Criar Sessão": { "main": [[{ "node": "Enviar WhatsApp", "type": "main", "index": 0 }]] },
+    "Salvar Score": { "main": [[{ "node": "Enviar WhatsApp", "type": "main", "index": 0 }]] },
+    "Download Foto Evolution": { "main": [[{ "node": "Gemini Analisa Foto", "type": "main", "index": 0 }]] },
+    "Gemini Analisa Foto": { "main": [[{ "node": "Chamar diagnose-soil", "type": "main", "index": 0 }]] },
+    "Chamar diagnose-soil": { "main": [[{ "node": "Reset Sessão", "type": "main", "index": 0 }]] },
+    "Reset Sessão": { "main": [[{ "node": "Enviar WhatsApp", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "irrigaagro"
+  },
+  "_comment": "VARIÁVEIS DE AMBIENTE NECESSÁRIAS NO N8N: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE, GEMINI_API_KEY. NOTA: Este workflow é alternativo — o fluxo principal já está implementado diretamente no whatsapp-webhook Edge Function do Supabase."
+}
