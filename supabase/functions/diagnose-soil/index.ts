@@ -10,7 +10,9 @@ interface DiagnoseRequest {
   soil_texture: string
   behavior_range: number          // Score 1-5 informado pelo agricultor
   photo_url?: string | null       // URL já gravada no Storage
-  ai_analysis?: {                 // Resultado do Gemini (se foto enviada)
+  photo_base64?: string | null    // Base64 da foto (para análise Gemini no web)
+  photo_mime?: string | null      // MIME type da foto
+  ai_analysis?: {                 // Resultado do Gemini pré-calculado (WhatsApp)
     estimated_behavior_range: number
     agrees_with_user_assessment: boolean
     confidence: number
@@ -19,6 +21,7 @@ interface DiagnoseRequest {
   source: 'web' | 'whatsapp'
   diagnosed_by?: string           // user_id (opcional para WhatsApp)
   company_id: string
+  dry_run?: boolean               // Se true: apenas retorna ai_analysis sem gravar
 }
 
 interface DiagnoseResponse {
@@ -96,11 +99,73 @@ serve(async (req) => {
 
   try {
     const body: DiagnoseRequest = await req.json()
-    const { pivot_id, season_id, soil_texture, behavior_range, photo_url, ai_analysis, source, company_id } = body
+    const { pivot_id, season_id, soil_texture, behavior_range, photo_url, photo_base64, photo_mime, source, company_id, dry_run } = body
+    let { ai_analysis } = body
 
     if (!pivot_id || !company_id || !behavior_range) {
       return new Response(JSON.stringify({ error: 'pivot_id, company_id e behavior_range são obrigatórios' }), {
         status: 400, headers: { 'Content-Type': 'application/json' }
+      })
+    }
+
+    // ── Análise Gemini com foto (quando photo_base64 fornecido e ai_analysis ainda não calculado) ──
+    if (photo_base64 && !ai_analysis) {
+      const geminiKey = Deno.env.get('GEMINI_API_KEY')
+      if (geminiKey) {
+        try {
+          const textureDescPt: Record<string, string> = {
+            'arenoso': 'arenoso — grãos visíveis, não forma fita',
+            'franco-arenoso': 'franco-arenoso — pouca plasticidade',
+            'franco': 'franco — plasticidade moderada, fita curta',
+            'franco-argiloso': 'franco-argiloso — plástico, fita média',
+            'argiloso': 'argiloso — muito plástico, fita longa',
+          }
+          const textureDesc = textureDescPt[soil_texture] ?? soil_texture
+
+          const geminiResp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [
+                    { text: `Você é especialista em ciência do solo. Esta é uma amostra de solo ${textureDesc}. O agricultor classificou como grau ${behavior_range}/5 (1=seco/crítico, 5=encharcado/excessivo). Analise a foto e responda APENAS com JSON: {"estimated_behavior_range": <1-5>, "agrees_with_user_assessment": <true/false>, "confidence": <0-100>, "visible_color": "<claro_seco|medio|escuro_umido>"}` },
+                    { inline_data: { mime_type: photo_mime || 'image/jpeg', data: photo_base64 } }
+                  ]
+                }],
+                generationConfig: { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: 256 }
+              })
+            }
+          )
+          if (geminiResp.ok) {
+            const gd = await geminiResp.json()
+            const rawText = gd.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+            const cleaned = rawText.replace(/```json|```/g, '').trim()
+            const match = cleaned.match(/\{[\s\S]*\}/)
+            if (match) ai_analysis = JSON.parse(match[0])
+          }
+        } catch (e) {
+          console.error('Gemini photo error:', e)
+        }
+      }
+    }
+
+    // dry_run: retorna só a análise de foto sem gravar
+    if (dry_run) {
+      let ai_validation = null
+      if (ai_analysis) {
+        ai_validation = {
+          agrees: ai_analysis.agrees_with_user_assessment,
+          confidence: ai_analysis.confidence,
+          estimated_behavior_range: ai_analysis.estimated_behavior_range,
+          notes: ai_analysis.agrees_with_user_assessment
+            ? `Foto confirma sua avaliação (${ai_analysis.confidence}% confiança).`
+            : `Foto sugere faixa ${ai_analysis.estimated_behavior_range} — revise se necessário.`,
+        }
+      }
+      return new Response(JSON.stringify({ ai_validation }), {
+        status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       })
     }
 

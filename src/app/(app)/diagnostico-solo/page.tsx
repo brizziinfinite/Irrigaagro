@@ -154,8 +154,15 @@ export default function DiagnosticoSoloPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [savingStep, setSavingStep] = useState<'upload' | 'gemini' | 'saving' | null>(null)
   const [diagnosis, setDiagnosis] = useState<DiagnosisOutput | null>(null)
   const [savedId, setSavedId] = useState<string | null>(null)
+  const [aiValidation, setAiValidation] = useState<{
+    agrees: boolean
+    confidence: number
+    estimated: number
+    notes: string
+  } | null>(null)
 
   // Histórico
   const [history, setHistory] = useState<DiagnosisRecord[]>([])
@@ -247,16 +254,20 @@ export default function DiagnosticoSoloPage() {
     setPhotoPreview(URL.createObjectURL(file))
   }
 
-  // ─── Salvar ─────────────────────────────────────────────────────────────────
+  // ─── Salvar (com upload + Gemini) ────────────────────────────────────────────
 
   async function handleSave() {
     if (!diagnosis || !selectedPivotId || !companyId) return
     setSaving(true)
+    setAiValidation(null)
 
     try {
+      // ── 1. Upload da foto ────────────────────────────────────────────────────
       let photo_url: string | null = null
+      let photoBase64: string | null = null
 
       if (photoFile) {
+        setSavingStep('upload')
         const ext = photoFile.name.split('.').pop() ?? 'jpg'
         const path = `${companyId}/${selectedPivotId}/${Date.now()}.${ext}`
         const { error: upErr } = await supabase.storage
@@ -267,8 +278,70 @@ export default function DiagnosticoSoloPage() {
             .from('soil-diagnosis-photos')
             .getPublicUrl(path)
           photo_url = urlData.publicUrl
+
+          // Converte para base64 para enviar ao Gemini
+          const buf = await photoFile.arrayBuffer()
+          const bytes = new Uint8Array(buf)
+          let binary = ''
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
+          photoBase64 = btoa(binary)
         }
       }
+
+      // ── 2. Análise Gemini (se tiver foto) ────────────────────────────────────
+      let aiResult: typeof aiValidation = null
+
+      if (photoBase64) {
+        setSavingStep('gemini')
+        try {
+          // Chama a Edge Function como proxy (evita expor GEMINI_API_KEY no frontend)
+          const { data: { session } } = await supabase.auth.getSession()
+          const resp = await fetch(
+            `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/diagnose-soil`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`,
+              },
+              body: JSON.stringify({
+                pivot_id: selectedPivotId,
+                season_id: selectedSeasonId || null,
+                sample_depth_cm: 30,
+                soil_texture: texture,
+                behavior_range: diagnosis.weighted_score,
+                photo_base64: photoBase64,
+                photo_mime: photoFile!.type || 'image/jpeg',
+                photo_url,
+                source: 'web',
+                company_id: companyId,
+                dry_run: true, // não salva de novo — só retorna ai_analysis
+              }),
+            }
+          )
+          if (resp.ok) {
+            const result = await resp.json()
+            if (result.ai_validation) {
+              aiResult = {
+                agrees: result.ai_validation.agrees,
+                confidence: result.ai_validation.confidence,
+                estimated: result.ai_validation.estimated_behavior_range ?? diagnosis.weighted_score,
+                notes: result.ai_validation.notes,
+              }
+              setAiValidation(aiResult)
+            }
+          }
+        } catch (_) {
+          // Gemini falhou — continua sem validação de foto
+        }
+      }
+
+      // ── 3. Salvar no banco ───────────────────────────────────────────────────
+      setSavingStep('saving')
+      const notesStr = [
+        notes.trim(),
+        aiResult ? `IA: ${aiResult.confidence}% confiança${aiResult.agrees ? ' ✓' : ` — sugere faixa ${aiResult.estimated.toFixed(1)}`}` : '',
+      ].filter(Boolean).join(' | ')
 
       const { data, error } = await supabase
         .from('soil_manual_diagnosis')
@@ -283,7 +356,7 @@ export default function DiagnosticoSoloPage() {
           weighted_score: diagnosis.weighted_score,
           result: diagnosis.result,
           estimated_fc_percent: diagnosis.estimated_fc_percent,
-          notes: notes.trim() || null,
+          notes: notesStr || null,
           photo_url,
         })
         .select('id')
@@ -291,7 +364,6 @@ export default function DiagnosticoSoloPage() {
 
       if (!error && data) {
         setSavedId(data.id)
-        // Recarregar histórico
         const { data: histData } = await supabase
           .from('soil_manual_diagnosis')
           .select('*, pivots(name)')
@@ -302,6 +374,7 @@ export default function DiagnosticoSoloPage() {
       }
     } finally {
       setSaving(false)
+      setSavingStep(null)
     }
   }
 
@@ -317,6 +390,8 @@ export default function DiagnosticoSoloPage() {
     setPhotoPreview(null)
     setDiagnosis(null)
     setSavedId(null)
+    setAiValidation(null)
+    setSavingStep(null)
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────────
@@ -671,6 +746,25 @@ export default function DiagnosticoSoloPage() {
             />
           </div>
 
+          {/* Validação IA — aparece após salvar com foto */}
+          {aiValidation && (
+            <div style={{
+              padding: '14px 16px', borderRadius: 10,
+              background: aiValidation.agrees ? 'rgba(56,189,248,0.08)' : 'rgba(245,158,11,0.08)',
+              border: `1px solid ${aiValidation.agrees ? 'rgba(56,189,248,0.3)' : 'rgba(245,158,11,0.3)'}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 16 }}>{aiValidation.agrees ? '📷' : '⚠️'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: aiValidation.agrees ? '#38bdf8' : '#f59e0b' }}>
+                  Análise de Foto — {aiValidation.confidence}% confiança
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5 }}>
+                {aiValidation.notes}
+              </p>
+            </div>
+          )}
+
           {/* Botões de ação */}
           {!savedId ? (
             <button
@@ -686,7 +780,11 @@ export default function DiagnosticoSoloPage() {
               }}
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              {saving ? 'Salvando…' : 'Salvar Diagnóstico'}
+              {saving
+                ? savingStep === 'upload' ? 'Enviando foto…'
+                : savingStep === 'gemini' ? 'Analisando com IA…'
+                : 'Salvando…'
+                : 'Salvar Diagnóstico'}
             </button>
           ) : (
             <div style={{
