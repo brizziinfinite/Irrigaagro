@@ -29,7 +29,7 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
     if (!activePivotIds.has(pivot.id)) continue
     const m = lastManagementByPivot[pivot.id]
     const threshold = pivot.alert_threshold_percent ?? 70
-    const warningPct = pivot.irrigation_target_percent ?? (threshold * 1.15)
+    const warningPct = (threshold + (pivot.irrigation_target_percent ?? threshold * 1.15)) / 2
     const pct = m?.field_capacity_percent ?? null
     if (pct === null) { ok++; continue }
     if (pct < threshold) { criticos++; criticoNames.push(pivot.name) }

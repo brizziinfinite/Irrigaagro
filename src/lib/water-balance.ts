@@ -556,21 +556,36 @@ export function calcProjection(params: {
     dryDays.push({ adcDry, cta, cad, ctaPrev, etcAvg, rainfall: rainfallForDay, das, kc, cropStage, fFactor, rootDepthCm })
   }
 
-  // ── Passo 2: determinar quais dias são dias de irrigação (antecipado).
-  // Se D+i+1 cruza o threshold, marcar D+i como dia de irrigação.
+  // ── Passo 2: determinar quais dias são dias de irrigação (múltiplas irrigações).
+  // Scan iterativo que simula o efeito de cada irrigação antes de continuar.
   const irrigateDayIdx = new Set<number>() // índice base-0 (i-1)
+  let adcScan = startAdc
   for (let i = 0; i < dryDays.length; i++) {
-    const thresholdMm = alertThresholdPct != null && dryDays[i].cta > 0
-      ? (alertThresholdPct / 100) * dryDays[i].cta
-      : dryDays[i].cad
-    // Cruzou threshold neste dia?
-    if (dryDays[i].adcDry < thresholdMm) {
-      // Antecipa: marca o dia anterior se ainda não foi marcado
-      const targetIdx = i > 0 ? i - 1 : 0
-      if (!irrigateDayIdx.has(targetIdx)) {
-        irrigateDayIdx.add(targetIdx)
+    const dry = dryDays[i]
+    const adcScanNext = calcADc(adcScan, dry.rainfall, 0, dry.etcAvg, dry.cta, dry.ctaPrev)
+
+    // Threshold do dia seguinte (look-ahead)
+    const nextDry = dryDays[i + 1]
+    const lookAheadAdc = nextDry
+      ? calcADc(adcScanNext, nextDry.rainfall, 0, nextDry.etcAvg, nextDry.cta, nextDry.ctaPrev)
+      : adcScanNext
+    const thresholdMmNext = nextDry
+      ? (alertThresholdPct != null && nextDry.cta > 0 ? (alertThresholdPct / 100) * nextDry.cta : nextDry.cad)
+      : (alertThresholdPct != null && dry.cta > 0 ? (alertThresholdPct / 100) * dry.cta : dry.cad)
+
+    // Se o dia seguinte vai cruzar o threshold, irrigar hoje
+    if (lookAheadAdc < thresholdMmNext && !irrigateDayIdx.has(i)) {
+      irrigateDayIdx.add(i)
+      // Simula o efeito da irrigação no adcScan para continuar projetando corretamente
+      const depthToApply = calcRecommendedIrrigation(dry.cta, dry.cad, adcScanNext, alertThresholdPct, irrigationTargetPct)
+      const speed = pivot ? findRecommendedSpeed(pivot, depthToApply) : null
+      let laminaBruta = depthToApply
+      if (pivot && speed != null) {
+        laminaBruta = calcDepthForSpeed(pivot, speed) ?? depthToApply
       }
-      break // apenas a próxima irrigação necessária
+      adcScan = Math.min(dry.cta, adcScanNext + laminaBruta * cuc)
+    } else {
+      adcScan = adcScanNext
     }
   }
 
