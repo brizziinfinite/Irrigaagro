@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 1020" width="820" height="1020" font-family="Arial, Helvetica, sans-serif">
+
+  <!-- Fundo -->
+  <rect width="820" height="1020" fill="#f5f0e8" rx="0"/>
+
+  <!-- Cabecalho -->
+  <rect x="0" y="0" width="820" height="72" fill="#2d5a1e"/>
+  <text x="410" y="30" text-anchor="middle" fill="white" font-size="20" font-weight="bold">UMIDADE DO SOLO — METODO FAO/USDA</text>
+  <text x="410" y="54" text-anchor="middle" fill="#b8f5a0" font-size="13">Retire solo a 30 cm, aperte na mao e compare com a escala abaixo</text>
+
+  <!-- Barra instrucao -->
+  <rect x="0" y="72" width="820" height="30" fill="#e8f5e3"/>
+  <text x="410" y="92" text-anchor="middle" fill="#2d5a1e" font-size="12" font-weight="bold">Solo Franco-Argiloso / Argiloso  |  Aperte, forme bolinha, depois tente fazer uma fita com polegar e indicador</text>
+
+  <!-- ===== LINHA CABECALHO TABELA ===== -->
+  <rect x="10" y="108" width="800" height="36" fill="#3a7a28" rx="4"/>
+  <text x="70"  y="132" text-anchor="middle" fill="white" font-size="13" font-weight="bold">NIVEL</text>
+  <text x="230" y="132" text-anchor="middle" fill="white" font-size="13" font-weight="bold">UMIDADE</text>
+  <text x="470" y="132" text-anchor="middle" fill="white" font-size="13" font-weight="bold">O QUE VOCE SENTE E VE</text>
+  <text x="720" y="132" text-anchor="middle" fill="white" font-size="13" font-weight="bold">DECISAO</text>
+
+  <!-- ===== NIVEL 1 — 0 a 25% ===== -->
+  <rect x="10" y="150" width="800" height="162" fill="#fff8f0" rx="4"/>
+  <rect x="10" y="150" width="6"   height="162" fill="#c2410c" rx="3"/>
+
+  <!-- Circulo nivel -->
+  <circle cx="70" cy="231" r="32" fill="#c2410c"/>
+  <text x="70" y="224" text-anchor="middle" fill="white" font-size="28" font-weight="bold">1</text>
+  <text x="70" y="244" text-anchor="middle" fill="white" font-size="10">SECO</text>
+
+  <!-- % umidade -->
+  <rect x="120" y="168" width="180" height="126" fill="#fde8d8" rx="6"/>
+  <text x="210" y="204" text-anchor="middle" fill="#c2410c" font-size="26" font-weight="bold">0 - 25%</text>
+  <text x="210" y="224" text-anchor="middle" fill="#9a3412" font-size="12">da Capacidade</text>
+  <text x="210" y="240" text-anchor="middle" fill="#9a3412" font-size="12">de Campo</text>
+  <!-- Barra de nivel -->
+  <rect x="130" y="256" width="160" height="10" rx="5" fill="#e5e7eb"/>
+  <rect x="130" y="256" width="32"  height="10" rx="5" fill="#c2410c"/>
+  <text x="210" y="280" text-anchor="middle" fill="#c2410c" font-size="11">CRITICO</text>
+
+  <!-- Ilustracao: solo seco com rachaduras -->
+  <rect x="312" y="158" width="280" height="144" fill="#fef3c7" rx="6"/>
+  <!-- Bloco de solo rachado -->
+  <rect x="340" y="175" width="224" height="95" fill="#a0522d" rx="4"/>
+  <!-- Rachaduras -->
+  <line x1="375" y1="175" x2="368" y2="270" stroke="#6b3a1f" stroke-width="3"/>
+  <line x1="415" y1="175" x2="422" y2="270" stroke="#6b3a1f" stroke-width="3"/>
+  <line x1="455" y1="175" x2="448" y2="270" stroke="#6b3a1f" stroke-width="2"/>
+  <line x1="495" y1="175" x2="502" y2="270" stroke="#6b3a1f" stroke-width="3"/>
+  <line x1="535" y1="175" x2="528" y2="270" stroke="#6b3a1f" stroke-width="2"/>
+  <!-- po solto no fundo -->
+  <circle cx="355" cy="262" r="4" fill="#c4855a" opacity="0.6"/>
+  <circle cx="370" cy="266" r="3" fill="#c4855a" opacity="0.6"/>
+  <circle cx="500" cy="264" r="3" fill="#c4855a" opacity="0.6"/>
+  <circle cx="520" cy="260" r="4" fill="#c4855a" opacity="0.5"/>
+  <text x="452" y="286" text-anchor="middle" fill="#92400e" font-size="11" font-weight="bold">COR CLARA — PO AO QUEBRAR — NAO MOLDA</text>
+  <text x="452" y="298" text-anchor="middle" fill="#78350f" font-size="11">Torroes duros, separados, com rachaduras visiveis</text>
+
+  <!-- Decisao -->
+  <rect x="604" y="168" width="196" height="126" fill="#fee2e2" rx="6"/>
+  <text x="702" y="204" text-anchor="middle" fill="#991b1b" font-size="14" font-weight="bold">IRRIGAR</text>
+  <text x="702" y="222" text-anchor="middle" fill="#991b1b" font-size="14" font-weight="bold">AGORA!</text>
+  <text x="702" y="248" text-anchor="middle" fill="#7f1d1d" font-size="11">Risco de murcha</text>
+  <text x="702" y="264" text-anchor="middle" fill="#7f1d1d" font-size="11">irreversivel</text>
+  <text x="702" y="285" text-anchor="middle" fill="#dc2626" font-size="22" font-weight="bold">!</text>
+
+  <!-- ===== NIVEL 2 — 25 a 50% ===== -->
+  <rect x="10" y="318" width="800" height="162" fill="#fffbf0" rx="4"/>
+  <rect x="10" y="318" width="6"   height="162" fill="#d97706" rx="3"/>
+
+  <circle cx="70" cy="399" r="32" fill="#d97706"/>
+  <text x="70" y="392" text-anchor="middle" fill="white" font-size="28" font-weight="bold">2</text>
+  <text x="70" y="412" text-anchor="middle" fill="white" font-size="10">P.UMIDO</text>
+
+  <rect x="120" y="336" width="180" height="126" fill="#fef3c7" rx="6"/>
+  <text x="210" y="372" text-anchor="middle" fill="#b45309" font-size="26" font-weight="bold">25 - 50%</text>
+  <text x="210" y="392" text-anchor="middle" fill="#92400e" font-size="12">da Capacidade</text>
+  <text x="210" y="408" text-anchor="middle" fill="#92400e" font-size="12">de Campo</text>
+  <rect x="130" y="424" width="160" height="10" rx="5" fill="#e5e7eb"/>
+  <rect x="130" y="424" width="64"  height="10" rx="5" fill="#d97706"/>
+  <text x="210" y="448" text-anchor="middle" fill="#d97706" font-size="11">ATENCAO</text>
+
+  <!-- Ilustracao: bolinha fragil que racha -->
+  <rect x="312" y="326" width="280" height="144" fill="#fffbeb" rx="6"/>
+  <!-- Mao esquematica (oval) -->
+  <ellipse cx="452" cy="380" rx="80" ry="50" fill="#d4956a" opacity="0.3"/>
+  <!-- Bolinha com rachadura -->
+  <circle cx="452" cy="375" r="36" fill="#8B5E3C"/>
+  <line x1="440" y1="358" x2="435" y2="410" stroke="#5c3a1e" stroke-width="2.5"/>
+  <line x1="458" y1="355" x2="466" y2="408" stroke="#5c3a1e" stroke-width="2"/>
+  <!-- Fragmento saindo -->
+  <path d="M480 362 L496 348 L500 362 Z" fill="#7c4a25"/>
+  <text x="452" y="432" text-anchor="middle" fill="#92400e" font-size="11" font-weight="bold">BOLINHA FRAGIL QUE RACHA AO DOBRAR</text>
+  <text x="452" y="446" text-anchor="middle" fill="#78350f" font-size="11">Sem mancha de agua nos dedos — cor media</text>
+  <text x="452" y="460" text-anchor="middle" fill="#78350f" font-size="11">Torroes achatam com pressao mas nao formam fita</text>
+
+  <rect x="604" y="336" width="196" height="126" fill="#fef9c3" rx="6"/>
+  <text x="702" y="372" text-anchor="middle" fill="#854d0e" font-size="13" font-weight="bold">IRRIGAR EM</text>
+  <text x="702" y="390" text-anchor="middle" fill="#854d0e" font-size="13" font-weight="bold">24-48h</text>
+  <text x="702" y="416" text-anchor="middle" fill="#713f12" font-size="11">Programar para</text>
+  <text x="702" y="432" text-anchor="middle" fill="#713f12" font-size="11">proximo turno</text>
+
+  <!-- ===== NIVEL 3 — 50 a 75% IDEAL ===== -->
+  <rect x="10" y="486" width="800" height="162" fill="#f0faf0" rx="4"/>
+  <rect x="10" y="486" width="6"   height="162" fill="#16a34a" rx="3"/>
+
+  <circle cx="70" cy="567" r="32" fill="#16a34a"/>
+  <text x="70" y="560" text-anchor="middle" fill="white" font-size="28" font-weight="bold">3</text>
+  <text x="70" y="580" text-anchor="middle" fill="white" font-size="10">IDEAL</text>
+
+  <rect x="120" y="504" width="180" height="126" fill="#dcfce7" rx="6"/>
+  <text x="210" y="540" text-anchor="middle" fill="#15803d" font-size="26" font-weight="bold">50 - 75%</text>
+  <text x="210" y="560" text-anchor="middle" fill="#166534" font-size="12">da Capacidade</text>
+  <text x="210" y="576" text-anchor="middle" fill="#166534" font-size="12">de Campo</text>
+  <rect x="130" y="592" width="160" height="10" rx="5" fill="#e5e7eb"/>
+  <rect x="130" y="592" width="100" height="10" rx="5" fill="#16a34a"/>
+  <!-- Badge IDEAL -->
+  <rect x="145" y="608" width="130" height="22" fill="#16a34a" rx="11"/>
+  <text x="210" y="623" text-anchor="middle" fill="white" font-size="12" font-weight="bold">FAIXA IDEAL</text>
+
+  <!-- Ilustracao: fita de solo entre dedos -->
+  <rect x="312" y="494" width="280" height="144" fill="#f0fdf4" rx="6"/>
+  <!-- Dedao e indicador -->
+  <rect x="370" y="510" width="30" height="70" fill="#d4956a" rx="8"/>
+  <rect x="412" y="528" width="30" height="52" fill="#d4956a" rx="8"/>
+  <!-- Fita de solo saindo -->
+  <rect x="398" y="516" width="16" height="64" fill="#5a3820" rx="3"/>
+  <!-- Indicador de comprimento 5-8cm -->
+  <line x1="440" y1="516" x2="440" y2="580" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="448" y="524" fill="#15803d" font-size="10">5-8 cm</text>
+  <text x="448" y="538" fill="#15803d" font-size="10">de fita</text>
+  <!-- Umidade leve nos dedos -->
+  <ellipse cx="378" cy="516" rx="8" ry="4" fill="#6b9fd4" opacity="0.4"/>
+  <text x="452" y="600" text-anchor="middle" fill="#166534" font-size="11" font-weight="bold">FITA DE 5-8 cm — COR ESCURA — FRESCO AO TOQUE</text>
+  <text x="452" y="614" text-anchor="middle" fill="#14532d" font-size="11">Bolinha firme com marcas de dedos definidas</text>
+  <text x="452" y="628" text-anchor="middle" fill="#14532d" font-size="11">Leve mancha de agua/solo nos dedos</text>
+
+  <rect x="604" y="504" width="196" height="126" fill="#dcfce7" rx="6"/>
+  <text x="702" y="544" text-anchor="middle" fill="#166534" font-size="13" font-weight="bold">AGUARDAR</text>
+  <text x="702" y="562" text-anchor="middle" fill="#166534" font-size="13" font-weight="bold">TURNO</text>
+  <text x="702" y="584" text-anchor="middle" fill="#14532d" font-size="11">Monitorar conforme</text>
+  <text x="702" y="600" text-anchor="middle" fill="#14532d" font-size="11">escala normal</text>
+
+  <!-- ===== NIVEL 4 — 75 a 100% ===== -->
+  <rect x="10" y="654" width="800" height="162" fill="#f0f7ff" rx="4"/>
+  <rect x="10" y="654" width="6"   height="162" fill="#0369a1" rx="3"/>
+
+  <circle cx="70" cy="735" r="32" fill="#0369a1"/>
+  <text x="70" y="728" text-anchor="middle" fill="white" font-size="28" font-weight="bold">4</text>
+  <text x="70" y="748" text-anchor="middle" fill="white" font-size="10">UMIDO</text>
+
+  <rect x="120" y="672" width="180" height="126" fill="#dbeafe" rx="6"/>
+  <text x="210" y="708" text-anchor="middle" fill="#1d4ed8" font-size="26" font-weight="bold">75 - 100%</text>
+  <text x="210" y="728" text-anchor="middle" fill="#1e40af" font-size="12">da Capacidade</text>
+  <text x="210" y="744" text-anchor="middle" fill="#1e40af" font-size="12">de Campo</text>
+  <rect x="130" y="760" width="160" height="10" rx="5" fill="#e5e7eb"/>
+  <rect x="130" y="760" width="144" height="10" rx="5" fill="#0369a1"/>
+  <text x="210" y="784" text-anchor="middle" fill="#0369a1" font-size="11">BEM ABASTECIDO</text>
+
+  <!-- Ilustracao: fita longa e brilhante -->
+  <rect x="312" y="662" width="280" height="144" fill="#eff6ff" rx="6"/>
+  <rect x="368" y="676" width="30" height="70" fill="#d4956a" rx="8"/>
+  <rect x="410" y="694" width="30" height="52" fill="#d4956a" rx="8"/>
+  <!-- Fita longa -->
+  <rect x="396" y="676" width="16" height="94" fill="#3d2610" rx="3"/>
+  <!-- Brilho na fita -->
+  <rect x="399" y="680" width="5"  height="86" fill="#6b9fd4" rx="2" opacity="0.5"/>
+  <!-- Mancha de agua nos dedos -->
+  <ellipse cx="376" cy="678" rx="12" ry="5" fill="#6b9fd4" opacity="0.6"/>
+  <ellipse cx="418" cy="696" rx="10" ry="4" fill="#6b9fd4" opacity="0.6"/>
+  <text x="452" y="785" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="bold">FITA LONGA E BRILHANTE — ESCORREGADIO</text>
+  <text x="452" y="799" text-anchor="middle" fill="#1e3a8a" font-size="11">Bolinha com marcas bem definidas</text>
+  <text x="452" y="793" text-anchor="middle" fill="#1e3a8a" font-size="11">  </text>
+  <text x="452" y="800" text-anchor="middle" fill="#1e3a8a" font-size="11">Mancha media/forte de agua e solo nos dedos</text>
+
+  <rect x="604" y="672" width="196" height="126" fill="#dbeafe" rx="6"/>
+  <text x="702" y="712" text-anchor="middle" fill="#1e40af" font-size="13" font-weight="bold">NAO IRRIGAR</text>
+  <text x="702" y="730" text-anchor="middle" fill="#1e40af" font-size="13" font-weight="bold">AINDA</text>
+  <text x="702" y="756" text-anchor="middle" fill="#1e3a8a" font-size="11">Solo bem abastecido</text>
+  <text x="702" y="772" text-anchor="middle" fill="#1e3a8a" font-size="11">Aguardar proximo</text>
+  <text x="702" y="788" text-anchor="middle" fill="#1e3a8a" font-size="11">turno de irrigacao</text>
+
+  <!-- ===== NIVEL 5 — acima 100% SATURADO ===== -->
+  <rect x="10" y="822" width="800" height="162" fill="#f0f0ff" rx="4"/>
+  <rect x="10" y="822" width="6"   height="162" fill="#7c3aed" rx="3"/>
+
+  <circle cx="70" cy="903" r="32" fill="#7c3aed"/>
+  <text x="70" y="896" text-anchor="middle" fill="white" font-size="22" font-weight="bold">+5</text>
+  <text x="70" y="916" text-anchor="middle" fill="white" font-size="9">SATURADO</text>
+
+  <rect x="120" y="840" width="180" height="126" fill="#ede9fe" rx="6"/>
+  <text x="210" y="876" text-anchor="middle" fill="#6d28d9" font-size="22" font-weight="bold">ACIMA 100%</text>
+  <text x="210" y="896" text-anchor="middle" fill="#5b21b6" font-size="12">da Capacidade</text>
+  <text x="210" y="912" text-anchor="middle" fill="#5b21b6" font-size="12">de Campo</text>
+  <rect x="130" y="928" width="160" height="10" rx="5" fill="#e5e7eb"/>
+  <rect x="130" y="928" width="160" height="10" rx="5" fill="#7c3aed"/>
+  <text x="210" y="952" text-anchor="middle" fill="#7c3aed" font-size="11">ENCHARCADO</text>
+
+  <!-- Ilustracao: agua livre escorrendo -->
+  <rect x="312" y="830" width="280" height="144" fill="#f5f3ff" rx="6"/>
+  <rect x="368" y="844" width="30" height="70" fill="#d4956a" rx="8"/>
+  <rect x="410" y="862" width="30" height="52" fill="#d4956a" rx="8"/>
+  <!-- Fita com agua -->
+  <rect x="396" y="844" width="16" height="94" fill="#2d1a08" rx="3"/>
+  <!-- Gotas de agua caindo -->
+  <ellipse cx="404" cy="946" rx="6" ry="9" fill="#3b82f6" opacity="0.8"/>
+  <ellipse cx="416" cy="952" rx="5" ry="7" fill="#3b82f6" opacity="0.7"/>
+  <ellipse cx="392" cy="950" rx="4" ry="6" fill="#3b82f6" opacity="0.6"/>
+  <!-- Agua nos dedos intensa -->
+  <ellipse cx="376" cy="846" rx="16" ry="7" fill="#3b82f6" opacity="0.7"/>
+  <ellipse cx="418" cy="864" rx="14" ry="6" fill="#3b82f6" opacity="0.7"/>
+  <text x="452" y="960" text-anchor="middle" fill="#4c1d95" font-size="11" font-weight="bold">AGUA LIVRE AO APERTAR — BRILHO INTENSO</text>
+  <text x="452" y="974" text-anchor="middle" fill="#3b0764" font-size="11">Bolinha mole — camada espessa de agua nos dedos</text>
+  <text x="452" y="966" text-anchor="middle" fill="#3b0764" font-size="11">  </text>
+
+  <rect x="604" y="840" width="196" height="126" fill="#ede9fe" rx="6"/>
+  <text x="702" y="876" text-anchor="middle" fill="#5b21b6" font-size="13" font-weight="bold">SUSPENDER</text>
+  <text x="702" y="894" text-anchor="middle" fill="#5b21b6" font-size="13" font-weight="bold">IRRIGACAO</text>
+  <text x="702" y="920" text-anchor="middle" fill="#4c1d95" font-size="11">Risco de asfixia</text>
+  <text x="702" y="936" text-anchor="middle" fill="#4c1d95" font-size="11">radicular e</text>
+  <text x="702" y="952" text-anchor="middle" fill="#4c1d95" font-size="11">perdas de nutrientes</text>
+
+  <!-- Rodape -->
+  <rect x="0" y="990" width="820" height="30" fill="#2d5a1e"/>
+  <text x="410" y="1010" text-anchor="middle" fill="#86efac" font-size="11">IrrigaAgro  |  Baseado em FAO Global Soil Doctors Programme / USDA-NRCS  |  CC = Capacidade de Campo</text>
+
+</svg>
