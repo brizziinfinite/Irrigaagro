@@ -445,8 +445,19 @@ export function findRecommendedSpeed(
   // Itera de speedFloor → 100%: velocidade maior = menos tempo = menos lâmina.
   // Retorna a maior % que ainda cobre a lâmina necessária.
   let bestSpeed: number | null = null
-  const startSpeed = Math.ceil(speedFloor / 10) * 10 // arredonda para múltiplo de 10
-  for (let speed = startSpeed; speed <= 100; speed += 10) {
+
+  // Monta lista de velocidades a testar: speedFloor exato + múltiplos de 5 acima dele
+  // Ex: speedFloor=47 → [47, 50, 55, 60, ..., 100]
+  // Ex: speedFloor=42 → [42, 45, 50, 55, ..., 100]
+  const speedsToTest: number[] = []
+  // Inclui o speedFloor exato para não perder lâminas abaixo do próximo múltiplo de 5
+  speedsToTest.push(speedFloor)
+  const firstMultiple = Math.ceil(speedFloor / 5) * 5
+  for (let speed = firstMultiple; speed <= 100; speed += 5) {
+    if (speed > speedFloor) speedsToTest.push(speed)
+  }
+
+  for (const speed of speedsToTest) {
     const durHours = pivot.time_360_h / (speed / 100)
     const volumeM3 = pivot.flow_rate_m3h * durHours
     const lamina = (volumeM3 / area) * 1000 // mm
@@ -457,11 +468,11 @@ export function findRecommendedSpeed(
   }
 
   // Se nenhuma velocidade acima do mínimo cobre a lâmina, retorna o mínimo
-  // (pivô vai ter que rodar no limite e aplicar mais que o necessário — ok agronômico)
+  // (lâmina necessária > capacidade por volta — pivô precisará de mais de uma passagem)
   if (bestSpeed === null) {
     const durMin = pivot.time_360_h / (speedFloor / 100)
     const laminaMin = (pivot.flow_rate_m3h * durMin / area) * 1000
-    if (laminaMin > 0) return Math.ceil(speedFloor / 10) * 10
+    if (laminaMin > 0) return speedFloor
   }
 
   return bestSpeed
@@ -764,9 +775,10 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
   // peakReachedCta indica que passou por CC durante o dia, mas o valor exibido é o pós-ETc
   const fieldCapacityPercent = cta > 0 ? (adcNew / cta) * 100 : 0
 
+  const alertThresholdPct = pivot?.alert_threshold_percent ?? null
   const irrigationTargetPct = pivot?.irrigation_target_percent ?? null
-  const status = getIrrigationStatus(adcNew, cad, isIrrigating)
-  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew, null, irrigationTargetPct)
+  const status = getIrrigationStatus(adcNew, cad, isIrrigating, cta, alertThresholdPct)
+  const recommendedDepthMm = calcRecommendedIrrigation(cta, cad, adcNew, alertThresholdPct, irrigationTargetPct)
   const recommendedSpeedPercent = pivot ? findRecommendedSpeed(pivot, recommendedDepthMm) : null
 
   return {
