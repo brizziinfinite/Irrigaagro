@@ -39,7 +39,7 @@ function calcETo(tmax: number, tmin: number, rh: number, wind: number, rgWm2: nu
   const ws = Math.acos(-Math.tan(latR) * Math.tan(d))
   const ra = ((24 * 60) / Math.PI) * 0.082 * dr *
     (ws * Math.sin(latR) * Math.sin(d) + Math.cos(latR) * Math.cos(d) * Math.sin(ws))
-  const rso = (0.75 + 2e-5 * 600) * ra
+  const rso = (0.75 + 2e-5 * 500) * ra
   const rsRso = rso > 0 ? Math.min(rg / rso, 1) : 0.5
   const ea = (rh / 100) * 0.5 * (
     0.6108 * Math.exp((17.27 * tmax) / (tmax + 237.3)) +
@@ -559,46 +559,44 @@ export async function GET(req: NextRequest) {
       continue
     }
 
-    // ── ETo: prioridade evapoPlugfield → Rs NASA → Rs estimada ──────────
-    // 1. Se a estação já calculou ETo (campo evapo), usa direto — mais preciso
-    //    especialmente em dias nublados onde Rs estimada superestima muito.
-    // 2. Se não, tenta Rs NASA (disponível com 4-5 dias de latência).
-    // 3. Fallback: Rs estimada da estação com fator de correção.
+    // ── ETo: sempre FAO-56 com dados climáticos ──────────────────────────────
+    // O campo evapo do sensor Plugfield mede evaporação de tanque e subestima
+    // ~30-50% em relação ao FAO-56 calculado com variáveis climáticas.
+    // Regra: SEMPRE calcular Penman-Monteith FAO-56 com as variáveis climáticas
+    // (tmax, tmin, humidity, wind, solarRadiation).
+    // O evapo bruto do sensor é salvo apenas em eto_plugfield_mm como referência.
+    //
+    // Prioridade de Rs (radiação solar):
+    // 1. Rs NASA (referência mais precisa, com ~8 dias de latência)
+    // 2. Rs do sensor Plugfield (ou Open-Meteo) com fator de correção
     let rsSource = 'plugfield_fallback'
     let rgForEto = weatherDay.solarRadiation
-    let eto: number
 
     const doy = getDayOfYear(dateToProcess)
     const lat = pivot.latitude ?? -15
 
-    if (weatherDay.evapoPlugfield != null && weatherDay.evapoPlugfield > 0) {
-      // Usa ETo da estação diretamente — mais confiável para dias nublados/chuvosos
-      eto = weatherDay.evapoPlugfield
-      rsSource = 'plugfield_evapo'
-    } else {
-      // Tenta Rs NASA
-      if (pivot.latitude != null && pivot.longitude != null) {
-        const rsNasaMJ = await fetchRsFromNASA(pivot.latitude, pivot.longitude, dateToProcess)
-        if (rsNasaMJ !== null) {
-          rgForEto = rsNasaMJ / 0.0864
-          rsSource = 'nasa'
-        }
+    // Tenta Rs NASA (disponível com ~8 dias de latência)
+    if (pivot.latitude != null && pivot.longitude != null) {
+      const rsNasaMJ = await fetchRsFromNASA(pivot.latitude, pivot.longitude, dateToProcess)
+      if (rsNasaMJ !== null) {
+        rgForEto = rsNasaMJ / 0.0864
+        rsSource = 'nasa'
       }
+    }
 
-      eto = calcETo(
-        weatherDay.tempMax, weatherDay.tempMin,
-        weatherDay.humidity, weatherDay.windSpeed,
-        rgForEto, lat, doy
-      )
+    let eto = calcETo(
+      weatherDay.tempMax, weatherDay.tempMin,
+      weatherDay.humidity, weatherDay.windSpeed,
+      rgForEto, lat, doy
+    )
 
-      // Fator de correção só quando usa Rs estimada da estação
-      if (rsSource === 'plugfield_fallback') {
-        const factor =
-          (station?.rs_correction_factor ?? null) ??
-          (pivot.rs_correction_factor ?? null) ??
-          parseFloat(process.env.ETO_PLUGFIELD_CORRECTION_FACTOR ?? '0.82')
-        eto = Math.round(eto * factor * 100) / 100
-      }
+    // Fator de correção só quando usa Rs estimada da estação (não NASA)
+    if (rsSource === 'plugfield_fallback') {
+      const factor =
+        (station?.rs_correction_factor ?? null) ??
+        (pivot.rs_correction_factor ?? null) ??
+        parseFloat(process.env.ETO_PLUGFIELD_CORRECTION_FACTOR ?? '0.82')
+      eto = Math.round(eto * factor * 100) / 100
     }
 
     // Só grava em weather_data se o pivô tem estação cadastrada
