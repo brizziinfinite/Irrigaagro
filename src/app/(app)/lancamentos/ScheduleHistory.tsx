@@ -1370,21 +1370,26 @@ export function ScheduleHistory({
             })
           : null
 
+        const canPrint = printRowsFiltered.length > 0 &&
+          (printBatchIds ? printSelectedBatches.size > 0 : printSelectedPivots.size > 0)
+
         return (
+          // Overlay fixo — SEM overflow (não scrola o container raiz)
           <div style={{
             position: 'fixed', inset: 0, zIndex: 3000,
-            background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(6px)',
+            background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(6px)',
             display: 'flex', flexDirection: 'column',
-            alignItems: 'center', padding: '20px 16px',
-            overflowY: 'auto',
           }}>
-            {/* Toolbar do preview */}
+            {/* ── Toolbar FIXA no topo — nunca some com o scroll ── */}
             <div style={{
-              width: '100%', maxWidth: 860,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              marginBottom: 16, flexShrink: 0, flexWrap: 'wrap', gap: 12,
+              flexShrink: 0,
+              display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+              flexWrap: 'wrap', gap: 12,
+              padding: '14px 20px',
+              background: 'rgba(13,18,26,0.98)',
+              borderBottom: '1px solid rgba(255,255,255,0.07)',
             }}>
-              {/* Título + seletor de pivôs */}
+              {/* Esquerda: título + seleção de lotes/pivôs */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>Preview de impressão</p>
@@ -1395,59 +1400,49 @@ export function ScheduleHistory({
 
                 {/* Seleção de lotes — aparece no modo "imprimir tudo" */}
                 {availBatches && (
-                  <div>
-                    <p style={{ margin: '0 0 6px', fontSize: 10, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>
-                      Programações
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                      {availBatches.map(b => {
-                        const selected = printSelectedBatches.has(b.batchId)
-                        return (
-                          <button
-                            key={b.batchId}
-                            onClick={() => setPrintSelectedBatches(prev => {
-                              const next = new Set(prev)
-                              selected ? next.delete(b.batchId) : next.add(b.batchId)
-                              return next
-                            })}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 10,
-                              padding: '7px 12px', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
-                              border: `1px solid ${selected ? 'rgba(0,147,208,0.45)' : 'rgba(255,255,255,0.08)'}`,
-                              background: selected ? 'rgba(0,147,208,0.10)' : 'rgba(255,255,255,0.02)',
-                              transition: 'all 0.15s',
-                            }}>
-                            <span style={{
-                              width: 15, height: 15, borderRadius: 4, flexShrink: 0,
-                              border: `2px solid ${selected ? '#0093D0' : '#445566'}`,
-                              background: selected ? '#0093D0' : 'transparent',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              {selected && (
-                                <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-                                  <polyline points="1.5,5 4,7.5 8.5,2" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              )}
-                            </span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <span style={{ fontSize: 12, fontWeight: selected ? 700 : 500, color: selected ? '#c8d8e8' : '#667788' }}>
-                                {b.pivotName}
-                              </span>
-                              <span style={{ fontSize: 11, color: selected ? '#0093D0' : '#445566', marginLeft: 8 }}>
-                                {b.dateRange} · {b.days}d
-                              </span>
-                            </div>
-                            <span style={{ fontSize: 9, color: '#334455', whiteSpace: 'nowrap' }}>
-                              {b.createdAt}
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {availBatches.map(b => {
+                      const selected = printSelectedBatches.has(b.batchId)
+                      return (
+                        <button
+                          key={b.batchId}
+                          onClick={() => setPrintSelectedBatches(prev => {
+                            const next = new Set(prev)
+                            selected ? next.delete(b.batchId) : next.add(b.batchId)
+                            return next
+                          })}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '6px 11px', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
+                            border: `1px solid ${selected ? 'rgba(0,147,208,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                            background: selected ? 'rgba(0,147,208,0.12)' : 'rgba(255,255,255,0.03)',
+                            transition: 'all 0.15s',
+                          }}>
+                          <span style={{
+                            width: 13, height: 13, borderRadius: 3, flexShrink: 0,
+                            border: `2px solid ${selected ? '#0093D0' : '#445566'}`,
+                            background: selected ? '#0093D0' : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            {selected && (
+                              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                                <polyline points="1.5,5 4,7.5 8.5,2" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </span>
+                          <span style={{ fontSize: 12, fontWeight: selected ? 700 : 400, color: selected ? '#c8d8e8' : '#667788' }}>
+                            {b.pivotName}
+                          </span>
+                          <span style={{ fontSize: 10, color: selected ? '#0093D0' : '#445566' }}>
+                            {b.dateRange} · {b.days}d
+                          </span>
+                        </button>
+                      )
+                    })}
                   </div>
                 )}
 
-                {/* Checkboxes de pivôs — só aparece se tiver mais de 1 e não houver seleção de lotes */}
+                {/* Checkboxes de pivôs — só quando não há seleção de lotes e há mais de 1 pivô */}
                 {!availBatches && availPivots.length > 1 && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {availPivots.map(p => {
@@ -1469,7 +1464,7 @@ export function ScheduleHistory({
                             fontSize: 12, fontWeight: selected ? 700 : 400, transition: 'all 0.15s',
                           }}>
                           <span style={{
-                            width: 14, height: 14, borderRadius: 4, flexShrink: 0,
+                            width: 13, height: 13, borderRadius: 3, flexShrink: 0,
                             border: `2px solid ${selected ? '#0093D0' : '#445566'}`,
                             background: selected ? '#0093D0' : 'transparent',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1488,43 +1483,43 @@ export function ScheduleHistory({
                 )}
               </div>
 
-              {/* Botões Fechar / Imprimir */}
-              <div style={{ display: 'flex', gap: 10, alignSelf: 'flex-start' }}>
+              {/* Direita: botões Fechar / Imprimir — sempre visíveis */}
+              <div style={{ display: 'flex', gap: 10, alignSelf: 'center', flexShrink: 0 }}>
                 <button onClick={handlePrintClose} style={{
                   padding: '9px 18px', borderRadius: 8,
                   border: '1px solid rgba(255,255,255,0.12)', background: 'transparent',
                   color: '#8899aa', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                 }}>Fechar</button>
-                {(() => {
-                  const canPrint = printRowsFiltered.length > 0 &&
-                    (printBatchIds ? printSelectedBatches.size > 0 : printSelectedPivots.size > 0)
-                  return (
-                    <button
-                      onClick={handlePrintConfirm}
-                      disabled={!canPrint}
-                      style={{
-                        padding: '9px 18px', borderRadius: 8, border: 'none',
-                        background: !canPrint ? '#1a3a2a' : '#16a34a',
-                        color: !canPrint ? '#334433' : '#fff',
-                        fontSize: 13, fontWeight: 700,
-                        cursor: !canPrint ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 6,
-                      }}>
-                      <Printer size={14} /> Imprimir
-                    </button>
-                  )
-                })()}
+                <button
+                  onClick={handlePrintConfirm}
+                  disabled={!canPrint}
+                  style={{
+                    padding: '9px 18px', borderRadius: 8, border: 'none',
+                    background: !canPrint ? 'rgba(22,163,74,0.2)' : '#16a34a',
+                    color: !canPrint ? '#334433' : '#fff',
+                    fontSize: 13, fontWeight: 700,
+                    cursor: !canPrint ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                  <Printer size={14} /> Imprimir
+                </button>
               </div>
             </div>
 
-            {/* Folha simulada */}
+            {/* ── Área scrollável: folha simulada ── */}
             <div style={{
-              width: '100%', maxWidth: 860,
-              background: '#fff', borderRadius: 4,
-              padding: '32px 36px',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+              flex: 1, overflowY: 'auto',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              padding: '24px 16px 40px',
             }}>
-              <PrintLayout schedules={printRowsFiltered} metas={metas} sectorsMap={sectorsMap} inline />
+              <div style={{
+                width: '100%', maxWidth: 860,
+                background: '#fff', borderRadius: 4,
+                padding: '32px 36px',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+              }}>
+                <PrintLayout schedules={printRowsFiltered} metas={metas} sectorsMap={sectorsMap} inline />
+              </div>
             </div>
           </div>
         )
