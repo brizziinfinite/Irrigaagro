@@ -534,7 +534,34 @@ export async function GET(req: NextRequest) {
       weatherDay = await fetchFromGoogleSheets(config.spreadsheet_id, dateToProcess, config.gid)
     }
 
-    // 3. Fallback: Open-Meteo — sempre tenta se os anteriores falharem
+    // 3. Fallback: média dos últimos 3 dias da própria estação
+    // O microclima local é muito mais representativo do que Open-Meteo,
+    // que superestima ETo sistematicamente nesta região.
+    if (!weatherDay && station) {
+      const { data: last3 } = await (supabase as any)
+        .from('weather_data')
+        .select('temp_max, temp_min, humidity_percent, wind_speed_ms, solar_radiation_wm2')
+        .eq('station_id', station.id)
+        .lt('date', dateToProcess)
+        .order('date', { ascending: false })
+        .limit(3)
+
+      if (last3 && last3.length >= 2) {
+        const avg = (field: string) =>
+          last3.reduce((s: number, r: Record<string, unknown>) => s + Number(r[field] ?? 0), 0) / last3.length
+        weatherDay = {
+          tempMax:        avg('temp_max'),
+          tempMin:        avg('temp_min'),
+          humidity:       avg('humidity_percent'),
+          windSpeed:      avg('wind_speed_ms'),
+          solarRadiation: avg('solar_radiation_wm2'),
+          rainfall:       0, // sem dado de chuva — conservador
+          source:         'station_avg3',
+        }
+      }
+    }
+
+    // 4. Último recurso: Open-Meteo (superestima ETo na região — usar só se não houver histórico local)
     if (!weatherDay && pivot.latitude != null && pivot.longitude != null) {
       try {
         const omData = await getWeatherByPivotGeolocation(pivot.latitude, pivot.longitude, dateToProcess)
