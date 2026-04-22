@@ -9,68 +9,100 @@ import type { DailyManagement } from '@/types/database'
 
 interface Props {
   history: DailyManagement[]
-  threshold?: number          // alert_threshold_percent (ex: 70%)
-  irrigationTarget?: number   // irrigation_target_percent (ex: 80%)
+  threshold?: number              // alert_threshold_percent (ex: 70%)
+  fFactor?: number | null         // f_factor do estágio atual
   fieldCapacity?: number | null   // CC em % volumétrica (ex: 30.49)
   wiltingPoint?: number | null    // PM em % volumétrica (ex: 16.1)
   pivotName?: string
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label, cc, pm }: any) {
+function CustomTooltip({ active, payload, label, lineSeg, lineCrit, cc, pm }: any) {
   if (!active || !payload?.length) return null
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const moistEntry = payload.find((p: any) => p.dataKey === 'umidVol')
+  const moistEntry = payload.find((p: any) => p.dataKey === 'umidVol' || p.dataKey === 'umidVolOk' || p.dataKey === 'umidVolWarn')
   const umid = moistEntry ? Number(moistEntry.value) : null
-  const dasEntry = payload.find((p: any) => p.dataKey === 'das')  // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dasEntry = payload.find((p: any) => p.dataKey === 'das')
   const dasVal = dasEntry ? Number(dasEntry.value) : null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fcPctEntry = payload.find((p: any) => p.dataKey === 'fcPct')
+  const fcPct = fcPctEntry ? Number(fcPctEntry.value) : (
+    umid !== null && cc !== null && pm !== null && cc > pm
+      ? Math.round(((umid - pm) / (cc - pm)) * 100)
+      : null
+  )
 
   let zoneLabel = null
   let zoneColor = '#22c55e'
-  if (umid !== null && cc && pm) {
-    const range = cc - pm
-    const pct = range > 0 ? ((umid - pm) / range) * 100 : 0
-    if (pct >= 80)      { zoneLabel = 'Zona Segura';    zoneColor = '#22c55e' }
-    else if (pct >= 70) { zoneLabel = 'Zona de Atenção'; zoneColor = '#f59e0b' }
-    else                { zoneLabel = 'Zona Crítica';   zoneColor = '#ef4444' }
+  if (umid !== null) {
+    if (lineSeg !== null && umid >= lineSeg)        { zoneLabel = 'Seguro';           zoneColor = '#38bdf8' }
+    else if (lineCrit !== null && umid >= lineCrit) { zoneLabel = 'Alerta';           zoneColor = '#f59e0b' }
+    else                                            { zoneLabel = 'Estresse Hídrico'; zoneColor = '#ef4444' }
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const seen = new Set<string>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const displayEntries = payload.filter((entry: any) => {
+    if (entry.dataKey === 'das') return false
+    if (entry.value === null || entry.value === undefined) return false
+    if (entry.value === 0 && (entry.dataKey === 'rain' || entry.dataKey === 'irr')) return false
+    // Unifica as duas séries de umidade numa só linha no tooltip
+    const key = (entry.dataKey === 'umidVolOk' || entry.dataKey === 'umidVolWarn') ? 'umid' : entry.dataKey
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 
   return (
     <div style={{
-      background: 'rgba(10,18,28,0.97)',
-      border: '1px solid rgba(255,255,255,0.1)',
-      borderRadius: 12,
-      padding: '12px 16px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-      backdropFilter: 'blur(12px)',
-      minWidth: 172,
+      background: 'rgba(8,14,22,0.97)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 10,
+      padding: '10px 14px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+      backdropFilter: 'blur(16px)',
+      minWidth: 160,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingBottom: 6, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, paddingBottom: 5, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>{label}</p>
         {dasVal !== null && (
-          <span style={{ fontSize: 10, color: '#556677', background: 'rgba(255,255,255,0.05)', borderRadius: 4, padding: '1px 6px' }}>
+          <span style={{ fontSize: 10, color: '#445566', background: 'rgba(255,255,255,0.04)', borderRadius: 4, padding: '1px 5px' }}>
             DAS {dasVal}
           </span>
         )}
       </div>
-      {payload.map((entry: any, i: number) => {  // eslint-disable-line @typescript-eslint/no-explicit-any
-        if (entry.dataKey === 'das') return null
-        if (entry.value === 0 && (entry.dataKey === 'rain' || entry.dataKey === 'irr')) return null
-        const isUmid  = entry.dataKey === 'umidVol'
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {displayEntries.map((entry: any, i: number) => {
+        const isUmid  = entry.dataKey === 'umidVolOk' || entry.dataKey === 'umidVolWarn'
         const isIrrig = entry.dataKey === 'irr'
+        const name    = isUmid ? 'Umidade' : entry.name
+        const color   = isUmid ? (umid !== null && lineSeg !== null && umid >= lineSeg ? '#38bdf8' : '#ef4444') : entry.color
         return (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: entry.color, flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: '#8899aa', flex: 1 }}>{entry.name}:</span>
-            <span style={{ fontSize: 12, color: isIrrig ? '#22d3ee' : '#fff', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
-              {Number(entry.value).toFixed(isUmid ? 2 : 1)}{isUmid ? '%' : ' mm'}
-            </span>
+          <div key={i}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 3 }}>
+              <div style={{ width: 7, height: 7, borderRadius: 2, background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: '#667788', flex: 1 }}>{name}:</span>
+              <span style={{ fontSize: 12, color: isIrrig ? '#22d3ee' : '#e2e8f0', fontWeight: 700, fontFamily: 'monospace' }}>
+                {Number(entry.value).toFixed(isUmid ? 1 : 1)}{isUmid ? '%' : ' mm'}
+              </span>
+            </div>
+            {isUmid && fcPct !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 2 }}>
+                <div style={{ width: 7, height: 7, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, color: '#445566', flex: 1 }}>% da CC:</span>
+                <span style={{ fontSize: 12, color: color, fontWeight: 700, fontFamily: 'monospace' }}>
+                  {fcPct.toFixed(0)}%
+                </span>
+              </div>
+            )}
           </div>
         )
       })}
       {zoneLabel && (
-        <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: 10, color: zoneColor, fontWeight: 600 }}>
+        <div style={{ marginTop: 7, paddingTop: 5, borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 10, color: zoneColor, fontWeight: 600, letterSpacing: '0.02em' }}>
           ● {zoneLabel}
         </div>
       )}
@@ -81,7 +113,7 @@ function CustomTooltip({ active, payload, label, cc, pm }: any) {
 export default function WaterBalanceChart({
   history,
   threshold = 70,
-  irrigationTarget = 80,
+  fFactor,
   fieldCapacity,
   wiltingPoint,
   pivotName,
@@ -93,203 +125,359 @@ export default function WaterBalanceChart({
   const hasVolAxis = cc !== null && pm !== null && cc > pm
 
   // Converte field_capacity_percent (0–100%) para % volumétrica real
-  // umid_vol = PM + (pct/100) × (CC - PM)
   const toVol = (pct: number | null): number | null => {
     if (pct === null) return null
     if (!hasVolAxis) return pct
     return pm! + (pct / 100) * (cc! - pm!)
   }
 
-  // Linhas de referência em % volumétrica
-  const lineCC     = hasVolAxis ? cc!                                    : 100
-  const lineSeg    = hasVolAxis ? pm! + (irrigationTarget / 100) * (cc! - pm!) : irrigationTarget
-  const lineCrit   = hasVolAxis ? pm! + (threshold / 100) * (cc! - pm!) : threshold
-  const linePM     = hasVolAxis ? pm!                                    : 0
+  // Linhas de referência
+  const f        = fFactor ?? 0.40
+  const lineCC   = hasVolAxis ? cc!                                    : null
+  const lineSeg  = hasVolAxis ? pm! + (cc! - pm!) * (1 - f)           : null
+  const lineCrit = hasVolAxis ? pm! + (threshold / 100) * (cc! - pm!) : null
+  const linePM   = hasVolAxis ? pm!                                    : null
 
-  const data = [...history]
+  const sorted = [...history]
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(-30)
-    .map(r => ({
-      dateLabel: r.date.substring(8, 10) + '/' + r.date.substring(5, 7),
-      das:     r.das ?? null,
-      eto:     r.eto_mm ?? 0,
-      etc:     r.etc_mm ?? 0,
-      rain:    r.rainfall_mm ?? 0,
-      irr:     r.actual_depth_mm ?? 0,
-      umidVol: toVol(r.field_capacity_percent ?? null),
-    }))
+
+  // Dois segmentos de umidade: OK (verde) e WARN (vermelho)
+  // No ponto de cruzamento AMBAS as séries recebem lineSeg — sem gap
+  const vols = sorted.map(r => toVol(r.field_capacity_percent ?? null))
+
+  const data = sorted.map((r, i) => {
+    const vol  = vols[i]
+    const prev = i > 0 ? vols[i - 1] : null
+    const next = i < vols.length - 1 ? vols[i + 1] : null
+
+    let umidVolOk: number | null   = null
+    let umidVolWarn: number | null = null
+
+    if (vol !== null && lineSeg !== null) {
+      const isWarn     = vol < lineSeg
+      const wasOk      = prev !== null && prev >= lineSeg
+      const willBeWarn = next !== null && next < lineSeg
+
+      if (!isWarn) {
+        // Ponto OK — aparece na série verde
+        umidVolOk = vol
+        // Se o próximo cruza para baixo: coloca lineSeg aqui e também abre o vermelho
+        if (willBeWarn) {
+          umidVolOk   = lineSeg
+          umidVolWarn = lineSeg
+        }
+      } else {
+        // Ponto WARN — aparece na série vermelha
+        umidVolWarn = vol
+        // Se o anterior estava acima: já teremos iniciado o vermelho em lineSeg no step anterior
+        // Mas também coloca lineSeg aqui para conectar sem gap
+        if (wasOk) {
+          umidVolOk   = lineSeg
+          umidVolWarn = lineSeg
+        }
+      }
+    } else if (vol !== null) {
+      // Sem eixo volumétrico — usa linha única OK
+      umidVolOk = vol
+    }
+
+    return {
+      dateLabel:   r.date.substring(8, 10) + '/' + r.date.substring(5, 7),
+      das:         r.das ?? null,
+      eto:         r.eto_mm ?? 0,
+      etc:         r.etc_mm ?? 0,
+      rain:        r.rainfall_mm ?? 0,
+      irr:         r.actual_depth_mm ?? 0,
+      umidVol:     vol,
+      umidVolOk,
+      umidVolWarn,
+    }
+  })
 
   const hasIrrigation = data.some(d => d.irr > 0)
 
-  // Domínio do eixo Y direito
-  const yMin = hasVolAxis ? Math.floor(pm! - 0.5)  : 0
-  const yMax = hasVolAxis ? Math.ceil(cc! + 0.5)   : 100
+  const yMin = hasVolAxis ? Math.floor(pm! - 0.5) : 0
+  const yMax = hasVolAxis ? Math.ceil(cc! + 0.5)  : 100
   const yDomain: [number, number] = [yMin, yMax]
+
+  // Cor atual do último ponto (para badge no header)
+  const lastVol   = data[data.length - 1]?.umidVol ?? null
+  const currentOk = lastVol !== null && lineSeg !== null ? lastVol >= lineSeg : null
 
   return (
     <div style={{
-      background: 'linear-gradient(160deg, #0a1218, #0f1923)',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: 'linear-gradient(160deg, #080e16 0%, #0c1520 100%)',
+      border: '1px solid rgba(255,255,255,0.05)',
       borderRadius: 16,
       overflow: 'hidden',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
     }}>
       {/* Header */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <BarChart2 size={14} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>Balanço Hídrico — Últimos 30 dias</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#d4dce8', letterSpacing: '0.01em' }}>Balanço Hídrico</span>
         {pivotName && (
-          <span style={{ fontSize: 11, color: '#0093D0', background: 'rgba(0,147,208,0.10)', border: '1px solid rgba(0,147,208,0.2)', borderRadius: 6, padding: '2px 8px' }}>
+          <span style={{ fontSize: 11, color: '#0093D0', background: 'rgba(0,147,208,0.10)', border: '1px solid rgba(0,147,208,0.18)', borderRadius: 6, padding: '2px 8px' }}>
             {pivotName}
           </span>
         )}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
-            <div style={{ width: 10, height: 3, background: '#f59e0b', borderRadius: 2 }} /> ETo
+        {currentOk !== null && lastVol !== null && (
+          <span style={{
+            fontSize: 11, fontWeight: 700,
+            color: currentOk ? '#38bdf8' : '#ef4444',
+            background: currentOk ? 'rgba(56,189,248,0.08)' : 'rgba(239,68,68,0.08)',
+            border: `1px solid ${currentOk ? 'rgba(56,189,248,0.2)' : 'rgba(239,68,68,0.2)'}`,
+            borderRadius: 6, padding: '2px 8px',
+            fontFamily: 'monospace',
+          }}>
+            {lastVol.toFixed(1)}% {currentOk ? '✓' : '↓'}
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
-            <div style={{ width: 10, height: 3, background: '#22d3ee', borderRadius: 2 }} /> ETc
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
-            <div style={{ width: 8, height: 8, background: 'rgba(200,220,255,0.65)', borderRadius: 2 }} /> Chuva
-          </span>
-          {hasIrrigation && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
-              <div style={{ width: 8, height: 8, background: 'rgba(0,147,208,0.75)', borderRadius: 2 }} /> Irrigação
+        )}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+          {[
+            { color: '#38bdf8',               dot: false, label: 'Umidade OK'  },
+            { color: '#ef4444',               dot: false, label: 'Umidade ↓'   },
+            { color: '#60a5fa',               dot: false, label: 'CC'          },
+            { color: '#fb923c',               dot: false, label: 'Seg'         },
+            { color: '#ef4444',               dot: false, label: 'PM'          },
+            { color: '#f59e0b', dashed: true, dot: false, label: 'Alerta'      },
+            { color: '#f59e0b',               dot: false, label: 'ETo'         },
+            { color: '#22d3ee',               dot: false, label: 'ETc'         },
+            { color: 'rgba(180,210,255,0.7)', bar: true,  label: 'Chuva'       },
+            ...(hasIrrigation ? [{ color: 'rgba(0,147,208,0.8)', bar: true, label: 'Irrigação' }] : []),
+          ].map(({ color, dashed, bar, label }) => (
+            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#445566' }}>
+              {bar
+                ? <div style={{ width: 7, height: 10, background: color, borderRadius: '2px 2px 0 0' }} />
+                : dashed
+                  ? <svg width="14" height="3"><line x1="0" y1="1.5" x2="14" y2="1.5" stroke={color} strokeWidth="1.5" strokeDasharray="3 2" /></svg>
+                  : <div style={{ width: 12, height: 2.5, background: color, borderRadius: 2 }} />
+              }
+              {label}
             </span>
-          )}
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
-            <div style={{ width: 10, height: 3, background: '#22c55e', borderRadius: 2 }} /> Umidade
-          </span>
+          ))}
         </div>
       </div>
 
       {/* Zone badges */}
-      <div style={{ display: 'flex', gap: 8, padding: '8px 20px 0', flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e' }}>
-          Zona Segura ≥{lineSeg.toFixed(hasVolAxis ? 1 : 0)}{hasVolAxis ? '%' : '%'}
-        </span>
-        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}>
-          Atenção {lineCrit.toFixed(hasVolAxis ? 1 : 0)}–{(lineSeg - 0.1).toFixed(hasVolAxis ? 1 : 0)}%
-        </span>
-        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}>
-          Crítico &lt;{lineCrit.toFixed(hasVolAxis ? 1 : 0)}%
-        </span>
+      <div style={{ display: 'flex', gap: 6, padding: '8px 20px 0', flexWrap: 'wrap', alignItems: 'center' }}>
+        {lineSeg !== null && (
+          <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(56,189,248,0.07)', border: '1px solid rgba(56,189,248,0.18)', color: '#38bdf8' }}>
+            Seguro ≥ {lineSeg.toFixed(1)}%
+          </span>
+        )}
+        {lineCrit !== null && lineSeg !== null && (
+          <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.18)', color: '#f59e0b' }}>
+            Alerta {lineCrit.toFixed(1)} – {(lineSeg - 0.1).toFixed(1)}%
+          </span>
+        )}
+        {lineCrit !== null && (
+          <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', color: '#ef4444' }}>
+            Estresse &lt; {lineCrit.toFixed(1)}%
+          </span>
+        )}
         {hasVolAxis && (
-          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#445566' }}>
+          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#334455' }}>
             CC {cc!.toFixed(1)}% · PM {pm!.toFixed(1)}%
           </span>
         )}
       </div>
 
       {/* Chart */}
-      <div style={{ padding: '12px 16px 0 0', width: '100%', height: 300 }}>
+      <div style={{ padding: '10px 12px 0 0', width: '100%', height: 300, position: 'relative' }}>
+        <style>{`
+          @keyframes wbcWave1 { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+          @keyframes wbcWave2 { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        `}</style>
+        {/* Onda animada — flutua na superfície da umidade atual */}
+        {hasVolAxis && lastVol !== null && (() => {
+          // Mapeamento do valor volumétrico para posição Y em pixels
+          // Recharts: margin top=6, bottom=0, mas eixos e labels ocupam ~30px no fundo
+          const chartTopPx   = 6
+          const chartBottomPx = 30   // espaço do eixo X
+          const plotH = 300 - chartTopPx - chartBottomPx
+          const pct = (yMax - lastVol) / (yMax - yMin)   // 0 = topo, 1 = base
+          const waveTopPx = chartTopPx + pct * plotH
+          const isOk = currentOk !== false
+          const waveColor = isOk ? '#38bdf8' : '#ef4444'
+          const enc = encodeURIComponent(waveColor)
+          return (
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+              <div style={{
+                position: 'absolute',
+                top: waveTopPx - 7,
+                left: 0, width: '200%', height: 14,
+                animation: 'wbcWave1 3s linear infinite',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 14'%3E%3Cpath d='M0,7 C50,1 100,13 150,7 C200,1 250,13 300,7 C350,1 400,13 400,7 L400,14 L0,14 Z' fill='${enc}' opacity='0.40'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'repeat-x', backgroundSize: '400px 14px',
+              }} />
+              <div style={{
+                position: 'absolute',
+                top: waveTopPx - 3,
+                left: 0, width: '200%', height: 9,
+                animation: 'wbcWave2 2s linear infinite reverse',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 9'%3E%3Cpath d='M0,4 C60,0 130,9 200,4 C270,0 340,9 400,4 L400,9 L0,9 Z' fill='${enc}' opacity='0.20'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'repeat-x', backgroundSize: '400px 9px',
+              }} />
+            </div>
+          )
+        })()}
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+          <ComposedChart data={data} margin={{ top: 6, right: 4, left: 0, bottom: 0 }}>
             <defs>
-              <linearGradient id="wbcMoistureArea" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(34,197,94,0.10)" />
-                <stop offset="100%" stopColor="rgba(239,68,68,0.15)" />
+              <linearGradient id="wbcRainGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(180,210,255,0.80)" />
+                <stop offset="100%" stopColor="rgba(180,210,255,0.30)" />
+              </linearGradient>
+              <linearGradient id="wbcIrrGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(0,147,208,0.90)" />
+                <stop offset="100%" stopColor="rgba(0,147,208,0.40)" />
+              </linearGradient>
+              {/* Preenchimento "coluna d'água" — azul oceano quando OK */}
+              <linearGradient id="wbcWaterOk" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="rgba(56,189,248,0.25)" />
+                <stop offset="100%" stopColor="rgba(56,189,248,0.06)" />
+              </linearGradient>
+              {/* Preenchimento "coluna d'água" — vermelho quando WARN */}
+              <linearGradient id="wbcWaterWarn" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="rgba(239,68,68,0.25)" />
+                <stop offset="100%" stopColor="rgba(239,68,68,0.07)" />
               </linearGradient>
             </defs>
 
             <YAxis
               yAxisId="left"
               orientation="left"
-              stroke="rgba(255,255,255,0.06)"
-              tick={{ fill: '#445566', fontSize: 10 }}
+              stroke="transparent"
+              tick={{ fill: '#334455', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
-              width={32}
+              width={28}
             />
             <YAxis
               yAxisId="right"
               orientation="right"
               domain={yDomain}
-              stroke="rgba(255,255,255,0.06)"
-              tick={{ fill: '#445566', fontSize: 10 }}
+              stroke="transparent"
+              tick={{ fill: '#334455', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
-              width={36}
-              tickFormatter={v => `${v.toFixed(hasVolAxis ? 1 : 0)}`}
+              width={38}
+              tickFormatter={v => `${v.toFixed(1)}`}
             />
             <XAxis
               dataKey="dateLabel"
-              stroke="rgba(255,255,255,0.06)"
-              tick={{ fill: '#445566', fontSize: 10 }}
+              stroke="transparent"
+              tick={{ fill: '#334455', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
-              dy={8}
-              minTickGap={24}
+              dy={6}
+              minTickGap={28}
             />
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-            <Tooltip content={<CustomTooltip cc={cc} pm={pm} />} cursor={{ fill: 'rgba(255,255,255,0.025)' }} />
+            <CartesianGrid strokeDasharray="2 4" vertical={false} stroke="rgba(255,255,255,0.025)" />
+            <Tooltip
+              content={<CustomTooltip lineSeg={lineSeg} lineCrit={lineCrit} cc={cc} pm={pm} />}
+              cursor={{ stroke: 'rgba(255,255,255,0.06)', strokeWidth: 1, fill: 'rgba(255,255,255,0.015)' }}
+            />
 
             {/* ── Linhas de referência ── */}
-            {/* CC — capacidade de campo */}
-            <ReferenceLine
-              yAxisId="right" y={lineCC}
-              stroke="#22c55e" strokeDasharray="4 4" strokeWidth={1.5} opacity={0.6}
-              label={{ value: `CC ${lineCC.toFixed(hasVolAxis ? 1 : 0)}%`, position: 'insideTopRight', fill: '#22c55e', fontSize: 9, dy: -4 }}
-            />
-            {/* Umidade de segurança */}
-            <ReferenceLine
-              yAxisId="right" y={lineSeg}
-              stroke="#22c55e" strokeDasharray="2 5" strokeWidth={1} opacity={0.4}
-              label={{ value: `Seg ${lineSeg.toFixed(hasVolAxis ? 1 : 0)}%`, position: 'insideTopRight', fill: '#22c55e', fontSize: 9, dy: -4 }}
-            />
-            {/* Limiar crítico */}
-            <ReferenceLine
-              yAxisId="right" y={lineCrit}
-              stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} opacity={0.55}
-              label={{ value: `Crit ${lineCrit.toFixed(hasVolAxis ? 1 : 0)}%`, position: 'insideTopRight', fill: '#f59e0b', fontSize: 9, dy: -4 }}
-            />
-            {/* PM — ponto de murcha */}
-            {hasVolAxis && (
-              <ReferenceLine
-                yAxisId="right" y={linePM}
-                stroke="#ef4444" strokeDasharray="2 5" strokeWidth={1} opacity={0.4}
-                label={{ value: `PM ${linePM.toFixed(1)}%`, position: 'insideTopRight', fill: '#ef4444', fontSize: 9, dy: 10 }}
+            {lineCC !== null && (
+              <ReferenceLine yAxisId="right" y={lineCC}
+                stroke="#60a5fa" strokeWidth={1.5} opacity={0.7}
+                label={{ value: `CC ${lineCC.toFixed(1)}%`, position: 'insideBottomLeft', fill: '#60a5fa', fontSize: 9, dx: 6, dy: 12 }}
+              />
+            )}
+            {lineSeg !== null && (
+              <ReferenceLine yAxisId="right" y={lineSeg}
+                stroke="#fb923c" strokeWidth={1.5} opacity={0.8}
+                label={{ value: `Seg ${lineSeg.toFixed(1)}%`, position: 'insideBottomLeft', fill: '#fb923c', fontSize: 9, dx: 6, dy: 12 }}
+              />
+            )}
+            {linePM !== null && (
+              <ReferenceLine yAxisId="right" y={linePM}
+                stroke="#ef4444" strokeWidth={1.5} opacity={0.7}
+                label={{ value: `PM ${linePM.toFixed(1)}%`, position: 'insideBottomLeft', fill: '#ef4444', fontSize: 9, dx: 6, dy: 12 }}
+              />
+            )}
+            {lineCrit !== null && (
+              <ReferenceLine yAxisId="right" y={lineCrit}
+                stroke="#f59e0b" strokeDasharray="4 3" strokeWidth={1} opacity={0.55}
+                label={{ value: `Alerta ${lineCrit.toFixed(1)}%`, position: 'insideBottomLeft', fill: '#f59e0b', fontSize: 9, dx: 6, dy: 12 }}
               />
             )}
 
             {/* Hidden DAS — só para tooltip */}
             <Line yAxisId="left" type="monotone" dataKey="das" name="DAS" stroke="transparent" dot={false} legendType="none" />
 
-            {/* Umidade volumétrica (eixo direito) */}
-            <Area
-              yAxisId="right"
-              type="monotone"
-              dataKey="umidVol"
-              name="Umidade"
-              fill="url(#wbcMoistureArea)"
-              stroke="url(#wbcMoistureStroke)"
-              strokeWidth={2.5}
-              dot={{ r: 0 }}
-              activeDot={{ r: 4, stroke: '#0f1923', strokeWidth: 2 }}
-            />
-
             {/* Chuva */}
-            <Bar yAxisId="left" dataKey="rain" name="Chuva" fill="rgba(200,220,255,0.65)" radius={[3, 3, 0, 0]} maxBarSize={16} />
+            <Bar yAxisId="left" dataKey="rain" name="Chuva" fill="url(#wbcRainGrad)" radius={[3, 3, 0, 0]} maxBarSize={14} />
 
             {/* Irrigação */}
             {hasIrrigation && (
-              <Bar yAxisId="left" dataKey="irr" name="Irrigação" fill="rgba(0,147,208,0.75)" radius={[3, 3, 0, 0]} maxBarSize={16} />
+              <Bar yAxisId="left" dataKey="irr" name="Irrigação" fill="url(#wbcIrrGrad)" radius={[3, 3, 0, 0]} maxBarSize={14} />
             )}
 
             {/* ETo */}
-            <Line yAxisId="left" type="monotone" dataKey="eto" name="ETo" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 3" dot={{ r: 0 }} activeDot={{ r: 3, stroke: '#0f1923', strokeWidth: 2 }} />
+            <Line
+              yAxisId="left" type="monotone" dataKey="eto" name="ETo"
+              stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.75}
+              dot={{ r: 0 }} activeDot={{ r: 3, stroke: '#080e16', strokeWidth: 2 }}
+            />
 
             {/* ETc */}
-            <Line yAxisId="left" type="monotone" dataKey="etc" name="ETc" stroke="#22d3ee" strokeWidth={2} dot={{ r: 0 }} activeDot={{ r: 3, stroke: '#0f1923', strokeWidth: 2 }} />
+            <Line
+              yAxisId="left" type="monotone" dataKey="etc" name="ETc"
+              stroke="#22d3ee" strokeWidth={1.5} opacity={0.75}
+              dot={{ r: 0 }} activeDot={{ r: 3, stroke: '#080e16', strokeWidth: 2 }}
+            />
+
+            {/* Área "coluna d'água" OK — azul oceano, da PM até a umidade atual */}
+            {hasVolAxis && (
+              <Area
+                yAxisId="right" type="monotone" dataKey="umidVolOk" name="Umidade"
+                stroke="#38bdf8" strokeWidth={2.5}
+                fill="url(#wbcWaterOk)"
+                dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#080e16', strokeWidth: 2 }}
+                connectNulls={false}
+                baseValue={linePM ?? yMin}
+              />
+            )}
+            {!hasVolAxis && (
+              <Line
+                yAxisId="right" type="monotone" dataKey="umidVolOk" name="Umidade"
+                stroke="#38bdf8" strokeWidth={2.5}
+                dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#080e16', strokeWidth: 2 }}
+                connectNulls={false}
+              />
+            )}
+
+            {/* Área "coluna d'água" WARN — vermelha, da PM até a umidade atual */}
+            {hasVolAxis && (
+              <Area
+                yAxisId="right" type="monotone" dataKey="umidVolWarn" name="Umidade ↓"
+                stroke="#ef4444" strokeWidth={2.5}
+                fill="url(#wbcWaterWarn)"
+                dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#080e16', strokeWidth: 2 }}
+                connectNulls={false}
+                baseValue={linePM ?? yMin}
+              />
+            )}
+            {!hasVolAxis && (
+              <Line
+                yAxisId="right" type="monotone" dataKey="umidVolWarn" name="Umidade ↓"
+                stroke="#ef4444" strokeWidth={2.5}
+                dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#080e16', strokeWidth: 2 }}
+                connectNulls={false}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '8px 20px 12px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: 10, color: '#334455' }}>Eixo direito: % volumétrica de umidade do solo</span>
-        <span style={{ fontSize: 10, color: '#334455' }}>Barras: escala esquerda (mm)</span>
+      <div style={{ padding: '6px 20px 10px', display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 9, color: '#223344', letterSpacing: '0.03em' }}>EIXO DIREITO: % vol. umidade · EIXO ESQUERDO: mm</span>
       </div>
     </div>
   )
