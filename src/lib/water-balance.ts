@@ -556,40 +556,12 @@ export function calcProjection(params: {
     dryDays.push({ adcDry, cta, cad, ctaPrev, etcAvg, rainfall: rainfallForDay, das, kc, cropStage, fFactor, rootDepthCm })
   }
 
-  // ── Passo 2: determinar quais dias são dias de irrigação (múltiplas irrigações).
-  // Scan iterativo que simula o efeito de cada irrigação antes de continuar.
-  const irrigateDayIdx = new Set<number>() // índice base-0 (i-1)
-  let adcScan = startAdc
-  for (let i = 0; i < dryDays.length; i++) {
-    const dry = dryDays[i]
-    const adcScanNext = calcADc(adcScan, dry.rainfall, 0, dry.etcAvg, dry.cta, dry.ctaPrev)
+  // ── Passo 2: projeção totalmente seca — sem simular nenhuma irrigação.
+  // O card serve para o agricultor se planejar: quanto precisaria irrigar em cada dia
+  // se deixar passar. A lâmina é acumulada (quanto falta para atingir o alvo naquele dia).
+  // irrigateDayIdx não é mais usado — todos os dias mostram a lâmina necessária.
 
-    // Threshold do dia seguinte (look-ahead)
-    const nextDry = dryDays[i + 1]
-    const lookAheadAdc = nextDry
-      ? calcADc(adcScanNext, nextDry.rainfall, 0, nextDry.etcAvg, nextDry.cta, nextDry.ctaPrev)
-      : adcScanNext
-    const thresholdMmNext = nextDry
-      ? (alertThresholdPct != null && nextDry.cta > 0 ? (alertThresholdPct / 100) * nextDry.cta : nextDry.cad)
-      : (alertThresholdPct != null && dry.cta > 0 ? (alertThresholdPct / 100) * dry.cta : dry.cad)
-
-    // Se o dia seguinte vai cruzar o threshold, irrigar hoje
-    if (lookAheadAdc < thresholdMmNext && !irrigateDayIdx.has(i)) {
-      irrigateDayIdx.add(i)
-      // Simula o efeito da irrigação no adcScan para continuar projetando corretamente
-      const depthToApply = calcRecommendedIrrigation(dry.cta, dry.cad, adcScanNext, alertThresholdPct, irrigationTargetPct)
-      const speed = pivot ? findRecommendedSpeed(pivot, depthToApply) : null
-      let laminaBruta = depthToApply
-      if (pivot && speed != null) {
-        laminaBruta = calcDepthForSpeed(pivot, speed) ?? depthToApply
-      }
-      adcScan = Math.min(dry.cta, adcScanNext + laminaBruta * cuc)
-    } else {
-      adcScan = adcScanNext
-    }
-  }
-
-  // ── Passo 3: projeção real — simula irrigação nos dias marcados.
+  // ── Passo 3: projeção seca — ADc cai livremente, lâmina calculada em cada dia.
   const results: ProjectionDay[] = []
   let adcPrev = startAdc
 
@@ -600,36 +572,28 @@ export function calcProjection(params: {
     d.setDate(d.getDate() + i)
     const date = d.toISOString().split('T')[0]
 
-    // ADc pré-irrigação (só com chuva e ETc)
-    const adcBeforeIrrig = calcADc(adcPrev, dry.rainfall, 0, dry.etcAvg, dry.cta, dry.ctaPrev)
+    // ADc totalmente seco (chuva prevista entra, irrigação não)
+    const adcDry = calcADc(adcPrev, dry.rainfall, 0, dry.etcAvg, dry.cta, dry.ctaPrev)
 
-    // Status e lâmina baseados no ADc pré-irrigação (mostrar necessidade real)
-    const status = getIrrigationStatus(adcBeforeIrrig, dry.cad, false, dry.cta, alertThresholdPct)
-    const recommendedDepthMm = irrigateDayIdx.has(idx)
-      ? calcRecommendedIrrigation(dry.cta, dry.cad, adcBeforeIrrig, alertThresholdPct, irrigationTargetPct)
-      : 0
+    // FC% real projetado sem irrigação
+    const fieldCapacityPercent = dry.cta > 0 ? (adcDry / dry.cta) * 100 : 0
+
+    // Status baseado no ADc seco
+    const status = getIrrigationStatus(adcDry, dry.cad, false, dry.cta, alertThresholdPct)
+
+    // Lâmina necessária para atingir o alvo neste dia (acumula à medida que o solo seca)
+    const recommendedDepthMm = calcRecommendedIrrigation(dry.cta, dry.cad, adcDry, alertThresholdPct, irrigationTargetPct)
+
+    // Velocidade que o pivô precisaria andar para aplicar essa lâmina
     const recommendedSpeedPercent = pivot && recommendedDepthMm > 0
       ? findRecommendedSpeed(pivot, recommendedDepthMm)
       : null
 
-    // ADc pós-irrigação — usado para os dias seguintes
-    let adcPostIrrig = adcBeforeIrrig
-    if (irrigateDayIdx.has(idx) && recommendedDepthMm > 0) {
-      // Lâmina que o pivô realmente aplica nessa velocidade (ou a recomendada se sem velocidade)
-      let laminaBruta = recommendedDepthMm
-      if (pivot && recommendedSpeedPercent != null) {
-        laminaBruta = calcDepthForSpeed(pivot, recommendedSpeedPercent) ?? recommendedDepthMm
-      }
-      adcPostIrrig = Math.min(dry.cta, adcBeforeIrrig + laminaBruta * cuc)
-    }
-    // Também respeita irrigationByDay externo (se passado explicitamente)
+    // Respeita irrigationByDay externo (simulação manual pelo usuário)
+    let adcNext = adcDry
     if (irrigationByDay?.[idx] && irrigationByDay[idx] > 0) {
-      adcPostIrrig = Math.min(dry.cta, adcBeforeIrrig + irrigationByDay[idx] * cuc)
+      adcNext = Math.min(dry.cta, adcDry + irrigationByDay[idx] * cuc)
     }
-
-    // FC% mostra o estado real do solo ANTES de irrigar — o que o operador vai encontrar.
-    // O adcPostIrrig é usado apenas para propagar o ADc nos dias seguintes.
-    const fieldCapacityPercent = dry.cta > 0 ? (adcBeforeIrrig / dry.cta) * 100 : 0
 
     results.push({
       date,
@@ -637,17 +601,17 @@ export function calcProjection(params: {
       cropStage: dry.cropStage,
       kc: dry.kc,
       etcAvg: dry.etcAvg,
-      adcProjected: adcPostIrrig,
+      adcProjected: adcNext,
       cta: dry.cta,
       cad: dry.cad,
       fieldCapacityPercent,
-      status: irrigateDayIdx.has(idx) && recommendedDepthMm > 0 ? 'vermelho' : status,
+      status,
       recommendedDepthMm,
       recommendedSpeedPercent,
-      isIrrigationDay: irrigateDayIdx.has(idx) && recommendedDepthMm > 0,
+      isIrrigationDay: recommendedDepthMm > 0,
     })
 
-    adcPrev = adcPostIrrig
+    adcPrev = adcNext
   }
 
   return results
