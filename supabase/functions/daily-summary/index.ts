@@ -358,7 +358,7 @@ serve(async (_req) => {
       }
 
       messageBody += `\n${divider}\n`
-      messageBody += `\n🔗 *Painel completo:* app.irrigaagro.com.br\n`
+      messageBody += `\n🔗 *Painel completo:* www.irrigaagro.com.br\n`
       messageBody += `💬 _Registre chuva: CHUVA [PIVÔ] [mm]_`
 
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {

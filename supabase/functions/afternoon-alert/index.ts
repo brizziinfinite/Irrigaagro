@@ -177,7 +177,7 @@ serve(async (_req) => {
         message += `👉 Planeje a irrigação para *amanhã*.\n\n`
       }
 
-      message += `🔗 app.irrigaagro.com.br/manejo`
+      message += `🔗 www.irrigaagro.com.br/manejo`
 
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: 'POST',

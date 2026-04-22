@@ -229,7 +229,7 @@ serve(async (_req) => {
       }
 
       msg += `\n${divider}\n`
-      msg += `\n🔗 *Painel completo:* app.irrigaagro.com.br`
+      msg += `\n🔗 *Painel completo:* www.irrigaagro.com.br`
 
       await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
         method: 'POST',
