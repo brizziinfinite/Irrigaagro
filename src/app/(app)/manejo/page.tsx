@@ -1535,6 +1535,9 @@ export default function ManejoPage() {
         <WaterBalanceChart
           history={history}
           threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70}
+          irrigationTarget={selectedSeason?.pivots?.irrigation_target_percent ?? 80}
+          fieldCapacity={selectedSeason?.pivots?.field_capacity ?? null}
+          wiltingPoint={selectedSeason?.pivots?.wilting_point ?? null}
           pivotName={selectedSeason?.pivots?.name ?? undefined}
         />
       )}
