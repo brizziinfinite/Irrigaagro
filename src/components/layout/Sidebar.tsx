@@ -37,14 +37,15 @@ function PivotIcon({ size = 20 }: { size?: number }) {
 }
 
 const OPERACIONAL = [
-  { icon: LayoutDashboard, label: 'Dashboard',       path: '/dashboard'        },
-  { icon: ClipboardList,   label: 'Lançamentos',     path: '/lancamentos'      },
-  { icon: Droplets,        label: 'Manejo Diário',   path: '/manejo'           },
-  { icon: CloudRain,       label: 'Precipitações',   path: '/precipitacoes'    },
-  { icon: MapPin,          label: 'Fazendas',        path: '/fazendas'         },
-  { icon: PivotIcon,       label: 'Pivôs',           path: '/pivos'            },
-  { icon: Sprout,          label: 'Safras',          path: '/safras'           },
-  { icon: FileBarChart,    label: 'Relatórios',      path: '/relatorios'       },
+  { icon: LayoutDashboard, label: 'Dashboard',        path: '/dashboard'         },
+  { icon: ClipboardList,   label: 'Lançamentos',      path: '/lancamentos'       },
+  { icon: Droplets,        label: 'Manejo Diário',    path: '/manejo'            },
+  { icon: Stethoscope,     label: 'Diagnóstico Solo', path: '/diagnostico-solo'  },
+  { icon: CloudRain,       label: 'Precipitações',    path: '/precipitacoes'     },
+  { icon: MapPin,          label: 'Fazendas',         path: '/fazendas'          },
+  { icon: PivotIcon,       label: 'Pivôs',            path: '/pivos'             },
+  { icon: Sprout,          label: 'Safras',           path: '/safras'            },
+  { icon: FileBarChart,    label: 'Relatórios',       path: '/relatorios'        },
 ];
 
 const CONFIGURACAO = [

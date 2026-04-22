@@ -82,6 +82,51 @@ async function downloadMedia(messageId: string): Promise<{ base64: string; mimeT
   }
 }
 
+// ─── Formata resposta do diagnóstico para WhatsApp ───────────────────────────
+// deno-lint-ignore no-explicit-any
+function formatDiagnosisResponse(result: any, pivotName: string, aiAnalysis: any): string {
+  const statusEmoji: Record<string, string> = {
+    critical: '🚨',
+    below_threshold: '⚠️',
+    ok: '✅',
+    near_fc: '💧',
+    saturated: '🌊',
+  }
+  const emoji = statusEmoji[result.management_status] ?? '🌱'
+
+  const actionText: Record<string, string> = {
+    irrigate_now: '*Irrigar hoje!*',
+    irrigate_soon: `Programar irrigação para *${result.next_check_date ? result.next_check_date.split('-').reverse().join('/') : 'amanhã'}*`,
+    wait: 'Não precisa irrigar ainda.',
+    no_action: 'Solo saturado — *não irrigar*.',
+  }
+  const action = actionText[result.action] ?? 'Monitorar.'
+
+  let msg = `${emoji} *Solo — ${pivotName}*\n`
+  msg += `💧 *${result.estimated_fc_percent}% da CC*\n\n`
+  msg += `🕒 ${action}\n`
+
+  if (result.recommended_irrigation_mm > 0) {
+    msg += `💦 Lâmina: *${result.recommended_irrigation_mm} mm*`
+    if (result.hours_estimated) msg += ` (~${result.hours_estimated}h de pivô)`
+    msg += '\n'
+  }
+
+  if (result.weather_context) {
+    msg += `\n${result.weather_context}\n`
+  }
+
+  if (aiAnalysis) {
+    if (aiAnalysis.agrees_with_user_assessment) {
+      msg += `\n📷 Foto confirma análise (IA ${aiAnalysis.confidence}%). Ótimo!`
+    } else if (aiAnalysis.confidence >= 60) {
+      msg += `\n📷 _Atenção: foto sugere faixa ${aiAnalysis.estimated_behavior_range}. Recomendo repetir._`
+    }
+  }
+
+  return msg
+}
+
 serve(async (req) => {
   try {
     const payload = await req.json()
@@ -483,13 +528,297 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
     }
 
     // ── ROTA 2: TEXTO → Parser de comandos ──
-    if (!textMessage) {
+    if (!textMessage && !hasImage) {
       return new Response('ok', { status: 200 })
     }
 
     const msg = textMessage.toUpperCase().trim()
+    const today = new Date().toISOString().slice(0, 10)
 
-    if (msg.startsWith('CHUVA')) {
+    // ── ROTA 3: MÁQUINA DE ESTADOS — Diagnóstico do Solo ──────────────────────
+    // Busca sessão ativa para este telefone
+    const { data: session } = await supabase
+      .from('whatsapp_sessions')
+      .select('*')
+      .eq('phone_number', phone)
+      .single()
+
+    const sessionExpired = session && new Date(session.expires_at) < new Date()
+    const activeSession = session && !sessionExpired && session.current_flow === 'soil_diagnosis'
+
+    // Detecta comando de início: "diagnóstico", "diagnostico", "diag", "solo"
+    const isDiagnosisStart = /diag[nó]?[os]?t?i?c?o?|diag\s+piv[oô]|umidade\s+solo|solo\s+piv/i.test(textMessage)
+
+    // ── 3a. Início do fluxo ────────────────────────────────────────────────
+    if (!activeSession && isDiagnosisStart) {
+      messageType = 'soil_diagnosis'
+
+      // Extrai nome/número do pivô da mensagem
+      const pivotMatch = textMessage.match(/piv[oô]?\s*([a-zA-Z0-9\s]+)/i)
+      const pivotHint = pivotMatch?.[1]?.trim().toUpperCase() ?? ''
+
+      // Encontra o pivô
+      let foundSub = subs.find(s => {
+        const name = s.pivots?.name?.toUpperCase() ?? ''
+        return pivotHint && (name === pivotHint || name.includes(pivotHint) || pivotHint.includes(name))
+      })
+      if (!foundSub && subs.length === 1) foundSub = subs[0]
+
+      if (!foundSub) {
+        const pivotList = subs.map((s, i) => `${i + 1} — ${s.pivots?.name}`).join('\n')
+        responseText = `🌱 *Diagnóstico Manual do Solo*\n\nQual pivô?\n\n${pivotList}\n\nResponda: *diagnóstico pivô [nome]*`
+      } else {
+        // Busca textura cadastrada ou usa padrão
+        const { data: pivotFull } = await supabase
+          .from('pivots')
+          .select('soil_texture')
+          .eq('id', foundSub.pivot_id)
+          .single()
+        const soilTexture = pivotFull?.soil_texture ?? 'franco'
+
+        // Busca safra ativa
+        const { data: activeSeason } = await supabase
+          .from('seasons')
+          .select('id, name')
+          .eq('pivot_id', foundSub.pivot_id)
+          .eq('is_active', true)
+          .limit(1)
+          .single()
+
+        // Cria/atualiza sessão
+        await supabase.from('whatsapp_sessions').upsert({
+          phone_number: phone,
+          user_id: contact ? (await supabase.auth.admin.getUserById(contact.id).catch(() => ({ data: { user: null } }))).data.user?.id ?? null : null,
+          company_id: contact.company_id,
+          current_flow: 'soil_diagnosis',
+          flow_step: 'awaiting_behavior',
+          context: {
+            pivot_id: foundSub.pivot_id,
+            pivot_name: foundSub.pivots?.name,
+            soil_texture: soilTexture,
+            season_id: activeSeason?.id ?? null,
+          },
+          last_interaction: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        }, { onConflict: 'phone_number' })
+
+        const textureDescriptions: Record<string, string[]> = {
+          'arenoso':         ['Escorre entre os dedos, não forma bolinha', 'Bolinha frágil, desfaz facilmente', 'Bolinha que mantém forma', 'Molhado, cobre a palma da mão', 'Água livre ao apertar'],
+          'franco-arenoso':  ['Seco, escorre entre dedos', 'Bolinha frágil que racha', 'Bolinha firme, levemente úmido', 'Deixa umidade na mão', 'Escorrega entre os dedos'],
+          'franco':          ['Torrão seco que quebra facilmente', 'Bolinha quebradiça, não molda bem', 'Bolinha firme, fita curta (1-2 cm)', 'Fita média (3-5 cm), levemente brilhante', 'Fita longa e brilhante, água visível'],
+          'franco-argiloso': ['Duro, trincado', 'Firme, quebra com esforço', 'Plástico, fita de 5-8 cm', 'Fita longa, brilhante, escorregadio', 'Muito escorregadio, água visível'],
+          'argiloso':        ['Muito duro, rachaduras visíveis', 'Duro, difícil de moldar', 'Plástico, fita > 8 cm', 'Escorregadio, fita longa e brilhante', 'Extremamente escorregadio, água na superfície'],
+        }
+        const opts = textureDescriptions[soilTexture] ?? textureDescriptions['franco']
+
+        responseText = `🌱 *${foundSub.pivots?.name}*${activeSeason ? ` — ${activeSeason.name}` : ''}\n\nColete solo a *30 cm* de profundidade, aperte na mão e escolha:\n\n1️⃣ ${opts[0]}\n2️⃣ ${opts[1]}\n3️⃣ ${opts[2]}\n4️⃣ ${opts[3]}\n5️⃣ ${opts[4]}\n\nResponda só com o número *1 a 5*.`
+      }
+
+    // ── 3b. Aguardando score (1-5) ─────────────────────────────────────────
+    } else if (activeSession && session.flow_step === 'awaiting_behavior') {
+      messageType = 'soil_diagnosis'
+      const scoreMatch = msg.match(/^[1-5]$/)
+
+      if (!scoreMatch) {
+        responseText = '❌ Por favor responda com um número de *1 a 5*.'
+      } else {
+        const score = parseInt(msg)
+        const ctx = session.context as Record<string, unknown>
+
+        // Atualiza sessão com score e passa para próximo passo
+        await supabase.from('whatsapp_sessions').update({
+          flow_step: 'awaiting_photo',
+          context: { ...ctx, behavior_range: score },
+          last_interaction: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        }).eq('phone_number', phone)
+
+        responseText = `📸 Perfeito!\n\nSe puder, mande uma *foto da amostra na palma da mão* — a IA vai validar o resultado.\n\nOu responda *pular* para ir direto ao resultado.`
+      }
+
+    // ── 3c. Aguardando foto ────────────────────────────────────────────────
+    } else if (activeSession && session.flow_step === 'awaiting_photo' && hasImage) {
+      messageType = 'soil_diagnosis'
+      const ctx = session.context as Record<string, unknown>
+      const pivotId = ctx.pivot_id as string
+      const seasonId = ctx.season_id as string | null
+      const soilTexture = ctx.soil_texture as string
+      const behaviorRange = ctx.behavior_range as number
+
+      // Download da imagem
+      const media = await downloadMedia(messageId)
+      let photoUrl: string | null = null
+      let aiAnalysis = null
+
+      if (media) {
+        // Upload para Supabase Storage
+        const ext = 'jpg'
+        const storagePath = `${contact.company_id}/${pivotId}/${Date.now()}.${ext}`
+        const imageBytes = Uint8Array.from(atob(media.base64), c => c.charCodeAt(0))
+
+        const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+        const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+        const uploadResp = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/soil-diagnosis-photos/${storagePath}`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${SERVICE_KEY}`,
+              'Content-Type': 'image/jpeg',
+            },
+            body: imageBytes,
+          }
+        )
+
+        if (uploadResp.ok) {
+          photoUrl = `${SUPABASE_URL}/storage/v1/object/public/soil-diagnosis-photos/${storagePath}`
+        }
+
+        // Chama Gemini para validar a foto
+        const geminiKey = Deno.env.get('GEMINI_API_KEY')
+        if (geminiKey && media.base64) {
+          const textureDescPt: Record<string, string> = {
+            'arenoso': 'arenoso — não forma fita, grãos visíveis',
+            'franco-arenoso': 'franco-arenoso — pouca plasticidade',
+            'franco': 'franco — plasticidade moderada, forma fita curta',
+            'franco-argiloso': 'franco-argiloso — plástico, forma fita média',
+            'argiloso': 'argiloso — muito plástico, fita longa',
+          }
+          const textureDesc = textureDescPt[soilTexture] ?? soilTexture
+
+          const geminiPrompt = `Você é um especialista em ciência do solo.
+Esta é uma foto de uma amostra de solo ${textureDesc}.
+O agricultor descreveu o solo como grau ${behaviorRange}/5 (1=seco/crítico, 5=encharcado/excessivo).
+
+Analise a foto e responda APENAS com JSON:
+{
+  "estimated_behavior_range": <número 1-5>,
+  "agrees_with_user_assessment": <true ou false>,
+  "confidence": <número 0-100>,
+  "visible_color": "<descricao da cor: escuro_umido, medio, claro_seco>"
+}
+Critérios:
+- 1: Solo seco, cor clara/pálida, rachaduras ou pó
+- 2: Ligeiramente úmido, cor levemente escurecida
+- 3: Úmido, cor média, amostra coesa
+- 4: Muito úmido, cor escura, brilho leve
+- 5: Encharcado, cor muito escura, água visível`
+
+          try {
+            const geminiResp = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{
+                    parts: [
+                      { text: geminiPrompt },
+                      { inline_data: { mime_type: media.mimeType || 'image/jpeg', data: media.base64 } }
+                    ]
+                  }],
+                  generationConfig: { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: 256 }
+                })
+              }
+            )
+
+            if (geminiResp.ok) {
+              const geminiData = await geminiResp.json()
+              const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+              const cleaned = rawText.replace(/```json|```/g, '').trim()
+              const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+              if (jsonMatch) aiAnalysis = JSON.parse(jsonMatch[0])
+            }
+          } catch (e) {
+            console.error('Gemini photo analysis error:', e)
+          }
+        }
+      }
+
+      // Chama Edge Function diagnose-soil
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+      const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+      const diagnoseResp = await fetch(`${SUPABASE_URL}/functions/v1/diagnose-soil`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SERVICE_KEY}` },
+        body: JSON.stringify({
+          pivot_id: pivotId,
+          season_id: seasonId,
+          sample_depth_cm: 30,
+          soil_texture: soilTexture,
+          behavior_range: behaviorRange,
+          photo_url: photoUrl,
+          ai_analysis: aiAnalysis,
+          source: 'whatsapp',
+          company_id: contact.company_id,
+        }),
+      })
+
+      const result = await diagnoseResp.json()
+      responseText = formatDiagnosisResponse(result, (ctx.pivot_name as string) ?? 'Pivô', aiAnalysis)
+
+      // Reset sessão
+      await supabase.from('whatsapp_sessions').update({
+        current_flow: null, flow_step: null, context: {},
+        last_interaction: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      }).eq('phone_number', phone)
+
+      // Se divergência alta, envia mensagem adicional após 500ms
+      if (result.divergence?.requires_action) {
+        await sendWhatsApp(phone, responseText)
+        responseText = `⚠️ *Divergência detectada*\n\nModelo previa: ${result.divergence.modeled_percent?.toFixed(0)}% da CC\nVocê mediu: ${result.percent_available?.toFixed(0)}% da CC\nDiferença: ${result.divergence.difference_pct?.toFixed(0)} pontos\n\nPossíveis causas:\n• Distribuição irregular da irrigação\n• Kc da cultura desatualizado\n• Vazamento no pivô\n\nVerifique no app: www.irrigaagro.com.br`
+      }
+
+    // ── 3d. Pular foto → vai direto ao resultado ───────────────────────────
+    } else if (activeSession && session.flow_step === 'awaiting_photo' && /pular|sem foto|pulando|skip/i.test(textMessage)) {
+      messageType = 'soil_diagnosis'
+      const ctx = session.context as Record<string, unknown>
+      const pivotId = ctx.pivot_id as string
+      const seasonId = ctx.season_id as string | null
+      const soilTexture = ctx.soil_texture as string
+      const behaviorRange = ctx.behavior_range as number
+
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+      const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+      const diagnoseResp = await fetch(`${SUPABASE_URL}/functions/v1/diagnose-soil`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SERVICE_KEY}` },
+        body: JSON.stringify({
+          pivot_id: pivotId,
+          season_id: seasonId,
+          sample_depth_cm: 30,
+          soil_texture: soilTexture,
+          behavior_range: behaviorRange,
+          photo_url: null,
+          ai_analysis: null,
+          source: 'whatsapp',
+          company_id: contact.company_id,
+        }),
+      })
+
+      const result = await diagnoseResp.json()
+      responseText = formatDiagnosisResponse(result, (ctx.pivot_name as string) ?? 'Pivô', null)
+
+      // Reset sessão
+      await supabase.from('whatsapp_sessions').update({
+        current_flow: null, flow_step: null, context: {},
+        last_interaction: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      }).eq('phone_number', phone)
+
+    // ── 3e. Sessão expirada — informa ao usuário ───────────────────────────
+    } else if (session && sessionExpired && session.current_flow === 'soil_diagnosis') {
+      messageType = 'soil_diagnosis'
+      await supabase.from('whatsapp_sessions').update({
+        current_flow: null, flow_step: null, context: {},
+      }).eq('phone_number', phone)
+      responseText = '⏱️ A sessão de diagnóstico expirou. Para recomeçar, envie:\n\n*diagnóstico pivô [nome]*'
+
+    } else if (msg.startsWith('CHUVA')) {
       messageType = 'rain_report'
       const parts = msg.split(/\s+/)
       let pivotId: string | null = null

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import type { Season, Crop, Pivot, DailyManagement, Farm, DailyManagementInsert } from '@/types/database'
 import {
-  getStageInfoForDas, calcCTA, calcProjection, calcRa, calcDepthForSpeed,
+  getStageInfoForDas, calcCTA, calcProjection, calcRa, calcDepthForSpeed, getFFactorForDas,
   type ProjectionDay,
   type RecommendationStatus,
 } from '@/lib/water-balance'
@@ -1535,7 +1535,11 @@ export default function ManejoPage() {
         <WaterBalanceChart
           history={history}
           threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70}
-          irrigationTarget={selectedSeason?.pivots?.irrigation_target_percent ?? 80}
+          fFactor={
+            selectedSeason?.crops && history.length > 0
+              ? getFFactorForDas(selectedSeason.crops, history[0].das ?? 1)
+              : null
+          }
           fieldCapacity={selectedSeason?.pivots?.field_capacity ?? null}
           wiltingPoint={selectedSeason?.pivots?.wilting_point ?? null}
           pivotName={selectedSeason?.pivots?.name ?? undefined}

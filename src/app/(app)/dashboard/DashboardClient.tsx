@@ -18,8 +18,9 @@ import {
   Droplets, AlertTriangle, AlertCircle, Info,
   CheckCircle2, X, CalendarClock
 } from 'lucide-react'
-import { findRecommendedSpeed } from '@/lib/water-balance'
+import { findRecommendedSpeed, getFFactorForDas } from '@/lib/water-balance'
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Area, ReferenceLine, ReferenceDot } from 'recharts'
+import WaterBalanceChart from '@/app/(app)/manejo/WaterBalanceChart'
 
 const PivotMap = dynamic(
   () => import('./PivotMap').then(m => ({ default: m.PivotMap })),
@@ -512,23 +513,11 @@ export function DashboardClient({
         const history = ctx ? (historyBySeason[ctx.season.id] ?? []) : []
         const threshold = pivot.alert_threshold_percent ?? 70
 
-        // Valores reais de solo (% CC)
-        const ccPct = 100  // CC = 100% por definição
-        const pmPct = pivot.wilting_point != null && pivot.field_capacity != null && pivot.field_capacity > 0
-          ? Math.round((pivot.wilting_point / pivot.field_capacity) * 100)
-          : 0
+        // f_factor do estágio atual (para calcular umidade de segurança)
+        const lastDas = history.length > 0 ? (history[history.length - 1].das ?? 1) : 1
+        const fFactor = ctx?.crop ? getFFactorForDas(ctx.crop, lastDas) : null
 
-        const trendData = history.slice(-30).map((d: DailyManagement) => ({
-          name: d.date.slice(8, 10) + '/' + d.date.slice(5, 7),
-          moisture: d.field_capacity_percent != null ? parseFloat(d.field_capacity_percent.toFixed(1)) : null,
-        })).filter((d: { name: string; moisture: number | null }) => d.moisture !== null)
-
-        // Segmenta linha: normal vs crítico (abaixo do threshold)
-        const dataWithColor = trendData.map((d: { name: string; moisture: number | null }) => ({
-          ...d,
-          moistureOk:       (d.moisture ?? 0) >= threshold ? d.moisture : null,
-          moistureCritical: (d.moisture ?? 0) <  threshold ? d.moisture : null,
-        }))
+        const trendData = history.filter((d: DailyManagement) => d.field_capacity_percent != null)
 
         return (
           <div
@@ -553,8 +542,7 @@ export function DashboardClient({
                 {(() => {
                   const currentPct = lastManagementByPivot[pivot.id]?.field_capacity_percent ?? null
                   const tc = currentPct === null ? '#334155'
-                    : currentPct >= 90 ? '#0093D0'
-                    : currentPct >= 80 ? '#22c55e'
+                    : currentPct >= 80 ? '#38bdf8'
                     : currentPct >= 70 ? '#f59e0b'
                     : '#ef4444'
                   return (
@@ -597,144 +585,26 @@ export function DashboardClient({
                 })()}
                 <div>
                   <h3 style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{pivot.name}</h3>
-                  <p style={{ fontSize: 11, color: '#445566', margin: 0 }}>Umidade do Solo — Últimos {trendData.length} dias</p>
+                  <p style={{ fontSize: 11, color: '#445566', margin: 0 }}>Balanço Hídrico — Últimos {trendData.length} dias</p>
                   {pivot.farms?.name && <p style={{ fontSize: 10, color: '#334455', margin: '3px 0 0' }}>{pivot.farms.name}</p>}
                 </div>
               </div>
 
               {/* Gráfico */}
-              <div style={{ height: 320, width: '100%', position: 'relative' }}>
-                {trendData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={dataWithColor} margin={{ top: 16, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        {/* Gradiente normal — azul/ciano */}
-                        <linearGradient id="gradOk" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%"   stopColor="#00E5FF" stopOpacity={0.5}/>
-                          <stop offset="60%"  stopColor="#22c55e" stopOpacity={0.15}/>
-                          <stop offset="100%" stopColor="#10151c" stopOpacity={0}/>
-                        </linearGradient>
-                        {/* Gradiente crítico — vermelho */}
-                        <linearGradient id="gradCrit" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%"   stopColor="#ef4444" stopOpacity={0.5}/>
-                          <stop offset="100%" stopColor="#10151c" stopOpacity={0}/>
-                        </linearGradient>
-                        {/* Animação de água */}
-                        <linearGradient id="waterShimmer" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%"   stopColor="#00E5FF" stopOpacity={0}/>
-                          <stop offset="50%"  stopColor="#00E5FF" stopOpacity={0.12}/>
-                          <stop offset="100%" stopColor="#00E5FF" stopOpacity={0}/>
-                        </linearGradient>
-                        <filter id="glowOk">
-                          <feGaussianBlur stdDeviation="2.5" result="blur"/>
-                          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                        </filter>
-                        <filter id="glowCrit">
-                          <feGaussianBlur stdDeviation="3" result="blur"/>
-                          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                        </filter>
-                      </defs>
-
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
-                      <XAxis dataKey="name" tick={{ fill: '#445566', fontSize: 10 }} axisLine={false} tickLine={false} dy={8} />
-                      <YAxis tick={{ fill: '#445566', fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, (dataMax: number) => Math.max(110, Math.ceil(dataMax / 10) * 10 + 10)]} tickCount={7} />
-                      <RechartsTooltip
-                        contentStyle={{ backgroundColor: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
-                        labelStyle={{ color: '#8899aa', marginBottom: 4 }}
-                        formatter={(v: unknown) => [`${v}%`, 'Umidade']}
-                      />
-
-                      {/* Linha CC (100%) */}
-                      <ReferenceLine y={ccPct} stroke="#22c55e" strokeDasharray="4 3" strokeWidth={1.5}
-                        label={{ position: 'insideTopLeft', value: `CC — ${ccPct}%`, fill: '#22c55e', fontSize: 10, fontWeight: 700 }} />
-
-                      {/* Linha de segurança */}
-                      <ReferenceLine y={threshold} stroke="#f59e0b" strokeDasharray="5 4" strokeWidth={1.5}
-                        label={{ position: 'insideTopLeft', value: `Segurança — ${threshold}%`, fill: '#f59e0b', fontSize: 10, fontWeight: 700 }} />
-
-                      {/* Linha PM */}
-                      {pmPct > 0 && (
-                        <ReferenceLine y={pmPct} stroke="#ef4444" strokeWidth={2}
-                          label={{ position: 'insideBottomLeft', value: `PM — ${pmPct}%`, fill: '#ef4444', fontSize: 10, fontWeight: 700 }} />
-                      )}
-
-                      {/* Área normal (acima do threshold) */}
-                      <Area type="monotone" dataKey="moistureOk"
-                        stroke="#00E5FF" strokeWidth={2.5}
-                        fill="url(#gradOk)"
-                        style={{ filter: 'url(#glowOk)' }}
-                        dot={false} activeDot={{ r: 5, fill: '#00E5FF', stroke: '#10151c', strokeWidth: 2 }}
-                        connectNulls={false}
-                      />
-
-                      {/* Área crítica (abaixo do threshold) — vermelha */}
-                      <Area type="monotone" dataKey="moistureCritical"
-                        stroke="#ef4444" strokeWidth={2.5}
-                        fill="url(#gradCrit)"
-                        style={{ filter: 'url(#glowCrit)' }}
-                        dot={false} activeDot={{ r: 5, fill: '#ef4444', stroke: '#10151c', strokeWidth: 2 }}
-                        connectNulls={false}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#445566', fontSize: 13 }}>
-                    Nenhum dado de umidade registrado para este pivô.
-                  </div>
-                )}
-
-                {/* Onda líquida animada — flutua na superfície da área preenchida */}
-                {trendData.length > 0 && (() => {
-                  // Usa a média dos dados para posicionar a onda no "nível médio" da água
-                  const validMoistures = trendData.map((d: { moisture: number | null }) => d.moisture).filter((v): v is number => v !== null)
-                  const avgMoisture = validMoistures.reduce((a, b) => a + b, 0) / validMoistures.length
-                  const yMax = Math.max(110, ...validMoistures) + 5
-                  // Mapeamento para pixels: margem top=16, bottom=30, total height=320
-                  const chartTop = 16
-                  const chartBottom = 30
-                  const chartH = 320 - chartTop - chartBottom
-                  const waveTop = chartTop + (1 - avgMoisture / yMax) * chartH
-                  const waveColor = avgMoisture >= threshold ? '#00E5FF' : '#ef4444'
-                  const waveEnc = encodeURIComponent(waveColor)
-                  return (
-                    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-                      {/* Onda 1 */}
-                      <div style={{
-                        position: 'absolute',
-                        top: waveTop - 8,
-                        left: 0, width: '200%', height: 16,
-                        animation: 'waterWave 3s linear infinite',
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 16'%3E%3Cpath d='M0,8 C50,2 100,14 150,8 C200,2 250,14 300,8 C350,2 400,14 400,8 L400,16 L0,16 Z' fill='${waveEnc}' opacity='0.45'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: 'repeat-x', backgroundSize: '400px 16px',
-                      }} />
-                      {/* Onda 2 — contra-fase */}
-                      <div style={{
-                        position: 'absolute',
-                        top: waveTop - 4,
-                        left: 0, width: '200%', height: 10,
-                        animation: 'waterWave 2s linear infinite reverse',
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 10'%3E%3Cpath d='M0,5 C60,0 130,10 200,5 C270,0 340,10 400,5 L400,10 L0,10 Z' fill='${waveEnc}' opacity='0.22'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: 'repeat-x', backgroundSize: '400px 10px',
-                      }} />
-                    </div>
-                  )
-                })()}
-              </div>
-
-              {/* Legenda */}
-              <div style={{ display: 'flex', gap: 20, marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                {[
-                  { color: '#22c55e',  dash: true,  label: 'Capacidade de Campo (CC)' },
-                  { color: '#f59e0b',  dash: true,  label: `Limiar de Segurança (${threshold}%)` },
-                  { color: '#ef4444',  dash: false, label: 'Ponto de Murcha (PM)' },
-                  { color: '#00E5FF',  dash: false, label: 'Umidade atual' },
-                ].map(({ color, label }) => (
-                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ width: 16, height: 2, background: color, borderRadius: 2 }} />
-                    <span style={{ fontSize: 10, color: '#556677', fontWeight: 600 }}>{label}</span>
-                  </div>
-                ))}
-              </div>
+              {trendData.length > 1 ? (
+                <WaterBalanceChart
+                  history={trendData}
+                  threshold={threshold}
+                  fFactor={fFactor}
+                  fieldCapacity={pivot.field_capacity ?? null}
+                  wiltingPoint={pivot.wilting_point ?? null}
+                  pivotName={pivot.name}
+                />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 160, color: '#445566', fontSize: 13 }}>
+                  Nenhum dado de umidade registrado para este pivô.
+                </div>
+              )}
             </div>
           </div>
         )
