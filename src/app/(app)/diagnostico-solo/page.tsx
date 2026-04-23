@@ -18,8 +18,9 @@ import {
 import {
   Loader2, ChevronDown, CheckCircle2, AlertTriangle, AlertCircle,
   Droplets, Layers, Camera, ClipboardList, ArrowLeft, ArrowRight,
-  RotateCcw, Save, X, ChevronRight, History, Sprout,
+  RotateCcw, Save, X, ChevronRight, History, Sprout, ExternalLink,
 } from 'lucide-react'
+import Link from 'next/link'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -866,7 +867,20 @@ export default function DiagnosticoSoloPage() {
           </span>
           <ChevronDown size={14} style={{ transform: showHistory ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
         </button>
-
+        <Link
+          href="/diagnostico-solo/historico"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            marginTop: 8, padding: '8px 14px',
+            borderRadius: 8, border: '1px solid rgba(0,147,208,0.2)',
+            background: 'rgba(0,147,208,0.06)',
+            color: '#0093D0', fontSize: 12, fontWeight: 500,
+            textDecoration: 'none',
+          }}
+        >
+          <ExternalLink size={13} />
+          Ver histórico completo com gráficos
+        </Link>
         {showHistory && (
           <div style={{
             marginTop: 8, background: '#0f1923',
