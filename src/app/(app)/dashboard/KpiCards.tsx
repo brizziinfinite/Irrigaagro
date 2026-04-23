@@ -47,7 +47,7 @@ export function KpiCards({ summary }: KpiCardsProps) {
       value: String(summary.pivotsWithAlerts),
       unit: summary.pivotsWithAlerts === 1 ? 'pivô' : 'pivôs',
       subtitle: 'Atenção operacional',
-      color: '#ef4444',
+      color: summary.pivotsWithAlerts > 0 ? '#ef4444' : '#556677',
       Icon: AlertTriangle,
     },
   ]
