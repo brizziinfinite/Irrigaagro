@@ -9,13 +9,13 @@ interface KpiCardsProps {
     activePivots: number
     handledToday: number
     pivotsWithAlerts: number
+    aguaHojeMm: number
   }
   lastManagementBySeason: Record<string, DailyManagement>
 }
 
-export function KpiCards({ summary, lastManagementBySeason }: KpiCardsProps) {
-  const aguaHoje = Object.values(lastManagementBySeason)
-    .reduce((sum, m) => sum + (m.recommended_depth_mm ?? 0), 0)
+export function KpiCards({ summary }: KpiCardsProps) {
+  const aguaHoje = summary.aguaHojeMm
 
   const cards = [
     {

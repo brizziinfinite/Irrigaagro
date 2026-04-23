@@ -140,6 +140,7 @@ interface Props {
     handledToday: number
     pivotsWithClimateFallback: number
     pivotsWithAlerts: number
+    aguaHojeMm?: number
   }
 }
 
@@ -215,7 +216,26 @@ export function DashboardClient({
       />
 
       {/* ③ KPIs resumidos */}
-      <KpiCards summary={summary} lastManagementBySeason={lastManagementBySeason} />
+      {(() => {
+        // Água hoje: soma lâmina recomendada dos pivôs que precisam irrigar hoje
+        const aguaHojeMm = Object.values(lastManagementByPivot)
+          .reduce((sum, m) => sum + (m.needs_irrigation ? (m.recommended_depth_mm ?? 0) : 0), 0)
+
+        // Alertas: pivôs com FC% abaixo do threshold (urgência operacional, não de configuração)
+        const pivotsWithAlerts = pivots.filter(pivot => {
+          if (!activePivotIds.has(pivot.id)) return false
+          const pct = lastManagementByPivot[pivot.id]?.field_capacity_percent ?? null
+          const threshold = pivot.alert_threshold_percent ?? 70
+          return pct !== null && pct < threshold
+        }).length
+
+        return (
+          <KpiCards
+            summary={{ ...summary, aguaHojeMm, pivotsWithAlerts }}
+            lastManagementBySeason={lastManagementBySeason}
+          />
+        )
+      })()}
 
       {/* ④ Recomendações Operacionais — sempre visível */}
       {(() => {
