@@ -438,7 +438,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
 
       {/* Linhas — scroll horizontal no mobile */}
       <div style={{ overflowX: 'auto' }}>
-      <div style={{ minWidth: 420, padding: '14px 20px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ minWidth: 420, padding: '14px 20px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {days.map((day, i) => {
           const cfg = STATUS_CONFIG[day.status]
           const StatusIcon = cfg.icon
@@ -1077,7 +1077,7 @@ export default function ManejoPage() {
     : 'rgba(34,197,94,0.15)'
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* ════════════════════════════════════════════════════════
           SEÇÃO 1 — HERO DE DECISÃO
@@ -1088,9 +1088,9 @@ export default function ManejoPage() {
           border: `1px solid ${heroBorder}`,
           borderTop: `2px solid ${heroMainColor}50`,
           borderRadius: 20,
-          padding: '28px 32px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap',
-          boxShadow: `0 12px 40px rgba(0,0,0,0.5)`,
+          padding: '32px 36px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
+          boxShadow: `0 8px 32px rgba(0,0,0,0.45)`,
           position: 'relative', overflow: 'hidden',
         }}>
           {/* Glow ambiental */}
@@ -1117,65 +1117,65 @@ export default function ManejoPage() {
 
             {/* Hierarquia tipográfica em 4 linhas */}
             <div style={{ minWidth: 0 }}>
-              {/* Linha 1 — título pequeno e discreto */}
+              {/* Linha 1 — título: levemente maior, semibold, 90% opacidade */}
               <p style={{
-                fontSize: 11, fontWeight: 600, color: '#445566',
-                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, lineHeight: 1,
+                fontSize: 12, fontWeight: 600, color: 'rgba(85,102,119,0.9)',
+                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6, lineHeight: 1,
               }}>
                 {shouldIrrigate
                   ? (heroStatus === 'vermelho' ? 'Irrigar hoje' : 'Irrigar em breve')
                   : 'Manejo diário'}
               </p>
 
-              {/* Linha 2 — número dominante: o MAIOR elemento da tela */}
+              {/* Linha 2 — número dominante: MAIOR elemento da tela */}
               {shouldIrrigate && heroDepth > 0 ? (
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
                   <span style={{
-                    fontSize: 52, fontWeight: 900, color: '#ffffff',
-                    fontFamily: 'var(--font-mono)', lineHeight: 1,
-                    letterSpacing: '-0.03em',
+                    fontSize: 56, fontWeight: 800, color: '#ffffff',
+                    fontFamily: 'var(--font-mono)', lineHeight: 0.95,
+                    letterSpacing: '-0.04em',
                   }}>
                     {heroDepth.toFixed(1)}
                   </span>
-                  <span style={{ fontSize: 20, fontWeight: 600, color: heroMainColor, lineHeight: 1 }}>mm</span>
-                  {heroSpeed && (
-                    <span style={{ fontSize: 13, color: '#445566', marginLeft: 4 }}>· {heroSpeed}%</span>
-                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 18, fontWeight: 600, color: heroMainColor, lineHeight: 1 }}>mm</span>
+                    {heroSpeed && (
+                      <span style={{ fontSize: 11, color: '#445566', lineHeight: 1 }}>{heroSpeed}%</span>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
                   <span style={{
-                    fontSize: 44, fontWeight: 900, color: '#22c55e',
-                    fontFamily: 'var(--font-mono)', lineHeight: 1, letterSpacing: '-0.03em',
+                    fontSize: 48, fontWeight: 800, color: '#22c55e',
+                    fontFamily: 'var(--font-mono)', lineHeight: 0.95, letterSpacing: '-0.04em',
                   }}>
                     {heroPct !== null ? `${heroPct.toFixed(0)}%` : '—'}
                   </span>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: '#445566' }}>umidade</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#445566' }}>umidade</span>
                 </div>
               )}
 
-              {/* Linha 3 — métricas secundárias em texto corrido */}
-              <p style={{ fontSize: 12, color: '#445566', lineHeight: 1.5, marginBottom: 4 }}>
-                {heroPct !== null && (
-                  <span>Solo: <span style={{ color: '#8899aa' }}>{heroPct.toFixed(0)}%</span></span>
-                )}
+              {/* Linha 3 — máximo 2 itens, contraste reduzido */}
+              <p style={{ fontSize: 11, color: 'rgba(68,85,102,0.85)', lineHeight: 1.4, marginBottom: 5 }}>
                 {heroMargin !== null && (
-                  <span> · Margem: <span style={{ color: heroMargin >= 0 ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
-                    {heroMargin >= 0 ? '+' : ''}{heroMargin.toFixed(0)}%
-                  </span></span>
+                  <span>Déficit: <span style={{
+                    color: heroMargin >= 0
+                      ? 'rgba(34,197,94,0.75)'
+                      : 'rgba(239,68,68,0.75)',
+                    fontWeight: 600,
+                  }}>{heroMargin >= 0 ? '+' : ''}{heroMargin.toFixed(0)}%</span></span>
                 )}
-                {heroEtc !== null && (
-                  <span> · ETc: <span style={{ color: '#8899aa' }}>{heroEtc.toFixed(1)} mm/d</span></span>
-                )}
-                <span> · Revisão: <span style={{ color: '#8899aa' }}>{shouldIrrigate ? 'hoje' : nextIrrigText.split(' — ')[0].toLowerCase()}</span></span>
+                <span style={{ marginLeft: heroMargin !== null ? 8 : 0 }}>
+                  Revisão: <span style={{ color: 'rgba(136,153,170,0.8)' }}>
+                    {shouldIrrigate ? 'hoje' : nextIrrigText.split(' — ')[0].toLowerCase()}
+                  </span>
+                </span>
               </p>
 
-              {/* Linha 4 — pivô / contexto mínimo */}
-              <p style={{ fontSize: 11, color: '#334455' }}>
+              {/* Linha 4 — pivô em texto mínimo */}
+              <p style={{ fontSize: 11, color: '#2a3a4a', letterSpacing: '0.01em' }}>
                 {selectedSeason?.pivots?.name ?? selectedSeason?.farms?.name ?? ''}
-                {heroCfg && (
-                  <span style={{ marginLeft: 6, color: heroCfg.color, fontWeight: 600 }}>· {heroCfg.label}</span>
-                )}
               </p>
             </div>
           </div>
@@ -1193,17 +1193,32 @@ export default function ManejoPage() {
                 }, 50)
               }}
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-                padding: '15px 28px', borderRadius: 14, fontSize: 14, fontWeight: 800,
-                textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '17px 32px', borderRadius: 14, fontSize: 14, fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap',
                 background: shouldIrrigate
-                  ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
-                  : 'linear-gradient(135deg, #0093D0, #0284c7)',
+                  ? 'linear-gradient(135deg, #e02424, #c01a1a)'
+                  : 'linear-gradient(135deg, #0093D0, #0277b5)',
                 color: '#fff', border: 'none', cursor: 'pointer',
                 boxShadow: shouldIrrigate
-                  ? '0 6px 20px rgba(220,38,38,0.35)'
-                  : '0 6px 20px rgba(0,147,208,0.3)',
+                  ? '0 8px 24px rgba(200,30,30,0.4)'
+                  : '0 8px 24px rgba(0,147,208,0.35)',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
               }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'scale(1.02)'
+                e.currentTarget.style.boxShadow = shouldIrrigate
+                  ? '0 10px 28px rgba(200,30,30,0.5)'
+                  : '0 10px 28px rgba(0,147,208,0.45)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.boxShadow = shouldIrrigate
+                  ? '0 8px 24px rgba(200,30,30,0.4)'
+                  : '0 8px 24px rgba(0,147,208,0.35)'
+              }}
+              onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.98)' }}
+              onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.02)' }}
             >
               <Droplets size={16} strokeWidth={2.5} />
               {shouldIrrigate ? 'Lançar Irrigação' : 'Registrar Manejo'}
@@ -1219,10 +1234,19 @@ export default function ManejoPage() {
               }}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                padding: '9px 16px', borderRadius: 10, fontSize: 11, fontWeight: 600,
-                textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap',
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.07)',
-                color: '#445566', cursor: 'pointer',
+                padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 500,
+                letterSpacing: '0.03em', whiteSpace: 'nowrap',
+                background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
+                color: '#334455', cursor: 'pointer',
+                transition: 'color 0.15s ease, border-color 0.15s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = '#556677'
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = '#334455'
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
               }}
             >
               <Save size={12} />
@@ -1314,40 +1338,40 @@ export default function ManejoPage() {
           ════════════════════════════════════════════════════════ */}
       {calcResult && (
         <div style={{
-          background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 14, padding: '16px 20px',
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 16,
+          background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)',
+          borderRadius: 14, padding: '20px 24px',
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 20,
         }}>
           {[
             {
-              label: 'Umidade atual',
+              label: 'Umidade',
               value: calcResult.fieldCapacityPercent.toFixed(0) + '%',
               color: heroCfg?.color ?? '#8899aa',
               sub: `Limiar: ${heroThreshold}%`,
             },
             {
-              label: 'Margem de segurança',
+              label: 'Margem',
               value: heroMargin !== null ? (heroMargin >= 0 ? `+${heroMargin.toFixed(0)}%` : `${heroMargin.toFixed(0)}%`) : '—',
-              color: heroMargin !== null && heroMargin >= 0 ? '#22c55e' : '#ef4444',
+              color: heroMargin !== null && heroMargin >= 0 ? '#22c55e' : '#e05252',
               sub: heroMargin !== null && heroMargin >= 0 ? 'Acima do limiar' : 'Abaixo do limiar',
             },
             {
-              label: 'Lâmina recomendada',
+              label: 'Lâmina rec.',
               value: heroDepth > 0 ? `${heroDepth.toFixed(1)} mm` : 'Não irrigar',
               color: heroDepth > 0 ? '#0093D0' : '#22c55e',
               sub: heroSpeed ? `Velocidade: ${heroSpeed}%` : 'Sem irrigação hoje',
             },
             {
-              label: 'ETc hoje',
+              label: 'ETc',
               value: heroEtc !== null ? `${heroEtc.toFixed(1)} mm/d` : '—',
-              color: '#8899aa',
-              sub: `ETo: ${calcResult.eto.toFixed(1)} mm · Kc: ${calcResult.kc.toFixed(2)}`,
+              color: '#556677',
+              sub: `ETo: ${calcResult.eto.toFixed(1)} · Kc: ${calcResult.kc.toFixed(2)}`,
             },
           ].map(({ label, value, color, sub }) => (
             <div key={label}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{label}</p>
-              <p style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1.2 }}>{value}</p>
-              <p style={{ fontSize: 10, color: '#445566', marginTop: 3 }}>{sub}</p>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{label}</p>
+              <p style={{ fontSize: 17, fontWeight: 700, color, fontFamily: 'var(--font-mono)', lineHeight: 1.15 }}>{value}</p>
+              <p style={{ fontSize: 10, color: '#334455', marginTop: 4, lineHeight: 1.3 }}>{sub}</p>
             </div>
           ))}
         </div>
@@ -1483,29 +1507,29 @@ export default function ManejoPage() {
         const totalEtc7d = history.slice(0, 7).reduce((acc: number, h: DailyManagement) => acc + (h.etc_mm ?? 0), 0)
 
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
             {/* Agenda de Irrigação */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h3 style={{ fontSize: 11, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Agenda de Irrigação</h3>
+            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <h3 style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Agenda de Irrigação</h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#8899aa' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12, color: '#556677' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Status:</span>
-                  <span style={{ color: st.color, fontWeight: 800, textTransform: 'uppercase', background: `${st.color}18`, padding: '2px 8px', borderRadius: 6, fontSize: 10 }}>{st.label}</span>
+                  <span>Status</span>
+                  <span style={{ color: st.color, fontWeight: 700, background: `${st.color}15`, padding: '2px 8px', borderRadius: 6, fontSize: 10, letterSpacing: '0.04em' }}>{st.label}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Próximo passo:</span>
-                  <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{previsaoTexto}</span>
+                  <span>Próximo passo</span>
+                  <span style={{ color: '#8899aa', fontWeight: 600 }}>{previsaoTexto}</span>
                 </div>
-                <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '2px 0' }} />
+                <div style={{ height: 1, background: 'rgba(255,255,255,0.04)', margin: '1px 0' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Demanda da cultura:</span>
-                  <span style={{ color: capWarning ? '#ef4444' : '#e2e8f0' }}>{etcDiariaStr} mm/dia</span>
+                  <span>Demanda da cultura</span>
+                  <span style={{ color: capWarning ? '#e05252' : '#8899aa' }}>{etcDiariaStr} mm/dia</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Estágio fenológico:</span>
-                  <span style={{ color: '#0093D0', fontWeight: 700 }}>{calcResult.cropStage ?? 1}</span>
+                  <span>Estágio fenológico</span>
+                  <span style={{ color: '#0093D0', fontWeight: 600 }}>{calcResult.cropStage ?? 1}</span>
                 </div>
               </div>
 
@@ -1540,12 +1564,12 @@ export default function ManejoPage() {
             </div>
 
             {/* Consumo de Água 7D */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 4 }}>
-                <h3 style={{ fontSize: 11, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Consumo de Água (7D)</h3>
-                <div style={{ fontSize: 11, color: '#8899aa', textAlign: 'right' }}>
-                  <div>Aplicado: <strong style={{ color: '#e2e8f0' }}>{totalWater7d.toFixed(1)} mm</strong></div>
-                  <div style={{ marginTop: 2 }}>ETc demanda: <span style={{ color: '#8899aa'}}>{totalEtc7d.toFixed(1)} mm</span></div>
+                <h3 style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Consumo de Água (7D)</h3>
+                <div style={{ fontSize: 10, color: '#445566', textAlign: 'right' }}>
+                  <div>Aplicado: <strong style={{ color: '#8899aa' }}>{totalWater7d.toFixed(1)} mm</strong></div>
+                  <div style={{ marginTop: 2 }}>ETc: <span style={{ color: '#445566'}}>{totalEtc7d.toFixed(1)} mm</span></div>
                 </div>
               </div>
 
@@ -1717,15 +1741,21 @@ export default function ManejoPage() {
             {/* Botão salvar */}
             <button onClick={handleSave} disabled={saving || !calcResult}
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '16px 0', borderRadius: 10, fontSize: 15, fontWeight: 800,
-                textTransform: 'uppercase', letterSpacing: '0.04em',
-                background: calcResult ? 'linear-gradient(135deg, #0093D0, #0284c7)' : '#0d1520',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                padding: '17px 0', borderRadius: 12, fontSize: 14, fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                background: calcResult ? 'linear-gradient(135deg, #0093D0, #0277b5)' : '#0d1520',
                 border: 'none', color: calcResult ? '#fff' : '#445566',
                 cursor: calcResult ? 'pointer' : 'not-allowed',
                 opacity: saving ? 0.7 : 1,
-                boxShadow: calcResult ? '0 6px 20px rgba(0, 147, 208, 0.25)' : 'none',
-              }}>
+                boxShadow: calcResult ? '0 8px 24px rgba(0, 147, 208, 0.3)' : 'none',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+              onMouseEnter={e => { if (calcResult && !saving) { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(0,147,208,0.4)' } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = calcResult ? '0 8px 24px rgba(0,147,208,0.3)' : 'none' }}
+              onMouseDown={e => { if (calcResult && !saving) e.currentTarget.style.transform = 'scale(0.99)' }}
+              onMouseUp={e => { if (calcResult && !saving) e.currentTarget.style.transform = 'scale(1.01)' }}
+            >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {saving ? 'Registrando...' : 'Confirmar Lançamento'}
             </button>
