@@ -69,6 +69,22 @@ Cores por zona de segurança, tooltip com % da CC, área de onda animada na umid
 
 ---
 
+## 🎯 UX orientada à decisão — Manejo Diário
+**Status:** ✅ Implementado em 2026-04-23 · branch `refactor/manejo-decision-ux` mergeado no `main`
+
+Refatoração completa da `/manejo/page.tsx` para experiência premium orientada à decisão.
+Nenhuma lógica ou cálculo foi alterado — somente apresentação.
+
+- **DecisionHero**: hierarquia tipográfica 4 linhas — título / número dominante 56px / contexto 2 itens / pivô
+- **Lâmina em mm** como âncora visual principal (ou % umidade quando não precisa irrigar)
+- **CTA primário** irresistível: gradient red/blue por status, hover `scale(1.02)`, active `scale(0.98)`
+- **Context Strip**: 4 métricas (Umidade, Margem, Lâmina rec., ETc) em grid responsivo
+- **Plano semanal com hierarquia temporal**: amanhã (peso 700, barra 100%), depois de amanhã (600, 70%), futuro (400, 45%)
+- **Paleta neon eliminada**: substituída por brand colors (#0093D0, #22c55e, #ef4444, #d97706)
+- **Zonas do gráfico suavizadas**: fillOpacity 0.02–0.03 para não competir com dados
+
+---
+
 ## 🔀 Split-view comparação (Precipitações)
 **Status:** ✅ Implementado em 2026-04-22
 
