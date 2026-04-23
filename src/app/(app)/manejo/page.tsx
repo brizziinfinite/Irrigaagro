@@ -23,19 +23,17 @@ import { upsertRainfallRecord, deleteRainfallRecord, listRainfallByPivotIdAndSec
 import {
   type EToSource,
   type EToConfidence,
-  getEToSourceLabel,
-  getEToConfidenceLabel,
 } from '@/lib/calculations/eto-resolution'
 import {
-  Loader2, ChevronDown, Droplets, Sun, CloudRain,
-  Wind, Thermometer, CheckCircle2, AlertTriangle, AlertCircle,
+  Loader2, ChevronDown, Droplets, Sun,
+  Thermometer, CheckCircle2, AlertTriangle, AlertCircle,
   Save, Calendar, FlaskConical, Sprout, Clock,
   Satellite, Sheet, TrendingDown, Zap, Orbit,
-  Edit2, Trash2, X, Plus
+  Edit2, Trash2, X, Plus, ArrowRight
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { ComposedChart, Line, Area, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceArea, Cell, AreaChart, BarChart } from 'recharts'
+import { Area, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceArea, Cell, AreaChart, BarChart } from 'recharts'
 import WaterBalanceChart from './WaterBalanceChart'
 
 // ─── Status semáforo ─────────────────────────────────────────
@@ -181,26 +179,28 @@ function SoilDiagram({
   cropName, farmName, pivotName, seasonName, date, pivotAreaHa,
 }: SoilDiagramProps) {
   const cfg = STATUS_CONFIG[status]
-  
+
   // Radial Gauge Calculations
   const radius = 100
   const strokeWidth = 14
   const circumference = 2 * Math.PI * radius
-  
-  // Clamping progress and calculating dash offset
+
   const progressPercent = Math.max(0, Math.min(100, fieldCapacityPercent))
   const offset = circumference - (progressPercent / 100) * circumference
-  
-  // Dynamic glow and colors
+
+  // Mature color palette (no neon)
   const trackColor = '#1A2433'
-  let gaugeColorPrimary = '#00E5FF' // Cyan
-  let gaugeColorSecondary = '#39FF14' // Neon Green
+  let gaugeColorPrimary = '#0093D0'   // azul brand
+  let gaugeColorSecondary = '#22c55e' // verde
   if (status === 'amarelo') {
-    gaugeColorPrimary = '#FFEA00'
-    gaugeColorSecondary = '#FF9900'
+    gaugeColorPrimary = '#d97706'
+    gaugeColorSecondary = '#f59e0b'
   } else if (status === 'vermelho') {
-    gaugeColorPrimary = '#FF3366'
-    gaugeColorSecondary = '#E60039'
+    gaugeColorPrimary = '#dc2626'
+    gaugeColorSecondary = '#ef4444'
+  } else if (status === 'azul') {
+    gaugeColorPrimary = '#0891b2'
+    gaugeColorSecondary = '#06b6d4'
   }
 
   return (
@@ -216,23 +216,20 @@ function SoilDiagram({
       boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
       height: '100%',
     }}>
-      {/* ── Header: Info Principal da Célula ── */}
+      {/* ── Header ── */}
       <div style={{ zIndex: 2, marginBottom: 20 }}>
-        <p style={{ fontSize: 24, fontWeight: 900, color: '#F1F5F9', letterSpacing: '-0.02em', textShadow: '0 0 10px rgba(255,255,255,0.1)' }}>
-          {pivotName ?? seasonName}
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+          Análise do Solo
         </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-          <span style={{ fontSize: 13, color: '#8899aa' }}>Status:</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color, display: 'flex', alignItems: 'center', gap: 4 }}>
-            {status === 'verde' || status === 'azul' ? 'Ativo' : status === 'amarelo' ? 'Aviso' : 'Crítico'} 
-            ({fieldCapacityPercent.toFixed(0)}% Umidade)
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color }}>{cfg.label}</span>
+          <span style={{ fontSize: 13, color: '#445566' }}>— {fieldCapacityPercent.toFixed(0)}% C.C.</span>
         </div>
       </div>
 
-      {/* ── Center: O Gauge Radial SVG ── */}
+      {/* ── Center: Gauge Radial SVG ── */}
       <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '20px 0', minHeight: 280
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '20px 0', minHeight: 260
       }}>
         <svg width="260" height="260" viewBox="0 0 240 240" style={{ transform: 'rotate(-90deg)', overflow: 'visible' }}>
           <defs>
@@ -241,14 +238,14 @@ function SoilDiagram({
               <stop offset="100%" stopColor={gaugeColorSecondary} />
             </linearGradient>
             <filter id="gaugeGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="8" result="blur" />
+              <feGaussianBlur stdDeviation="5" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
 
           {/* Background Track */}
           <circle cx="120" cy="120" r={radius} fill="none" stroke={trackColor} strokeWidth={strokeWidth} />
-          
+
           {/* Progress Arc */}
           <circle
             cx="120" cy="120" r={radius}
@@ -261,15 +258,6 @@ function SoilDiagram({
             filter="url(#gaugeGlow)"
             style={{ transition: 'stroke-dashoffset 1s ease-out' }}
           />
-
-          {/* Limit Threshold Mark */}
-          {alertThresholdPct && (
-            <circle
-              cx="120" cy="120" r={radius - strokeWidth/2 + 2}
-              fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeDasharray={'2 6'}
-              style={{ opacity: 0.5 }}
-            />
-          )}
         </svg>
 
         {/* Text inside Gauge */}
@@ -277,14 +265,14 @@ function SoilDiagram({
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none'
         }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#8899aa', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Umidade (C.C.)
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Umidade C.C.
           </span>
-          <span style={{ 
-            fontSize: 54, fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1,
-            textShadow: `0 0 20px ${gaugeColorPrimary}60`, fontFamily: 'var(--font-mono)'
+          <span style={{
+            fontSize: 52, fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1,
+            fontFamily: 'var(--font-mono)'
           }}>
-            {fieldCapacityPercent.toFixed(0)}<span style={{ fontSize: 30 }}>%</span>
+            {fieldCapacityPercent.toFixed(0)}<span style={{ fontSize: 28 }}>%</span>
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: cfg.color }}>{cfg.label}</span>
@@ -292,40 +280,46 @@ function SoilDiagram({
         </div>
       </div>
 
-      {/* ── Stats Grid (Analytics Premium Agro) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 'auto' }}>
-        
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: 16 }}>
-          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Situação da Cultura</p>
+      {/* ── Stats Grid ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 'auto' }}>
+
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
+          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cultura</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cropName ?? 'Não inf.'}</span>
-            <span style={{ fontSize: 11, color: '#00E5FF', fontWeight: 700 }}>D{das}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cropName ?? 'Não inf.'}</span>
+            <span style={{ fontSize: 11, color: '#0093D0', fontWeight: 700 }}>D{das}</span>
           </div>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 8 }}>Prof. de Raiz: <span style={{ color: '#fff' }}>{Math.round(rootDepthCm)} cm</span></p>
+          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 6 }}>Raiz: <span style={{ color: '#e2e8f0' }}>{Math.round(rootDepthCm)} cm</span></p>
         </div>
 
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: 16 }}>
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
           <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Armazenamento</p>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }} title="Capacidade de Água Disponível: Água estocada que a raiz da cultura consegue extrair sem sofrer estresse severo."><span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}}>CAD:</span> {cad.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 8 }} title="Capacidade Total de Água: Quantidade máxima de água em milímetros que a atual profundidade de raiz consegue processar antes de escorrer (percolação profunda)."><span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}}>CTA Total:</span> <span style={{ color: '#fff' }}>{cta.toFixed(1)} mm</span></p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
+            <span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}} title="Capacidade de Água Disponível">CAD:</span> {cad.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span>
+          </p>
+          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 6 }}>
+            <span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}} title="Capacidade Total de Água">CTA:</span> <span style={{ color: '#e2e8f0' }}>{cta.toFixed(1)} mm</span>
+          </p>
         </div>
 
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: 16 }}>
-          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hídrico Solos</p>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#00E5FF', fontFamily: 'var(--font-mono)' }} title="Conteúdo de Umidade Atual (ADc): Volume real de água disponível no solo hoje."><span style={{cursor: 'help', borderBottom: '1px dotted #00E5FF'}}>Atual:</span> {adcNew.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 8 }}>Falta p/ CC: <span style={{ color: '#ef4444' }}>{Math.max(0, cta - adcNew).toFixed(1)} mm</span></p>
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
+          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hídrico Atual</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
+            ADc: {adcNew.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span>
+          </p>
+          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 6 }}>Falta p/ CC: <span style={{ color: '#ef4444' }}>{Math.max(0, cta - adcNew).toFixed(1)} mm</span></p>
         </div>
 
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: 16 }}>
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
           <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 4 }}>
             <span>Limiar de Segurança</span>
             {alertThresholdPct && <span style={{ color: '#f59e0b' }}>({alertThresholdPct}%)</span>}
           </p>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
             Mín: {(cta * ((alertThresholdPct ?? 50)/100)).toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span>
           </p>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 8 }}>
-            Déficit Aceitável: <span style={{ color: '#fff' }}>{(cta - (cta * ((alertThresholdPct ?? 50)/100))).toFixed(1)} mm</span>
+          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 6 }}>
+            Déficit aceito: <span style={{ color: '#e2e8f0' }}>{(cta - (cta * ((alertThresholdPct ?? 50)/100))).toFixed(1)} mm</span>
           </p>
         </div>
 
@@ -340,7 +334,7 @@ function SoilDiagram({
 
 interface ProjectionForecastProps {
   days: ProjectionDay[]
-  baseDays: ProjectionDay[]  // projeção sem irrigação (para comparação)
+  baseDays: ProjectionDay[]
   avgEto: number | null
   pivot: Pivot | null
   simulatedIrrigation: number[]
@@ -356,7 +350,6 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
 
   const hasSimulation = simulatedIrrigation.some(v => v > 0)
   const firstIrrigIdx = days.findIndex(d => d.isIrrigationDay)
-
   const hasMechanicalData = !!(pivot?.time_360_h && pivot?.flow_rate_m3h && pivot?.length_m)
 
   function handleApply(dayIdx: number) {
@@ -398,9 +391,9 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
     <div style={{ background: '#0f1923', border: hasSimulation ? '1px solid rgba(0,147,208,0.25)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <TrendingDown size={14} style={{ color: hasSimulation ? '#0093D0' : '#0093D0' }} />
+        <TrendingDown size={14} style={{ color: '#0093D0' }} />
         <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>
-          {hasSimulation ? 'Projeção — Simulação Ativa' : 'Projeção — próximos 7 dias'}
+          {hasSimulation ? 'Projeção — Simulação Ativa' : 'Se não irrigar, o que acontece?'}
         </span>
         {avgEto !== null && (
           <span style={{ fontSize: 11, color: '#556677', marginLeft: 'auto' }}>
@@ -445,7 +438,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
 
       {/* Linhas — scroll horizontal no mobile */}
       <div style={{ overflowX: 'auto' }}>
-      <div style={{ minWidth: 420, padding: '14px 20px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ minWidth: 420, padding: '14px 20px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {days.map((day, i) => {
           const cfg = STATUS_CONFIG[day.status]
           const StatusIcon = cfg.icon
@@ -457,50 +450,80 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
           const basePct = baseDay ? Math.max(0, Math.min(100, baseDay.fieldCapacityPercent)) : null
           const showComparison = hasSimulation && basePct !== null && Math.abs(pct - basePct) > 0.5
 
+          // Hierarquia temporal: amanhã (i=0) > depois de amanhã (i=1) > resto
+          const isAmanha = i === 0
+          const isDepoisAmanha = i === 1
+          const isFuturo = i >= 2
+          // Cor do dia: amanhã vermelho se alerta, âmbar se i=1, resto suavizado
+          const dayLabelColor = isAmanha
+            ? (isAlert ? cfg.color : '#8899aa')
+            : isDepoisAmanha
+              ? (isAlert ? '#d97706' : '#556677')
+              : '#334455'
+          const dayFontWeight = isAmanha ? 700 : isDepoisAmanha ? 600 : 400
+          // Barra: amanhã mais intensa, resto com opacidade menor
+          const barOpacity = isAmanha ? 1 : isDepoisAmanha ? 0.7 : 0.45
+          // Background row
+          const rowBg = hasIrrigHere
+            ? 'rgba(0,147,208,0.08)'
+            : isAmanha && isAlert
+              ? (day.status === 'vermelho' ? 'rgba(239,68,68,0.07)' : 'rgba(245,158,11,0.06)')
+              : isAmanha
+                ? '#0d1520'
+                : i % 2 ? '#080e14' : 'transparent'
+          const rowBorder = hasIrrigHere
+            ? '1px solid rgba(0,147,208,0.25)'
+            : isAmanha && isAlert
+              ? `1px solid ${cfg.color}30`
+              : '1px solid transparent'
+          // Cor status: amanhã cor real, depois âmbar se alerta, resto neutro
+          const statusColor = isAmanha ? cfg.color : isDepoisAmanha && isAlert ? '#d97706' : '#334455'
+
           return (
             <div key={day.date}>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '80px 30px 1fr 60px 46px 90px 32px',
                 alignItems: 'center', gap: 8,
-                padding: isAlert ? '8px 10px' : '5px 10px',
+                padding: isAmanha ? '9px 10px' : '5px 10px',
                 borderRadius: 9,
-                background: hasIrrigHere ? 'rgba(0,147,208,0.08)' : isAlert ? cfg.bg : i % 2 ? '#080e14' : 'transparent',
-                border: hasIrrigHere ? '1px solid rgba(0,147,208,0.25)' : isAlert ? `1px solid ${cfg.border}` : '1px solid transparent',
+                background: rowBg,
+                border: rowBorder,
+                opacity: isFuturo && !isAlert ? 0.7 : 1,
               }}>
-                <span style={{ fontSize: 11, color: isAlert ? cfg.color : '#8899aa', fontWeight: isAlert ? 700 : 400 }}>
+                <span style={{ fontSize: 11, color: dayLabelColor, fontWeight: dayFontWeight }}>
                   {i === 0 ? 'Amanhã' : fmtDate(day.date)}
                 </span>
-                <span style={{ fontSize: 10, color: '#445566' }}>D{day.das}</span>
-                <div style={{ position: 'relative', height: 12, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
-                  <div style={{ position: 'absolute', left: `${cadPct}%`, top: -2, bottom: -2, width: 2, background: '#f59e0b', opacity: 0.6, borderRadius: 1, zIndex: 2 }} />
+                <span style={{ fontSize: 10, color: '#334455' }}>D{day.das}</span>
+                <div style={{ position: 'relative', height: isAmanha ? 10 : 8, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
+                  <div style={{ position: 'absolute', left: `${cadPct}%`, top: -2, bottom: -2, width: 2, background: '#f59e0b', opacity: 0.5, borderRadius: 1, zIndex: 2 }} />
                   {showComparison && basePct !== null && (
-                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${basePct}%`, background: cfg.color, borderRadius: 99, opacity: 0.2 }} />
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${basePct}%`, background: cfg.color, borderRadius: 99, opacity: 0.15 }} />
                   )}
-                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: cfg.color, borderRadius: 99, transition: 'width 0.3s' }} />
+                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: isAmanha ? cfg.color : isDepoisAmanha ? (isAlert ? '#d97706' : cfg.color) : cfg.color, borderRadius: 99, transition: 'width 0.3s', opacity: barOpacity }} />
                 </div>
-                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
+                <span style={{ fontSize: isAmanha ? 12 : 11, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
                   {showComparison && basePct !== null ? (
                     <>
-                      <span style={{ color: '#556677', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
-                      <span style={{ color: cfg.color, fontWeight: 700 }}> {fmtNum(day.fieldCapacityPercent, 0)}%</span>
+                      <span style={{ color: '#334455', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
+                      <span style={{ color: statusColor, fontWeight: isAmanha ? 700 : 500 }}> {fmtNum(day.fieldCapacityPercent, 0)}%</span>
                     </>
                   ) : (
-                    <span style={{ color: cfg.color, fontWeight: 700 }}>{fmtNum(day.fieldCapacityPercent, 0)}%</span>
+                    <span style={{ color: statusColor, fontWeight: isAmanha ? 700 : 500 }}>{fmtNum(day.fieldCapacityPercent, 0)}%</span>
                   )}
                 </span>
                 <span style={{ fontSize: 10, textAlign: 'right' }} title={day.recommendedDepthMm > 0 ? `Déficit previsto D+${i+1}: ${fmtNum(day.recommendedDepthMm)} mm` : `ETc prevista: ${fmtNum(day.etcAvg)} mm/dia`}>
                   {hasIrrigHere ? (
                     <span style={{ color: '#0093D0', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10 }}>+{fmtNum(simulatedIrrigation[i])}</span>
                   ) : day.recommendedDepthMm > 0 ? (
-                    <><span style={{ color: cfg.color, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#556677' }}> mm</span></>
+                    <><span style={{ color: isAmanha ? cfg.color : isDepoisAmanha ? '#d97706' : '#445566', fontFamily: 'var(--font-mono)', fontWeight: isAmanha ? 700 : 500 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#334455' }}> mm</span></>
                   ) : (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#22c55e' }}>NI</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: isAmanha ? '#22c55e' : '#334455' }}>NI</span>
                   )}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
-                  <StatusIcon size={10} style={{ color: cfg.color }} />
-                  <span style={{ fontSize: 10, color: cfg.color, fontWeight: 600 }}>{cfg.label}</span>
+                  <StatusIcon size={10} style={{ color: statusColor }} />
+                  <span style={{ fontSize: 10, color: statusColor, fontWeight: isAmanha ? 600 : 400 }}>{cfg.label}</span>
                 </div>
                 {/* Botão + / editar irrigação simulada */}
                 <button
@@ -661,7 +684,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.etc_mm)}</span>
             <span style={{ fontSize: 12, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall_mm)}</span>
-            <span style={{ fontSize: 12, color: lamina !== null && lamina > 0 ? '#00E5FF' : '#334455', fontFamily: 'var(--font-mono)', fontWeight: lamina !== null && lamina > 0 ? 700 : 400 }}>
+            <span style={{ fontSize: 12, color: lamina !== null && lamina > 0 ? '#0093D0' : '#334455', fontFamily: 'var(--font-mono)', fontWeight: lamina !== null && lamina > 0 ? 700 : 400 }}>
               {lamina !== null && lamina > 0 ? `${fmtNum(lamina)} mm` : '—'}
             </span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.ctda)}</span>
@@ -719,8 +742,7 @@ export default function ManejoPage() {
   const [date, setDate]           = useState(todayISO())
   const [tmax, setTmax]           = useState('')
   const [tmin, setTmin]           = useState('')
-  
-  // ── UI States para Modo Premium (Clean) ──
+
   const [showForm, setShowForm]   = useState(false)
   const [showHistoryTab, setShowHistoryTab] = useState(false)
   const [humidity, setHumidity]   = useState('')
@@ -769,7 +791,6 @@ export default function ManejoPage() {
 
   useEffect(() => { if (selectedSeasonId) loadHistory(selectedSeasonId) }, [selectedSeasonId, loadHistory])
 
-  // Recarrega histórico quando o usuário volta para a aba (ex: após editar precipitações)
   useEffect(() => {
     if (!selectedSeasonId) return
     const handleFocus = () => loadHistory(selectedSeasonId)
@@ -783,10 +804,9 @@ export default function ManejoPage() {
   )
 
   // ─── Busca automática de clima ──────────────────────────────
-  // Não busca quando em modo edição (campos já foram preenchidos com os dados do registro)
   useEffect(() => {
     if (!selectedSeason || !date) { setExternalData(null); return }
-    if (editingRecord) return  // em modo edição, não sobrescreve os campos
+    if (editingRecord) return
     const season = selectedSeason
     let cancelled = false
 
@@ -802,8 +822,6 @@ export default function ManejoPage() {
         setHumidity(cs?.humidity_percent != null ? cs.humidity_percent.toFixed(0) : '')
         setWind(cs?.wind_speed_ms != null ? cs.wind_speed_ms.toFixed(1) : '')
         setRadiation(cs?.solar_radiation_wm2 != null ? cs.solar_radiation_wm2.toFixed(0) : '')
-        // Chuva SOMENTE de rainfall_records (entrada manual/importação)
-        // Não usar Open-Meteo/weather_data como fonte de chuva — dados imprecisos
         setRainfall(snapshot.rainfall?.rainfall_mm != null
           ? snapshot.rainfall.rainfall_mm.toFixed(1)
           : '')
@@ -818,12 +836,9 @@ export default function ManejoPage() {
     return () => { cancelled = true }
   }, [selectedSeason, date, editingRecord])
 
-  // ─── Pré-preenche irrigação a partir de registro existente (cron) ──
-  // Quando já existe um registro gravado pelo cron para a data selecionada,
-  // o formulário deve refletir os dados reais — evita divergência entre
-  // dashboard (usa banco) e manejo (recalcula ao vivo com formulário vazio).
+  // ─── Pré-preenche irrigação a partir de registro existente ──
   useEffect(() => {
-    if (editingRecord) return  // modo edição manual, não sobrescreve
+    if (editingRecord) return
     const todayRecord = history.find(r => r.date === date)
     if (todayRecord) {
       if (todayRecord.actual_depth_mm != null && todayRecord.actual_depth_mm > 0) {
@@ -862,7 +877,6 @@ export default function ManejoPage() {
   }, [selectedSeason, history, date, tmax, tmin, humidity, wind, radiation, rainfall, actualDepth, actualSpeed, externalData])
 
   // ─── Projeção 7 dias ─────────────────────────────────────────
-  // ETo base = valor do dia atual calculado (mesmo que aparece no diagrama)
   useEffect(() => {
     if (!calcResult || !selectedSeason?.crops || !das || !date) { setProjection([]); setBaseProjection([]); setAvgEto(null); return }
     const baseEto = calcResult.eto
@@ -931,8 +945,6 @@ export default function ManejoPage() {
   }
 
   // ─── Auto-fill lâmina a partir da velocidade ─────────────────
-  // Só preenche automaticamente se: campo vazio OU preenchido automaticamente antes
-  // Se o usuário digitou manualmente (depthAutoFilled=false, actualDepth!=''), não sobrescreve
   useEffect(() => {
     if (!depthAutoFilled && actualDepth !== '') return
     const speed = parseOptionalNumber(actualSpeed)
@@ -961,8 +973,6 @@ export default function ManejoPage() {
       wind_speed_ms: parseOptionalNumber(wind) ?? cs?.wind_speed_ms ?? null,
       solar_radiation_wm2: parseOptionalNumber(radiation) ?? cs?.solar_radiation_wm2 ?? null,
       eto_mm: calcResult.eto, etc_mm: calcResult.etc,
-      // Em modo edição, usa só o valor do campo (não sobrescreve com externalData)
-      // Fora de edição, fallback para rainfall_records (nunca Open-Meteo)
       rainfall_mm: editingRecord
         ? (parseOptionalNumber(rainfall) ?? 0)
         : (parseOptionalNumber(rainfall) ?? externalData?.rainfall?.rainfall_mm ?? 0),
@@ -980,8 +990,6 @@ export default function ManejoPage() {
     try {
       await upsertDailyManagementRecord(payload)
 
-      // Sincroniza chuva com rainfall_records (fonte autoritativa)
-      // Se chuva > 0 → upsert com source='manual'. Se chuva = 0 → remove registro existente.
       const pivotId = selectedSeason.pivots?.id
       const rainfallMm = payload.rainfall_mm ?? 0
       if (pivotId) {
@@ -994,7 +1002,6 @@ export default function ManejoPage() {
             sector_id: null,
           })
         } else {
-          // Se zerou a chuva, remove o registro de rainfall_records (se existir)
           const existing = await listRainfallByPivotIdAndSector(pivotId, null)
           const rec = existing.find(r => r.date === date)
           if (rec) await deleteRainfallRecord(rec.id)
@@ -1032,14 +1039,233 @@ export default function ManejoPage() {
 
   const climateInfo = getClimateSourceInfo(externalData?.climateSource ?? null)
 
-  return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+  // ─── Dados para o DecisionHero ──────────────────────────────
+  const rec = calcResult?.recommendation ?? null
+  const heroStatus = calcResult?.status as IrrigationStatus | undefined
+  const heroCfg = heroStatus ? STATUS_CONFIG[heroStatus] : null
+  const shouldIrrigate = rec?.shouldIrrigateToday ?? false
+  const heroDepth = calcResult?.recommendedDepthMm ?? 0
+  const heroSpeed = calcResult?.recommendedSpeedPercent ?? null
+  const heroPct = calcResult?.fieldCapacityPercent ?? null
+  const heroThreshold = selectedSeason?.pivots?.alert_threshold_percent ?? 70
+  const heroMargin = heroPct !== null ? heroPct - heroThreshold : null
+  const heroEtc = calcResult?.etc ?? null
+  const heroMaxDepth = rec?.maxDepthMm ?? null
 
-      {/* ── Título ── */}
-      <div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0' }}>Manejo Diário</h1>
-        <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>Balanço Hídrico FAO-56 Penman-Monteith</p>
-      </div>
+  // Próxima irrigação via projeção
+  const nextIrrigDay = projection.find(p => p.isIrrigationDay)
+  let nextIrrigText = 'Seguro — >7 dias'
+  if (shouldIrrigate) {
+    nextIrrigText = `Hoje — ${heroDepth.toFixed(1)} mm`
+  } else if (nextIrrigDay) {
+    const dias = nextIrrigDay.das - (calcResult?.das ?? 0)
+    nextIrrigText = dias === 1
+      ? `Amanhã — ${nextIrrigDay.recommendedDepthMm.toFixed(1)} mm`
+      : `Em ${dias} dias — ${nextIrrigDay.recommendedDepthMm.toFixed(1)} mm`
+  }
+
+  const heroMainColor = shouldIrrigate
+    ? (heroStatus === 'vermelho' ? '#ef4444' : '#d97706')
+    : '#22c55e'
+  const heroMainBg = shouldIrrigate
+    ? (heroStatus === 'vermelho'
+        ? 'linear-gradient(145deg, rgba(30,16,18,0.98), rgba(15,19,24,0.99))'
+        : 'linear-gradient(145deg, rgba(28,20,10,0.98), rgba(15,19,24,0.99))')
+    : 'linear-gradient(145deg, rgba(14,22,18,0.98), rgba(12,17,22,0.99))'
+  const heroBorder = shouldIrrigate
+    ? (heroStatus === 'vermelho' ? 'rgba(239,68,68,0.2)' : 'rgba(217,119,6,0.2)')
+    : 'rgba(34,197,94,0.15)'
+
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ════════════════════════════════════════════════════════
+          SEÇÃO 1 — HERO DE DECISÃO
+          ════════════════════════════════════════════════════════ */}
+      {calcResult && heroCfg ? (
+        <div style={{
+          background: heroMainBg,
+          border: `1px solid ${heroBorder}`,
+          borderTop: `2px solid ${heroMainColor}50`,
+          borderRadius: 20,
+          padding: '32px 36px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
+          boxShadow: `0 8px 32px rgba(0,0,0,0.45)`,
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {/* Glow ambiental */}
+          <div style={{
+            position: 'absolute', top: -60, left: -40, width: 200, height: 200,
+            borderRadius: '50%', pointerEvents: 'none',
+            background: `radial-gradient(circle, ${heroMainColor}10 0%, transparent 70%)`,
+          }} />
+
+          {/* Left: decisão principal — hierarquia em 4 linhas */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: 1, minWidth: 0, position: 'relative' }}>
+            {/* Ícone discreto */}
+            <div className="hidden sm:flex" style={{
+              width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+              background: `${heroMainColor}0e`,
+              border: `1px solid ${heroMainColor}25`,
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              {shouldIrrigate
+                ? <AlertCircle size={24} style={{ color: heroMainColor, opacity: 0.9 }} />
+                : <CheckCircle2 size={24} style={{ color: heroMainColor, opacity: 0.9 }} />
+              }
+            </div>
+
+            {/* Hierarquia tipográfica em 4 linhas */}
+            <div style={{ minWidth: 0 }}>
+              {/* Linha 1 — título: levemente maior, semibold, 90% opacidade */}
+              <p style={{
+                fontSize: 12, fontWeight: 600, color: 'rgba(85,102,119,0.9)',
+                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6, lineHeight: 1,
+              }}>
+                {shouldIrrigate
+                  ? (heroStatus === 'vermelho' ? 'Irrigar hoje' : 'Irrigar em breve')
+                  : 'Manejo diário'}
+              </p>
+
+              {/* Linha 2 — número dominante: MAIOR elemento da tela */}
+              {shouldIrrigate && heroDepth > 0 ? (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+                  <span style={{
+                    fontSize: 56, fontWeight: 800, color: '#ffffff',
+                    fontFamily: 'var(--font-mono)', lineHeight: 0.95,
+                    letterSpacing: '-0.04em',
+                  }}>
+                    {heroDepth.toFixed(1)}
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 18, fontWeight: 600, color: heroMainColor, lineHeight: 1 }}>mm</span>
+                    {heroSpeed && (
+                      <span style={{ fontSize: 11, color: '#445566', lineHeight: 1 }}>{heroSpeed}%</span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+                  <span style={{
+                    fontSize: 48, fontWeight: 800, color: '#22c55e',
+                    fontFamily: 'var(--font-mono)', lineHeight: 0.95, letterSpacing: '-0.04em',
+                  }}>
+                    {heroPct !== null ? `${heroPct.toFixed(0)}%` : '—'}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#445566' }}>umidade</span>
+                </div>
+              )}
+
+              {/* Linha 3 — máximo 2 itens, contraste reduzido */}
+              <p style={{ fontSize: 11, color: 'rgba(68,85,102,0.85)', lineHeight: 1.4, marginBottom: 5 }}>
+                {heroMargin !== null && (
+                  <span>Déficit: <span style={{
+                    color: heroMargin >= 0
+                      ? 'rgba(34,197,94,0.75)'
+                      : 'rgba(239,68,68,0.75)',
+                    fontWeight: 600,
+                  }}>{heroMargin >= 0 ? '+' : ''}{heroMargin.toFixed(0)}%</span></span>
+                )}
+                <span style={{ marginLeft: heroMargin !== null ? 8 : 0 }}>
+                  Revisão: <span style={{ color: 'rgba(136,153,170,0.8)' }}>
+                    {shouldIrrigate ? 'hoje' : nextIrrigText.split(' — ')[0].toLowerCase()}
+                  </span>
+                </span>
+              </p>
+
+              {/* Linha 4 — pivô em texto mínimo */}
+              <p style={{ fontSize: 11, color: '#2a3a4a', letterSpacing: '0.01em' }}>
+                {selectedSeason?.pivots?.name ?? selectedSeason?.farms?.name ?? ''}
+              </p>
+            </div>
+          </div>
+
+          {/* Right: CTAs — primário dominante, secundário discreto */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+            <button
+              onClick={() => {
+                setShowForm(true)
+                const recDepth = calcResult?.recommendedDepthMm
+                if (recDepth && recDepth > 0) setActualDepth(recDepth.toFixed(1))
+                setTimeout(() => {
+                  const el = document.getElementById('manejo-form-section')
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }, 50)
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '17px 32px', borderRadius: 14, fontSize: 14, fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap',
+                background: shouldIrrigate
+                  ? 'linear-gradient(135deg, #e02424, #c01a1a)'
+                  : 'linear-gradient(135deg, #0093D0, #0277b5)',
+                color: '#fff', border: 'none', cursor: 'pointer',
+                boxShadow: shouldIrrigate
+                  ? '0 8px 24px rgba(200,30,30,0.4)'
+                  : '0 8px 24px rgba(0,147,208,0.35)',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'scale(1.02)'
+                e.currentTarget.style.boxShadow = shouldIrrigate
+                  ? '0 10px 28px rgba(200,30,30,0.5)'
+                  : '0 10px 28px rgba(0,147,208,0.45)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'scale(1)'
+                e.currentTarget.style.boxShadow = shouldIrrigate
+                  ? '0 8px 24px rgba(200,30,30,0.4)'
+                  : '0 8px 24px rgba(0,147,208,0.35)'
+              }}
+              onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.98)' }}
+              onMouseUp={e => { e.currentTarget.style.transform = 'scale(1.02)' }}
+            >
+              <Droplets size={16} strokeWidth={2.5} />
+              {shouldIrrigate ? 'Lançar Irrigação' : 'Registrar Manejo'}
+              <ArrowRight size={16} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={() => {
+                setShowForm(true)
+                setTimeout(() => {
+                  const el = document.getElementById('manejo-form-section')
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }, 50)
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 500,
+                letterSpacing: '0.03em', whiteSpace: 'nowrap',
+                background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
+                color: '#334455', cursor: 'pointer',
+                transition: 'color 0.15s ease, border-color 0.15s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = '#556677'
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = '#334455'
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+              }}
+            >
+              <Save size={12} />
+              {shouldIrrigate ? 'Só registrar dados' : 'Só lançar clima'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Hero skeleton enquanto carrega */
+        <div style={{
+          background: 'linear-gradient(145deg, rgba(18,24,32,0.95), rgba(13,18,26,0.98))',
+          border: '1px solid rgba(255,255,255,0.05)',
+          borderRadius: 20, padding: '28px 32px',
+          display: 'flex', alignItems: 'center', gap: 20,
+        }}>
+          <Loader2 size={20} className="animate-spin" style={{ color: '#0093D0' }} />
+          <span style={{ fontSize: 14, color: '#445566' }}>Calculando balanço hídrico...</span>
+        </div>
+      )}
 
       {/* ── Seletor de safra ── */}
       <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1107,328 +1333,329 @@ export default function ManejoPage() {
         </div>
       )}
 
-      {/* ── MANEJO MAIN LAYOUT: GAUGE + TRENDS (TABLET VIEW) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.8fr] gap-6 items-stretch">
-        
-        {/* Lado Esquerdo - Gauge Radial */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, height: '100%' }}>
-          {calcResult && selectedSeason ? (
-            <SoilDiagram
-              status={calcResult.status as IrrigationStatus}
-              fieldCapacityPercent={calcResult.fieldCapacityPercent}
-              adcNew={calcResult.adcNew}
-              cad={calcResult.cad}
-              cta={calcResult.cta}
-              recommendedDepthMm={calcResult.recommendedDepthMm}
-              das={calcResult.das}
-              cropStage={calcResult.cropStage}
-              eto={calcResult.eto}
-              etc={calcResult.etc}
-              kc={calcResult.kc}
-              rootDepthCm={calcResult.rootDepthCm}
-              etoSource={calcResult.etoSource as EToSource}
-              etoConfidence={calcResult.etoConfidence as EToConfidence | null}
-              alertThresholdPct={selectedSeason.pivots?.alert_threshold_percent ?? null}
-              cropName={selectedSeason.crops?.name ?? null}
-              farmName={selectedSeason.farms.name}
-              pivotName={selectedSeason.pivots?.name ?? null}
-              seasonName={selectedSeason.name}
-              date={date}
-              pivotAreaHa={
-                selectedSeason.pivots?.length_m
-                  ? Math.PI * Math.pow(selectedSeason.pivots.length_m, 2) / 10000
-                  : null
-              }
-            />
-          ) : (
-            !loading && (
-              <div style={{ background: '#0f1923', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 24, padding: '32px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8 }}>
-                <Thermometer size={34} style={{ color: '#556677' }} />
-                <p style={{ fontSize: 13, color: '#556677' }}>Preencha Tmax e Tmin para projetar o solo</p>
+      {/* ════════════════════════════════════════════════════════
+          SEÇÃO 2 — CONTEXTO: Tira compacta de confirmação
+          ════════════════════════════════════════════════════════ */}
+      {calcResult && (
+        <div style={{
+          background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)',
+          borderRadius: 14, padding: '20px 24px',
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 20,
+        }}>
+          {[
+            {
+              label: 'Umidade',
+              value: calcResult.fieldCapacityPercent.toFixed(0) + '%',
+              color: heroCfg?.color ?? '#8899aa',
+              sub: `Limiar: ${heroThreshold}%`,
+            },
+            {
+              label: 'Margem',
+              value: heroMargin !== null ? (heroMargin >= 0 ? `+${heroMargin.toFixed(0)}%` : `${heroMargin.toFixed(0)}%`) : '—',
+              color: heroMargin !== null && heroMargin >= 0 ? '#22c55e' : '#e05252',
+              sub: heroMargin !== null && heroMargin >= 0 ? 'Acima do limiar' : 'Abaixo do limiar',
+            },
+            {
+              label: 'Lâmina rec.',
+              value: heroDepth > 0 ? `${heroDepth.toFixed(1)} mm` : 'Não irrigar',
+              color: heroDepth > 0 ? '#0093D0' : '#22c55e',
+              sub: heroSpeed ? `Velocidade: ${heroSpeed}%` : 'Sem irrigação hoje',
+            },
+            {
+              label: 'ETc',
+              value: heroEtc !== null ? `${heroEtc.toFixed(1)} mm/d` : '—',
+              color: '#556677',
+              sub: `ETo: ${calcResult.eto.toFixed(1)} · Kc: ${calcResult.kc.toFixed(2)}`,
+            },
+          ].map(({ label, value, color, sub }) => (
+            <div key={label}>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{label}</p>
+              <p style={{ fontSize: 17, fontWeight: 700, color, fontFamily: 'var(--font-mono)', lineHeight: 1.15 }}>{value}</p>
+              <p style={{ fontSize: 10, color: '#334455', marginTop: 4, lineHeight: 1.3 }}>{sub}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════
+          SEÇÃO 3 — PROJEÇÃO 7 DIAS + GRÁFICO
+          ════════════════════════════════════════════════════════ */}
+      {calcResult?.recommendation && (() => {
+        const targetThresholdLine = selectedSeason?.pivots?.alert_threshold_percent ?? 70
+        const trendData = projection.slice(0, 7).map((d) => ({
+          name: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(d.date + 'T12:00:00').getDay()],
+          moisture: parseFloat(d.fieldCapacityPercent.toFixed(1))
+        }))
+
+        return (
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <TrendingDown size={13} style={{ color: '#0093D0' }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Se não irrigar, o que acontece?
+                </span>
               </div>
-            )
-          )}
-        </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[
+                  { color: '#22c55e', label: `Seguro >${Math.round(targetThresholdLine * 1.15)}%` },
+                  { color: '#f59e0b', label: `Atenção ${targetThresholdLine}–${Math.round(targetThresholdLine * 1.15)}%` },
+                  { color: '#ef4444', label: `Crítico <${targetThresholdLine}%` },
+                ].map(z => (
+                  <span key={z.label} style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: `${z.color}15`, border: `1px solid ${z.color}30`, color: z.color, fontWeight: 600 }}>
+                    {z.label}
+                  </span>
+                ))}
+              </div>
+            </div>
 
-        {/* Lado Direito - VISUALIZAÇÃO PREMIUM MOCKUP */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%', minWidth: 0 }}>
-          {calcResult?.recommendation ? (
-            (() => {
-              const isConjugated = selectedSeason?.pivots?.operation_mode === 'conjugated'
-              const rec = calcResult.recommendation
-              const statusStyles: Record<RecommendationStatus, { color: string; label: string }> = {
-                  ok:               { color: '#39FF14', label: 'SEM NECESSIDADE' },
-                  queue:            { color: '#FFEA00', label: 'FILA (PENDENTE)' },
-                  irrigate_today:   { color: '#00E5FF', label: 'IRRIGAR HOJE' },
-                  operational_risk: { color: '#E60039', label: 'ALERTA (T < 0%)' },
-              }
-              const st = statusStyles[rec.status] || statusStyles.ok
+            {/* Gráfico de área */}
+            <div style={{ padding: '0 20px 4px', height: 220 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trendData} margin={{ top: 16, right: 8, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorMoisture2" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor="#ef4444" stopOpacity={0.25}/>
+                      <stop offset={`${targetThresholdLine}%`} stopColor="#ef4444" stopOpacity={0.15}/>
+                      <stop offset={`${targetThresholdLine}%`} stopColor="#22c55e" stopOpacity={0.12}/>
+                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0.08}/>
+                    </linearGradient>
+                    <linearGradient id="strokeMoisture2" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0%" stopColor="#ef4444"/>
+                      <stop offset={`${targetThresholdLine}%`} stopColor="#ef4444"/>
+                      <stop offset={`${targetThresholdLine}%`} stopColor="#22c55e"/>
+                      <stop offset="100%" stopColor="#22c55e"/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="name" tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
+                  <YAxis tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 110]} tickFormatter={(v: number) => `${v}%`} />
+                  <ReferenceArea y1={Math.round(targetThresholdLine * 1.15)} y2={110} fill="rgba(34,197,94,0.02)" />
+                  <ReferenceArea y1={targetThresholdLine} y2={Math.round(targetThresholdLine * 1.15)} fill="rgba(245,158,11,0.03)" />
+                  <ReferenceArea y1={0} y2={targetThresholdLine} fill="rgba(239,68,68,0.03)" />
+                  <ReferenceLine y={100} stroke="#22c55e" strokeDasharray="4 4" strokeWidth={1} opacity={0.25} label={{ position: 'insideTopRight', value: 'CC 100%', fill: '#22c55e', fontSize: 9 }} />
+                  <ReferenceLine y={targetThresholdLine} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} label={{ position: 'insideBottomLeft', value: `Limiar ${targetThresholdLine}%`, fill: '#f59e0b', fontSize: 9, fontWeight: 700 }} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#10151C', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
+                    formatter={(value: unknown) => {
+                      const v = Number(value)
+                      const zone = v >= targetThresholdLine * 1.15 ? 'Seguro' : v >= targetThresholdLine ? 'Atenção' : 'Crítico'
+                      return [`${v}% — ${zone}`, 'Umidade']
+                    }}
+                  />
+                  <Area
+                    type="monotone" dataKey="moisture" name="Umidade"
+                    stroke="url(#strokeMoisture2)" strokeWidth={2.5}
+                    fillOpacity={1} fill="url(#colorMoisture2)"
+                    dot={{ r: 4, fill: '#0f1923', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#0093D0', stroke: '#0f1923', strokeWidth: 2 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
-              // 1. DATA PREP: Gráfico de Área (7-DAY TREND)
-              const trendData = projection.slice(0, 7).map((d) => {
-                 return {
-                    name: ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(d.date + 'T12:00:00').getDay()],
-                    moisture: parseFloat(d.fieldCapacityPercent.toFixed(1))
-                 }
-              })
+            {/* Lista de dias interativa */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <ProjectionForecast
+                days={projection}
+                baseDays={baseProjection}
+                avgEto={avgEto}
+                pivot={selectedSeason?.pivots ?? null}
+                simulatedIrrigation={simulatedIrrigation}
+                onSimulate={setSimulatedIrrigation}
+              />
+            </div>
+          </div>
+        )
+      })()}
 
-              // 2. DATA PREP: Gráfico de Uso de Água (últimos 7 dias)
-              const waterUsageData = history.slice(0, 7).reverse().map((h: any) => {
-                 return {
-                   name: h.date.slice(8, 10), // dia
-                   usage: parseFloat(String((h.actual_depth_mm || 0) + (h.rainfall_mm || 0)))
-                 }
-              })
-              const totalWater7d = waterUsageData.reduce((acc, curr) => acc + curr.usage, 0)
-              // ETc acumulada dos últimos 7 dias = demanda real da cultura
-              const totalEtc7d = history.slice(0, 7).reduce((acc: number, h: any) => acc + (h.etc_mm ?? 0), 0)
+      {/* ════════════════════════════════════════════════════════
+          SEÇÃO 4 — AGENDA + CONSUMO (ações secundárias)
+          ════════════════════════════════════════════════════════ */}
+      {calcResult?.recommendation && (() => {
+        const rec2 = calcResult.recommendation
+        const statusStyles: Record<RecommendationStatus, { color: string; label: string }> = {
+          ok:               { color: '#22c55e',  label: 'SEM NECESSIDADE' },
+          queue:            { color: '#d97706',  label: 'FILA (PENDENTE)' },
+          irrigate_today:   { color: '#0093D0',  label: 'IRRIGAR HOJE' },
+          operational_risk: { color: '#ef4444',  label: 'ALERTA (T < 0%)' },
+        }
+        const st = statusStyles[rec2.status] || statusStyles.ok
 
-              // 3. ANÁLISE PREDITIVA PARA O AGRICULTOR (Dias até próxima rega & Limites)
-              const progReal = projection.find(p => p.isIrrigationDay)
-              let previsaoTexto = 'Hoje'
-              if (!rec.shouldIrrigateToday) {
-                if (progReal) {
-                   const diasFaltam = progReal.das - calcResult.das
-                   if (diasFaltam === 1) previsaoTexto = `Amanhã (${progReal.recommendedDepthMm.toFixed(1)} mm)`
-                   else previsaoTexto = `Em ${diasFaltam} dias (${progReal.recommendedDepthMm.toFixed(1)} mm)`
-                } else {
-                   previsaoTexto = 'Seguro (>7 dias)'
-                }
-              }
-              const etcDiariaStr = calcResult.etc.toFixed(1)
-              const capMaxPivotStr = rec.maxDepthMm != null ? rec.maxDepthMm.toFixed(1) : '—'
-              const capWarning = (rec.maxDepthMm != null && calcResult.etc > rec.maxDepthMm)
-              const targetThresholdLine = selectedSeason?.pivots?.alert_threshold_percent ?? 70
+        const progReal = projection.find(p => p.isIrrigationDay)
+        let previsaoTexto = 'Hoje'
+        if (!rec2.shouldIrrigateToday) {
+          if (progReal) {
+            const diasFaltam = progReal.das - calcResult.das
+            previsaoTexto = diasFaltam === 1
+              ? `Amanhã (${progReal.recommendedDepthMm.toFixed(1)} mm)`
+              : `Em ${diasFaltam} dias (${progReal.recommendedDepthMm.toFixed(1)} mm)`
+          } else {
+            previsaoTexto = 'Seguro (>7 dias)'
+          }
+        }
+        const etcDiariaStr = calcResult.etc.toFixed(1)
+        const capMaxPivotStr = rec2.maxDepthMm != null ? rec2.maxDepthMm.toFixed(1) : '—'
+        const capWarning = rec2.maxDepthMm != null && calcResult.etc > rec2.maxDepthMm
 
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20, height: '100%', minWidth: 0 }}>
-                  
-                  {/* === PAINEL 1: TENDÊNCIA DE UMIDADE === */}
-                  <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px 24px 14px 24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', flex: 1, minHeight: 280, position: 'relative' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <h3 style={{ fontSize: 12, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                        Projeção 7 dias — sem irrigação
-                      </h3>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {[
-                          { color: '#22c55e', label: `Seguro >${Math.round(targetThresholdLine * 1.15)}%` },
-                          { color: '#f59e0b', label: `Atenção ${targetThresholdLine}–${Math.round(targetThresholdLine * 1.15)}%` },
-                          { color: '#ef4444', label: `Crítico <${targetThresholdLine}%` },
-                        ].map(z => (
-                          <span key={z.label} style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: `${z.color}15`, border: `1px solid ${z.color}30`, color: z.color, fontWeight: 600 }}>
-                            {z.label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+        const waterUsageData = history.slice(0, 7).reverse().map((h: DailyManagement) => ({
+          name: h.date.slice(8, 10),
+          usage: parseFloat(String((h.actual_depth_mm || 0) + (h.rainfall_mm || 0)))
+        }))
+        const totalWater7d = waterUsageData.reduce((acc, curr) => acc + curr.usage, 0)
+        const totalEtc7d = history.slice(0, 7).reduce((acc: number, h: DailyManagement) => acc + (h.etc_mm ?? 0), 0)
 
-                    <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={trendData} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="colorMoisture" x1="0" y1="1" x2="0" y2="0">
-                              <stop offset="0%" stopColor="#ef4444" stopOpacity={0.25}/>
-                              <stop offset={`${targetThresholdLine}%`} stopColor="#ef4444" stopOpacity={0.15}/>
-                              <stop offset={`${targetThresholdLine}%`} stopColor="#22c55e" stopOpacity={0.12}/>
-                              <stop offset="100%" stopColor="#22c55e" stopOpacity={0.08}/>
-                            </linearGradient>
-                            <linearGradient id="strokeMoisture" x1="0" y1="1" x2="0" y2="0">
-                              <stop offset="0%" stopColor="#ef4444"/>
-                              <stop offset={`${targetThresholdLine}%`} stopColor="#ef4444"/>
-                              <stop offset={`${targetThresholdLine}%`} stopColor="#22c55e"/>
-                              <stop offset="100%" stopColor="#22c55e"/>
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
-                          <XAxis dataKey="name" tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
-                          <YAxis tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 110]} tickFormatter={(v: number) => `${v}%`} />
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                          {/* Zonas de solo */}
-                          <ReferenceArea y1={Math.round(targetThresholdLine * 1.15)} y2={110} fill="rgba(34,197,94,0.04)" />
-                          <ReferenceArea y1={targetThresholdLine} y2={Math.round(targetThresholdLine * 1.15)} fill="rgba(245,158,11,0.04)" />
-                          <ReferenceArea y1={0} y2={targetThresholdLine} fill="rgba(239,68,68,0.06)" />
+            {/* Agenda de Irrigação */}
+            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <h3 style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Agenda de Irrigação</h3>
 
-                          {/* Linhas de referência */}
-                          <ReferenceLine y={100} stroke="#22c55e" strokeDasharray="4 4" strokeWidth={1} opacity={0.3} label={{ position: 'insideTopRight', value: 'CC 100%', fill: '#22c55e', fontSize: 9 }} />
-                          <ReferenceLine y={Math.round(targetThresholdLine * 1.15)} stroke="#22c55e" strokeDasharray="2 6" strokeWidth={1} opacity={0.25} />
-                          <ReferenceLine y={targetThresholdLine} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} label={{ position: 'insideBottomLeft', value: `Segurança ${targetThresholdLine}%`, fill: '#f59e0b', fontSize: 9, fontWeight: 700 }} />
-
-                          <Tooltip
-                            contentStyle={{ backgroundColor: '#10151C', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
-                            formatter={(value: unknown) => {
-                              const v = Number(value)
-                              const zone = v >= targetThresholdLine * 1.15 ? 'Seguro' : v >= targetThresholdLine ? 'Atenção' : 'Crítico'
-                              const zoneColor = v >= targetThresholdLine * 1.15 ? '#22c55e' : v >= targetThresholdLine ? '#f59e0b' : '#ef4444'
-                              return [`${v}% — ${zone}`, 'Umidade']
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="moisture"
-                            name="Umidade"
-                            stroke="url(#strokeMoisture)"
-                            strokeWidth={3}
-                            fillOpacity={1}
-                            fill="url(#colorMoisture)"
-                            dot={{ r: 4, fill: '#0f1923', strokeWidth: 2 }}
-                            activeDot={{ r: 6, fill: '#CCFF00', stroke: '#0f1923', strokeWidth: 2 }}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  {/* === PAINÉIS 2 & 3: SCHEDULE + WATER USAGE === */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    {/* Bloco Schedule */}
-                    <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', minWidth: 0 }}>
-                      <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Agenda de Irrigação</h3>
-                      
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: '#A0AAB4' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span>Status:</span>
-                          <span style={{ color: st.color, fontWeight: 800, textTransform: 'uppercase', background: `${st.color}20`, padding: '2px 8px', borderRadius: 6, fontSize: 11 }}>{st.label}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>Próximo Passo:</span>
-                          <span style={{ color: '#fff', fontWeight: 600 }}>{previsaoTexto}</span>
-                        </div>
-                        <div style={{ height: 1, background: '#2A2A2E', margin: '4px 0' }} />
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>Demanda de Cultura:</span>
-                          <span style={{ color: capWarning ? '#FF3366' : '#fff' }}>{etcDiariaStr} mm/dia</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>Estágio Fenológico:</span>
-                          <span style={{ color: '#00E5FF', fontWeight: 700 }}>{calcResult.cropStage ?? 1}</span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 12, marginTop: 'auto' }}>
-                        <button style={{
-                          flex: 1, background: '#CCFF00', padding: '16px',
-                          borderRadius: 12, border: 'none', color: '#10151c', fontWeight: 900, 
-                          fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em',
-                          boxShadow: '0 4px 20px rgba(204,255,0,0.25)', cursor: 'pointer', transition: 'all 0.2s',
-                          whiteSpace: 'nowrap'
-                        }}
-                        onClick={() => { setShowForm(true); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }) }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'none'}
-                        >
-                          REGISTRAR<br/>MANEJO
-                        </button>
-                        <button style={{
-                          flex: 1, background: '#00E5FF', padding: '16px',
-                          borderRadius: 12, border: 'none', color: '#10151c', fontWeight: 900, 
-                          fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.04em',
-                          boxShadow: '0 4px 20px rgba(0,229,255,0.25)', cursor: 'pointer', transition: 'all 0.2s',
-                          textAlign: 'center', lineHeight: 1.2
-                        }}
-                        onClick={() => {
-                          setShowForm(true)
-                          // Pré-preenche com a lâmina recomendada pelo cálculo, não um valor fixo
-                          const recDepth = calcResult?.recommendedDepthMm
-                          if (recDepth && recDepth > 0) setActualDepth(recDepth.toFixed(1))
-                          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'none'}
-                        >
-                          LANÇAR<br/>IRRIGAÇÃO
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Bloco Water Usage */}
-                    <div style={{ background: '#1c1c1e', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.4)', minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#8899AA', margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Consumo de Água (7D)</h3>
-                        <div style={{ fontSize: 11, color: '#A0AAB4', textTransform: 'uppercase', textAlign: 'right' }}>
-                          <div>Total Aplicado: <strong style={{ color: '#fff' }}>{totalWater7d.toFixed(1)} mm</strong></div>
-                          <div style={{ marginTop: 2 }}>Demanda ETc: <span style={{ color: '#8899aa'}}>{totalEtc7d.toFixed(1)} mm</span></div>
-                        </div>
-                      </div>
-
-                      <div style={{ flex: 1, minHeight: 120, width: '100%' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={waterUsageData} margin={{ top: 10, right: 0, left: -20, bottom: -10 }}>
-                             <defs>
-                                <filter id="barGlow" x="-50%" y="-50%" width="200%" height="200%">
-                                   <feGaussianBlur stdDeviation="3" result="blur" />
-                                   <feMerge>
-                                     <feMergeNode in="blur"/>
-                                     <feMergeNode in="SourceGraphic"/>
-                                   </feMerge>
-                                </filter>
-                             </defs>
-                             <Tooltip
-                               contentStyle={{ backgroundColor: '#10151C', border: '1px solid #2A2A2E', borderRadius: 8, color: '#fff', fontSize: 12 }}
-                               itemStyle={{ color: '#00E5FF' }}
-                               cursor={{ fill: 'rgba(0, 229, 255, 0.05)' }}
-                               formatter={(value: unknown) => [`${Number(value).toFixed(1)} mm`, 'Água aplicada']}
-                               labelFormatter={(label: unknown) => `Dia ${label}`}
-                             />
-                             <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fill: '#556677', fontSize: 10}} dy={5} />
-                             <Bar dataKey="usage" radius={[4, 4, 0, 0]} maxBarSize={28} style={{ filter: 'url(#barGlow)' }}>
-                               {waterUsageData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.usage > 0 ? '#00E5FF' : '#2A2A2E'} />
-                               ))}
-                             </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-
-                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) 1fr', gap: 12, marginTop: 'auto' }}>
-                        <Link href="/pivos" style={{ textDecoration: 'none' }}>
-                          <button style={{
-                            width: '100%', background: '#323236', color: '#D0D0D4', border: '1px solid #444448', padding: '14px 4px', 
-                            borderRadius: 12, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center', transition: 'all 0.2s',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '56px'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
-                          onMouseLeave={e => e.currentTarget.style.background = '#323236'}
-                          >
-                             CONFIGURAR<br/>PIVÔ
-                          </button>
-                        </Link>
-                        <Link href="/precipitacoes" style={{ textDecoration: 'none' }}>
-                          <button style={{
-                            width: '100%', background: '#323236', color: '#D0D0D4', border: '1px solid #444448', padding: '14px 4px', 
-                            borderRadius: 12, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center', transition: 'all 0.2s',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '56px'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#3c3c40'}
-                          onMouseLeave={e => e.currentTarget.style.background = '#323236'}
-                          >
-                             REGISTRAR<br/>CHUVAS
-                          </button>
-                        </Link>
-                      </div>
-                    </div>
-
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12, color: '#556677' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Status</span>
+                  <span style={{ color: st.color, fontWeight: 700, background: `${st.color}15`, padding: '2px 8px', borderRadius: 6, fontSize: 10, letterSpacing: '0.04em' }}>{st.label}</span>
                 </div>
-              )
-            })()
-          ) : (
-             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#1c1c1e', borderRadius: 16 }}>
-                <span style={{ color: '#556677', fontSize: 13 }}>Carregando métricas e predições...</span>
-             </div>
-          )}
-        </div>
-      </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Próximo passo</span>
+                  <span style={{ color: '#8899aa', fontWeight: 600 }}>{previsaoTexto}</span>
+                </div>
+                <div style={{ height: 1, background: 'rgba(255,255,255,0.04)', margin: '1px 0' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Demanda da cultura</span>
+                  <span style={{ color: capWarning ? '#e05252' : '#8899aa' }}>{etcDiariaStr} mm/dia</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Estágio fenológico</span>
+                  <span style={{ color: '#0093D0', fontWeight: 600 }}>{calcResult.cropStage ?? 1}</span>
+                </div>
+              </div>
 
-      {/* ── Formulário de entrada (Oculto em Accordion Premium) ── */}
-      <div style={{ marginTop: 12 }}>
-        <button 
+              <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                <Link href="/pivos" style={{ textDecoration: 'none', flex: 1 }}>
+                  <button style={{
+                    width: '100%', background: 'rgba(255,255,255,0.04)', color: '#8899aa',
+                    border: '1px solid rgba(255,255,255,0.08)', padding: '12px 8px',
+                    borderRadius: 10, fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+                    cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                  >
+                    Config. Pivô
+                  </button>
+                </Link>
+                <Link href="/precipitacoes" style={{ textDecoration: 'none', flex: 1 }}>
+                  <button style={{
+                    width: '100%', background: 'rgba(255,255,255,0.04)', color: '#8899aa',
+                    border: '1px solid rgba(255,255,255,0.08)', padding: '12px 8px',
+                    borderRadius: 10, fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+                    cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                  >
+                    Reg. Chuvas
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Consumo de Água 7D */}
+            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 4 }}>
+                <h3 style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Consumo de Água (7D)</h3>
+                <div style={{ fontSize: 10, color: '#445566', textAlign: 'right' }}>
+                  <div>Aplicado: <strong style={{ color: '#8899aa' }}>{totalWater7d.toFixed(1)} mm</strong></div>
+                  <div style={{ marginTop: 2 }}>ETc: <span style={{ color: '#445566'}}>{totalEtc7d.toFixed(1)} mm</span></div>
+                </div>
+              </div>
+
+              <div style={{ flex: 1, minHeight: 110 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={waterUsageData} margin={{ top: 8, right: 0, left: -20, bottom: -10 }}>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#10151C', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, color: '#fff', fontSize: 12 }}
+                      itemStyle={{ color: '#0093D0' }}
+                      cursor={{ fill: 'rgba(0, 147, 208, 0.05)' }}
+                      formatter={(value: unknown) => [`${Number(value).toFixed(1)} mm`, 'Água aplicada']}
+                      labelFormatter={(label: unknown) => `Dia ${label}`}
+                    />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fill: '#556677', fontSize: 10}} dy={5} />
+                    <Bar dataKey="usage" radius={[4, 4, 0, 0]} maxBarSize={28}>
+                      {waterUsageData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.usage > 0 ? '#0093D0' : '#1a2433'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+          </div>
+        )
+      })()}
+
+      {/* ════════════════════════════════════════════════════════
+          SEÇÃO 5 — ANÁLISE DO SOLO (Gauge Radial)
+          ════════════════════════════════════════════════════════ */}
+      {calcResult && selectedSeason ? (
+        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 20px 4px' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+            Análise Detalhada do Solo
+          </p>
+          <SoilDiagram
+            status={calcResult.status as IrrigationStatus}
+            fieldCapacityPercent={calcResult.fieldCapacityPercent}
+            adcNew={calcResult.adcNew}
+            cad={calcResult.cad}
+            cta={calcResult.cta}
+            recommendedDepthMm={calcResult.recommendedDepthMm}
+            das={calcResult.das}
+            cropStage={calcResult.cropStage}
+            eto={calcResult.eto}
+            etc={calcResult.etc}
+            kc={calcResult.kc}
+            rootDepthCm={calcResult.rootDepthCm}
+            etoSource={calcResult.etoSource as EToSource}
+            etoConfidence={calcResult.etoConfidence as EToConfidence | null}
+            alertThresholdPct={selectedSeason.pivots?.alert_threshold_percent ?? null}
+            cropName={selectedSeason.crops?.name ?? null}
+            farmName={selectedSeason.farms.name}
+            pivotName={selectedSeason.pivots?.name ?? null}
+            seasonName={selectedSeason.name}
+            date={date}
+            pivotAreaHa={
+              selectedSeason.pivots?.length_m
+                ? Math.PI * Math.pow(selectedSeason.pivots.length_m, 2) / 10000
+                : null
+            }
+          />
+        </div>
+      ) : (
+        !loading && (
+          <div style={{ background: '#0f1923', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 14, padding: '32px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <Thermometer size={28} style={{ color: '#556677' }} />
+            <p style={{ fontSize: 13, color: '#556677' }}>Preencha Tmax e Tmin para projetar o solo</p>
+          </div>
+        )
+      )}
+
+      {/* ════════════════════════════════════════════════════════
+          SEÇÃO 6 — FORMULÁRIO DE LANÇAMENTO
+          ════════════════════════════════════════════════════════ */}
+      <div id="manejo-form-section" style={{ scrollMarginTop: 80 }}>
+        <button
           onClick={() => setShowForm(!showForm)}
           style={{
-            width: '100%', padding: '16px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: showForm ? '#0d1520' : 'linear-gradient(90deg, #10151C, #161e27)', border: '1px solid rgba(255,255,255,0.06)',
-            color: '#00E5FF', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
-            transition: 'all 0.2s', boxShadow: showForm ? 'none' : '0 4px 12px rgba(0,0,0,0.1)'
+            width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: showForm ? '#0d1520' : 'linear-gradient(90deg, #0f1923, #121c26)',
+            border: showForm ? '1px solid rgba(0,147,208,0.2)' : '1px solid rgba(255,255,255,0.06)',
+            color: showForm ? '#0093D0' : '#8899aa',
+            fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
+            transition: 'all 0.2s',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1441,13 +1668,13 @@ export default function ManejoPage() {
         {showForm && (
           <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* Fonte climática + data — empilhado no mobile, lado a lado no desktop */}
+            {/* Fonte climática + data */}
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 items-start">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Dados Climáticos</label>
                 {weatherLoading && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <Loader2 size={12} className="animate-spin" style={{ color: '#00E5FF' }} />
+                    <Loader2 size={12} className="animate-spin" style={{ color: '#0093D0' }} />
                     <span style={{ fontSize: 13, color: '#445566' }}>Buscando dados climáticos...</span>
                   </div>
                 )}
@@ -1470,7 +1697,7 @@ export default function ManejoPage() {
               <InputField label="Data do registro" type="date" value={date} onChange={setDate} />
             </div>
 
-            {/* Campos climáticos — grid 3 colunas */}
+            {/* Campos climáticos */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14 }}>
               <InputField label="Tmax" value={tmax} onChange={setTmax} unit="°C" placeholder="35" />
               <InputField label="Tmin" value={tmin} onChange={setTmin} unit="°C" placeholder="18" />
@@ -1480,11 +1707,11 @@ export default function ManejoPage() {
               <InputField label="Chuva (fazenda)" value={rainfall} onChange={setRainfall} unit="mm" placeholder="0" />
             </div>
 
-            {/* ADc anterior — compacto */}
+            {/* ADc anterior */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <Droplets size={14} style={{ color: '#00E5FF', flexShrink: 0 }} />
+              <Droplets size={14} style={{ color: '#0093D0', flexShrink: 0 }} />
               <span style={{ fontSize: 13, color: '#445566' }}>ADc (Umidade) anterior:</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#00E5FF', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcPrev)} mm</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcPrev)} mm</span>
               <span style={{ fontSize: 12, color: '#334455', marginLeft: 2 }}>{history.length > 0 ? '(último registro)' : '(ADc inicial da safra)'}</span>
             </div>
 
@@ -1501,12 +1728,12 @@ export default function ManejoPage() {
 
             {/* Erros / sucesso */}
             {error && (
-              <div style={{ padding: '11px 16px', borderRadius: 8, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)', color: '#FF3366', fontSize: 13 }}>
+              <div style={{ padding: '11px 16px', borderRadius: 8, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)', color: '#ef4444', fontSize: 13 }}>
                 {error}
               </div>
             )}
             {saveMsg && (
-              <div style={{ padding: '11px 16px', borderRadius: 8, background: 'rgba(57, 255, 20, 0.1)', border: '1px solid rgba(57, 255, 20, 0.25)', color: '#39FF14', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ padding: '11px 16px', borderRadius: 8, background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.25)', color: '#22c55e', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <CheckCircle2 size={14} /> {saveMsg}
               </div>
             )}
@@ -1514,15 +1741,21 @@ export default function ManejoPage() {
             {/* Botão salvar */}
             <button onClick={handleSave} disabled={saving || !calcResult}
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '16px 0', borderRadius: 10, fontSize: 15, fontWeight: 800,
-                textTransform: 'uppercase', letterSpacing: '0.04em',
-                background: calcResult ? 'linear-gradient(135deg, #00B4D8, #00E5FF)' : '#0d1520',
-                border: 'none', color: calcResult ? '#0F1923' : '#445566',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                padding: '17px 0', borderRadius: 12, fontSize: 14, fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                background: calcResult ? 'linear-gradient(135deg, #0093D0, #0277b5)' : '#0d1520',
+                border: 'none', color: calcResult ? '#fff' : '#445566',
                 cursor: calcResult ? 'pointer' : 'not-allowed',
                 opacity: saving ? 0.7 : 1,
-                boxShadow: calcResult ? '0 6px 20px rgba(0, 229, 255, 0.3)' : 'none',
-              }}>
+                boxShadow: calcResult ? '0 8px 24px rgba(0, 147, 208, 0.3)' : 'none',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+              onMouseEnter={e => { if (calcResult && !saving) { e.currentTarget.style.transform = 'scale(1.01)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(0,147,208,0.4)' } }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = calcResult ? '0 8px 24px rgba(0,147,208,0.3)' : 'none' }}
+              onMouseDown={e => { if (calcResult && !saving) e.currentTarget.style.transform = 'scale(0.99)' }}
+              onMouseUp={e => { if (calcResult && !saving) e.currentTarget.style.transform = 'scale(1.01)' }}
+            >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {saving ? 'Registrando...' : 'Confirmar Lançamento'}
             </button>
@@ -1530,24 +1763,33 @@ export default function ManejoPage() {
         )}
       </div>
 
-      {/* ── Gráfico Balanço Hídrico — sempre visível se há histórico ── */}
+      {/* ════════════════════════════════════════════════════════
+          SEÇÃO 7 — GRÁFICO DE BALANÇO HÍDRICO (análise avançada)
+          ════════════════════════════════════════════════════════ */}
       {history.length >= 2 && (
-        <WaterBalanceChart
-          history={history}
-          threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70}
-          fFactor={
-            selectedSeason?.crops && history.length > 0
-              ? getFFactorForDas(selectedSeason.crops, history[0].das ?? 1)
-              : null
-          }
-          fieldCapacity={selectedSeason?.pivots?.field_capacity ?? null}
-          wiltingPoint={selectedSeason?.pivots?.wilting_point ?? null}
-          pivotName={selectedSeason?.pivots?.name ?? undefined}
-        />
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 4 }}>
+            Balanço Hídrico — Histórico
+          </p>
+          <WaterBalanceChart
+            history={history}
+            threshold={selectedSeason?.pivots?.alert_threshold_percent ?? 70}
+            fFactor={
+              selectedSeason?.crops && history.length > 0
+                ? getFFactorForDas(selectedSeason.crops, history[0].das ?? 1)
+                : null
+            }
+            fieldCapacity={selectedSeason?.pivots?.field_capacity ?? null}
+            wiltingPoint={selectedSeason?.pivots?.wilting_point ?? null}
+            pivotName={selectedSeason?.pivots?.name ?? undefined}
+          />
+        </div>
       )}
 
-      {/* ── Seção de Histórico (Accordion) ── */}
-      <div style={{ marginTop: 8 }}>
+      {/* ════════════════════════════════════════════════════════
+          SEÇÃO 8 — HISTÓRICO (Data Explorer)
+          ════════════════════════════════════════════════════════ */}
+      <div style={{ marginTop: 4 }}>
         <button
           onClick={() => setShowHistoryTab(!showHistoryTab)}
           style={{
@@ -1564,7 +1806,7 @@ export default function ManejoPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 10, color: '#556677', background: '#0d1520', padding: '2px 8px', borderRadius: 10 }}>
-              {history.length} Registros Salvos
+              {history.length} Registros
             </span>
             {selectedSeasonId && (
               <span
