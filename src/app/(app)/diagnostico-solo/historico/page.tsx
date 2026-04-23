@@ -22,7 +22,7 @@ import {
 } from 'recharts'
 import {
   Loader2, ChevronDown, ArrowLeft, Droplets,
-  History, Camera, AlertTriangle, CheckCircle2, Clock,
+  History, Camera, AlertTriangle, CheckCircle2, Clock, Sliders,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -153,6 +153,8 @@ export default function DiagnosticoHistoricoPage() {
   const [balances, setBalances] = useState<DailyBalance[]>([])
   const [loading, setLoading] = useState(false)
   const [photoModal, setPhotoModal] = useState<string | null>(null)
+  const [calibrating, setCalibrating] = useState<string | null>(null)   // id do diagnóstico sendo calibrado
+  const [calibrated, setCalibrated] = useState<Set<string>>(new Set())  // ids já calibrados nessa sessão
 
   // Carregar pivôs da empresa
   useEffect(() => {
@@ -259,6 +261,61 @@ export default function DiagnosticoHistoricoPage() {
 
     return { last, avgDiff, byResult, total: records.length }
   }, [records, balances])
+
+  // ─── Calibração ───────────────────────────────────────────────────────────
+  async function handleCalibrate(rec: DiagnosisRecord, matchingBal: DailyBalance) {
+    if (!confirm(
+      `Calibrar o modelo para ${fmtDate(matchingBal.date)}?\n\n` +
+      `Balanço calculado: ${matchingBal.field_capacity_percent.toFixed(0)}% da CC\n` +
+      `Diagnóstico manual: ${rec.estimated_fc_percent}% da CC\n\n` +
+      `O valor do dia será substituído pelo diagnóstico de campo.`
+    )) return
+
+    setCalibrating(rec.id)
+    try {
+      // Buscar o registro de daily_management pelo pivot_id + date
+      const date = rec.diagnosed_at.slice(0, 10)
+      const { data: dmRows, error: fetchErr } = await supabase
+        .from('daily_management')
+        .select('id, notes, pivot_id')
+        .eq('pivot_id', rec.pivot_id)
+        .eq('date', date)
+        .limit(1)
+
+      if (fetchErr || !dmRows?.length) {
+        alert('Registro de balanço não encontrado para esta data.')
+        return
+      }
+
+      const dm = dmRows[0]
+      const prevNote = dm.notes ? dm.notes + ' | ' : ''
+      const calibNote = `Calibrado por diagnóstico manual em ${new Date().toLocaleDateString('pt-BR')} (${matchingBal.field_capacity_percent.toFixed(0)}%→${rec.estimated_fc_percent}%)`
+
+      const { error: updateErr } = await supabase
+        .from('daily_management')
+        .update({
+          field_capacity_percent: rec.estimated_fc_percent,
+          notes: prevNote + calibNote,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', dm.id)
+
+      if (updateErr) {
+        alert('Erro ao calibrar: ' + updateErr.message)
+        return
+      }
+
+      // Atualizar estado local do balanço
+      setBalances(prev => prev.map(b =>
+        b.date === date
+          ? { ...b, field_capacity_percent: rec.estimated_fc_percent }
+          : b
+      ))
+      setCalibrated(prev => new Set([...prev, rec.id]))
+    } finally {
+      setCalibrating(null)
+    }
+  }
 
   return (
     <div style={{ padding: '24px 24px 80px', maxWidth: 860, margin: '0 auto' }}>
@@ -504,27 +561,62 @@ export default function DiagnosticoHistoricoPage() {
                     <ScoreBar label="40-60 cm" score={rec.depth_40_60_score} />
                   </div>
 
-                  {/* Comparação com modelo */}
-                  {matchingBal && (
-                    <div style={{
-                      display: 'flex', gap: 16, padding: '8px 12px',
-                      background: 'rgba(255,255,255,0.03)', borderRadius: 8,
-                      marginBottom: rec.photo_url || rec.notes ? 10 : 0,
-                    }}>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Diagnóstico</div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: '#22c55e' }}>{rec.estimated_fc_percent}%</div>
+                  {/* Comparação com modelo + botão calibrar */}
+                  {matchingBal && (() => {
+                    const isCalibrated = calibrated.has(rec.id)
+                    const showBtn = diff != null && diff >= 15 && !isCalibrated
+                    return (
+                      <div style={{ marginBottom: rec.photo_url || rec.notes ? 10 : 0 }}>
+                        <div style={{
+                          display: 'flex', gap: 16, padding: '8px 12px',
+                          background: 'rgba(255,255,255,0.03)', borderRadius: showBtn ? '8px 8px 0 0' : 8,
+                          alignItems: 'center',
+                        }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Diagnóstico</div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: '#22c55e' }}>{rec.estimated_fc_percent}%</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Balanço</div>
+                            <div style={{ fontSize: 15, fontWeight: 700, color: '#0093D0' }}>{matchingBal.field_capacity_percent.toFixed(0)}%</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Diferença</div>
+                            <DivBadge diff={diff} />
+                          </div>
+                          {/* Já calibrado nessa sessão */}
+                          {isCalibrated && (
+                            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#22c55e' }}>
+                              <CheckCircle2 size={14} /> Calibrado
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Botão calibrar — só aparece quando diff ≥ 15pp */}
+                        {showBtn && (
+                          <button
+                            onClick={() => handleCalibrate(rec, matchingBal)}
+                            disabled={calibrating === rec.id}
+                            style={{
+                              width: '100%', padding: '8px 14px',
+                              borderRadius: '0 0 8px 8px',
+                              border: '1px solid rgba(245,158,11,0.3)',
+                              borderTop: 'none',
+                              background: 'rgba(245,158,11,0.06)',
+                              color: '#f59e0b', fontSize: 12, fontWeight: 600,
+                              cursor: calibrating === rec.id ? 'not-allowed' : 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            }}
+                          >
+                            {calibrating === rec.id
+                              ? <><Loader2 size={13} className="animate-spin" /> Calibrando…</>
+                              : <><Sliders size={13} /> Calibrar modelo com este diagnóstico</>
+                            }
+                          </button>
+                        )}
                       </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Balanço</div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: '#0093D0' }}>{matchingBal.field_capacity_percent.toFixed(0)}%</div>
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Diferença</div>
-                        <DivBadge diff={diff} />
-                      </div>
-                    </div>
-                  )}
+                    )
+                  })()}
 
                   {/* Foto + notas */}
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
