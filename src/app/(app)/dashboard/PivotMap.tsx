@@ -199,7 +199,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
                 width:22px;height:22px;border-radius:50%;
                 background:${col.fill};
                 border:2.5px solid ${col.stroke};
-                box-shadow:0 2px 8px ${col.fill}80;
+                box-shadow:0 2px 8px ${col.fill}40;
                 display:flex;align-items:center;justify-content:center;
               ">
                 <span style="font-size:9px;font-weight:800;color:#fff;">
@@ -364,7 +364,6 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
             <div style={{
               width: 8, height: 8, borderRadius: '50%',
               background: val.fill,
-              boxShadow: `0 0 4px ${val.fill}`,
             }} />
             <span style={{ fontSize: 11, color: '#8899aa' }}>{val.label}</span>
           </div>

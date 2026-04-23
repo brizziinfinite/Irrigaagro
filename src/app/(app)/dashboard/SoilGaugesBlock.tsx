@@ -24,7 +24,7 @@ function GaugeCircle({ pct, color, size = 110 }: { pct: number; color: string; s
 
   return (
     <div style={{ position: 'relative', width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ filter: `drop-shadow(0 0 8px ${color}80)` }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ filter: `drop-shadow(0 0 6px ${color}40)` }}>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="7" />
         <circle
           cx={cx} cy={cy} r={r}
@@ -44,7 +44,7 @@ function GaugeCircle({ pct, color, size = 110 }: { pct: number; color: string; s
       }}>
         <span style={{
           fontSize: 24, fontWeight: 900, color: '#fff',
-          fontFamily: 'var(--font-mono)', lineHeight: 1, textShadow: `0 0 12px ${color}80`
+          fontFamily: 'var(--font-mono)', lineHeight: 1, textShadow: `0 0 8px ${color}40`
         }}>
           {Math.round(pct)}
         </span>

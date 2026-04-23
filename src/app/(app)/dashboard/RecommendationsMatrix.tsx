@@ -377,7 +377,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                           <span style={{
                             fontSize: 12, fontWeight: 800, color: colors.text,
                             fontFamily: 'var(--font-mono)', lineHeight: 1,
-                            textShadow: `0 0 8px ${colors.text}50`
+                            textShadow: 'none'
                           }}>
                             {Math.round(day.fieldCapacityPercent)}%
                           </span>

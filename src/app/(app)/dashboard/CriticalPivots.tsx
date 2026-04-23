@@ -94,9 +94,9 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
     <div style={{
       background: 'linear-gradient(145deg, rgba(14,20,28,0.97), rgba(10,15,22,0.98))',
       backdropFilter: 'blur(16px)',
-      border: urgentCount > 0 ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(255,255,255,0.06)',
+      border: urgentCount > 0 ? '1px solid rgba(239,68,68,0.18)' : '1px solid rgba(255,255,255,0.06)',
       boxShadow: urgentCount > 0
-        ? '0 0 28px rgba(239,68,68,0.12), 0 8px 32px rgba(0,0,0,0.45)'
+        ? '0 0 16px rgba(239,68,68,0.06), 0 8px 32px rgba(0,0,0,0.45)'
         : '0 8px 32px rgba(0,0,0,0.35)',
       borderRadius: 18,
       padding: '22px 20px',
@@ -113,7 +113,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
           <div style={{
             width: 8, height: 8, borderRadius: '50%',
             background: urgentCount > 0 ? '#ef4444' : '#22c55e',
-            boxShadow: urgentCount > 0 ? '0 0 10px #ef4444' : '0 0 10px #22c55e',
+            boxShadow: urgentCount > 0 ? '0 0 5px rgba(239,68,68,0.6)' : '0 0 5px rgba(34,197,94,0.5)',
             animation: urgentCount > 0 ? 'pulse 2s infinite' : 'none',
           }} />
           <span style={{
@@ -322,10 +322,14 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                   <Link href="/manejo" style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     width: 30, height: 30, borderRadius: 8,
-                    background: status === 'critico' ? '#ef4444' : status === 'atencao' ? '#f59e0b' : 'rgba(255,255,255,0.05)',
-                    color: status === 'ok' ? '#8899aa' : '#fff',
+                    background: 'transparent',
+                    border: status === 'critico'
+                      ? '1px solid rgba(239,68,68,0.4)'
+                      : status === 'atencao'
+                        ? '1px solid rgba(245,158,11,0.4)'
+                        : '1px solid rgba(255,255,255,0.08)',
+                    color: status === 'critico' ? '#ef4444' : status === 'atencao' ? '#f59e0b' : '#556677',
                     textDecoration: 'none', transition: 'all 0.2s',
-                    boxShadow: status !== 'ok' ? `0 4px 12px ${s.color}60` : 'none',
                   }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14M12 5l7 7-7 7"/>
