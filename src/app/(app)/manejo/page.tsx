@@ -450,50 +450,80 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
           const basePct = baseDay ? Math.max(0, Math.min(100, baseDay.fieldCapacityPercent)) : null
           const showComparison = hasSimulation && basePct !== null && Math.abs(pct - basePct) > 0.5
 
+          // Hierarquia temporal: amanhã (i=0) > depois de amanhã (i=1) > resto
+          const isAmanha = i === 0
+          const isDepoisAmanha = i === 1
+          const isFuturo = i >= 2
+          // Cor do dia: amanhã vermelho se alerta, âmbar se i=1, resto suavizado
+          const dayLabelColor = isAmanha
+            ? (isAlert ? cfg.color : '#8899aa')
+            : isDepoisAmanha
+              ? (isAlert ? '#d97706' : '#556677')
+              : '#334455'
+          const dayFontWeight = isAmanha ? 700 : isDepoisAmanha ? 600 : 400
+          // Barra: amanhã mais intensa, resto com opacidade menor
+          const barOpacity = isAmanha ? 1 : isDepoisAmanha ? 0.7 : 0.45
+          // Background row
+          const rowBg = hasIrrigHere
+            ? 'rgba(0,147,208,0.08)'
+            : isAmanha && isAlert
+              ? (day.status === 'vermelho' ? 'rgba(239,68,68,0.07)' : 'rgba(245,158,11,0.06)')
+              : isAmanha
+                ? '#0d1520'
+                : i % 2 ? '#080e14' : 'transparent'
+          const rowBorder = hasIrrigHere
+            ? '1px solid rgba(0,147,208,0.25)'
+            : isAmanha && isAlert
+              ? `1px solid ${cfg.color}30`
+              : '1px solid transparent'
+          // Cor status: amanhã cor real, depois âmbar se alerta, resto neutro
+          const statusColor = isAmanha ? cfg.color : isDepoisAmanha && isAlert ? '#d97706' : '#334455'
+
           return (
             <div key={day.date}>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '80px 30px 1fr 60px 46px 90px 32px',
                 alignItems: 'center', gap: 8,
-                padding: isAlert ? '8px 10px' : '5px 10px',
+                padding: isAmanha ? '9px 10px' : '5px 10px',
                 borderRadius: 9,
-                background: hasIrrigHere ? 'rgba(0,147,208,0.08)' : isAlert ? cfg.bg : i % 2 ? '#080e14' : 'transparent',
-                border: hasIrrigHere ? '1px solid rgba(0,147,208,0.25)' : isAlert ? `1px solid ${cfg.border}` : '1px solid transparent',
+                background: rowBg,
+                border: rowBorder,
+                opacity: isFuturo && !isAlert ? 0.7 : 1,
               }}>
-                <span style={{ fontSize: 11, color: isAlert ? cfg.color : '#8899aa', fontWeight: isAlert ? 700 : 400 }}>
+                <span style={{ fontSize: 11, color: dayLabelColor, fontWeight: dayFontWeight }}>
                   {i === 0 ? 'Amanhã' : fmtDate(day.date)}
                 </span>
-                <span style={{ fontSize: 10, color: '#445566' }}>D{day.das}</span>
-                <div style={{ position: 'relative', height: 12, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
-                  <div style={{ position: 'absolute', left: `${cadPct}%`, top: -2, bottom: -2, width: 2, background: '#f59e0b', opacity: 0.6, borderRadius: 1, zIndex: 2 }} />
+                <span style={{ fontSize: 10, color: '#334455' }}>D{day.das}</span>
+                <div style={{ position: 'relative', height: isAmanha ? 10 : 8, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
+                  <div style={{ position: 'absolute', left: `${cadPct}%`, top: -2, bottom: -2, width: 2, background: '#f59e0b', opacity: 0.5, borderRadius: 1, zIndex: 2 }} />
                   {showComparison && basePct !== null && (
-                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${basePct}%`, background: cfg.color, borderRadius: 99, opacity: 0.2 }} />
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${basePct}%`, background: cfg.color, borderRadius: 99, opacity: 0.15 }} />
                   )}
-                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: cfg.color, borderRadius: 99, transition: 'width 0.3s' }} />
+                  <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: isAmanha ? cfg.color : isDepoisAmanha ? (isAlert ? '#d97706' : cfg.color) : cfg.color, borderRadius: 99, transition: 'width 0.3s', opacity: barOpacity }} />
                 </div>
-                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
+                <span style={{ fontSize: isAmanha ? 12 : 11, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
                   {showComparison && basePct !== null ? (
                     <>
-                      <span style={{ color: '#556677', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
-                      <span style={{ color: cfg.color, fontWeight: 700 }}> {fmtNum(day.fieldCapacityPercent, 0)}%</span>
+                      <span style={{ color: '#334455', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
+                      <span style={{ color: statusColor, fontWeight: isAmanha ? 700 : 500 }}> {fmtNum(day.fieldCapacityPercent, 0)}%</span>
                     </>
                   ) : (
-                    <span style={{ color: cfg.color, fontWeight: 700 }}>{fmtNum(day.fieldCapacityPercent, 0)}%</span>
+                    <span style={{ color: statusColor, fontWeight: isAmanha ? 700 : 500 }}>{fmtNum(day.fieldCapacityPercent, 0)}%</span>
                   )}
                 </span>
                 <span style={{ fontSize: 10, textAlign: 'right' }} title={day.recommendedDepthMm > 0 ? `Déficit previsto D+${i+1}: ${fmtNum(day.recommendedDepthMm)} mm` : `ETc prevista: ${fmtNum(day.etcAvg)} mm/dia`}>
                   {hasIrrigHere ? (
                     <span style={{ color: '#0093D0', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10 }}>+{fmtNum(simulatedIrrigation[i])}</span>
                   ) : day.recommendedDepthMm > 0 ? (
-                    <><span style={{ color: cfg.color, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#556677' }}> mm</span></>
+                    <><span style={{ color: isAmanha ? cfg.color : isDepoisAmanha ? '#d97706' : '#445566', fontFamily: 'var(--font-mono)', fontWeight: isAmanha ? 700 : 500 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#334455' }}> mm</span></>
                   ) : (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#22c55e' }}>NI</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: isAmanha ? '#22c55e' : '#334455' }}>NI</span>
                   )}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
-                  <StatusIcon size={10} style={{ color: cfg.color }} />
-                  <span style={{ fontSize: 10, color: cfg.color, fontWeight: 600 }}>{cfg.label}</span>
+                  <StatusIcon size={10} style={{ color: statusColor }} />
+                  <span style={{ fontSize: 10, color: statusColor, fontWeight: isAmanha ? 600 : 400 }}>{cfg.label}</span>
                 </div>
                 {/* Botão + / editar irrigação simulada */}
                 <button
@@ -1060,9 +1090,7 @@ export default function ManejoPage() {
           borderRadius: 20,
           padding: '28px 32px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap',
-          boxShadow: shouldIrrigate
-            ? `0 0 32px rgba(239,68,68,0.06), 0 12px 40px rgba(0,0,0,0.5)`
-            : `0 0 24px rgba(34,197,94,0.05), 0 12px 40px rgba(0,0,0,0.5)`,
+          boxShadow: `0 12px 40px rgba(0,0,0,0.5)`,
           position: 'relative', overflow: 'hidden',
         }}>
           {/* Glow ambiental */}
@@ -1072,89 +1100,88 @@ export default function ManejoPage() {
             background: `radial-gradient(circle, ${heroMainColor}10 0%, transparent 70%)`,
           }} />
 
-          {/* Left: decisão principal */}
+          {/* Left: decisão principal — hierarquia em 4 linhas */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, flex: 1, minWidth: 0, position: 'relative' }}>
-            {/* Ícone */}
+            {/* Ícone discreto */}
             <div className="hidden sm:flex" style={{
-              width: 64, height: 64, borderRadius: 18, flexShrink: 0,
-              background: `${heroMainColor}12`,
-              border: `1px solid ${heroMainColor}30`,
-              boxShadow: `inset 0 0 20px ${heroMainColor}10, 0 0 20px ${heroMainColor}15`,
+              width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+              background: `${heroMainColor}0e`,
+              border: `1px solid ${heroMainColor}25`,
               alignItems: 'center', justifyContent: 'center',
             }}>
               {shouldIrrigate
-                ? <AlertCircle size={30} style={{ color: heroMainColor }} />
-                : <CheckCircle2 size={30} style={{ color: heroMainColor }} />
+                ? <AlertCircle size={24} style={{ color: heroMainColor, opacity: 0.9 }} />
+                : <CheckCircle2 size={24} style={{ color: heroMainColor, opacity: 0.9 }} />
               }
             </div>
 
-            {/* Texto hero */}
+            {/* Hierarquia tipográfica em 4 linhas */}
             <div style={{ minWidth: 0 }}>
-              <span className="text-2xl sm:text-3xl" style={{
-                display: 'block', fontWeight: 900, color: heroMainColor,
-                letterSpacing: '-0.03em', lineHeight: 1.1,
+              {/* Linha 1 — título pequeno e discreto */}
+              <p style={{
+                fontSize: 11, fontWeight: 600, color: '#445566',
+                textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, lineHeight: 1,
               }}>
                 {shouldIrrigate
-                  ? (heroStatus === 'vermelho' ? 'IRRIGAR HOJE: SIM' : 'IRRIGAR EM BREVE')
-                  : 'IRRIGAR HOJE: NÃO'}
-              </span>
+                  ? (heroStatus === 'vermelho' ? 'Irrigar hoje' : 'Irrigar em breve')
+                  : 'Manejo diário'}
+              </p>
 
-              {/* Badges de urgência */}
-              {shouldIrrigate && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-                  {heroStatus === 'vermelho' && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 800,
-                      background: 'rgba(220,38,38,0.12)', color: '#ef4444',
-                      border: '1px solid rgba(220,38,38,0.25)',
-                      borderRadius: 99, padding: '3px 10px',
-                      letterSpacing: '0.04em', textTransform: 'uppercase',
-                    }}>Solo crítico</span>
+              {/* Linha 2 — número dominante: o MAIOR elemento da tela */}
+              {shouldIrrigate && heroDepth > 0 ? (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
+                  <span style={{
+                    fontSize: 52, fontWeight: 900, color: '#ffffff',
+                    fontFamily: 'var(--font-mono)', lineHeight: 1,
+                    letterSpacing: '-0.03em',
+                  }}>
+                    {heroDepth.toFixed(1)}
+                  </span>
+                  <span style={{ fontSize: 20, fontWeight: 600, color: heroMainColor, lineHeight: 1 }}>mm</span>
+                  {heroSpeed && (
+                    <span style={{ fontSize: 13, color: '#445566', marginLeft: 4 }}>· {heroSpeed}%</span>
                   )}
-                  {heroStatus === 'amarelo' && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 800,
-                      background: 'rgba(217,119,6,0.12)', color: '#d97706',
-                      border: '1px solid rgba(217,119,6,0.25)',
-                      borderRadius: 99, padding: '3px 10px',
-                      letterSpacing: '0.04em', textTransform: 'uppercase',
-                    }}>Atenção</span>
-                  )}
-                  {heroDepth > 0 && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 800,
-                      background: 'rgba(0,147,208,0.12)', color: '#0093D0',
-                      border: '1px solid rgba(0,147,208,0.25)',
-                      borderRadius: 99, padding: '3px 10px',
-                      letterSpacing: '0.04em',
-                    }}>{heroDepth.toFixed(1)} mm{heroSpeed ? ` · ${heroSpeed}%` : ''}</span>
-                  )}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
+                  <span style={{
+                    fontSize: 44, fontWeight: 900, color: '#22c55e',
+                    fontFamily: 'var(--font-mono)', lineHeight: 1, letterSpacing: '-0.03em',
+                  }}>
+                    {heroPct !== null ? `${heroPct.toFixed(0)}%` : '—'}
+                  </span>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: '#445566' }}>umidade</span>
                 </div>
               )}
 
-              {/* Linha de contexto rápido */}
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
+              {/* Linha 3 — métricas secundárias em texto corrido */}
+              <p style={{ fontSize: 12, color: '#445566', lineHeight: 1.5, marginBottom: 4 }}>
                 {heroPct !== null && (
-                  <span style={{ fontSize: 13, color: '#8899aa' }}>
-                    Solo: <span style={{ color: heroCfg.color, fontWeight: 700 }}>{heroPct.toFixed(0)}%</span>
-                  </span>
+                  <span>Solo: <span style={{ color: '#8899aa' }}>{heroPct.toFixed(0)}%</span></span>
                 )}
                 {heroMargin !== null && (
-                  <span style={{ fontSize: 13, color: '#8899aa' }}>
-                    Margem: <span style={{ color: heroMargin >= 0 ? '#22c55e' : '#ef4444', fontWeight: 700 }}>
-                      {heroMargin >= 0 ? '+' : ''}{heroMargin.toFixed(0)}%
-                    </span>
-                  </span>
+                  <span> · Margem: <span style={{ color: heroMargin >= 0 ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                    {heroMargin >= 0 ? '+' : ''}{heroMargin.toFixed(0)}%
+                  </span></span>
                 )}
-                <span style={{ fontSize: 13, color: '#8899aa' }}>
-                  Próxima rega: <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{nextIrrigText}</span>
-                </span>
-              </div>
+                {heroEtc !== null && (
+                  <span> · ETc: <span style={{ color: '#8899aa' }}>{heroEtc.toFixed(1)} mm/d</span></span>
+                )}
+                <span> · Revisão: <span style={{ color: '#8899aa' }}>{shouldIrrigate ? 'hoje' : nextIrrigText.split(' — ')[0].toLowerCase()}</span></span>
+              </p>
+
+              {/* Linha 4 — pivô / contexto mínimo */}
+              <p style={{ fontSize: 11, color: '#334455' }}>
+                {selectedSeason?.pivots?.name ?? selectedSeason?.farms?.name ?? ''}
+                {heroCfg && (
+                  <span style={{ marginLeft: 6, color: heroCfg.color, fontWeight: 600 }}>· {heroCfg.label}</span>
+                )}
+              </p>
             </div>
           </div>
 
-          {/* Right: CTAs primários */}
-          <div style={{ display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+          {/* Right: CTAs — primário dominante, secundário discreto */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
             <button
               onClick={() => {
                 setShowForm(true)
@@ -1166,21 +1193,21 @@ export default function ManejoPage() {
                 }, 50)
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '13px 22px', borderRadius: 14, fontSize: 13, fontWeight: 800,
-                textTransform: 'uppercase', letterSpacing: '0.05em',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                padding: '15px 28px', borderRadius: 14, fontSize: 14, fontWeight: 800,
+                textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
                 background: shouldIrrigate
                   ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
                   : 'linear-gradient(135deg, #0093D0, #0284c7)',
                 color: '#fff', border: 'none', cursor: 'pointer',
                 boxShadow: shouldIrrigate
-                  ? '0 4px 16px rgba(220,38,38,0.3)'
-                  : '0 4px 16px rgba(0,147,208,0.25)',
+                  ? '0 6px 20px rgba(220,38,38,0.35)'
+                  : '0 6px 20px rgba(0,147,208,0.3)',
               }}
             >
-              <Droplets size={15} strokeWidth={2.5} />
+              <Droplets size={16} strokeWidth={2.5} />
               {shouldIrrigate ? 'Lançar Irrigação' : 'Registrar Manejo'}
-              <ArrowRight size={15} strokeWidth={2.5} />
+              <ArrowRight size={16} strokeWidth={2.5} />
             </button>
             <button
               onClick={() => {
@@ -1191,15 +1218,15 @@ export default function ManejoPage() {
                 }, 50)
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                padding: '13px 18px', borderRadius: 14, fontSize: 12, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.04em',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-                color: '#8899aa', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                padding: '9px 16px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap',
+                background: 'transparent', border: '1px solid rgba(255,255,255,0.07)',
+                color: '#445566', cursor: 'pointer',
               }}
             >
-              <Save size={14} />
-              {shouldIrrigate ? 'Só Registrar' : 'Lançar Dados'}
+              <Save size={12} />
+              {shouldIrrigate ? 'Só registrar dados' : 'Só lançar clima'}
             </button>
           </div>
         </div>
@@ -1380,9 +1407,9 @@ export default function ManejoPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="name" tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
                   <YAxis tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 110]} tickFormatter={(v: number) => `${v}%`} />
-                  <ReferenceArea y1={Math.round(targetThresholdLine * 1.15)} y2={110} fill="rgba(34,197,94,0.03)" />
-                  <ReferenceArea y1={targetThresholdLine} y2={Math.round(targetThresholdLine * 1.15)} fill="rgba(245,158,11,0.04)" />
-                  <ReferenceArea y1={0} y2={targetThresholdLine} fill="rgba(239,68,68,0.05)" />
+                  <ReferenceArea y1={Math.round(targetThresholdLine * 1.15)} y2={110} fill="rgba(34,197,94,0.02)" />
+                  <ReferenceArea y1={targetThresholdLine} y2={Math.round(targetThresholdLine * 1.15)} fill="rgba(245,158,11,0.03)" />
+                  <ReferenceArea y1={0} y2={targetThresholdLine} fill="rgba(239,68,68,0.03)" />
                   <ReferenceLine y={100} stroke="#22c55e" strokeDasharray="4 4" strokeWidth={1} opacity={0.25} label={{ position: 'insideTopRight', value: 'CC 100%', fill: '#22c55e', fontSize: 9 }} />
                   <ReferenceLine y={targetThresholdLine} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} label={{ position: 'insideBottomLeft', value: `Limiar ${targetThresholdLine}%`, fill: '#f59e0b', fontSize: 9, fontWeight: 700 }} />
                   <Tooltip
