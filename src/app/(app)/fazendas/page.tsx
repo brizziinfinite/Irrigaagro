@@ -73,38 +73,47 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(10px)' }}>
       <div style={{
-        background: 'linear-gradient(145deg, rgba(15, 25, 35, 0.97), rgba(10, 15, 20, 0.99))',
+        background: '#0d1520',
         border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 20, padding: 32, width: '100%', maxWidth: 440,
-        boxShadow: '0 24px 48px -8px rgba(0, 0, 0, 0.7)',
+        borderRadius: 20, padding: '32px 36px', width: '100%', maxWidth: 460,
+        boxShadow: '0 32px 64px -12px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03)',
       }}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', letterSpacing: '0.01em' }}>
-            {isEdit ? 'Editar Fazenda' : 'Nova Fazenda'}
-          </h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+          <div>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: '#e2e8f0', margin: 0, letterSpacing: '0.01em' }}>
+              {isEdit ? 'Editar Fazenda' : 'Nova Fazenda'}
+            </h2>
+            <p style={{ fontSize: 12, color: '#556677', margin: '3px 0 0' }}>
+              {isEdit ? 'Atualize os dados da fazenda' : 'Preencha o nome para começar'}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer', transition: 'all 0.2s' }}
+            style={{ padding: 7, borderRadius: 8, border: 'none', background: 'transparent', color: '#667788', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0 }}
             onMouseEnter={e => { e.currentTarget.style.color = '#e2e8f0'; e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#778899'; e.currentTarget.style.background = 'transparent' }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#667788'; e.currentTarget.style.background = 'transparent' }}
           >
             <X size={16} />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.25)', color: '#ef4444' }}>
+          <div style={{ marginBottom: 20, padding: '10px 14px', borderRadius: 10, background: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.2)', color: '#ef4444', fontSize: 13 }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
           {/* Campo principal — nome */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 8, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            <label style={{
+              display: 'block', fontSize: 11, fontWeight: 700, color: '#cbd5e1',
+              marginBottom: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+            }}>
               Nome da Fazenda *
             </label>
             <input
@@ -115,18 +124,27 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
               autoFocus
               placeholder="Ex: Fazenda Primavera"
               style={{
-                width: '100%', padding: '14px 16px', borderRadius: 10, fontSize: 15, fontWeight: 500, transition: 'all 0.2s',
-                background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', outline: 'none',
+                width: '100%', padding: '16px 18px',
+                borderRadius: 12, fontSize: 18, fontWeight: 600,
+                background: '#0b0f14', border: '1px solid rgba(255,255,255,0.1)',
+                color: '#e2e8f0', outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+                boxSizing: 'border-box',
               }}
-              onFocus={e => { e.target.style.borderColor = '#0093D0'; e.target.style.boxShadow = '0 0 0 3px rgba(0,147,208,0.15)' }}
+              onFocus={e => { e.target.style.borderColor = '#0093D0'; e.target.style.boxShadow = '0 0 0 3px rgba(0,147,208,0.14)' }}
               onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none' }}
             />
           </div>
 
           {/* Campo secundário — altitude */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 8, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-              Altitude (m) <span style={{ color: '#556677', fontWeight: 400, textTransform: 'none' }}>— opcional</span>
+            <label style={{
+              display: 'block', fontSize: 11, fontWeight: 700, color: '#94a3b8',
+              marginBottom: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+            }}>
+              Altitude (m){' '}
+              <span style={{ color: '#4a5568', fontWeight: 400, fontSize: 11, textTransform: 'none', letterSpacing: 0 }}>
+                — opcional
+              </span>
             </label>
             <input
               type="number"
@@ -134,24 +152,29 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
               onChange={e => setAltitude(e.target.value)}
               placeholder="Ex: 820"
               style={{
-                width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, transition: 'all 0.2s',
-                background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.07)', color: '#e2e8f0', outline: 'none',
+                width: '100%', padding: '13px 18px',
+                borderRadius: 12, fontSize: 15, fontWeight: 400,
+                background: '#0b0f14', border: '1px solid rgba(255,255,255,0.07)',
+                color: '#e2e8f0', outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+                boxSizing: 'border-box',
               }}
-              onFocus={e => { e.target.style.borderColor = '#0093D0'; e.target.style.boxShadow = '0 0 0 3px rgba(0,147,208,0.12)' }}
+              onFocus={e => { e.target.style.borderColor = '#0093D0'; e.target.style.boxShadow = '0 0 0 3px rgba(0,147,208,0.1)' }}
               onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.07)'; e.target.style.boxShadow = 'none' }}
             />
           </div>
 
-          <div className="flex gap-3 mt-2">
+          {/* Ações */}
+          <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
             <button
               type="button"
               onClick={onClose}
               style={{
-                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500,
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer', transition: 'all 0.2s'
+                flex: '0 0 auto', padding: '0 20px', height: 48, borderRadius: 11, fontSize: 13, fontWeight: 500,
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
+                color: '#667788', cursor: 'pointer', transition: 'all 0.15s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#e2e8f0' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#8899aa' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#94a3b8' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#667788' }}
             >
               Cancelar
             </button>
@@ -159,16 +182,18 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
               type="submit"
               disabled={loading}
               style={{
-                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 700, letterSpacing: '0.04em',
-                background: 'linear-gradient(135deg, #0093D0, #006fa0)', border: 'none', color: '#fff', cursor: 'pointer',
-                opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                boxShadow: '0 4px 12px rgba(0,147,208,0.25)', transition: 'all 0.2s',
+                flex: 1, height: 52, borderRadius: 11, fontSize: 14, fontWeight: 700, letterSpacing: '0.03em',
+                background: 'linear-gradient(135deg, #0093D0, #006fa0)',
+                border: '1px solid rgba(0,147,208,0.3)', color: '#fff', cursor: loading ? 'default' : 'pointer',
+                opacity: loading ? 0.65 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                boxShadow: '0 2px 10px rgba(0,147,208,0.2)', transition: 'all 0.15s',
               }}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,147,208,0.4)' }}
-              onMouseLeave={e => { if (!loading) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,147,208,0.25)' }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = 'linear-gradient(135deg, #00a8ef, #007db8)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,147,208,0.35)' } }}
+              onMouseLeave={e => { if (!loading) { e.currentTarget.style.background = 'linear-gradient(135deg, #0093D0, #006fa0)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,147,208,0.2)' } }}
             >
-              {loading && <Loader2 size={14} className="animate-spin" />}
-              {isEdit ? 'Salvar' : 'Criar Fazenda'}
+              {loading && <Loader2 size={15} className="animate-spin" />}
+              {isEdit ? 'Salvar alterações' : 'Criar fazenda'}
             </button>
           </div>
         </form>
