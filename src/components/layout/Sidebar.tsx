@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Droplets,
-  ClipboardList,
+  CalendarDays,
   MapPin,
   Sprout,
   Wheat,
@@ -38,8 +38,8 @@ function PivotIcon({ size = 20 }: { size?: number }) {
 
 const OPERACIONAL = [
   { icon: LayoutDashboard, label: 'Dashboard',        path: '/dashboard'         },
-  { icon: ClipboardList,   label: 'Lançamentos',      path: '/lancamentos'       },
   { icon: Droplets,        label: 'Manejo Diário',    path: '/manejo'            },
+  { icon: CalendarDays,    label: 'Programação',      path: '/lancamentos'       },
   { icon: Stethoscope,     label: 'Diagnóstico Solo', path: '/diagnostico-solo'  },
   { icon: CloudRain,       label: 'Precipitações',    path: '/precipitacoes'     },
   { icon: MapPin,          label: 'Fazendas',         path: '/fazendas'          },

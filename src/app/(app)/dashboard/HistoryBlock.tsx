@@ -80,9 +80,10 @@ export function HistoryBlock({
 
   // Cor do status do pivô
   const pct = critical?.pct ?? null
+  // Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
   const statusColor = pct == null ? '#556677'
-    : pct >= threshold * 1.15 ? '#22c55e'
-    : pct >= threshold ? '#f59e0b'
+    : pct >= 75 ? '#22c55e'
+    : pct >= 60 ? '#f59e0b'
     : '#ef4444'
 
   return (

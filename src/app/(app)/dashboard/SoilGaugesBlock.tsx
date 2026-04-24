@@ -8,10 +8,10 @@ interface SoilGaugesBlockProps {
   activePivotIds: Set<string>
 }
 
-function gaugeColor(pct: number, threshold: number): string {
-  const warningPct = threshold * 1.15
-  if (pct >= warningPct) return '#22c55e'
-  if (pct >= threshold) return '#f59e0b'
+// Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
+function gaugeColor(pct: number, _threshold: number): string {
+  if (pct >= 75) return '#22c55e'
+  if (pct >= 60) return '#f59e0b'
   return '#ef4444'
 }
 
@@ -126,9 +126,9 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
             return (
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                 {[
-                  { color: '#22c55e', label: `>${Math.round(avgThreshold * 1.15)}%` },
-                  { color: '#f59e0b', label: `${avgThreshold}–${Math.round(avgThreshold * 1.15)}%` },
-                  { color: '#ef4444', label: `<${avgThreshold}%` },
+                  { color: '#22c55e', label: '≥75%' },
+                  { color: '#f59e0b', label: '60–75%' },
+                  { color: '#ef4444', label: '<60%' },
                 ].map(({ color, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />

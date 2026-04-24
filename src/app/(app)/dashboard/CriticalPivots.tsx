@@ -20,14 +20,12 @@ const STATUS_STYLE: Record<PivotStatus, { color: string; bg: string; border: str
   ok:      { color: '#22c55e', bg: '#141e2b',                border: 'rgba(255,255,255,0.06)', label: '' },
 }
 
-// Cor da água baseada no nível de umidade — independente do status operacional
+// Cor da água baseada no nível de umidade — paleta unificada
 function tankColor(pct: number | null): string {
   if (pct === null) return '#334155'
-  if (pct >= 90)  return '#0093D0'
-  if (pct >= 80)  return '#22c55e'
-  if (pct >= 70)  return '#f59e0b'
-  if (pct > 65)   return '#ef4444'
-  return '#a855f7'
+  if (pct >= 75) return '#22c55e'
+  if (pct >= 60) return '#f59e0b'
+  return '#ef4444'
 }
 
 /**
@@ -76,12 +74,11 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
   for (const pivot of pivots) {
     if (!activePivotIds.has(pivot.id)) continue
     const m = lastManagementByPivot[pivot.id]
-    const threshold = pivot.alert_threshold_percent ?? 70
-    const warningPct = threshold * 1.15
     const pct = m?.field_capacity_percent ?? null
     let status: PivotStatus = 'ok'
-    if (m?.needs_irrigation || (pct !== null && pct < threshold)) status = 'critico'
-    else if (pct !== null && pct < warningPct) status = 'atencao'
+    // Paleta unificada: <60% = crítico, 60–75% = atenção, ≥75% = ok
+    if (pct !== null && pct < 60) status = 'critico'
+    else if (pct !== null && pct < 75) status = 'atencao'
     items.push({ pivot, pct, status, diag: diagnosticsByPivot[pivot.id] ?? null, mgmt: m ?? null })
   }
 

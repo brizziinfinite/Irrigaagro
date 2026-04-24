@@ -42,23 +42,23 @@ const STATUS_CONFIG: Record<IrrigationStatus, {
   label: string; color: string; bg: string; border: string
   icon: typeof CheckCircle2; desc: string
 }> = {
-  azul:      { label: 'Irrigando',     color: '#0093D0', bg: 'rgb(0 147 208 / 0.12)',   border: 'rgb(0 147 208 / 0.25)',  icon: Droplets,      desc: 'Irrigação em andamento' },
-  verde:     { label: 'OK',            color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',   border: 'rgb(34 197 94 / 0.25)',  icon: CheckCircle2,  desc: 'Sem necessidade de irrigação' },
-  amarelo:   { label: 'Atenção',       color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',  border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle, desc: 'Irrigação recomendada em breve' },
-  vermelho:  { label: 'Irrigar Agora', color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',   border: 'rgb(239 68 68 / 0.25)',  icon: AlertCircle,   desc: 'Solo abaixo do nível crítico' },
-  sem_safra: { label: 'Sem safra',     color: '#556677', bg: 'rgb(85 102 119 / 0.12)',  border: 'rgb(85 102 119 / 0.25)', icon: Info,          desc: 'Nenhuma safra ativa' },
+  azul:      { label: 'Irrigando',   color: '#0093D0', bg: 'rgb(0 147 208 / 0.12)',  border: 'rgb(0 147 208 / 0.25)',  icon: Droplets,      desc: 'Pivô em movimento agora' },
+  verde:     { label: 'Confortável', color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',  border: 'rgb(34 197 94 / 0.25)',  icon: CheckCircle2,  desc: 'Solo bem abastecido — ≥75%' },
+  amarelo:   { label: 'Atenção',     color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)', border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle, desc: 'Irrigar nos próximos 2 dias — 60–75%' },
+  vermelho:  { label: 'Crítico',     color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',  border: 'rgb(239 68 68 / 0.25)',  icon: AlertCircle,   desc: 'Irrigar hoje — solo abaixo de 60%' },
+  sem_safra: { label: 'Sem safra',   color: '#556677', bg: 'rgb(85 102 119 / 0.12)', border: 'rgb(85 102 119 / 0.25)', icon: Info,          desc: 'Nenhuma safra ativa' },
 }
 
 // threshold: limiar configurado no pivô (padrão 70)
 // Zona amarela: threshold × 1,15 (alinhado ao getIrrigationStatus de water-balance.ts)
-function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, threshold = 70): IrrigationStatus {
+function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, _threshold = 70): IrrigationStatus {
   if (!hasActiveSeason) return 'sem_safra'
   if (!lastM) return 'verde'
   const pct = lastM.field_capacity_percent ?? null
   if (pct === null) return 'verde'
-  const warningPct = threshold * 1.15
-  if (pct >= warningPct) return 'verde'
-  if (pct >= threshold) return 'amarelo'
+  // Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
+  if (pct >= 75) return 'verde'
+  if (pct >= 60) return 'amarelo'
   return 'vermelho'
 }
 
@@ -377,7 +377,11 @@ export function DashboardClient({
                 {recs.map((rec, i) => {
                   const isUrgent = rec.needsIrrigationToday
                   const isSoon = !isUrgent && (rec.daysAway ?? 99) <= 2
-                  const color = isUrgent ? '#ef4444' : isSoon ? '#f59e0b' : '#22c55e'
+                  // Cor baseada no pct real, alinhada à paleta unificada
+                  const pctVal = rec.pct ?? null
+                  const color = isUrgent ? '#ef4444'
+                    : pctVal !== null ? (pctVal >= 75 ? '#22c55e' : pctVal >= 60 ? '#f59e0b' : '#ef4444')
+                    : isSoon ? '#f59e0b' : '#22c55e'
                   const Icon = isUrgent ? AlertCircle : isSoon ? AlertTriangle : CheckCircle2
 
                   return (

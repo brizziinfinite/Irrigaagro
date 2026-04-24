@@ -9,21 +9,21 @@ import type { ProjectionDay } from '@/lib/water-balance'
 type IrrigationStatus = 'azul' | 'verde' | 'amarelo' | 'vermelho' | 'sem_safra'
 
 const STATUS_CONFIG: Record<IrrigationStatus, { label: string; color: string; bg: string; border: string; icon: typeof CheckCircle2 }> = {
-  azul:      { label: 'Irrigando',     color: '#0093D0', bg: 'rgb(0 147 208 / 0.12)',   border: 'rgb(0 147 208 / 0.25)',  icon: Droplets      },
-  verde:     { label: 'OK',            color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',   border: 'rgb(34 197 94 / 0.25)',  icon: CheckCircle2  },
-  amarelo:   { label: 'Atenção',       color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',  border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle },
-  vermelho:  { label: 'Irrigar Agora', color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',   border: 'rgb(239 68 68 / 0.25)',  icon: AlertCircle   },
-  sem_safra: { label: 'Sem safra',     color: '#556677', bg: 'rgb(85 102 119 / 0.12)',  border: 'rgb(85 102 119 / 0.25)', icon: Info          },
+  azul:      { label: 'Irrigando',   color: '#0093D0', bg: 'rgb(0 147 208 / 0.12)',  border: 'rgb(0 147 208 / 0.25)',  icon: Droplets      },
+  verde:     { label: 'Confortável', color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',  border: 'rgb(34 197 94 / 0.25)',  icon: CheckCircle2  },
+  amarelo:   { label: 'Atenção',     color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)', border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle },
+  vermelho:  { label: 'Crítico',     color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',  border: 'rgb(239 68 68 / 0.25)',  icon: AlertCircle   },
+  sem_safra: { label: 'Sem safra',   color: '#556677', bg: 'rgb(85 102 119 / 0.12)', border: 'rgb(85 102 119 / 0.25)', icon: Info          },
 }
 
-function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, threshold = 70): IrrigationStatus {
+function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, _threshold = 70): IrrigationStatus {
   if (!hasActiveSeason) return 'sem_safra'
   if (!lastM) return 'verde'
   const pct = lastM.field_capacity_percent ?? null
   if (pct === null) return 'verde'
-  const warningPct = threshold * 1.15
-  if (pct >= warningPct) return 'verde'
-  if (pct >= threshold) return 'amarelo'
+  // Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
+  if (pct >= 75) return 'verde'
+  if (pct >= 60) return 'amarelo'
   return 'vermelho'
 }
 
@@ -154,10 +154,9 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
             const cfg = STATUS_CONFIG[status]
             const StatusIcon = cfg.icon
             const pct = m?.field_capacity_percent ?? null
-            const warningPct = threshold * 1.15
             const pctColor = pct === null ? '#556677'
-              : pct >= warningPct ? '#22c55e'
-              : pct >= threshold ? '#f59e0b'
+              : pct >= 75 ? '#22c55e'
+              : pct >= 60 ? '#f59e0b'
               : '#ef4444'
             const lamina = m?.actual_depth_mm ?? m?.recommended_depth_mm ?? null
 

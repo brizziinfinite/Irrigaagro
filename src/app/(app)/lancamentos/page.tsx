@@ -1966,10 +1966,15 @@ export default function LancamentosPage() {
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ClipboardList size={20} style={{ color: '#0093D0' }} />
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: '#e2e8f0', margin: 0, letterSpacing: '-0.02em' }}>
-              Lançamentos
-            </h1>
+            <CalendarDays size={20} style={{ color: '#0093D0' }} />
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 900, color: '#e2e8f0', margin: 0, letterSpacing: '-0.02em' }}>
+                Programação
+              </h1>
+              <p style={{ fontSize: 11, color: '#556677', margin: 0, marginTop: 2 }}>
+                Planeje, ajuste e acompanhe a programação de irrigação.
+              </p>
+            </div>
             {isPastWeek && (
               <span style={{
                 fontSize: 10, fontWeight: 700, color: '#f59e0b',
