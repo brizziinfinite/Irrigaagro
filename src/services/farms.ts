@@ -40,18 +40,14 @@ export async function updateFarm(
   id: string,
   input: FarmUpdate,
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient
-): Promise<Farm> {
-  const { data, error } = await farmsTable(client)
+): Promise<void> {
+  const { error } = await farmsTable(client)
     .update(input)
     .eq('id', id)
-    .select()
-    .single()
 
   if (error) {
     throw new Error(`Falha ao atualizar fazenda: ${error.message}`)
   }
-
-  return data as Farm
 }
 
 export async function deleteFarm(

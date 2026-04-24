@@ -113,7 +113,8 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
     setError('')
     setLoading(true)
 
-    const payload = {
+    // Campos editáveis (sem company_id no update — evita conflito de constraint)
+    const fields = {
       name: name.trim(),
       document_number: docNumber.trim() || null,
       owner_name: ownerName.trim() || null,
@@ -126,18 +127,18 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
       altitude: altitude ? Number(altitude) : null,
       longitude: longitude ? Number(longitude) : null,
       notes: notes.trim() || null,
-      company_id: companyId,
     }
 
     try {
       if (isEdit) {
-        await updateFarm(farm.id, payload)
+        await updateFarm(farm.id, fields)
       } else {
-        await createFarm(payload)
+        await createFarm({ ...fields, company_id: companyId })
       }
       onSaved()
       onClose()
     } catch (err) {
+      console.error('[FarmModal] save error:', err)
       setError(err instanceof Error ? err.message : 'Falha ao salvar fazenda')
     } finally {
       setLoading(false)
