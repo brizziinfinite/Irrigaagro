@@ -1598,8 +1598,8 @@ export default function ManejoPage() {
             {
               label: 'ETc',
               value: heroEtc !== null ? `${heroEtc.toFixed(1)} mm/d` : '—',
-              color: '#778899',
-              sub: `ETo: ${calcResult.eto.toFixed(1)} · Kc: ${calcResult.kc.toFixed(2)}`,
+              color: '#22c55e',
+              sub: `ETo: ${calcResult.eto.toFixed(1)} mm/d`,
             },
           ].map(({ label, value, color, sub }) => (
             <div key={label}>
