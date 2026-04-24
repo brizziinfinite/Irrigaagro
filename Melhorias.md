@@ -53,6 +53,26 @@ Legenda: `[ ]` pendente · `[x]` feito
 
 ---
 
+## 🔴 PRIORIDADE ALTA — Sistema de aprovação de clientes
+**Status:** Pendente — implementar na próxima sessão (2026-04-25)
+
+Novo cliente se cadastra → fica em `pending` → Brizzi aprova → cliente acessa.
+
+**O que implementar (em ordem):**
+- [ ] **Migration**: `status text DEFAULT 'pending'` em `companies`
+- [ ] **Middleware** (`src/middleware.ts`): verifica `status` da company após login; `pending` → `/aguardando`
+- [ ] **Página `/aguardando`**: tela informativa para cliente aguardar aprovação
+- [ ] **Página `/admin`**: lista companies (pending/active/suspended), botões Ativar/Suspender — super-admin only
+- [ ] **Resend**: criar conta, domínio `gotejo.com.br`, `RESEND_API_KEY` nas env vars Vercel
+- [ ] **E-mail para Brizzi**: novo cadastro → notificação com nome/e-mail do cliente + link `/admin`
+- [ ] **E-mail para cliente**: ativação → e-mail automático confirmando acesso liberado
+
+**Dependências:**
+- `isSuperAdmin()` já existe em `src/lib/super-admin.ts`
+- Trigger `handle_new_user()` já cria a company — só adicionar `status = 'pending'`
+
+---
+
 ## 🗺️ Mapa interativo dos pivôs (Dashboard)
 **Status:** ✅ Implementado em 2026-03-17
 

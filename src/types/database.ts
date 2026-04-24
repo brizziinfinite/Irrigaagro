@@ -180,11 +180,24 @@ export interface Farm {
   id: string
   company_id: string
   name: string
+  // Identificação
+  document_number: string | null
+  owner_name: string | null
+  owner_email: string | null
+  owner_phone: string | null
+  // Localização
+  cep: string | null
+  address: string | null
+  city: string | null
+  state_uf: string | null
   latitude_degrees: number | null
   latitude_minutes: number | null
   hemisphere: 'N' | 'S' | null
+  longitude: number | null
   altitude: number | null
   area_m2: number | null
+  // Observações
+  notes: string | null
   created_at: string
   updated_at: string
 }
@@ -192,11 +205,21 @@ export interface Farm {
 export interface FarmInsert {
   company_id: string
   name: string
+  document_number?: string | null
+  owner_name?: string | null
+  owner_email?: string | null
+  owner_phone?: string | null
+  cep?: string | null
+  address?: string | null
+  city?: string | null
+  state_uf?: string | null
   latitude_degrees?: number | null
   latitude_minutes?: number | null
   hemisphere?: 'N' | 'S' | null
+  longitude?: number | null
   altitude?: number | null
   area_m2?: number | null
+  notes?: string | null
 }
 
 export type FarmUpdate = Partial<FarmInsert>
