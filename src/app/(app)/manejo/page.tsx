@@ -754,6 +754,13 @@ export default function ManejoPage() {
   const [irrigStart, setIrrigStart]   = useState('')
   const [irrigEnd, setIrrigEnd]       = useState('')
   const [depthAutoFilled, setDepthAutoFilled] = useState(false)
+
+  // ─── Modal lançamento rápido ──────────────────────────────────
+  const [showQuickModal, setShowQuickModal]     = useState(false)
+  const [quickDepth, setQuickDepth]             = useState('')
+  const [quickObs, setQuickObs]                 = useState('')
+  const [quickModalSaving, setQuickModalSaving] = useState(false)
+  const [quickModalMsg, setQuickModalMsg]       = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [editingRecord, setEditingRecord] = useState<DailyManagement | null>(null)
 
   // ─── Carregar safras ────────────────────────────────────────
@@ -1018,6 +1025,58 @@ export default function ManejoPage() {
     }
   }
 
+  // ─── Lançamento rápido (modal) ───────────────────────────────
+  async function handleQuickLaunch() {
+    if (!selectedSeason || !calcResult || !date) return
+    const mm = parseFloat(quickDepth.replace(',', '.'))
+    if (!isFinite(mm) || mm < 0) {
+      setQuickModalMsg({ type: 'error', text: 'Informe uma lâmina válida (≥ 0).' })
+      return
+    }
+    setQuickModalSaving(true)
+    setQuickModalMsg(null)
+    const cs = externalData?.weather ?? externalData?.geolocationWeather ?? null
+    const payload: DailyManagementInsert = {
+      season_id: selectedSeason.id, date, das: calcResult.das, crop_stage: calcResult.cropStage,
+      temp_max: parseOptionalNumber(tmax) ?? cs?.temp_max ?? null,
+      temp_min: parseOptionalNumber(tmin) ?? cs?.temp_min ?? null,
+      humidity_percent: parseOptionalNumber(humidity) ?? cs?.humidity_percent ?? null,
+      wind_speed_ms: parseOptionalNumber(wind) ?? cs?.wind_speed_ms ?? null,
+      solar_radiation_wm2: parseOptionalNumber(radiation) ?? cs?.solar_radiation_wm2 ?? null,
+      eto_mm: calcResult.eto, etc_mm: calcResult.etc,
+      rainfall_mm: parseOptionalNumber(rainfall) ?? externalData?.rainfall?.rainfall_mm ?? 0,
+      kc: calcResult.kc, ks: calcResult.ks, ctda: calcResult.adcNew, cta: calcResult.cta,
+      recommended_depth_mm: calcResult.recommendedDepthMm,
+      recommended_speed_percent: calcResult.recommendedSpeedPercent,
+      field_capacity_percent: calcResult.fieldCapacityPercent,
+      needs_irrigation: calcResult.recommendedDepthMm > 0,
+      actual_depth_mm: mm,
+      soil_moisture_calculated: calcResult.fieldCapacityPercent,
+    }
+    try {
+      await upsertDailyManagementRecord(payload)
+      setQuickModalMsg({ type: 'success', text: `Irrigação de ${mm} mm registrada com sucesso!` })
+      setTimeout(() => {
+        setShowQuickModal(false)
+        setQuickDepth('')
+        setQuickObs('')
+        setQuickModalMsg(null)
+        loadHistory(selectedSeason.id)
+      }, 1200)
+    } catch (err) {
+      setQuickModalMsg({ type: 'error', text: err instanceof Error ? err.message : 'Falha ao registrar. Tente novamente.' })
+    } finally {
+      setQuickModalSaving(false)
+    }
+  }
+
+  function openQuickModal() {
+    setQuickDepth(calcResult?.recommendedDepthMm ? calcResult.recommendedDepthMm.toFixed(1) : '')
+    setQuickObs('')
+    setQuickModalMsg(null)
+    setShowQuickModal(true)
+  }
+
   // ─── Loading / sem safra ─────────────────────────────────────
   if (loading) {
     return (
@@ -1078,6 +1137,160 @@ export default function ManejoPage() {
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ── Modal: Lançamento Rápido de Irrigação ─────────────── */}
+      {showQuickModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+        }}
+          onClick={e => { if (e.target === e.currentTarget) setShowQuickModal(false) }}
+        >
+          <div style={{
+            background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)',
+            borderTop: '2px solid #ef4444',
+            borderRadius: 18, padding: '32px 32px 28px', width: '100%', maxWidth: 440,
+            boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+          }}>
+            {/* Header do modal */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+              <div>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0', margin: 0, letterSpacing: '-0.02em' }}>
+                  Lançar irrigação
+                </h2>
+                <p style={{ fontSize: 12, color: '#556677', margin: '4px 0 0' }}>
+                  Confirme a lâmina aplicada para o pivô selecionado.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowQuickModal(false)}
+                style={{ background: 'transparent', border: 'none', color: '#445566', cursor: 'pointer', padding: 4 }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Pivô + data (só leitura, informativo) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+              <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Pivô</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{selectedSeason?.pivots?.name ?? '—'}</div>
+              </div>
+              <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Data</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>
+                  {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                </div>
+              </div>
+            </div>
+
+            {/* Lâmina recomendada (informativa) */}
+            {calcResult?.recommendedDepthMm != null && calcResult.recommendedDepthMm > 0 && (
+              <div style={{
+                background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)',
+                borderRadius: 10, padding: '10px 14px', marginBottom: 16,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <span style={{ fontSize: 12, color: '#8899aa' }}>Lâmina recomendada</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: '#ef4444', fontFamily: 'monospace' }}>
+                  {calcResult.recommendedDepthMm.toFixed(1)} mm
+                </span>
+              </div>
+            )}
+
+            {/* Campo: lâmina aplicada */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Lâmina aplicada (mm)
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={quickDepth}
+                  onChange={e => setQuickDepth(e.target.value)}
+                  placeholder="Ex: 28.5"
+                  autoFocus
+                  style={{
+                    width: '100%', padding: '14px 44px 14px 16px', borderRadius: 10,
+                    background: '#0d1520', border: '1px solid rgba(0,147,208,0.3)',
+                    color: '#e2e8f0', fontSize: 16, fontWeight: 700, fontFamily: 'monospace',
+                    outline: 'none', boxSizing: 'border-box',
+                  }}
+                  onFocus={e => e.target.style.borderColor = '#0093D0'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(0,147,208,0.3)'}
+                  onKeyDown={e => { if (e.key === 'Enter') handleQuickLaunch() }}
+                />
+                <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#445566', pointerEvents: 'none', fontWeight: 600 }}>
+                  mm
+                </span>
+              </div>
+            </div>
+
+            {/* Campo: observação (opcional) */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Observação <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span>
+              </label>
+              <input
+                type="text"
+                value={quickObs}
+                onChange={e => setQuickObs(e.target.value)}
+                placeholder="Ex: chuva durante a noite, parada por vento..."
+                style={{
+                  width: '100%', padding: '11px 14px', borderRadius: 10,
+                  background: '#0d1520', border: '1px solid rgba(255,255,255,0.07)',
+                  color: '#8899aa', fontSize: 13,
+                  outline: 'none', boxSizing: 'border-box',
+                }}
+                onFocus={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.07)'}
+              />
+            </div>
+
+            {/* Feedback sucesso/erro */}
+            {quickModalMsg && (
+              <div style={{
+                padding: '10px 14px', borderRadius: 8, marginBottom: 16,
+                background: quickModalMsg.type === 'success' ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)',
+                border: `1px solid ${quickModalMsg.type === 'success' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
+                color: quickModalMsg.type === 'success' ? '#22c55e' : '#ef4444',
+                fontSize: 13, fontWeight: 600,
+              }}>
+                {quickModalMsg.type === 'success' ? '✓ ' : '⚠ '}{quickModalMsg.text}
+              </div>
+            )}
+
+            {/* Ações */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowQuickModal(false)}
+                style={{
+                  flex: 1, padding: '13px 0', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                  background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
+                  color: '#556677', cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleQuickLaunch}
+                disabled={quickModalSaving}
+                style={{
+                  flex: 2, padding: '13px 0', borderRadius: 10, fontSize: 14, fontWeight: 800,
+                  background: quickModalSaving ? 'rgba(239,68,68,0.3)' : 'linear-gradient(135deg, #e02424, #c01a1a)',
+                  border: 'none', color: '#fff', cursor: quickModalSaving ? 'not-allowed' : 'pointer',
+                  boxShadow: quickModalSaving ? 'none' : '0 4px 20px rgba(200,30,30,0.35)',
+                }}
+              >
+                {quickModalSaving ? 'Confirmando…' : 'Confirmar lançamento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ════════════════════════════════════════════════════════
           SEÇÃO 1 — HERO DE DECISÃO
@@ -1182,15 +1395,20 @@ export default function ManejoPage() {
 
           {/* Right: CTAs — primário dominante, secundário discreto */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+            {/* CTA primário: abre modal rápido se deve irrigar, senão vai para formulário */}
             <button
               onClick={() => {
-                setShowForm(true)
-                const recDepth = calcResult?.recommendedDepthMm
-                if (recDepth && recDepth > 0) setActualDepth(recDepth.toFixed(1))
-                setTimeout(() => {
-                  const el = document.getElementById('manejo-form-section')
-                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                }, 50)
+                if (shouldIrrigate) {
+                  openQuickModal()
+                } else {
+                  setShowForm(true)
+                  const recDepth = calcResult?.recommendedDepthMm
+                  if (recDepth && recDepth > 0) setActualDepth(recDepth.toFixed(1))
+                  setTimeout(() => {
+                    const el = document.getElementById('manejo-form-section')
+                    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }, 50)
+                }
               }}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -1224,6 +1442,7 @@ export default function ManejoPage() {
               {shouldIrrigate ? 'Lançar Irrigação' : 'Registrar Manejo'}
               <ArrowRight size={16} strokeWidth={2.5} />
             </button>
+            {/* CTA secundário: detalhe ou clima */}
             <button
               onClick={() => {
                 setShowForm(true)
@@ -1252,6 +1471,21 @@ export default function ManejoPage() {
               <Save size={12} />
               {shouldIrrigate ? 'Só registrar dados' : 'Só lançar clima'}
             </button>
+            {/* Link terciário: programação avançada */}
+            <Link
+              href="/lancamentos"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 400,
+                color: '#445566', textDecoration: 'none',
+                transition: 'color 0.15s ease',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#667788' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#445566' }}
+            >
+              <Calendar size={11} />
+              Ver programação avançada
+            </Link>
           </div>
         </div>
       ) : (
