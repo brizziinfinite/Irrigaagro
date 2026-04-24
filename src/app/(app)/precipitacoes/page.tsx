@@ -283,14 +283,14 @@ function RainfallChips({
       {/* Chips padrão */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         {sectorLabel && (
-          <span style={{ fontSize: 11, color: '#556677', marginRight: 4 }}>{sectorLabel}</span>
+          <span style={{ fontSize: 11, color: '#778899', marginRight: 4 }}>{sectorLabel}</span>
         )}
         {chips.map(c => (
           <div key={c.label} style={{
             padding: '6px 14px', borderRadius: 20,
             background: c.value > 0 ? 'rgb(6 182 212 / 0.1)' : '#0d1520',
             border: `1px solid ${c.value > 0 ? 'rgb(6 182 212 / 0.3)' : 'rgba(255,255,255,0.06)'}`,
-            color: c.value > 0 ? '#06b6d4' : '#556677',
+            color: c.value > 0 ? '#06b6d4' : '#778899',
             fontSize: 12, fontWeight: 600,
           }}>
             {c.label}: {c.value.toFixed(1)} mm
@@ -300,19 +300,19 @@ function RainfallChips({
 
       {/* Filtro de período personalizado */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 11, color: '#556677', fontWeight: 600 }}>Período:</span>
+        <span style={{ fontSize: 11, color: '#778899', fontWeight: 600 }}>Período:</span>
         <input type="date" value={rangeFrom} onChange={e => setRangeFrom(e.target.value)} style={inputStyle} />
-        <span style={{ fontSize: 11, color: '#556677' }}>até</span>
+        <span style={{ fontSize: 11, color: '#778899' }}>até</span>
         <input type="date" value={rangeTo} onChange={e => setRangeTo(e.target.value)} style={inputStyle} />
         {rangeLoading && (
-          <span style={{ fontSize: 12, color: '#556677' }}>calculando…</span>
+          <span style={{ fontSize: 12, color: '#778899' }}>calculando…</span>
         )}
         {!rangeLoading && rangeTotal !== null && (
           <div style={{
             padding: '6px 14px', borderRadius: 20,
             background: rangeTotal > 0 ? 'rgb(34 197 94 / 0.1)' : '#0d1520',
             border: `1px solid ${rangeTotal > 0 ? 'rgb(34 197 94 / 0.3)' : 'rgba(255,255,255,0.06)'}`,
-            color: rangeTotal > 0 ? '#22c55e' : '#556677',
+            color: rangeTotal > 0 ? '#22c55e' : '#778899',
             fontSize: 12, fontWeight: 700,
           }}>
             Total: {rangeTotal.toFixed(1)} mm
@@ -430,14 +430,14 @@ function RainfallBarChart({ records, year, month }: { records: RainfallRecord[];
           <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.03)" vertical={false} />
           <XAxis 
             dataKey="day" 
-            tick={{ fill: '#556677', fontSize: 10 }} 
+            tick={{ fill: '#778899', fontSize: 10 }} 
             axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} 
             tickLine={false} 
             interval={0}
             tickFormatter={(v, i) => i === 0 || i === data.length - 1 || (i + 1) % 5 === 0 ? v : ''}
           />
           <YAxis 
-            tick={{ fill: '#556677', fontSize: 10 }} 
+            tick={{ fill: '#778899', fontSize: 10 }} 
             axisLine={false} 
             tickLine={false} 
             tickFormatter={v => v > 0 ? v : ''}
@@ -610,7 +610,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
               <p style={{ fontSize: 11, color: '#8899aa', marginTop: 2 }}>Setor {sectorName}</p>
             )}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#556677', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#778899', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
@@ -631,7 +631,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
             }}>
               {cfg.label}
               {existing.source === 'plugfield' && (
-                <span style={{ color: '#556677', marginLeft: 4 }}>— editar muda para Manual</span>
+                <span style={{ color: '#778899', marginLeft: 4 }}>— editar muda para Manual</span>
               )}
             </div>
           )
@@ -732,7 +732,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
             style={{
               padding: '10px 14px', borderRadius: 8,
               background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
-              color: '#556677', cursor: 'pointer', fontSize: 13,
+              color: '#778899', cursor: 'pointer', fontSize: 13,
             }}
           >
             Cancelar
@@ -944,7 +944,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700 }}>Importar Google Sheets</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#556677', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#778899', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
@@ -967,7 +967,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <label style={{ fontSize: 12, color: '#8899aa' }}>Aba</label>
-            {loadingTabs && <span style={{ fontSize: 11, color: '#556677' }}>detectando abas…</span>}
+            {loadingTabs && <span style={{ fontSize: 11, color: '#778899' }}>detectando abas…</span>}
             {tabs.length > 0 && <span style={{ fontSize: 11, color: '#0093D0' }}>{tabs.length} aba{tabs.length > 1 ? 's' : ''}</span>}
           </div>
           {tabs.length > 0 ? (
@@ -979,7 +979,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
             <input type="number" placeholder="0" value={gid} onChange={e => setGid(e.target.value)}
               style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }} />
           )}
-          <p style={{ fontSize: 11, color: '#556677', margin: '2px 0 0' }}>
+          <p style={{ fontSize: 11, color: '#778899', margin: '2px 0 0' }}>
             Número GID da aba — visível na URL da planilha após <code style={{ color: '#8899aa' }}>#gid=</code>. Para a 1ª aba use 0.
           </p>
         </div>
@@ -1060,7 +1060,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
                 <div style={{ height: 6, borderRadius: 3, background: '#0d1520', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#003d5c,#3b82f6)', borderRadius: 3, transition: 'width 0.2s' }} />
                 </div>
-                <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>{progress}%</p>
+                <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>{progress}%</p>
               </div>
             )}
 
@@ -1077,7 +1077,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
           </>
         )}
 
-        <p style={{ fontSize: 11, color: '#556677' }}>
+        <p style={{ fontSize: 11, color: '#778899' }}>
           Formatos de data aceitos: YYYY-MM-DD · DD/MM/YYYY · DD/MM/YY
         </p>
       </div>
@@ -1129,7 +1129,7 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
         {DAY_LABELS.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#556677', padding: '4px 0' }}>{d}</div>
+          <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#778899', padding: '4px 0' }}>{d}</div>
         ))}
       </div>
 
@@ -1228,7 +1228,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
         border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 32,
         display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200,
       }}>
-        <span style={{ color: '#556677', fontSize: 13 }}>Carregando histórico…</span>
+        <span style={{ color: '#778899', fontSize: 13 }}>Carregando histórico…</span>
       </div>
     )
   }
@@ -1237,7 +1237,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
 
   // Color for a cell value
   function cellColor(v: number | null): { bg: string; text: string; border: string } {
-    if (v === null) return { bg: 'transparent', text: '#2a3a4a', border: 'transparent' }
+    if (v === null) return { bg: 'transparent', text: '#667788', border: 'transparent' }
     if (v === 0) return { bg: 'rgba(255,255,255,0.02)', text: '#334155', border: 'rgba(255,255,255,0.04)' }
     if (v < 50) return { bg: 'rgba(6,182,212,0.08)', text: '#22d3ee', border: 'rgba(6,182,212,0.15)' }
     if (v < 100) return { bg: 'rgba(6,182,212,0.14)', text: '#06b6d4', border: 'rgba(6,182,212,0.25)' }
@@ -1287,7 +1287,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
               <h2 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', lineHeight: 1 }}>
                 Histórico Anual
               </h2>
-              <p style={{ fontSize: 11, color: '#556677', marginTop: 3 }}>{pivotName} · {years[0]}–{years[years.length - 1]}</p>
+              <p style={{ fontSize: 11, color: '#778899', marginTop: 3 }}>{pivotName} · {years[0]}–{years[years.length - 1]}</p>
             </div>
           </div>
         </div>
@@ -1303,7 +1303,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
           ].map(l => (
             <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 8, height: 8, borderRadius: 2, background: l.color, opacity: 0.85 }} />
-              <span style={{ fontSize: 10, color: '#556677' }}>{l.label}</span>
+              <span style={{ fontSize: 10, color: '#778899' }}>{l.label}</span>
             </div>
           ))}
         </div>
@@ -1321,7 +1321,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                 {MONTH_SHORT.map((m, mi) => (
                   <th key={m} style={{
                     padding: '4px 4px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-                    color: hoveredMonth === mi ? '#f472b6' : '#556677',
+                    color: hoveredMonth === mi ? '#f472b6' : '#778899',
                     transition: 'color 0.15s', textAlign: 'center', cursor: 'default',
                   }}>
                     {m}
@@ -1371,7 +1371,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                     <span style={{ fontSize: 11, fontWeight: 700, color: yearTotals[ri] > 0 ? '#e2e8f0' : '#334155', fontVariantNumeric: 'tabular-nums' }}>
                       {Math.round(yearTotals[ri])}
                     </span>
-                    <span style={{ fontSize: 9, color: '#556677', marginLeft: 2 }}>mm</span>
+                    <span style={{ fontSize: 9, color: '#778899', marginLeft: 2 }}>mm</span>
                   </td>
                 </tr>
               ))}
@@ -1409,7 +1409,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', fontVariantNumeric: 'tabular-nums' }}>
                     {Math.round(avgByMonth.reduce((a, b) => a + b, 0))}
                   </span>
-                  <span style={{ fontSize: 9, color: '#556677', marginLeft: 2 }}>mm/ano</span>
+                  <span style={{ fontSize: 9, color: '#778899', marginLeft: 2 }}>mm/ano</span>
                 </td>
               </tr>
             </tbody>
@@ -1420,7 +1420,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Média mensal</p>
-            <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>
+            <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>
               {years.length} ano{years.length !== 1 ? 's' : ''} de dados
             </p>
           </div>
@@ -1437,7 +1437,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                   background: frac === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
                 }}>
                   <span style={{
-                    position: 'absolute', left: -30, fontSize: 9, color: '#556677',
+                    position: 'absolute', left: -30, fontSize: 9, color: '#778899',
                     fontVariantNumeric: 'tabular-nums', fontWeight: 600, minWidth: 26, textAlign: 'right',
                   }}>
                     {val}
@@ -1807,7 +1807,7 @@ export default function PrecipitacoesPage() {
           <div>
             <h1 style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0' }}>Precipitações</h1>
             {selectedPivot && (
-              <p style={{ fontSize: 12, color: '#556677' }}>{selectedPivot.farm_name} · {selectedPivot.name}</p>
+              <p style={{ fontSize: 12, color: '#778899' }}>{selectedPivot.farm_name} · {selectedPivot.name}</p>
             )}
           </div>
         </div>
@@ -1883,7 +1883,7 @@ export default function PrecipitacoesPage() {
       )}
 
       {!loadingPivots && pivots.length === 0 && (
-        <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, color: '#556677', fontSize: 14 }}>
+        <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, color: '#778899', fontSize: 14 }}>
           <Calendar size={32} color="rgba(255,255,255,0.06)" style={{ margin: '0 auto 12px' }} />
           Nenhum pivô cadastrado. Cadastre um pivô para registrar precipitações.
         </div>
@@ -1904,7 +1904,7 @@ export default function PrecipitacoesPage() {
                 onSelectSector={setActiveSectorId}
               />
               <div style={{ flex: 1, minWidth: 180, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#556677' }}>
+                <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#778899' }}>
                   Setor de Precipitação
                 </p>
                 <SectorTabs
@@ -1912,7 +1912,7 @@ export default function PrecipitacoesPage() {
                   activeSectorId={activeSectorId}
                   onSelect={setActiveSectorId}
                 />
-                <p style={{ fontSize: 11, color: '#556677', marginTop: 4, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 11, color: '#778899', marginTop: 4, lineHeight: 1.5 }}>
                   {activeSectorId === null
                     ? 'Mostrando precipitações gerais (sem setor específico). Clique num setor para filtrar.'
                     : `Setor ${activeSector?.name ?? ''} selecionado. Dados exclusivos deste setor.`}
@@ -1943,7 +1943,7 @@ export default function PrecipitacoesPage() {
                 <h2 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>
                   {MONTH_NAMES[month]} {year}
                 </h2>
-                {loadingRecords && <span style={{ fontSize: 11, color: '#556677' }}>carregando…</span>}
+                {loadingRecords && <span style={{ fontSize: 11, color: '#778899' }}>carregando…</span>}
               </div>
 
               <div style={{ display: 'flex', gap: 6 }}>
@@ -1975,15 +1975,15 @@ export default function PrecipitacoesPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>
                 Distribuição diária — {MONTH_NAMES[month]}
-                {activeSector && <span style={{ color: '#556677' }}> · Setor {activeSector.name}</span>}
+                {activeSector && <span style={{ color: '#778899' }}> · Setor {activeSector.name}</span>}
               </span>
               <div style={{ width: 10, height: 2, background: '#f59e0b', borderRadius: 1 }} />
-              <span style={{ fontSize: 10, color: '#556677' }}>média mensal</span>
+              <span style={{ fontSize: 10, color: '#778899' }}>média mensal</span>
             </div>
             <RainfallBarChart records={monthRecords} year={year} month={month} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-              <span style={{ fontSize: 10, color: '#556677' }}>1</span>
-              <span style={{ fontSize: 10, color: '#556677' }}>{new Date(year, month + 1, 0).getDate()}</span>
+              <span style={{ fontSize: 10, color: '#778899' }}>1</span>
+              <span style={{ fontSize: 10, color: '#778899' }}>{new Date(year, month + 1, 0).getDate()}</span>
             </div>
           </div>
 
@@ -2017,7 +2017,7 @@ export default function PrecipitacoesPage() {
                <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16, display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                  <PivotCircleMap sectors={compareSectors} activeSectorId={compareActiveSectorId} onSelectSector={setCompareActiveSectorId} />
                  <div style={{ flex: 1, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                   <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#556677' }}>Setor de Precipitação</p>
+                   <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#778899' }}>Setor de Precipitação</p>
                    <SectorTabs sectors={compareSectors} activeSectorId={compareActiveSectorId} onSelect={setCompareActiveSectorId} />
                  </div>
                </div>

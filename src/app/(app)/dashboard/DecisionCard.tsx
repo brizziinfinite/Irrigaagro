@@ -54,7 +54,7 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
       ? 'rgba(239,68,68,0.2)'
       : 'rgba(34,197,94,0.2)'
 
-  const mainColor = noPivots ? '#556677' : needsIrrigation ? '#ef4444' : '#22c55e'
+  const mainColor = noPivots ? '#778899' : needsIrrigation ? '#ef4444' : '#22c55e'
   const Icon = needsIrrigation ? AlertCircle : CheckCircle2
 
   const textShadowGlow = needsIrrigation

@@ -432,13 +432,13 @@ export default function DiagnosticoSoloPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: done ? '#0093D018' : active ? '#0093D0' : 'rgba(255,255,255,0.06)',
                   border: `2px solid ${done ? '#0093D0' : active ? '#0093D0' : 'transparent'}`,
-                  color: done ? '#0093D0' : active ? '#fff' : '#556677',
+                  color: done ? '#0093D0' : active ? '#fff' : '#778899',
                   fontSize: 11, fontWeight: 700,
                   transition: 'all 0.2s',
                 }}>
                   {done ? <CheckCircle2 size={14} /> : s.id}
                 </div>
-                <span style={{ fontSize: 10, color: active ? '#e2e8f0' : '#556677', fontWeight: active ? 600 : 400, whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 10, color: active ? '#e2e8f0' : '#778899', fontWeight: active ? 600 : 400, whiteSpace: 'nowrap' }}>
                   {s.label}
                 </span>
               </div>
@@ -476,7 +476,7 @@ export default function DiagnosticoSoloPage() {
                 style={{
                   width: '100%', padding: '10px 36px 10px 12px',
                   background: '#0d1520', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 8, color: selectedPivotId ? '#e2e8f0' : '#556677',
+                  borderRadius: 8, color: selectedPivotId ? '#e2e8f0' : '#778899',
                   fontSize: 14, appearance: 'none', cursor: 'pointer',
                 }}
               >
@@ -485,7 +485,7 @@ export default function DiagnosticoSoloPage() {
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
-              <ChevronDown size={14} color="#556677" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <ChevronDown size={14} color="#778899" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             </div>
           </label>
 
@@ -510,7 +510,7 @@ export default function DiagnosticoSoloPage() {
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
-                <ChevronDown size={14} color="#556677" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                <ChevronDown size={14} color="#778899" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
               </div>
             </label>
           )}
@@ -607,15 +607,15 @@ export default function DiagnosticoSoloPage() {
                 <div style={{ fontSize: 32, fontWeight: 700, fontFamily: 'monospace', color: diagnosis.color }}>
                   {diagnosis.estimated_fc_percent}%
                 </div>
-                <div style={{ fontSize: 11, color: '#556677' }}>da CC estimada</div>
+                <div style={{ fontSize: 11, color: '#778899' }}>da CC estimada</div>
               </div>
             </div>
 
             {/* Barra visual */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 11, color: '#556677' }}>PM (0%)</span>
-                <span style={{ fontSize: 11, color: '#556677' }}>CC (100%)</span>
+                <span style={{ fontSize: 11, color: '#778899' }}>PM (0%)</span>
+                <span style={{ fontSize: 11, color: '#778899' }}>CC (100%)</span>
               </div>
               <div style={{ height: 10, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
                 <div style={{
@@ -665,7 +665,7 @@ export default function DiagnosticoSoloPage() {
                 const scoreColors: Record<number, string> = { 1: '#ef4444', 2: '#f97316', 3: '#38bdf8', 4: '#22c55e', 5: '#a78bfa' }
                 return (
                   <div key={depth} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 60, fontSize: 12, color: '#556677', fontWeight: 500 }}>{depth} cm</div>
+                    <div style={{ width: 60, fontSize: 12, color: '#778899', fontWeight: 500 }}>{depth} cm</div>
                     <div style={{
                       flex: 1, height: 6, borderRadius: 99,
                       background: 'rgba(255,255,255,0.06)', overflow: 'hidden',
@@ -673,13 +673,13 @@ export default function DiagnosticoSoloPage() {
                       <div style={{
                         height: '100%', borderRadius: 99,
                         width: `${(scoreVal / 5) * 100}%`,
-                        background: scoreColors[scoreVal] ?? '#556677',
+                        background: scoreColors[scoreVal] ?? '#778899',
                       }} />
                     </div>
-                    <div style={{ width: 24, textAlign: 'right', fontSize: 13, fontWeight: 700, color: scoreColors[scoreVal] ?? '#556677' }}>
+                    <div style={{ width: 24, textAlign: 'right', fontSize: 13, fontWeight: 700, color: scoreColors[scoreVal] ?? '#778899' }}>
                       {scoreVal}
                     </div>
-                    <div style={{ width: 40, fontSize: 11, color: '#556677' }}>({Math.round(weight * 100)}%)</div>
+                    <div style={{ width: 40, fontSize: 11, color: '#778899' }}>({Math.round(weight * 100)}%)</div>
                   </div>
                 )
               })}
@@ -838,7 +838,7 @@ export default function DiagnosticoSoloPage() {
               flex: 2, padding: '12px',
               borderRadius: 10, border: 'none',
               background: canProceed ? '#0093D0' : 'rgba(255,255,255,0.06)',
-              color: canProceed ? '#fff' : '#556677', fontSize: 14, fontWeight: 600,
+              color: canProceed ? '#fff' : '#778899', fontSize: 14, fontWeight: 600,
               cursor: canProceed ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
@@ -888,12 +888,12 @@ export default function DiagnosticoSoloPage() {
             overflow: 'hidden',
           }}>
             {loadingHistory && (
-              <div style={{ padding: 24, textAlign: 'center', color: '#556677' }}>
+              <div style={{ padding: 24, textAlign: 'center', color: '#778899' }}>
                 <Loader2 size={16} className="animate-spin" style={{ margin: '0 auto' }} />
               </div>
             )}
             {!loadingHistory && history.length === 0 && (
-              <div style={{ padding: 24, textAlign: 'center', color: '#556677', fontSize: 13 }}>
+              <div style={{ padding: 24, textAlign: 'center', color: '#778899', fontSize: 13 }}>
                 Nenhum diagnóstico registrado ainda.
               </div>
             )}
@@ -917,7 +917,7 @@ export default function DiagnosticoSoloPage() {
                     <div style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500 }}>
                       {(rec.pivots as unknown as { name: string })?.name ?? 'Pivô'}
                     </div>
-                    <div style={{ fontSize: 11, color: '#556677', marginTop: 2 }}>
+                    <div style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>
                       {date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                       {' · '}
                       {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
@@ -925,7 +925,7 @@ export default function DiagnosticoSoloPage() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <ResultBadge result={rec.result} size="sm" />
-                    <div style={{ fontSize: 11, color: '#556677', marginTop: 3 }}>
+                    <div style={{ fontSize: 11, color: '#778899', marginTop: 3 }}>
                       {rec.estimated_fc_percent}% da CC
                     </div>
                   </div>

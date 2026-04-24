@@ -333,7 +333,7 @@ export default function WhatsAppPage() {
         <div style={{
           textAlign: 'center', padding: '48px 24px',
           background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 12, color: '#556677',
+          borderRadius: 12, color: '#778899',
         }}>
           <MessageSquare size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
           <p style={{ margin: 0, fontSize: 14 }}>Nenhum contato cadastrado</p>
@@ -362,7 +362,7 @@ export default function WhatsAppPage() {
                     background: contact.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(85,102,119,0.2)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <User size={16} color={contact.is_active ? '#22c55e' : '#556677'} />
+                    <User size={16} color={contact.is_active ? '#22c55e' : '#778899'} />
                   </div>
 
                   {/* Info */}
@@ -373,7 +373,7 @@ export default function WhatsAppPage() {
                       </span>
                       {!contact.is_active && (
                         <span style={{
-                          fontSize: 10, background: 'rgba(85,102,119,0.2)', color: '#556677',
+                          fontSize: 10, background: 'rgba(85,102,119,0.2)', color: '#778899',
                           padding: '1px 6px', borderRadius: 10,
                         }}>inativo</span>
                       )}
@@ -429,14 +429,14 @@ export default function WhatsAppPage() {
                     padding: '12px 16px',
                   }}>
                     {loadingSubs ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#556677', fontSize: 13 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 13 }}>
                         <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Carregando…
                       </div>
                     ) : pivots.length === 0 ? (
-                      <p style={{ margin: 0, fontSize: 13, color: '#556677' }}>Nenhum pivô cadastrado.</p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#778899' }}>Nenhum pivô cadastrado.</p>
                     ) : (
                       <div>
-                        <p style={{ margin: '0 0 10px', fontSize: 12, color: '#556677', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <p style={{ margin: '0 0 10px', fontSize: 12, color: '#778899', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                           Configurar alertas por pivô
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -455,7 +455,7 @@ export default function WhatsAppPage() {
                                     {pivot.name}
                                   </span>
                                   {pivot.farms?.name && (
-                                    <span style={{ fontSize: 11, color: '#556677', marginLeft: 6 }}>
+                                    <span style={{ fontSize: 11, color: '#778899', marginLeft: 6 }}>
                                       {pivot.farms.name}
                                     </span>
                                   )}
@@ -480,7 +480,7 @@ export default function WhatsAppPage() {
                                         display: 'flex', alignItems: 'center', gap: 5,
                                         background: active ? `${color}22` : 'rgba(255,255,255,0.04)',
                                         border: `1px solid ${active ? `${color}44` : 'rgba(255,255,255,0.08)'}`,
-                                        color: active ? color : '#556677',
+                                        color: active ? color : '#778899',
                                         borderRadius: 6, padding: '4px 9px', fontSize: 11,
                                         fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
                                       }}
@@ -502,7 +502,7 @@ export default function WhatsAppPage() {
                                     title="Remover pivô"
                                     style={{
                                       background: 'none', border: 'none',
-                                      color: '#556677', cursor: 'pointer', padding: 4,
+                                      color: '#778899', cursor: 'pointer', padding: 4,
                                       display: 'flex', alignItems: 'center',
                                     }}
                                   >
@@ -577,7 +577,7 @@ export default function WhatsAppPage() {
                     style={{ ...inputStyle, marginTop: 0, flex: 1 }}
                   />
                 </div>
-                <span style={{ fontSize: 11, color: '#556677', marginTop: 4, display: 'block' }}>
+                <span style={{ fontSize: 11, color: '#778899', marginTop: 4, display: 'block' }}>
                   Número completo com DDD, sem espaços ou traços
                 </span>
               </label>

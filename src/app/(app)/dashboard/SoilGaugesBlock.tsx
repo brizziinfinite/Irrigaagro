@@ -73,13 +73,13 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
       {/* Header */}
       <span style={{
         fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-        letterSpacing: '0.09em', color: '#556677',
+        letterSpacing: '0.09em', color: '#778899',
       }}>
         Umidade do Solo
       </span>
 
       {activePivots.length === 0 ? (
-        <p style={{ fontSize: 12, color: '#556677', textAlign: 'center', padding: '20px 0' }}>
+        <p style={{ fontSize: 12, color: '#778899', textAlign: 'center', padding: '20px 0' }}>
           Nenhum pivô com safra ativa.
         </p>
       ) : (
@@ -93,7 +93,7 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
               const m = lastManagementByPivot[pivot.id]
               const pct = m?.field_capacity_percent ?? null
               const threshold = pivot.alert_threshold_percent ?? 70
-              const color = pct !== null ? gaugeColor(pct, threshold) : '#556677'
+              const color = pct !== null ? gaugeColor(pct, threshold) : '#778899'
 
               return (
                 <div key={pivot.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -102,7 +102,7 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
                   ) : (
                     <svg width="110" height="110" viewBox="0 0 110 110">
                       <circle cx="55" cy="55" r="45" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
-                      <text x="55" y="58" textAnchor="middle" fill="#556677" fontSize="14">—</text>
+                      <text x="55" y="58" textAnchor="middle" fill="#778899" fontSize="14">—</text>
                     </svg>
                   )}
                   <span style={{
@@ -132,7 +132,7 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
                 ].map(({ color, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
-                    <span style={{ fontSize: 10, color: '#556677' }}>{label}</span>
+                    <span style={{ fontSize: 10, color: '#778899' }}>{label}</span>
                   </div>
                 ))}
               </div>

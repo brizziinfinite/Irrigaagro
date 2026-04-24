@@ -66,7 +66,7 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
         <Info size={12} style={{ color: '#f59e0b' }} />
         <span style={{
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#556677',
+          letterSpacing: '0.06em', color: '#778899',
         }}>
           Alertas Inteligentes
         </span>
@@ -87,7 +87,7 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
       {alerts.length === 0 ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
           <CheckCircle2 size={14} style={{ color: '#22c55e', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: '#556677' }}>Nenhum alerta no momento.</span>
+          <span style={{ fontSize: 12, color: '#778899' }}>Nenhum alerta no momento.</span>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

@@ -203,10 +203,10 @@ function KpiCard({ label, value, unit, color = '#e2e8f0', icon: Icon, sub }: {
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px' }}>
       {Icon && <Icon size={14} style={{ color, marginBottom: 8 }} />}
       <p style={{ fontSize: 22, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-        {value} <span style={{ fontSize: 12, fontWeight: 400, color: '#556677' }}>{unit}</span>
+        {value} <span style={{ fontSize: 12, fontWeight: 400, color: '#778899' }}>{unit}</span>
       </p>
       <p style={{ fontSize: 11, color: '#8899aa', marginTop: 5 }}>{label}</p>
-      {sub && <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{sub}</p>}
+      {sub && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{sub}</p>}
     </div>
   )
 }
@@ -234,7 +234,7 @@ function StressGauge({ value }: { value: number }) {
         <div style={{ position: 'absolute', left: `${(refMax / 40) * 100}%`, top: 0, bottom: 0, width: 2, background: '#f59e0b', opacity: 0.6 }} />
         <div style={{ width: `${Math.min(100, (value / 40) * 100)}%`, height: '100%', background: color, borderRadius: 99 }} />
       </div>
-      <p style={{ fontSize: 9, color: '#556677', marginTop: 3 }}>Ref: máx. 10–12%</p>
+      <p style={{ fontSize: 9, color: '#778899', marginTop: 3 }}>Ref: máx. 10–12%</p>
     </div>
   )
 }
@@ -257,7 +257,7 @@ function GaugeCard({ title, value, unit, color, desc }: {
       <div style={{ marginTop: 22, height: 6, background: '#0d1520', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
         <div style={{ width: `${percent}%`, height: '100%', background: color, borderRadius: 99 }} />
       </div>
-      <p style={{ fontSize: 9, color: '#556677', marginTop: 6, lineHeight: 1.4 }}>{desc}</p>
+      <p style={{ fontSize: 9, color: '#778899', marginTop: 6, lineHeight: 1.4 }}>{desc}</p>
     </div>
   )
 }
@@ -298,7 +298,7 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
         {/* Header */}
         {['', 'ETc (mm)', 'Irrig. (mm)', 'Chuva (mm)'].map((h, i) => (
           <div key={i} style={{ padding: '8px 14px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
           </div>
         ))}
         {rows.map((r, i) => (
@@ -331,14 +331,14 @@ function StageTable({ stages }: { stages: StageStats[] }) {
       <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <Leaf size={13} style={{ color: '#0093D0' }} />
         <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Histórico por Fase Fenológica</span>
-        <span style={{ fontSize: 10, color: '#556677', marginLeft: 'auto' }}>como Irriger</span>
+        <span style={{ fontSize: 10, color: '#778899', marginLeft: 'auto' }}>como Irriger</span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#0d1520' }}>
               {['Fase', 'Dias', 'Irrigação (mm)', 'Precipitação (mm)', 'ETc (mm)', 'ETp (mm)', 'Stress (%)'].map(h => (
-                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -407,7 +407,7 @@ function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
       <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <Calendar size={13} style={{ color: '#0093D0' }} />
         <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Consumo Hídrico — Resumo Semanal</span>
-        <span style={{ fontSize: 10, color: '#556677', marginLeft: 'auto' }}>clique na semana para expandir detahles dia a dia</span>
+        <span style={{ fontSize: 10, color: '#778899', marginLeft: 'auto' }}>clique na semana para expandir detahles dia a dia</span>
       </div>
 
       {weeks.map((w, i) => {
@@ -424,7 +424,7 @@ function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
                     {w.weekNum}
                  </div>
                  <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                   Semana {w.weekNum} <span style={{ color: '#556677', fontWeight: 400, textTransform: 'none' }}>· {fmtDate(w.startDate)} – {fmtDate(w.endDate)}</span>
+                   Semana {w.weekNum} <span style={{ color: '#778899', fontWeight: 400, textTransform: 'none' }}>· {fmtDate(w.startDate)} – {fmtDate(w.endDate)}</span>
                  </span>
               </div>
               <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
@@ -432,7 +432,7 @@ function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
                  <span style={{ color: '#8899aa' }} title="ETc">ETc: <span style={{ color: '#06b6d4' }}>{fmtNum(w.etc)}</span></span>
                  <span style={{ color: '#8899aa' }} title="Precipitação">Chuva: <span style={{ color: '#38bdf8' }}>{fmtNum(w.rain)}</span></span>
                  <span style={{ color: '#8899aa' }} title="Irrigação">Irrig: <span style={{ color: '#0093D0', fontWeight: 700 }}>{fmtNum(w.irrig)}</span></span>
-                 <ChevronDown size={14} style={{ color: '#556677', transform: isExp ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                 <ChevronDown size={14} style={{ color: '#778899', transform: isExp ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
               </div>
             </div>
 
@@ -539,12 +539,12 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
         <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>ADc% (Água Disponível no Solo) ao Longo da Safra</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
           {[1,2,3,4].map(s => (
-            <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
+            <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#778899' }}>
               <div style={{ width: 10, height: 10, borderRadius: 2, background: stageColors[s]?.replace('0.06', '0.5') ?? '#333' }} />
               Fase {s}
             </span>
           ))}
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#556677' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#778899' }}>
             <div style={{ width: 2, height: 10, background: '#f59e0b', opacity: 0.6 }} />CAD
           </span>
         </div>
@@ -629,12 +629,12 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
 
           {/* Eixo Y */}
           {yTicks.map(({ v, y }) => (
-            <text key={v} x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#556677">{v}%</text>
+            <text key={v} x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#778899">{v}%</text>
           ))}
 
           {/* Eixo X */}
           {xTicks.map(({ i, label }) => (
-            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#556677">{label}</text>
+            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#778899">{label}</text>
           ))}
 
           <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
@@ -642,13 +642,13 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
         </svg>
       </div>
       <div style={{ padding: '8px 18px 10px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#778899' }}>
           <div style={{ width: 8, height: 12, background: 'rgba(0,147,208,0.5)', borderRadius: 1 }} /> Irrigação aplicada
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#778899' }}>
           <div style={{ width: 8, height: 12, background: 'rgb(56 189 248 / 0.4)', borderRadius: 1 }} /> Chuva
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#556677' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#778899' }}>
           <div style={{ width: 16, height: 3, background: '#0093D0', borderRadius: 99 }} /> ADc (%) Umidade Atual
         </span>
       </div>
@@ -698,10 +698,10 @@ function EnergyKpiCard({ label, value, unit, status, meta }: {
   return (
     <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '14px 16px' }}>
       <p style={{ fontSize: 20, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-        {value} <span style={{ fontSize: 11, fontWeight: 400, color: '#556677' }}>{unit}</span>
+        {value} <span style={{ fontSize: 11, fontWeight: 400, color: '#778899' }}>{unit}</span>
       </p>
       <p style={{ fontSize: 11, color: '#8899aa', marginTop: 5 }}>{label}</p>
-      {meta && <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{meta}</p>}
+      {meta && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{meta}</p>}
     </div>
   )
 }
@@ -738,13 +738,13 @@ function EnergyBarChart({ bills }: { bills: EnergyBill[] }) {
         <Bolt size={13} style={{ color: '#f59e0b' }} />
         <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Histórico de Energia — Reativa % e Custo/mm/ha</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 14 }}>
-          <span style={{ fontSize: 10, color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 10, height: 10, background: 'rgb(239 68 68 / 0.5)', borderRadius: 2 }} /> Reativa %
           </span>
-          <span style={{ fontSize: 10, color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 16, height: 3, background: '#0093D0', borderRadius: 99 }} /> R$/mm/ha
           </span>
-          <span style={{ fontSize: 10, color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 12, height: 2, background: '#f59e0b', borderRadius: 99, opacity: 0.6 }} /> Meta
           </span>
         </div>
@@ -801,14 +801,14 @@ function EnergyBarChart({ bills }: { bills: EnergyBill[] }) {
 
           {/* Eixo X */}
           {sorted.map((b, i) => (
-            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#556677">
+            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#778899">
               {monthLabel(b.reference_month)}
             </text>
           ))}
 
           {/* Eixo Y (reativa %) */}
           {[0, 2, 5, 10].map(v => (
-            <text key={v} x={PAD.left - 4} y={yBar(v) + 4} textAnchor="end" fontSize="8" fill="#556677">{v}%</text>
+            <text key={v} x={PAD.left - 4} y={yBar(v) + 4} textAnchor="end" fontSize="8" fill="#778899">{v}%</text>
           ))}
 
           <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
@@ -834,7 +834,7 @@ function EnergyTable({ bills }: { bills: EnergyBill[] }) {
           <thead>
             <tr style={{ background: '#0d1520' }}>
               {['Mês', 'kWh', 'Custo Total', 'Reativa %', 'HR %', 'Custo/mm/ha', 'Ponta (R$)', 'Status'].map(h => (
-                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -1060,7 +1060,7 @@ export default function RelatoriosPage() {
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '48px 24px', textAlign: 'center' }}>
         <Sprout size={32} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra cadastrada</h2>
-        <p style={{ fontSize: 13, color: '#556677' }}>Cadastre uma safra para gerar relatórios.</p>
+        <p style={{ fontSize: 13, color: '#778899' }}>Cadastre uma safra para gerar relatórios.</p>
       </div>
     )
   }
@@ -1105,7 +1105,7 @@ export default function RelatoriosPage() {
               </option>
             ))}
           </select>
-          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
+          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
         </div>
 
         {/* Resumo da safra selecionada */}
@@ -1117,11 +1117,11 @@ export default function RelatoriosPage() {
               </span>
             )}
             {selectedSeason.planting_date && (
-              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Calendar size={10} /> Plantio: {fmtDateLong(selectedSeason.planting_date)}
               </span>
             )}
-            <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
               <BarChart2 size={10} /> {kpis.totalDays} dias com registros
             </span>
           </div>
@@ -1130,7 +1130,7 @@ export default function RelatoriosPage() {
 
       {/* Loading de registros */}
       {loadingRecords && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#556677', fontSize: 13 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 13 }}>
           <Loader2 size={14} className="animate-spin" style={{ color: '#0093D0' }} />
           Carregando dados da safra...
         </div>
@@ -1139,9 +1139,9 @@ export default function RelatoriosPage() {
       {/* Sem dados */}
       {!loadingRecords && records.length === 0 && (
         <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
-          <BarChart2 size={28} style={{ color: '#556677', margin: '0 auto 12px' }} />
-          <p style={{ fontSize: 14, color: '#556677' }}>Nenhum registro de manejo diário para esta safra.</p>
-          <p style={{ fontSize: 12, color: '#556677', marginTop: 4 }}>Registre dados no Manejo Diário para gerar relatórios.</p>
+          <BarChart2 size={28} style={{ color: '#778899', margin: '0 auto 12px' }} />
+          <p style={{ fontSize: 14, color: '#778899' }}>Nenhum registro de manejo diário para esta safra.</p>
+          <p style={{ fontSize: 12, color: '#778899', marginTop: 4 }}>Registre dados no Manejo Diário para gerar relatórios.</p>
         </div>
       )}
 
@@ -1207,7 +1207,7 @@ export default function RelatoriosPage() {
                 },
               ].map(item => {
                 const v = item.value
-                const color = v === null ? '#556677' : item.good(v) ? '#22c55e' : '#f59e0b'
+                const color = v === null ? '#778899' : item.good(v) ? '#22c55e' : '#f59e0b'
                 return (
                   <div key={item.label} style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -1216,7 +1216,7 @@ export default function RelatoriosPage() {
                         {v !== null ? fmtNum(v, 0) + '%' : '—'}
                       </span>
                     </div>
-                    <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{item.desc}</p>
+                    <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{item.desc}</p>
                   </div>
                 )
               })}
@@ -1261,7 +1261,7 @@ export default function RelatoriosPage() {
                     <option key={p.id} value={p.id}>{p.name} — {p.farm_name}</option>
                   ))}
                 </select>
-                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
+                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
               </div>
             </div>
 
@@ -1296,11 +1296,11 @@ export default function RelatoriosPage() {
                 background: uploadFile ? 'rgba(0,147,208,0.05)' : 'transparent',
               }}
             >
-              <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#556677', margin: '0 auto 6px' }} />
-              <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : '#556677' }}>
+              <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#778899', margin: '0 auto 6px' }} />
+              <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : '#778899' }}>
                 {uploadFile ? uploadFile.name : 'Clique ou arraste o arquivo aqui'}
               </p>
-              {!uploadFile && <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>PDF, JPG ou PNG</p>}
+              {!uploadFile && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>PDF, JPG ou PNG</p>}
             </div>
             <input
               ref={fileInputRef}
@@ -1324,7 +1324,7 @@ export default function RelatoriosPage() {
                 padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
                 background: (!uploadFile || !selectedPivotId || uploading) ? '#0d1520' : '#0093D0',
                 border: '1px solid rgba(255,255,255,0.08)',
-                color: (!uploadFile || !selectedPivotId || uploading) ? '#556677' : '#fff',
+                color: (!uploadFile || !selectedPivotId || uploading) ? '#778899' : '#fff',
                 cursor: (!uploadFile || !selectedPivotId || uploading) ? 'not-allowed' : 'pointer',
               }}
             >
@@ -1349,7 +1349,7 @@ export default function RelatoriosPage() {
           const costStatus = costMmHa === null ? 'unknown' : costMmHa <= 1.5 ? 'green' : costMmHa <= 2 ? 'yellow' : 'red'
           return (
             <div style={{ marginTop: 14 }}>
-              <p style={{ fontSize: 10, color: '#556677', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <p style={{ fontSize: 10, color: '#778899', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Último mês: {latest.reference_month}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
@@ -1409,7 +1409,7 @@ export default function RelatoriosPage() {
 
         {/* Loading */}
         {loadingBills && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#556677', fontSize: 12, marginTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 12, marginTop: 12 }}>
             <Loader2 size={13} className="animate-spin" style={{ color: '#0093D0' }} />
             Carregando contas...
           </div>
@@ -1418,9 +1418,9 @@ export default function RelatoriosPage() {
         {/* Sem dados */}
         {!loadingBills && energyBills.length === 0 && (
           <div style={{ marginTop: 12, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
-            <Bolt size={24} style={{ color: '#556677', margin: '0 auto 10px' }} />
-            <p style={{ fontSize: 13, color: '#556677' }}>Nenhuma conta de energia para este pivô.</p>
-            <p style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>Faça upload de uma conta acima para começar.</p>
+            <Bolt size={24} style={{ color: '#778899', margin: '0 auto 10px' }} />
+            <p style={{ fontSize: 13, color: '#778899' }}>Nenhuma conta de energia para este pivô.</p>
+            <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>Faça upload de uma conta acima para começar.</p>
           </div>
         )}
       </div>
@@ -1432,7 +1432,7 @@ function SectionTitle({ icon: Icon, text }: { icon: typeof BarChart2; text: stri
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <Icon size={13} style={{ color: '#0093D0' }} />
-      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>{text}</span>
+      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>{text}</span>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
     </div>
   )

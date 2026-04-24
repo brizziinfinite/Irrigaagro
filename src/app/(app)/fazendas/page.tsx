@@ -59,9 +59,9 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
           </h2>
           <button
             onClick={onClose}
-            style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#556677', cursor: 'pointer', transition: 'all 0.2s' }}
+            style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer', transition: 'all 0.2s' }}
             onMouseEnter={e => { e.currentTarget.style.color = '#e2e8f0'; e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#556677'; e.currentTarget.style.background = 'transparent' }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#778899'; e.currentTarget.style.background = 'transparent' }}
           >
             <X size={16} />
           </button>
@@ -258,7 +258,7 @@ export default function FazendasPage() {
             <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>
               Nenhuma fazenda cadastrada
             </h3>
-            <p style={{ fontSize: 14, color: '#556677', marginBottom: 24 }}>
+            <p style={{ fontSize: 14, color: '#778899', marginBottom: 24 }}>
               Cadastre sua primeira fazenda para começar a gerenciar a irrigação.
             </p>
             <button
@@ -311,7 +311,7 @@ export default function FazendasPage() {
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', letterSpacing: '0.01em' }}>{farm.name}</p>
-                  <p style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
+                  <p style={{ fontSize: 12, color: '#778899', marginTop: 2 }}>
                     {farm.altitude ? `Altitude: ${farm.altitude} m` : 'Altitude não informada'}
                     {farm.area_m2 ? ` · ${(farm.area_m2 / 10000).toFixed(1)} ha` : ''}
                   </p>

@@ -36,12 +36,12 @@ function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
           onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
         />
         {unit && (
-          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#556677', pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#778899', pointerEvents: 'none' }}>
             {unit}
           </span>
         )}
       </div>
-      {hint && <p style={{ fontSize: 10, color: '#556677', marginTop: 3 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 10, color: '#778899', marginTop: 3 }}>{hint}</p>}
     </div>
   )
 }
@@ -153,7 +153,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>{isEdit ? 'Editar Cultura' : 'Nova Cultura'}</h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#556677', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}>
             <X size={16} />
           </button>
         </div>
@@ -211,7 +211,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
                       }}
                     >
                       <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{preset.name}</span>
-                      <span style={{ fontSize: 11, color: '#556677' }}>
+                      <span style={{ fontSize: 11, color: '#778899' }}>
                         Kc {preset.kc_ini}/{preset.kc_mid}/{preset.kc_final} · {preset.stage1_days + preset.stage2_days + preset.stage3_days + preset.stage4_days}d
                       </span>
                     </button>
@@ -224,7 +224,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
           {/* Crescimento de Raiz */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>
                 Crescimento de Raiz
               </span>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
@@ -253,7 +253,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
           {/* 4 Fases */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>
                 Fases de Desenvolvimento — FAO-56
               </span>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
@@ -276,7 +276,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
                       {i + 1}
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>{stage.label}</span>
-                    <span style={{ fontSize: 10, color: '#556677', marginLeft: 4 }}>Kc {stage.hint}</span>
+                    <span style={{ fontSize: 10, color: '#778899', marginLeft: 4 }}>Kc {stage.hint}</span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: stage.kcLabel ? '1fr 1fr 1fr' : '1fr 1fr', gap: 10 }}>
@@ -351,11 +351,11 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{crop.name}</p>
             {!isCustom && (
-              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 3, background: '#0d1520', color: '#556677', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 3, background: '#0d1520', color: '#778899', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <Lock size={9} /> padrão FAO-56
               </span>
             )}
-            {totalDays ? <span style={{ fontSize: 11, color: '#556677' }}>{totalDays} dias</span> : null}
+            {totalDays ? <span style={{ fontSize: 11, color: '#778899' }}>{totalDays} dias</span> : null}
           </div>
           {/* Kc resumo */}
           <div style={{ display: 'flex', gap: 6 }}>
@@ -365,7 +365,7 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
               { label: 'Kc final', value: crop.kc_final },
             ].filter(k => k.value !== null).map(k => (
               <div key={k.label} style={{ background: '#0d1520', borderRadius: 7, padding: '5px 10px', textAlign: 'center' }}>
-                <span style={{ fontSize: 9, color: '#556677', display: 'block' }}>{k.label}</span>
+                <span style={{ fontSize: 9, color: '#778899', display: 'block' }}>{k.label}</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{k.value}</span>
               </div>
             ))}
@@ -418,7 +418,7 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
                 { label: 'Máx. efetivo', value: '40 cm' },
               ].map(item => (
                 <div key={item.label} style={{ background: '#0d1520', borderRadius: 8, padding: '6px 12px' }}>
-                  <span style={{ fontSize: 9, color: '#556677', display: 'block', marginBottom: 2 }}>{item.label}</span>
+                  <span style={{ fontSize: 9, color: '#778899', display: 'block', marginBottom: 2 }}>{item.label}</span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>{item.value}</span>
                 </div>
               ))}
@@ -428,16 +428,16 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
             {/* Header */}
             <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', minWidth: 320, background: '#0d1520', padding: '8px 14px', gap: 8 }}>
               {['Fase', 'Descrição', 'Dias', 'Fator f', 'Kc'].map(h => (
-                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
               ))}
             </div>
             {stageRows.map((row, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', minWidth: 320, padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: '#0093D0' }}>Fase {i + 1}</span>
-                <span style={{ fontSize: 12, color: '#8899aa' }}>{['Inicial', 'Desenvolvimento', 'Médio', 'Final'][i]} <span style={{ color: '#556677', fontSize: 10 }}>{row.hint ? `(${row.hint})` : ''}</span></span>
+                <span style={{ fontSize: 12, color: '#8899aa' }}>{['Inicial', 'Desenvolvimento', 'Médio', 'Final'][i]} <span style={{ color: '#778899', fontSize: 10 }}>{row.hint ? `(${row.hint})` : ''}</span></span>
                 <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
                 <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.f ?? '—'}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: row.kc ? '#0093D0' : '#556677', fontFamily: 'var(--font-mono)' }}>{row.kc ?? row.kcLabel}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: row.kc ? '#0093D0' : '#778899', fontFamily: 'var(--font-mono)' }}>{row.kc ?? row.kcLabel}</span>
               </div>
             ))}
           </div>
@@ -548,7 +548,7 @@ export default function CulturasPage() {
             {customCrops.length > 0 && (
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>Minhas Culturas</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>Minhas Culturas</span>
                   <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
                 </div>
                 <div className="flex flex-col gap-3">
@@ -566,7 +566,7 @@ export default function CulturasPage() {
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>Culturas Padrão FAO-56</span>
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>Culturas Padrão FAO-56</span>
                 <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
               </div>
               <div className="flex flex-col gap-3">

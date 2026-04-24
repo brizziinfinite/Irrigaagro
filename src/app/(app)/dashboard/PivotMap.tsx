@@ -34,7 +34,7 @@ const STATUS_COLORS: Record<IrrigationStatus, { fill: string; stroke: string; la
   verde:     { fill: '#22c55e', stroke: '#16a34a', label: 'Confortável' },
   amarelo:   { fill: '#f59e0b', stroke: '#d97706', label: 'Atenção' },
   vermelho:  { fill: '#ef4444', stroke: '#dc2626', label: 'Crítico' },
-  sem_safra: { fill: '#556677', stroke: 'rgba(255,255,255,0.06)', label: 'Sem safra' },
+  sem_safra: { fill: '#778899', stroke: 'rgba(255,255,255,0.06)', label: 'Sem safra' },
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -156,14 +156,14 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
               </div>
               <span style="font-size:9px;font-weight:700;color:${col.fill};">${col.label}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:10px;color:#445566;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:10px;color:#667788;">
               <span>ETo <b style="color:#8899aa;">${m?.eto_mm != null ? m.eto_mm.toFixed(1) : '—'}</b></span>
               <span>ETc <b style="color:#8899aa;">${m?.etc_mm != null ? m.etc_mm.toFixed(1) : '—'}</b></span>
               <span>🌧 <b style="color:#8899aa;">${m?.rainfall_mm != null ? m.rainfall_mm.toFixed(1) : '—'}</b></span>
             </div>
             <div>
               <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-                <span style="font-size:9px;color:#445566;">% Campo</span>
+                <span style="font-size:9px;color:#667788;">% Campo</span>
                 <span style="font-size:10px;font-weight:700;color:${barColor};">${pct !== null ? pct.toFixed(0) + '%' : '—'}</span>
               </div>
               <div style="height:3px;background:#0d1520;border-radius:99px;overflow:hidden;">
@@ -264,7 +264,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
     return (
       <div style={{
         background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
-        padding: '20px 24px', color: '#556677', fontSize: 13, textAlign: 'center',
+        padding: '20px 24px', color: '#778899', fontSize: 13, textAlign: 'center',
       }}>
         Nenhum pivô com coordenadas cadastradas.{' '}
         <a href="/pivos" style={{ color: '#0093D0', textDecoration: 'none' }}>
@@ -291,7 +291,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
       }}>
         <span style={{
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.08em', color: '#556677',
+          letterSpacing: '0.08em', color: '#778899',
         }}>
           Mapa dos Pivôs
         </span>
@@ -300,7 +300,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 4px #22c55e' }} />
-          <span style={{ fontSize: 10, color: '#556677' }}>{pivotsWithCoords.length} pivô{pivotsWithCoords.length !== 1 ? 's' : ''} no mapa</span>
+          <span style={{ fontSize: 10, color: '#778899' }}>{pivotsWithCoords.length} pivô{pivotsWithCoords.length !== 1 ? 's' : ''} no mapa</span>
         </div>
       </div>
       <div style={{ position: 'relative', overflow: 'hidden' }}>

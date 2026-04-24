@@ -106,10 +106,10 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
   const colors: Record<number, string> = {
     1: '#ef4444', 2: '#f97316', 3: '#38bdf8', 4: '#22c55e', 5: '#a78bfa',
   }
-  const color = colors[score] ?? '#556677'
+  const color = colors[score] ?? '#778899'
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 10, color: '#556677', width: 48, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 10, color: '#778899', width: 48, flexShrink: 0 }}>{label}</span>
       <div style={{ flex: 1, height: 5, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${(score / 5) * 100}%`, background: color, borderRadius: 99 }} />
       </div>
@@ -344,7 +344,7 @@ export default function DiagnosticoHistoricoPage() {
           style={{
             width: '100%', padding: '10px 36px 10px 12px',
             background: '#0f1923', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 8, color: selectedPivotId ? '#e2e8f0' : '#556677',
+            borderRadius: 8, color: selectedPivotId ? '#e2e8f0' : '#778899',
             fontSize: 14, appearance: 'none', cursor: 'pointer',
           }}
         >
@@ -353,11 +353,11 @@ export default function DiagnosticoHistoricoPage() {
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
-        <ChevronDown size={14} color="#556677" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+        <ChevronDown size={14} color="#778899" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
       </div>
 
       {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 48, color: '#556677' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 48, color: '#778899' }}>
           <Loader2 size={22} className="animate-spin" />
         </div>
       )}
@@ -366,7 +366,7 @@ export default function DiagnosticoHistoricoPage() {
         <div style={{
           padding: 32, textAlign: 'center',
           background: '#0f1923', borderRadius: 12,
-          border: '1px solid rgba(255,255,255,0.06)', color: '#556677', fontSize: 13,
+          border: '1px solid rgba(255,255,255,0.06)', color: '#778899', fontSize: 13,
         }}>
           <Droplets size={28} style={{ margin: '0 auto 10px', opacity: 0.3 }} />
           Nenhum diagnóstico registrado nos últimos 90 dias para este pivô.
@@ -383,7 +383,7 @@ export default function DiagnosticoHistoricoPage() {
             }}>
               {/* Último diagnóstico */}
               <div style={{ background: '#0f1923', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, color: '#556677', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ fontSize: 11, color: '#778899', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <Clock size={11} /> ÚLTIMO DIAGNÓSTICO
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'monospace', color: RESULT_META[kpis.last.result].color }}>
@@ -392,20 +392,20 @@ export default function DiagnosticoHistoricoPage() {
                 <div style={{ marginTop: 4 }}>
                   <ResultBadge result={kpis.last.result} size="sm" />
                 </div>
-                <div style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>
                   {fmtDateTime(kpis.last.diagnosed_at)}
                 </div>
               </div>
 
               {/* Total diagnósticos */}
               <div style={{ background: '#0f1923', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, color: '#556677', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ fontSize: 11, color: '#778899', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <History size={11} /> TOTAL (90 DIAS)
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'monospace', color: '#0093D0' }}>
                   {kpis.total}
                 </div>
-                <div style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>
                   {Object.entries(kpis.byResult).map(([r, n]) => (
                     <span key={r} style={{ marginRight: 6 }}>
                       {RESULT_META[r as DiagnosisResult]?.icon} {n}
@@ -416,7 +416,7 @@ export default function DiagnosticoHistoricoPage() {
 
               {/* Divergência média */}
               <div style={{ background: '#0f1923', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, color: '#556677', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ fontSize: 11, color: '#778899', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <AlertTriangle size={11} /> DIVERGÊNCIA MÉDIA
                 </div>
                 {kpis.avgDiff != null ? (
@@ -427,26 +427,26 @@ export default function DiagnosticoHistoricoPage() {
                     }}>
                       {kpis.avgDiff.toFixed(0)}pp
                     </div>
-                    <div style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>
+                    <div style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>
                       {kpis.avgDiff > 20 ? 'Alta — considere calibrar o modelo'
                         : kpis.avgDiff > 10 ? 'Moderada — monitorar'
                         : 'Baixa — modelo alinhado'}
                     </div>
                   </>
                 ) : (
-                  <div style={{ fontSize: 13, color: '#556677', marginTop: 8 }}>Sem balanço p/ comparar</div>
+                  <div style={{ fontSize: 13, color: '#778899', marginTop: 8 }}>Sem balanço p/ comparar</div>
                 )}
               </div>
 
               {/* Cobertura de fotos */}
               <div style={{ background: '#0f1923', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, color: '#556677', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ fontSize: 11, color: '#778899', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <Camera size={11} /> FOTOS
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'monospace', color: '#a78bfa' }}>
                   {records.filter(r => r.photo_url).length}/{kpis.total}
                 </div>
-                <div style={{ fontSize: 11, color: '#556677', marginTop: 4 }}>diagnósticos com foto</div>
+                <div style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>diagnósticos com foto</div>
               </div>
             </div>
           )}
@@ -461,7 +461,7 @@ export default function DiagnosticoHistoricoPage() {
               <h2 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginBottom: 4, paddingLeft: 4 }}>
                 Evolução da Umidade do Solo
               </h2>
-              <p style={{ fontSize: 12, color: '#556677', marginBottom: 16, paddingLeft: 4 }}>
+              <p style={{ fontSize: 12, color: '#778899', marginBottom: 16, paddingLeft: 4 }}>
                 Linha: balanço hídrico calculado · Pontos: diagnóstico manual
               </p>
               <ResponsiveContainer width="100%" height={240}>
@@ -469,14 +469,14 @@ export default function DiagnosticoHistoricoPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis
                     dataKey="label"
-                    tick={{ fill: '#556677', fontSize: 10 }}
+                    tick={{ fill: '#778899', fontSize: 10 }}
                     tickLine={false}
                     axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
                     interval="preserveStartEnd"
                   />
                   <YAxis
                     domain={[0, 105]}
-                    tick={{ fill: '#556677', fontSize: 10 }}
+                    tick={{ fill: '#778899', fontSize: 10 }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={v => `${v}%`}
@@ -573,15 +573,15 @@ export default function DiagnosticoHistoricoPage() {
                           alignItems: 'center',
                         }}>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Diagnóstico</div>
+                            <div style={{ fontSize: 10, color: '#778899', marginBottom: 2 }}>Diagnóstico</div>
                             <div style={{ fontSize: 15, fontWeight: 700, color: '#22c55e' }}>{rec.estimated_fc_percent}%</div>
                           </div>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Balanço</div>
+                            <div style={{ fontSize: 10, color: '#778899', marginBottom: 2 }}>Balanço</div>
                             <div style={{ fontSize: 15, fontWeight: 700, color: '#0093D0' }}>{matchingBal.field_capacity_percent.toFixed(0)}%</div>
                           </div>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 10, color: '#556677', marginBottom: 2 }}>Diferença</div>
+                            <div style={{ fontSize: 10, color: '#778899', marginBottom: 2 }}>Diferença</div>
                             <DivBadge diff={diff} />
                           </div>
                           {/* Já calibrado nessa sessão */}
