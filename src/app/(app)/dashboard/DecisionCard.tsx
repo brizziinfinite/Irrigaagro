@@ -28,12 +28,11 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
   for (const pivot of pivots) {
     if (!activePivotIds.has(pivot.id)) continue
     const m = lastManagementByPivot[pivot.id]
-    const threshold = pivot.alert_threshold_percent ?? 70
-    const warningPct = (threshold + (pivot.irrigation_target_percent ?? threshold * 1.15)) / 2
     const pct = m?.field_capacity_percent ?? null
     if (pct === null) { ok++; continue }
-    if (pct < threshold) { criticos++; criticoNames.push(pivot.name) }
-    else if (pct < warningPct) { atencao++; atencaoNames.push(pivot.name) }
+    // Paleta unificada: <60% = crítico | 60–75% = atenção | ≥75% = ok
+    if (pct < 60) { criticos++; criticoNames.push(pivot.name) }
+    else if (pct < 75) { atencao++; atencaoNames.push(pivot.name) }
     else ok++
   }
 

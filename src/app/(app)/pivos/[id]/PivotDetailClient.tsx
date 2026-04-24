@@ -24,18 +24,17 @@ interface Props {
 type PivotIrrigationStatus = 'azul' | 'verde' | 'amarelo' | 'vermelho'
 
 const PIVOT_STATUS_CONFIG: Record<PivotIrrigationStatus, { label: string; color: string; bg: string; border: string }> = {
-  azul:     { label: 'Irrigando',     color: '#06b6d4', bg: 'rgb(6 182 212 / 0.12)',   border: 'rgb(6 182 212 / 0.25)'   },
-  verde:    { label: 'OK',            color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',    border: 'rgb(34 197 94 / 0.25)'   },
-  amarelo:  { label: 'Atenção',       color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',   border: 'rgb(245 158 11 / 0.25)'  },
-  vermelho: { label: 'Irrigar Agora', color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',    border: 'rgb(239 68 68 / 0.25)'   },
+  azul:     { label: 'Irrigando',   color: '#0093D0', bg: 'rgb(0 147 208 / 0.12)',   border: 'rgb(0 147 208 / 0.25)'  },
+  verde:    { label: 'Confortável', color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',   border: 'rgb(34 197 94 / 0.25)'  },
+  amarelo:  { label: 'Atenção',     color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',  border: 'rgb(245 158 11 / 0.25)' },
+  vermelho: { label: 'Crítico',     color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',   border: 'rgb(239 68 68 / 0.25)'  },
 }
 
-function resolvePivotStatus(adcMm: number, cadMm: number, ctaMm: number, threshold: number | null): PivotIrrigationStatus {
+function resolvePivotStatus(adcMm: number, _cadMm: number, ctaMm: number, _threshold: number | null): PivotIrrigationStatus {
+  // Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
   const pct = ctaMm > 0 ? (adcMm / ctaMm) * 100 : 100
-  const th = threshold ?? 70
-  const warningPct = th * 1.15
-  if (pct >= warningPct) return 'verde'
-  if (pct >= th) return 'amarelo'
+  if (pct >= 75) return 'verde'
+  if (pct >= 60) return 'amarelo'
   return 'vermelho'
 }
 

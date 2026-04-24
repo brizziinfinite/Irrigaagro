@@ -41,10 +41,10 @@ import WaterBalanceChart from './WaterBalanceChart'
 type IrrigationStatus = 'azul' | 'verde' | 'amarelo' | 'vermelho'
 
 const STATUS_CONFIG: Record<IrrigationStatus, { label: string; color: string; bg: string; border: string; icon: typeof CheckCircle2; desc: string }> = {
-  azul:     { label: 'Irrigando',     color: '#06b6d4', bg: 'rgb(6 182 212 / 0.12)',   border: 'rgb(6 182 212 / 0.25)',   icon: Droplets,      desc: 'Irrigação em andamento' },
-  verde:    { label: 'OK',            color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',    border: 'rgb(34 197 94 / 0.25)',   icon: CheckCircle2,  desc: 'Sem necessidade de irrigação' },
-  amarelo:  { label: 'Atenção',       color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',   border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle, desc: 'Irrigação recomendada em breve' },
-  vermelho: { label: 'Irrigar Agora', color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',    border: 'rgb(239 68 68 / 0.25)',  icon: AlertCircle,   desc: 'Solo abaixo do nível crítico' },
+  azul:     { label: 'Irrigando',    color: '#0093D0', bg: 'rgb(0 147 208 / 0.12)',   border: 'rgb(0 147 208 / 0.25)',  icon: Droplets,      desc: 'Irrigação em andamento' },
+  verde:    { label: 'Confortável',  color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',   border: 'rgb(34 197 94 / 0.25)',  icon: CheckCircle2,  desc: 'Solo bem abastecido — ≥75%' },
+  amarelo:  { label: 'Atenção',      color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',  border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle, desc: 'Irrigar nos próximos 2 dias — 60–75%' },
+  vermelho: { label: 'Crítico',      color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',   border: 'rgb(239 68 68 / 0.25)', icon: AlertCircle,   desc: 'Irrigar hoje — solo abaixo de 60%' },
 }
 
 // ─── Helpers ─────────────────────────────────────────────────

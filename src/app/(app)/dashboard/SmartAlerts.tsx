@@ -32,17 +32,16 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
   for (const pivot of pivots) {
     if (!activePivotIds.has(pivot.id)) continue
     const m = lastManagementByPivot[pivot.id]
-    const threshold = pivot.alert_threshold_percent ?? 70
     const pct = m?.field_capacity_percent ?? null
     const diag = diagnosticsByPivot[pivot.id]
 
-    const warningPct = threshold * 1.15
-    if (pct !== null && pct < threshold) {
+    // Paleta unificada: <60% = urgente | 60–75% = aviso | ≥75% = info
+    if (pct !== null && pct < 60) {
       alerts.push({ tipo: 'urgente', msg: `${pivot.name} — solo a ${pct.toFixed(0)}% — irrigar imediatamente`, pivotId: pivot.id })
-    } else if (pct !== null && pct < warningPct) {
-      alerts.push({ tipo: 'aviso', msg: `${pivot.name} — solo a ${pct.toFixed(0)}% — atenção para irrigação`, pivotId: pivot.id })
+    } else if (pct !== null && pct < 75) {
+      alerts.push({ tipo: 'aviso', msg: `${pivot.name} — solo a ${pct.toFixed(0)}% — irrigar nos próximos 2 dias`, pivotId: pivot.id })
     } else if (pct !== null) {
-      alerts.push({ tipo: 'info', msg: `${pivot.name} — solo a ${pct.toFixed(0)}% — sem necessidade de irrigação`, pivotId: pivot.id })
+      alerts.push({ tipo: 'info', msg: `${pivot.name} — solo a ${pct.toFixed(0)}% — confortável`, pivotId: pivot.id })
     }
 
     if (diag?.alerts?.length > 0) {

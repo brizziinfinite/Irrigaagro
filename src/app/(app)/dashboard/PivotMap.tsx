@@ -30,10 +30,10 @@ interface PivotMapProps {
 // ─── Status colors ────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<IrrigationStatus, { fill: string; stroke: string; label: string }> = {
-  azul:      { fill: '#06b6d4', stroke: '#0891b2', label: 'Irrigando' },
-  verde:     { fill: '#22c55e', stroke: '#16a34a', label: 'OK' },
+  azul:      { fill: '#0093D0', stroke: '#0077aa', label: 'Irrigando' },
+  verde:     { fill: '#22c55e', stroke: '#16a34a', label: 'Confortável' },
   amarelo:   { fill: '#f59e0b', stroke: '#d97706', label: 'Atenção' },
-  vermelho:  { fill: '#ef4444', stroke: '#dc2626', label: 'Irrigar Agora' },
+  vermelho:  { fill: '#ef4444', stroke: '#dc2626', label: 'Crítico' },
   sem_safra: { fill: '#556677', stroke: 'rgba(255,255,255,0.06)', label: 'Sem safra' },
 }
 

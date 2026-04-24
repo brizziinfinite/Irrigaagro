@@ -363,20 +363,19 @@ export function getIrrigationStatus(
 ): IrrigationStatus {
   if (isIrrigating) return 'azul'
 
-  // Se o pivô tem threshold configurado (ex: 70%), usa ele como gatilho
-  // Zona amarela: threshold × 1,15 (spec seção 16)
-  if (alertThresholdPct != null && cta > 0) {
-    const thresholdMm = (alertThresholdPct / 100) * cta
-    const warningMm = thresholdMm * 1.15  // ×1,15 conforme spec seção 16
-    if (adc >= warningMm) return 'verde'
-    if (adc >= thresholdMm) return 'amarelo'
+  // Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
+  // Independe do threshold configurado — threshold é só o gatilho de alarme,
+  // as faixas de cor são fixas para consistência visual em todo o sistema.
+  if (cta > 0) {
+    const pct = (adc / cta) * 100
+    if (pct >= 75) return 'verde'
+    if (pct >= 60) return 'amarelo'
     return 'vermelho'
   }
 
-  // Fallback FAO-56: limiar = CAD, zona amarela = CAD até CAD×1,15
-  const warningMm = cad * 1.15
-  if (adc >= warningMm) return 'verde'
-  if (adc >= cad) return 'amarelo'
+  // Fallback sem CTA: usa CAD como referência
+  if (adc >= cad * 0.75) return 'verde'
+  if (adc >= cad * 0.60) return 'amarelo'
   return 'vermelho'
 }
 
