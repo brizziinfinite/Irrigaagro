@@ -81,7 +81,7 @@ export function HistoryBlock({
   // Cor do status do pivô
   const pct = critical?.pct ?? null
   // Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
-  const statusColor = pct == null ? '#556677'
+  const statusColor = pct == null ? '#778899'
     : pct >= 75 ? '#22c55e'
     : pct >= 60 ? '#f59e0b'
     : '#ef4444'
@@ -113,7 +113,7 @@ export function HistoryBlock({
           }}>
             {pivotName}
           </span>
-          <span style={{ fontSize: 11, color: '#445566', fontWeight: 500 }}>
+          <span style={{ fontSize: 11, color: '#667788', fontWeight: 500 }}>
             · últimos {chartData.length || 0} dias
           </span>
         </div>
@@ -135,13 +135,13 @@ export function HistoryBlock({
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: '#556677', fontSize: 10 }}
+              tick={{ fill: '#778899', fontSize: 10 }}
               axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
               tickLine={false}
             />
             <YAxis
               yAxisId="mm"
-              tick={{ fill: '#556677', fontSize: 10 }}
+              tick={{ fill: '#778899', fontSize: 10 }}
               axisLine={false}
               tickLine={false}
             />
@@ -149,7 +149,7 @@ export function HistoryBlock({
               yAxisId="pct"
               orientation="right"
               domain={[0, 110]}
-              tick={{ fill: '#556677', fontSize: 10 }}
+              tick={{ fill: '#778899', fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) => `${v}%`}
@@ -213,7 +213,7 @@ export function HistoryBlock({
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             height: 240, marginTop: -240, position: 'relative',
-            color: '#334455', fontSize: 13,
+            color: '#778899', fontSize: 13,
           }}>
             Aguardando registros de manejo.
           </div>
@@ -229,7 +229,7 @@ export function HistoryBlock({
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, boxShadow: hasData ? `0 0 6px ${color}` : 'none', opacity: hasData ? 1 : 0.4 }} />
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#556677' }}>{label}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: '#778899' }}>{label}</span>
           </div>
         ))}
       </div>

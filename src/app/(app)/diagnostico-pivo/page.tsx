@@ -122,7 +122,7 @@ function SummaryCard({
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>{eyebrow}</p>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>{eyebrow}</p>
           <p style={{ fontSize: 13, fontWeight: 600, color: '#8899aa', marginTop: 4 }}>{title}</p>
         </div>
         <div style={{
@@ -193,11 +193,11 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
         </div>
         {avg !== null && (
           <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#556677' }}>Diferença média</p>
+            <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#778899' }}>Diferença média</p>
             <p style={{ fontSize: 22, fontWeight: 800, color: avg >= 0 ? '#22c55e' : '#ef4444', marginTop: 4 }}>
               {avg >= 0 ? '+' : ''}{avg.toFixed(2)} mm
             </p>
-            <p style={{ fontSize: 11, color: '#556677', marginTop: 2 }}>{calibRows.length} dias com dados Plugfield</p>
+            <p style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>{calibRows.length} dias com dados Plugfield</p>
           </div>
         )}
       </div>
@@ -216,7 +216,7 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 {['Data', 'Rs fonte', 'ETo FAO-56 (nosso)', 'ETo Plugfield', 'Diferença (mm)', 'Diferença (%)'].map(h => (
-                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#556677', whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#778899', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -236,7 +236,7 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
                       ) : row.rs_source === 'plugfield_fallback' ? (
                         <span style={{ color: '#8899aa' }}>Plugfield</span>
                       ) : (
-                        <span style={{ color: '#556677' }}>{row.rs_source ?? '—'}</span>
+                        <span style={{ color: '#778899' }}>{row.rs_source ?? '—'}</span>
                       )}
                     </td>
                     <td style={{ padding: '8px 12px', color: '#e2e8f0', fontVariantNumeric: 'tabular-nums' }}>
@@ -485,7 +485,7 @@ export default function PivotDiagnosticsPage() {
           </div>
         </div>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Fazenda</p>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Fazenda</p>
           <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginTop: 6 }}>{selectedSummary?.farmName ?? '—'}</p>
         </div>
         {statusTone ? <StatusPill label={statusTone.label} tone={statusTone} /> : null}
@@ -595,14 +595,14 @@ export default function PivotDiagnosticsPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
                 <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Status da automação</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Status da automação</p>
                   <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.automationStatus}</p>
                   <p style={{ fontSize: 13, lineHeight: 1.6, color: '#8899aa', marginTop: 8 }}>
                     {diagnostic.hasManagementToday ? 'O pivô já possui manejo salvo para hoje.' : diagnostic.automationReason ?? 'Sem motivo adicional registrado.'}
                   </p>
                 </div>
                 <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Ação sugerida</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Ação sugerida</p>
                   <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.suggestedAction}</p>
                   <p style={{ fontSize: 13, lineHeight: 1.6, color: '#8899aa', marginTop: 8 }}>
                     {diagnostic.automationReason ?? 'O pivô tem contexto suficiente para seguir com a operação.'}
@@ -621,12 +621,12 @@ export default function PivotDiagnosticsPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Pivô</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Pivô</p>
                   <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.pivot.name}</p>
                   <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>{diagnostic.farm.name}</p>
                 </div>
                 <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Coordenadas</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Coordenadas</p>
                   <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>
                     {diagnostic.pivot.latitude != null && diagnostic.pivot.longitude != null
                       ? `${formatNumber(diagnostic.pivot.latitude, 6)}, ${formatNumber(diagnostic.pivot.longitude, 6)}`
@@ -637,14 +637,14 @@ export default function PivotDiagnosticsPage() {
                   </p>
                 </div>
                 <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Safra ativa</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Safra ativa</p>
                   <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.activeSeason?.name ?? 'Sem safra ativa'}</p>
                   <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>
                     {diagnostic.activeSeason?.planting_date ? `Plantio: ${formatDate(diagnostic.activeSeason.planting_date)}` : 'Sem data de plantio'}
                   </p>
                 </div>
                 <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>Cultura</p>
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Cultura</p>
                   <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.crop?.name ?? 'Sem cultura vinculada'}</p>
                   <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>
                     {diagnostic.preferredStation?.name

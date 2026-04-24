@@ -56,13 +56,13 @@ function PhaseTimeline({ plantingDate, crop }: { plantingDate: string; crop: Cro
           return (
             <div key={i}>
               <div style={{ fontSize: 9, color: s.color, fontWeight: 700 }}>{s.label} {s.days}d</div>
-              <div style={{ fontSize: 9, color: '#556677' }}>{fmtDate(stageStart)}</div>
+              <div style={{ fontSize: 9, color: '#778899' }}>{fmtDate(stageStart)}</div>
             </div>
           )
         })}
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 9, color: '#8899aa', fontWeight: 700 }}>Colheita</div>
-          <div style={{ fontSize: 9, color: '#556677' }}>{fmtDate(addDays(start, totalDays))}</div>
+          <div style={{ fontSize: 9, color: '#778899' }}>{fmtDate(addDays(start, totalDays))}</div>
         </div>
       </div>
     </div>
@@ -80,13 +80,13 @@ function StyledSelect({ label, value, onChange, children, required }: {
       </label>
       <div style={{ position: 'relative' }}>
         <select value={value} onChange={e => onChange(e.target.value)} required={required}
-          style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: value ? '#e2e8f0' : '#556677', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+          style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: value ? '#e2e8f0' : '#778899', outline: 'none', appearance: 'none', cursor: 'pointer' }}
           onFocus={e => e.target.style.borderColor = '#0093D0'}
           onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
         >
           {children}
         </select>
-        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
+        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
       </div>
     </div>
   )
@@ -104,9 +104,9 @@ function NumField({ label, value, onChange, placeholder, unit, hint }: {
           onFocus={e => e.target.style.borderColor = '#0093D0'}
           onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
         />
-        {unit && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#556677', pointerEvents: 'none' }}>{unit}</span>}
+        {unit && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#778899', pointerEvents: 'none' }}>{unit}</span>}
       </div>
-      {hint && <p style={{ fontSize: 11, color: '#556677', marginTop: 3 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 11, color: '#778899', marginTop: 3 }}>{hint}</p>}
     </div>
   )
 }
@@ -114,7 +114,7 @@ function NumField({ label, value, onChange, placeholder, unit, hint }: {
 function SectionLabel({ text }: { text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
-      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#556677' }}>{text}</span>
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>{text}</span>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
     </div>
   )
@@ -240,7 +240,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
       <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 540, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)', maxHeight: '92vh', overflowY: 'auto' }}>
         <div className="flex items-center justify-between mb-6">
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>{isEdit ? 'Editar Safra' : 'Nova Safra'}</h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#556677', cursor: 'pointer' }}><X size={16} /></button>
+          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}><X size={16} /></button>
         </div>
 
         {error && (
@@ -281,10 +281,10 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
           ) : (
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 8 }}>
-                Pivôs <span style={{ color: '#556677', fontWeight: 400 }}>(selecione um ou mais)</span>
+                Pivôs <span style={{ color: '#778899', fontWeight: 400 }}>(selecione um ou mais)</span>
               </label>
               {farmPivots.length === 0 ? (
-                <p style={{ fontSize: 12, color: '#556677', padding: '10px 14px', background: '#0d1520', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p style={{ fontSize: 12, color: '#778899', padding: '10px 14px', background: '#0d1520', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
                   Nenhum pivô cadastrado nesta fazenda.
                 </p>
               ) : (
@@ -315,7 +315,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
                         <div style={{ flex: 1 }}>
                           <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>{p.name}</p>
                           {p.field_capacity && (
-                            <p style={{ fontSize: 11, color: '#556677', margin: 0 }}>
+                            <p style={{ fontSize: 11, color: '#778899', margin: 0 }}>
                               CC {p.field_capacity}% · PM {p.wilting_point}% · Ds {p.bulk_density}
                             </p>
                           )}
@@ -338,7 +338,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Data de Plantio</label>
             <input type="date" value={plantingDate} onChange={e => setPlantingDate(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: plantingDate ? '#e2e8f0' : '#556677', outline: 'none', colorScheme: 'dark' }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: plantingDate ? '#e2e8f0' : '#778899', outline: 'none', colorScheme: 'dark' }}
               onFocus={e => e.target.style.borderColor = '#0093D0'}
               onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
             />
@@ -385,7 +385,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             </button>
             <div>
               <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{isActive ? 'Safra Ativa' : 'Safra Inativa'}</p>
-              <p style={{ fontSize: 11, color: '#556677' }}>{isActive ? 'Aparece no Dashboard e Manejo Diário' : 'Arquivada'}</p>
+              <p style={{ fontSize: 11, color: '#778899' }}>{isActive ? 'Aparece no Dashboard e Manejo Diário' : 'Arquivada'}</p>
             </div>
           </div>
 
@@ -477,7 +477,7 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
   const threshold = 70 // padrão — idealmente viria do pivô
   const pct = lastRecord?.field_capacity_percent ?? null
-  const statusColor = pct === null ? '#556677'
+  const statusColor = pct === null ? '#778899'
     : pct >= threshold * 1.15 ? '#22c55e'
     : pct >= threshold ? '#f59e0b'
     : '#ef4444'
@@ -496,19 +496,19 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
         {season.is_active ? (
           loadingRecord ? (
             <div style={{ width: 64, height: 64, borderRadius: 12, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Loader2 size={16} className="animate-spin" style={{ color: '#334455' }} />
+              <Loader2 size={16} className="animate-spin" style={{ color: '#778899' }} />
             </div>
           ) : pct !== null ? (
             <MiniWave pct={pct} threshold={threshold} />
           ) : (
             <div style={{ width: 64, height: 64, borderRadius: 12, background: 'rgba(0,147,208,0.08)', border: '1px solid rgba(0,147,208,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, gap: 2 }}>
               <Sprout size={20} style={{ color: '#0093D0' }} />
-              <span style={{ fontSize: 8, color: '#334455', fontWeight: 600 }}>SEM DADOS</span>
+              <span style={{ fontSize: 8, color: '#778899', fontWeight: 600 }}>SEM DADOS</span>
             </div>
           )
         ) : (
           <div style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Sprout size={18} style={{ color: '#334455' }} />
+            <Sprout size={18} style={{ color: '#778899' }} />
           </div>
         )}
 
@@ -516,7 +516,7 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
           {/* Título + badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>{season.name}</p>
-            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgb(34 197 94 / 0.10)' : '#0d1520', color: season.is_active ? '#22c55e' : '#445566', border: `1px solid ${season.is_active ? 'rgb(34 197 94 / 0.2)' : 'rgba(255,255,255,0.05)'}` }}>
+            <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgb(34 197 94 / 0.10)' : '#0d1520', color: season.is_active ? '#22c55e' : '#667788', border: `1px solid ${season.is_active ? 'rgb(34 197 94 / 0.2)' : 'rgba(255,255,255,0.05)'}` }}>
               {season.is_active ? '● Ativa' : 'Inativa'}
             </span>
             {/* Badge de alerta de irrigação */}
@@ -529,12 +529,12 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
           {/* Localização e cultura */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 12, color: '#556677' }}>
+            <span style={{ fontSize: 12, color: '#778899' }}>
               {season.farms.name}{season.pivots ? ` · ${season.pivots.name}` : ''}
             </span>
             {season.crops && <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500 }}>🌱 {season.crops.name}</span>}
             {season.planting_date && (
-              <span style={{ fontSize: 12, color: '#556677', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 12, color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <CalendarDays size={11} />
                 {new Date(season.planting_date + 'T12:00:00').toLocaleDateString('pt-BR')}
                 {harvestDate && ` → ${harvestDate}`}
@@ -555,7 +555,7 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
                   <span style={{ fontSize: 11, fontWeight: 600, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>ETc {lastRecord.etc_mm.toFixed(1)} mm</span>
                 </div>
               )}
-              <span style={{ fontSize: 10, color: '#334455', alignSelf: 'center' }}>
+              <span style={{ fontSize: 10, color: '#778899', alignSelf: 'center' }}>
                 {lastRecord.date ? new Date(lastRecord.date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
               </span>
             </div>
@@ -563,9 +563,9 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
           {/* Chips de solo */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {season.field_capacity && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#556677', display: 'flex', alignItems: 'center', gap: 2 }}><Droplets size={9} />CC {season.field_capacity}%</span>}
-            {season.wilting_point && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#556677' }}>PM {season.wilting_point}%</span>}
-            {season.bulk_density && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#556677' }}>Ds {season.bulk_density}</span>}
+            {season.field_capacity && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#778899', display: 'flex', alignItems: 'center', gap: 2 }}><Droplets size={9} />CC {season.field_capacity}%</span>}
+            {season.wilting_point && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#778899' }}>PM {season.wilting_point}%</span>}
+            {season.bulk_density && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#778899' }}>Ds {season.bulk_density}</span>}
             {cta && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 5, background: 'rgba(0,147,208,0.08)', color: '#0093D0', border: '1px solid rgba(0,147,208,0.18)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}><FlaskConical size={9} />CTA {cta.toFixed(1)} mm</span>}
           </div>
         </div>
@@ -574,22 +574,22 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           {season.is_active && season.planting_date && (
             <button onClick={onRecalculate} disabled={recalculating} title="Atualizar histórico do plantio até hoje"
-              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677' }}
+              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899' }}
               onMouseEnter={e => { if (!recalculating) { (e.currentTarget as HTMLElement).style.color = '#22c55e'; (e.currentTarget as HTMLElement).style.background = 'rgba(34,197,94,0.1)' } }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#556677'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
               <RefreshCw size={14} className={recalculating ? 'animate-spin' : ''} />
             </button>
           )}
           <button onClick={onEdit} title="Editar"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677' }}
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0093D0'; (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.1)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#556677'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
             <Pencil size={14} />
           </button>
           <button onClick={onDelete} disabled={deleting} title="Excluir"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677' }}
+            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#556677' }}>
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#778899' }}>
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
           </button>
         </div>
@@ -688,8 +688,8 @@ export default function SafrasPage() {
   function GroupHeader({ label, count }: { label: string; count: number }) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#556677' }}>{label}</span>
-        <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#0d1520', color: '#556677' }}>{count}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>{label}</span>
+        <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 20, background: '#0d1520', color: '#778899' }}>{count}</span>
         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
       </div>
     )
@@ -713,7 +713,7 @@ export default function SafrasPage() {
           <button
             onClick={() => { setEditingSeason(null); setModalOpen(true) }}
             disabled={farms.length === 0}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? '#0d1520' : '#0093D0', border: 'none', color: farms.length === 0 ? '#556677' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(0 147 208 / 0.25)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? '#0d1520' : '#0093D0', border: 'none', color: farms.length === 0 ? '#778899' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(0 147 208 / 0.25)' }}
           >
             <Plus size={16} /> Nova Safra
           </button>
@@ -727,13 +727,13 @@ export default function SafrasPage() {
           <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
             <Sprout size={28} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
             <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>Cadastre uma fazenda primeiro</h3>
-            <p style={{ fontSize: 14, color: '#556677' }}>Acesse <strong style={{ color: '#8899aa' }}>Configuração → Fazendas</strong> para começar.</p>
+            <p style={{ fontSize: 14, color: '#778899' }}>Acesse <strong style={{ color: '#8899aa' }}>Configuração → Fazendas</strong> para começar.</p>
           </div>
         ) : seasons.length === 0 ? (
           <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
             <Sprout size={28} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
             <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra cadastrada</h3>
-            <p style={{ fontSize: 14, color: '#556677', marginBottom: 24 }}>Configure a primeira safra para iniciar o manejo hídrico.</p>
+            <p style={{ fontSize: 14, color: '#778899', marginBottom: 24 }}>Configure a primeira safra para iniciar o manejo hídrico.</p>
             <button onClick={() => { setEditingSeason(null); setModalOpen(true) }}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer' }}>
               <Plus size={16} /> Criar Safra

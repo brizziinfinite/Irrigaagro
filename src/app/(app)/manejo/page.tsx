@@ -136,7 +136,7 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
           onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
         />
         {unit && (
-          <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#445566', pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#667788', pointerEvents: 'none' }}>
             {unit}
           </span>
         )}
@@ -223,7 +223,7 @@ function SoilDiagram({
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color }}>{cfg.label}</span>
-          <span style={{ fontSize: 13, color: '#445566' }}>— {fieldCapacityPercent.toFixed(0)}% C.C.</span>
+          <span style={{ fontSize: 13, color: '#667788' }}>— {fieldCapacityPercent.toFixed(0)}% C.C.</span>
         </div>
       </div>
 
@@ -396,7 +396,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
           {hasSimulation ? 'Projeção — Simulação Ativa' : 'Se não irrigar, o que acontece?'}
         </span>
         {avgEto !== null && (
-          <span style={{ fontSize: 11, color: '#556677', marginLeft: 'auto' }}>
+          <span style={{ fontSize: 11, color: '#778899', marginLeft: 'auto' }}>
             ETo base: <span style={{ color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{avgEto.toFixed(1)} mm/d</span>
           </span>
         )}
@@ -409,7 +409,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
             Limpar simulação
           </button>
         ) : (
-          <span style={{ fontSize: 10, color: '#445566', padding: '3px 8px', borderRadius: 20, background: '#0d1520' }}>sem chuva prevista</span>
+          <span style={{ fontSize: 10, color: '#667788', padding: '3px 8px', borderRadius: 20, background: '#0d1520' }}>sem chuva prevista</span>
         )}
       </div>
 
@@ -428,7 +428,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                 : firstIrrigIdx === 1 ? 'Iniciar irrigação em 2 dias'
                 : `Irrigar em ${firstIrrigIdx + 1} dias (${fmtDate(days[firstIrrigIdx].date)})`}
             </p>
-            <p style={{ fontSize: 10, color: '#556677' }}>
+            <p style={{ fontSize: 10, color: '#778899' }}>
               Lâmina prevista para o dia: {fmtNum(days[firstIrrigIdx].recommendedDepthMm)} mm
               {days[firstIrrigIdx].recommendedSpeedPercent !== null ? ` · Velocidade: ${days[firstIrrigIdx].recommendedSpeedPercent}%` : ''}
             </p>
@@ -458,8 +458,8 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
           const dayLabelColor = isAmanha
             ? (isAlert ? cfg.color : '#8899aa')
             : isDepoisAmanha
-              ? (isAlert ? '#d97706' : '#556677')
-              : '#334455'
+              ? (isAlert ? '#d97706' : '#778899')
+              : '#778899'
           const dayFontWeight = isAmanha ? 700 : isDepoisAmanha ? 600 : 400
           // Barra: amanhã mais intensa, resto com opacidade menor
           const barOpacity = isAmanha ? 1 : isDepoisAmanha ? 0.7 : 0.45
@@ -477,7 +477,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
               ? `1px solid ${cfg.color}30`
               : '1px solid transparent'
           // Cor status: amanhã cor real, depois âmbar se alerta, resto neutro
-          const statusColor = isAmanha ? cfg.color : isDepoisAmanha && isAlert ? '#d97706' : '#334455'
+          const statusColor = isAmanha ? cfg.color : isDepoisAmanha && isAlert ? '#d97706' : '#778899'
 
           return (
             <div key={day.date}>
@@ -494,7 +494,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                 <span style={{ fontSize: 11, color: dayLabelColor, fontWeight: dayFontWeight }}>
                   {i === 0 ? 'Amanhã' : fmtDate(day.date)}
                 </span>
-                <span style={{ fontSize: 10, color: '#334455' }}>D{day.das}</span>
+                <span style={{ fontSize: 10, color: '#778899' }}>D{day.das}</span>
                 <div style={{ position: 'relative', height: isAmanha ? 10 : 8, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
                   <div style={{ position: 'absolute', left: `${cadPct}%`, top: -2, bottom: -2, width: 2, background: '#f59e0b', opacity: 0.5, borderRadius: 1, zIndex: 2 }} />
                   {showComparison && basePct !== null && (
@@ -505,7 +505,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                 <span style={{ fontSize: isAmanha ? 12 : 11, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
                   {showComparison && basePct !== null ? (
                     <>
-                      <span style={{ color: '#334455', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
+                      <span style={{ color: '#778899', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
                       <span style={{ color: statusColor, fontWeight: isAmanha ? 700 : 500 }}> {fmtNum(day.fieldCapacityPercent, 0)}%</span>
                     </>
                   ) : (
@@ -516,9 +516,9 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                   {hasIrrigHere ? (
                     <span style={{ color: '#0093D0', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10 }}>+{fmtNum(simulatedIrrigation[i])}</span>
                   ) : day.recommendedDepthMm > 0 ? (
-                    <><span style={{ color: isAmanha ? cfg.color : isDepoisAmanha ? '#d97706' : '#445566', fontFamily: 'var(--font-mono)', fontWeight: isAmanha ? 700 : 500 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#334455' }}> mm</span></>
+                    <><span style={{ color: isAmanha ? cfg.color : isDepoisAmanha ? '#d97706' : '#667788', fontFamily: 'var(--font-mono)', fontWeight: isAmanha ? 700 : 500 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#778899' }}> mm</span></>
                   ) : (
-                    <span style={{ fontSize: 10, fontWeight: 600, color: isAmanha ? '#22c55e' : '#334455' }}>NI</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: isAmanha ? '#22c55e' : '#778899' }}>NI</span>
                   )}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
@@ -532,7 +532,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                     width: 24, height: 24, borderRadius: 6, border: 'none', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: hasIrrigHere ? 'rgba(0,147,208,0.15)' : 'rgba(255,255,255,0.04)',
-                    color: hasIrrigHere ? '#0093D0' : '#556677',
+                    color: hasIrrigHere ? '#0093D0' : '#778899',
                     fontSize: 14, fontWeight: 700, lineHeight: 1,
                   }}
                   title={hasIrrigHere ? 'Editar irrigação simulada' : 'Simular irrigação neste dia'}
@@ -582,7 +582,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                       onFocus={e => e.target.style.borderColor = '#0093D0'}
                       onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                     />
-                    <span style={{ fontSize: 10, color: '#556677' }}>mm</span>
+                    <span style={{ fontSize: 10, color: '#778899' }}>mm</span>
                   </div>
                   <button
                     onClick={() => handleApply(i)}
@@ -590,7 +590,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                     style={{
                       padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 700,
                       background: manualDepth && parseFloat(manualDepth) > 0 ? '#0093D0' : '#0d1520',
-                      border: 'none', color: manualDepth && parseFloat(manualDepth) > 0 ? '#fff' : '#445566',
+                      border: 'none', color: manualDepth && parseFloat(manualDepth) > 0 ? '#fff' : '#667788',
                       cursor: manualDepth && parseFloat(manualDepth) > 0 ? 'pointer' : 'not-allowed',
                     }}
                   >
@@ -612,7 +612,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                     onClick={() => setEditingDayIdx(null)}
                     style={{
                       padding: '5px 8px', borderRadius: 6, fontSize: 11,
-                      background: 'none', border: 'none', color: '#556677', cursor: 'pointer',
+                      background: 'none', border: 'none', color: '#778899', cursor: 'pointer',
                     }}
                   >
                     <X size={12} />
@@ -629,9 +629,9 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 2, height: 10, background: '#f59e0b', opacity: 0.7 }} />
-            <span style={{ fontSize: 10, color: '#445566' }}>Limiar irrigação</span>
+            <span style={{ fontSize: 10, color: '#667788' }}>Limiar irrigação</span>
           </div>
-          <span style={{ fontSize: 10, color: '#445566' }}>· Clique no <strong>+</strong> para simular irrigação</span>
+          <span style={{ fontSize: 10, color: '#667788' }}>· Clique no <strong>+</strong> para simular irrigação</span>
         </div>
         {hasSimulation && (
           <span style={{ fontSize: 10, color: '#0093D0', fontStyle: 'italic' }}>
@@ -654,8 +654,8 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
   if (records.length === 0) {
     return (
       <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
-        <Calendar size={22} style={{ color: '#445566', margin: '0 auto 8px' }} />
-        <p style={{ fontSize: 13, color: '#445566' }}>Nenhum registro ainda.</p>
+        <Calendar size={22} style={{ color: '#667788', margin: '0 auto 8px' }} />
+        <p style={{ fontSize: 13, color: '#667788' }}>Nenhum registro ainda.</p>
       </div>
     )
   }
@@ -667,7 +667,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
       <div style={{ overflowX: 'auto' }}>
       <div style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         {['Data', 'DAS', 'ETo', 'ETc', 'Chuva', 'Lâmina', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
-          <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+          <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
       </div>
       {records.map((r, i) => {
@@ -680,11 +680,11 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
         return (
           <div key={r.id} style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', borderBottom: i < records.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent', alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: '#8899aa' }}>{fmtDate(r.date)}</span>
-            <span style={{ fontSize: 12, color: '#445566' }}>{r.das ?? '—'}</span>
+            <span style={{ fontSize: 12, color: '#667788' }}>{r.das ?? '—'}</span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.etc_mm)}</span>
             <span style={{ fontSize: 12, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall_mm)}</span>
-            <span style={{ fontSize: 12, color: lamina !== null && lamina > 0 ? '#0093D0' : '#334455', fontFamily: 'var(--font-mono)', fontWeight: lamina !== null && lamina > 0 ? 700 : 400 }}>
+            <span style={{ fontSize: 12, color: lamina !== null && lamina > 0 ? '#0093D0' : '#778899', fontFamily: 'var(--font-mono)', fontWeight: lamina !== null && lamina > 0 ? 700 : 400 }}>
               {lamina !== null && lamina > 0 ? `${fmtNum(lamina)} mm` : '—'}
             </span>
             <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.ctda)}</span>
@@ -697,18 +697,18 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
               <button
                 onClick={() => onEdit(r)}
                 title="Editar registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#445566', lineHeight: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0 }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#0093D0')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#445566')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#667788')}
               >
                 <Edit2 size={14} />
               </button>
               <button
                 onClick={() => onDelete(r)}
                 title="Excluir registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#445566', lineHeight: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0 }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#445566')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#667788')}
               >
                 <Trash2 size={14} />
               </button>
@@ -1091,7 +1091,7 @@ export default function ManejoPage() {
       <div style={{ maxWidth: 440, margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
         <Sprout size={32} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra ativa</h2>
-        <p style={{ fontSize: 13, color: '#556677' }}>Cadastre uma safra em <strong style={{ color: '#8899aa' }}>Safras</strong> para iniciar o manejo.</p>
+        <p style={{ fontSize: 13, color: '#778899' }}>Cadastre uma safra em <strong style={{ color: '#8899aa' }}>Safras</strong> para iniciar o manejo.</p>
       </div>
     )
   }
@@ -1159,13 +1159,13 @@ export default function ManejoPage() {
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0', margin: 0, letterSpacing: '-0.02em' }}>
                   Lançar irrigação
                 </h2>
-                <p style={{ fontSize: 12, color: '#556677', margin: '4px 0 0' }}>
+                <p style={{ fontSize: 12, color: '#778899', margin: '4px 0 0' }}>
                   Confirme a lâmina aplicada para o pivô selecionado.
                 </p>
               </div>
               <button
                 onClick={() => setShowQuickModal(false)}
-                style={{ background: 'transparent', border: 'none', color: '#445566', cursor: 'pointer', padding: 4 }}
+                style={{ background: 'transparent', border: 'none', color: '#667788', cursor: 'pointer', padding: 4 }}
               >
                 <X size={18} />
               </button>
@@ -1174,11 +1174,11 @@ export default function ManejoPage() {
             {/* Pivô + data (só leitura, informativo) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
               <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Pivô</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Pivô</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{selectedSeason?.pivots?.name ?? '—'}</div>
               </div>
               <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Data</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Data</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>
                   {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </div>
@@ -1223,7 +1223,7 @@ export default function ManejoPage() {
                   onBlur={e => e.target.style.borderColor = 'rgba(0,147,208,0.3)'}
                   onKeyDown={e => { if (e.key === 'Enter') handleQuickLaunch() }}
                 />
-                <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#445566', pointerEvents: 'none', fontWeight: 600 }}>
+                <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#667788', pointerEvents: 'none', fontWeight: 600 }}>
                   mm
                 </span>
               </div>
@@ -1231,7 +1231,7 @@ export default function ManejoPage() {
 
             {/* Campo: observação (opcional) */}
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                 Observação <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span>
               </label>
               <input
@@ -1270,7 +1270,7 @@ export default function ManejoPage() {
                 style={{
                   flex: 1, padding: '13px 0', borderRadius: 10, fontSize: 13, fontWeight: 600,
                   background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#556677', cursor: 'pointer',
+                  color: '#778899', cursor: 'pointer',
                 }}
               >
                 Cancelar
@@ -1353,7 +1353,7 @@ export default function ManejoPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontSize: 18, fontWeight: 600, color: heroMainColor, lineHeight: 1 }}>mm</span>
                     {heroSpeed && (
-                      <span style={{ fontSize: 11, color: '#445566', lineHeight: 1 }}>{heroSpeed}%</span>
+                      <span style={{ fontSize: 11, color: '#667788', lineHeight: 1 }}>{heroSpeed}%</span>
                     )}
                   </div>
                 </div>
@@ -1365,7 +1365,7 @@ export default function ManejoPage() {
                   }}>
                     {heroPct !== null ? `${heroPct.toFixed(0)}%` : '—'}
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: '#445566' }}>umidade</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#667788' }}>umidade</span>
                 </div>
               )}
 
@@ -1387,7 +1387,7 @@ export default function ManejoPage() {
               </p>
 
               {/* Linha 4 — pivô em texto mínimo */}
-              <p style={{ fontSize: 11, color: '#2a3a4a', letterSpacing: '0.01em' }}>
+              <p style={{ fontSize: 11, color: '#667788', letterSpacing: '0.01em' }}>
                 {selectedSeason?.pivots?.name ?? selectedSeason?.farms?.name ?? ''}
               </p>
             </div>
@@ -1456,15 +1456,15 @@ export default function ManejoPage() {
                 padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 500,
                 letterSpacing: '0.03em', whiteSpace: 'nowrap',
                 background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
-                color: '#334455', cursor: 'pointer',
+                color: '#778899', cursor: 'pointer',
                 transition: 'color 0.15s ease, border-color 0.15s ease',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.color = '#556677'
+                e.currentTarget.style.color = '#778899'
                 e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.color = '#334455'
+                e.currentTarget.style.color = '#778899'
                 e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
               }}
             >
@@ -1477,11 +1477,11 @@ export default function ManejoPage() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                 padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 400,
-                color: '#445566', textDecoration: 'none',
+                color: '#667788', textDecoration: 'none',
                 transition: 'color 0.15s ease',
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#667788' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#445566' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#667788' }}
             >
               <Calendar size={11} />
               Ver programação avançada
@@ -1497,13 +1497,13 @@ export default function ManejoPage() {
           display: 'flex', alignItems: 'center', gap: 20,
         }}>
           <Loader2 size={20} className="animate-spin" style={{ color: '#0093D0' }} />
-          <span style={{ fontSize: 14, color: '#445566' }}>Calculando balanço hídrico...</span>
+          <span style={{ fontSize: 14, color: '#667788' }}>Calculando balanço hídrico...</span>
         </div>
       )}
 
       {/* ── Seletor de safra ── */}
       <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <label style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Safra</label>
+        <label style={{ fontSize: 11, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Safra</label>
         <div style={{ position: 'relative' }}>
           <select value={selectedSeasonId} onChange={e => setSelectedSeasonId(e.target.value)}
             style={{ width: '100%', padding: '10px 36px 10px 12px', borderRadius: 9, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
@@ -1514,7 +1514,7 @@ export default function ManejoPage() {
               <option key={s.id} value={s.id}>{s.name} — {s.farms.name}{s.pivots ? ` / ${s.pivots.name}` : ''}</option>
             ))}
           </select>
-          <ChevronDown size={13} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', color: '#445566', pointerEvents: 'none' }} />
+          <ChevronDown size={13} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', color: '#667788', pointerEvents: 'none' }} />
         </div>
 
         {/* Badges da safra */}
@@ -1542,7 +1542,7 @@ export default function ManejoPage() {
                 </span>
               )}
               {selectedSeason.planting_date && (
-                <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#445566', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#667788', display: 'flex', alignItems: 'center', gap: 3 }}>
                   <Calendar size={9} /> Plantio {fmtDate(selectedSeason.planting_date)}
                 </span>
               )}
@@ -1598,14 +1598,14 @@ export default function ManejoPage() {
             {
               label: 'ETc',
               value: heroEtc !== null ? `${heroEtc.toFixed(1)} mm/d` : '—',
-              color: '#556677',
-              sub: `ETo: ${calcResult.eto.toFixed(1)} · Kc: ${calcResult.kc.toFixed(2)}`,
+              color: '#22c55e',
+              sub: `ETo: ${calcResult.eto.toFixed(1)} mm/d`,
             },
           ].map(({ label, value, color, sub }) => (
             <div key={label}>
-              <p style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{label}</p>
+              <p style={{ fontSize: 10, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{label}</p>
               <p style={{ fontSize: 17, fontWeight: 700, color, fontFamily: 'var(--font-mono)', lineHeight: 1.15 }}>{value}</p>
-              <p style={{ fontSize: 10, color: '#334455', marginTop: 4, lineHeight: 1.3 }}>{sub}</p>
+              <p style={{ fontSize: 10, color: '#778899', marginTop: 4, lineHeight: 1.3 }}>{sub}</p>
             </div>
           ))}
         </div>
@@ -1663,8 +1663,8 @@ export default function ManejoPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="name" tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
-                  <YAxis tick={{ fill: '#556677', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 110]} tickFormatter={(v: number) => `${v}%`} />
+                  <XAxis dataKey="name" tick={{ fill: '#778899', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
+                  <YAxis tick={{ fill: '#778899', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 110]} tickFormatter={(v: number) => `${v}%`} />
                   <ReferenceArea y1={Math.round(targetThresholdLine * 1.15)} y2={110} fill="rgba(34,197,94,0.02)" />
                   <ReferenceArea y1={targetThresholdLine} y2={Math.round(targetThresholdLine * 1.15)} fill="rgba(245,158,11,0.03)" />
                   <ReferenceArea y1={0} y2={targetThresholdLine} fill="rgba(239,68,68,0.03)" />
@@ -1745,9 +1745,9 @@ export default function ManejoPage() {
 
             {/* Agenda de Irrigação */}
             <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h3 style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Agenda de Irrigação</h3>
+              <h3 style={{ fontSize: 10, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Agenda de Irrigação</h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12, color: '#556677' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12, color: '#778899' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>Status</span>
                   <span style={{ color: st.color, fontWeight: 700, background: `${st.color}15`, padding: '2px 8px', borderRadius: 6, fontSize: 10, letterSpacing: '0.04em' }}>{st.label}</span>
@@ -1800,10 +1800,10 @@ export default function ManejoPage() {
             {/* Consumo de Água 7D */}
             <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 4 }}>
-                <h3 style={{ fontSize: 10, fontWeight: 600, color: '#334455', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Consumo de Água (7D)</h3>
-                <div style={{ fontSize: 10, color: '#445566', textAlign: 'right' }}>
+                <h3 style={{ fontSize: 10, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Consumo de Água (7D)</h3>
+                <div style={{ fontSize: 10, color: '#667788', textAlign: 'right' }}>
                   <div>Aplicado: <strong style={{ color: '#8899aa' }}>{totalWater7d.toFixed(1)} mm</strong></div>
-                  <div style={{ marginTop: 2 }}>ETc: <span style={{ color: '#445566'}}>{totalEtc7d.toFixed(1)} mm</span></div>
+                  <div style={{ marginTop: 2 }}>ETc: <span style={{ color: '#667788'}}>{totalEtc7d.toFixed(1)} mm</span></div>
                 </div>
               </div>
 
@@ -1817,7 +1817,7 @@ export default function ManejoPage() {
                       formatter={(value: unknown) => [`${Number(value).toFixed(1)} mm`, 'Água aplicada']}
                       labelFormatter={(label: unknown) => `Dia ${label}`}
                     />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fill: '#556677', fontSize: 10}} dy={5} />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fill: '#778899', fontSize: 10}} dy={5} />
                     <Bar dataKey="usage" radius={[4, 4, 0, 0]} maxBarSize={28}>
                       {waterUsageData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.usage > 0 ? '#0093D0' : '#1a2433'} />
@@ -1837,7 +1837,7 @@ export default function ManejoPage() {
           ════════════════════════════════════════════════════════ */}
       {calcResult && selectedSeason ? (
         <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 20px 4px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
             Análise Detalhada do Solo
           </p>
           <SoilDiagram
@@ -1871,8 +1871,8 @@ export default function ManejoPage() {
       ) : (
         !loading && (
           <div style={{ background: '#0f1923', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 14, padding: '32px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <Thermometer size={28} style={{ color: '#556677' }} />
-            <p style={{ fontSize: 13, color: '#556677' }}>Preencha Tmax e Tmin para projetar o solo</p>
+            <Thermometer size={28} style={{ color: '#778899' }} />
+            <p style={{ fontSize: 13, color: '#778899' }}>Preencha Tmax e Tmin para projetar o solo</p>
           </div>
         )
       )}
@@ -1896,7 +1896,7 @@ export default function ManejoPage() {
             {showForm ? <ChevronDown size={18} /> : <Plus size={18} />}
             {showForm ? 'Ocultar Lançamento Manual' : 'Lançar Dados Manuais (Clima / Irrigação)'}
           </div>
-          {!showForm && <div style={{ fontSize: 11, color: '#445566', fontWeight: 500, textTransform: 'none' }}>Opcional se auto-integrado</div>}
+          {!showForm && <div style={{ fontSize: 11, color: '#667788', fontWeight: 500, textTransform: 'none' }}>Opcional se auto-integrado</div>}
         </button>
 
         {showForm && (
@@ -1905,11 +1905,11 @@ export default function ManejoPage() {
             {/* Fonte climática + data */}
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 items-start">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Dados Climáticos</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Dados Climáticos</label>
                 {weatherLoading && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <Loader2 size={12} className="animate-spin" style={{ color: '#0093D0' }} />
-                    <span style={{ fontSize: 13, color: '#445566' }}>Buscando dados climáticos...</span>
+                    <span style={{ fontSize: 13, color: '#667788' }}>Buscando dados climáticos...</span>
                   </div>
                 )}
                 {!weatherLoading && climateInfo && (() => {
@@ -1923,8 +1923,8 @@ export default function ManejoPage() {
                 })()}
                 {!weatherLoading && !climateInfo && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <Thermometer size={13} style={{ color: '#445566' }} />
-                    <span style={{ fontSize: 13, color: '#445566' }}>Preencha os dados manualmente</span>
+                    <Thermometer size={13} style={{ color: '#667788' }} />
+                    <span style={{ fontSize: 13, color: '#667788' }}>Preencha os dados manualmente</span>
                   </div>
                 )}
               </div>
@@ -1944,14 +1944,14 @@ export default function ManejoPage() {
             {/* ADc anterior */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)' }}>
               <Droplets size={14} style={{ color: '#0093D0', flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: '#445566' }}>ADc (Umidade) anterior:</span>
+              <span style={{ fontSize: 13, color: '#667788' }}>ADc (Umidade) anterior:</span>
               <span style={{ fontSize: 15, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcPrev)} mm</span>
-              <span style={{ fontSize: 12, color: '#334455', marginLeft: 2 }}>{history.length > 0 ? '(último registro)' : '(ADc inicial da safra)'}</span>
+              <span style={{ fontSize: 12, color: '#778899', marginLeft: 2 }}>{history.length > 0 ? '(último registro)' : '(ADc inicial da safra)'}</span>
             </div>
 
             {/* Irrigação realizada */}
             <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Irrigação Realizada <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></p>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Irrigação Realizada <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14 }}>
                 <InputField label="Velocidade real" value={actualSpeed} onChange={setActualSpeed} unit="%" placeholder="60" />
                 <InputField label="Lâmina real" value={actualDepth} onChange={v => { setActualDepth(v); setDepthAutoFilled(false) }} unit="mm" placeholder="12" />
@@ -1979,7 +1979,7 @@ export default function ManejoPage() {
                 padding: '17px 0', borderRadius: 12, fontSize: 14, fontWeight: 700,
                 textTransform: 'uppercase', letterSpacing: '0.06em',
                 background: calcResult ? 'linear-gradient(135deg, #0093D0, #0277b5)' : '#0d1520',
-                border: 'none', color: calcResult ? '#fff' : '#445566',
+                border: 'none', color: calcResult ? '#fff' : '#667788',
                 cursor: calcResult ? 'pointer' : 'not-allowed',
                 opacity: saving ? 0.7 : 1,
                 boxShadow: calcResult ? '0 8px 24px rgba(0, 147, 208, 0.3)' : 'none',
@@ -2002,7 +2002,7 @@ export default function ManejoPage() {
           ════════════════════════════════════════════════════════ */}
       {history.length >= 2 && (
         <div>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 4 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 4 }}>
             Balanço Hídrico — Histórico
           </p>
           <WaterBalanceChart
@@ -2039,7 +2039,7 @@ export default function ManejoPage() {
             <Clock size={16} /> Data Explorer — Histórico & Timeline
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 10, color: '#556677', background: '#0d1520', padding: '2px 8px', borderRadius: 10 }}>
+            <span style={{ fontSize: 10, color: '#778899', background: '#0d1520', padding: '2px 8px', borderRadius: 10 }}>
               {history.length} Registros
             </span>
             {selectedSeasonId && (
@@ -2060,9 +2060,9 @@ export default function ManejoPage() {
                   await loadHistory(selectedSeasonId)
                   btn.style.color = '#22c55e'
                   btn.textContent = '✓'
-                  setTimeout(() => { btn.style.color = '#556677'; btn.textContent = '↻' }, 2000)
+                  setTimeout(() => { btn.style.color = '#778899'; btn.textContent = '↻' }, 2000)
                 }}
-                style={{ fontSize: 14, color: '#556677', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
+                style={{ fontSize: 14, color: '#778899', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
               >↻</span>
             )}
             {showHistoryTab ? <ChevronDown size={14} /> : <TrendingDown size={14} />}

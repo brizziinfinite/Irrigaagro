@@ -91,7 +91,7 @@ function Divider({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-      <span style={{ fontSize: 11, color: '#556677', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 11, color: '#778899', fontWeight: 500 }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
     </div>
   )
@@ -221,7 +221,7 @@ export default function LoginPage() {
               <span style={{ color: '#0093D0' }}>preciso</span> e{' '}
               <span style={{ color: '#22c55e' }}>eficiente</span>
             </h1>
-            <p style={{ fontSize: 15, color: '#556677', lineHeight: 1.7 }}>
+            <p style={{ fontSize: 15, color: '#778899', lineHeight: 1.7 }}>
               Software agrícola para manejo hídrico inteligente.<br />
               Controle seus pivôs, safras e irrigação em um só lugar.
             </p>
@@ -237,7 +237,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-          <span style={{ fontSize: 12, color: '#556677' }}>IrrigaAgro</span>
+          <span style={{ fontSize: 12, color: '#778899' }}>IrrigaAgro</span>
         </div>
       </div>
 
@@ -274,7 +274,7 @@ export default function LoginPage() {
                 flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
                 fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.18s',
                 background: mode === m ? '#0f1923' : 'transparent',
-                color: mode === m ? '#e2e8f0' : '#556677',
+                color: mode === m ? '#e2e8f0' : '#778899',
                 boxShadow: mode === m ? '0 1px 4px rgba(0,0,0,0.4)' : 'none',
               }}
             >
@@ -288,7 +288,7 @@ export default function LoginPage() {
           <h2 style={{ fontSize: 26, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.03em', marginBottom: 8 }}>
             {mode === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta'}
           </h2>
-          <p style={{ fontSize: 13, color: '#556677', lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: '#778899', lineHeight: 1.6 }}>
             {mode === 'login'
               ? 'Acesse o painel de manejo hídrico da sua operação.'
               : 'Configure seus pivôs e comece a irrigar com precisão.'}
@@ -349,7 +349,7 @@ export default function LoginPage() {
                 Nome completo
               </label>
               <div style={{ position: 'relative' }}>
-                <User size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
+                <User size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
                 <input
                   type="text"
                   value={name}
@@ -374,7 +374,7 @@ export default function LoginPage() {
               E-mail
             </label>
             <div style={{ position: 'relative' }}>
-              <Mail size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
+              <Mail size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
               <input
                 type="email"
                 value={email}
@@ -398,7 +398,7 @@ export default function LoginPage() {
               Senha
             </label>
             <div style={{ position: 'relative' }}>
-              <LockKeyhole size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#556677', pointerEvents: 'none' }} />
+              <LockKeyhole size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -419,7 +419,7 @@ export default function LoginPage() {
                 onClick={() => setShowPassword(v => !v)}
                 style={{
                   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                  padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: '#556677',
+                  padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: '#778899',
                 }}
               >
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -455,7 +455,7 @@ export default function LoginPage() {
         </form>
 
         {/* Footer */}
-        <div style={{ marginTop: 32, textAlign: 'center', fontSize: 11, color: '#556677' }}>
+        <div style={{ marginTop: 32, textAlign: 'center', fontSize: 11, color: '#778899' }}>
           Ao continuar, você concorda com os termos de uso do IrrigaAgro.
         </div>
       </div>

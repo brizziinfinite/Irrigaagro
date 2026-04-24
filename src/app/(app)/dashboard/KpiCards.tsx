@@ -47,7 +47,7 @@ export function KpiCards({ summary }: KpiCardsProps) {
       value: String(summary.pivotsWithAlerts),
       unit: summary.pivotsWithAlerts === 1 ? 'pivô' : 'pivôs',
       subtitle: 'Atenção operacional',
-      color: summary.pivotsWithAlerts > 0 ? '#ef4444' : '#556677',
+      color: summary.pivotsWithAlerts > 0 ? '#ef4444' : '#778899',
       Icon: AlertTriangle,
     },
   ]
@@ -77,7 +77,7 @@ export function KpiCards({ summary }: KpiCardsProps) {
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.09em',
-              color: '#445566',
+              color: '#667788',
               lineHeight: 1.4,
             }}>
               {label}
@@ -103,10 +103,10 @@ export function KpiCards({ summary }: KpiCardsProps) {
             }}>
               {value}
             </span>
-            <span style={{ fontSize: 12, color: '#556677', fontWeight: 500 }}>{unit}</span>
+            <span style={{ fontSize: 12, color: '#778899', fontWeight: 500 }}>{unit}</span>
           </div>
 
-          <p style={{ fontSize: 11, color: '#445566', marginTop: 10, lineHeight: 1.4, fontWeight: 500 }}>{subtitle}</p>
+          <p style={{ fontSize: 11, color: '#667788', marginTop: 10, lineHeight: 1.4, fontWeight: 500 }}>{subtitle}</p>
         </div>
       ))}
     </div>

@@ -143,7 +143,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flex: 1, minHeight: 120, border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 12
         }}>
-          <p style={{ fontSize: 13, color: '#556677' }}>Nenhum pivô online.</p>
+          <p style={{ fontSize: 13, color: '#778899' }}>Nenhum pivô online.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, overflowY: 'auto' }}>
@@ -226,14 +226,14 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                   {/* Projeção: irrigar em X dias */}
                   {proj && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
-                      <span style={{ fontSize: 10, color: '#556677' }}>
+                      <span style={{ fontSize: 10, color: '#778899' }}>
                         Irrigar em{' '}
                         <span style={{ color: proj.daysAway <= 2 ? '#f59e0b' : '#8899aa', fontWeight: 700 }}>
                           {proj.daysAway === 1 ? 'amanhã' : `${proj.daysAway} dias`}
                         </span>
                       </span>
                       {proj.projectedDepthMm > 0 && (
-                        <span style={{ fontSize: 10, color: '#556677' }}>
+                        <span style={{ fontSize: 10, color: '#778899' }}>
                           · {proj.projectedDepthMm.toFixed(1)} mm
                         </span>
                       )}
@@ -251,7 +251,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
 
                   {/* Nenhum dado disponível */}
                   {!mgmt && (
-                    <span style={{ fontSize: 10, color: '#445566' }}>Sem balanço hoje</span>
+                    <span style={{ fontSize: 10, color: '#667788' }}>Sem balanço hoje</span>
                   )}
                 </div>
 
@@ -325,7 +325,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                       : status === 'atencao'
                         ? '1px solid rgba(245,158,11,0.4)'
                         : '1px solid rgba(255,255,255,0.08)',
-                    color: status === 'critico' ? '#ef4444' : status === 'atencao' ? '#f59e0b' : '#556677',
+                    color: status === 'critico' ? '#ef4444' : status === 'atencao' ? '#f59e0b' : '#778899',
                     textDecoration: 'none', transition: 'all 0.2s',
                   }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

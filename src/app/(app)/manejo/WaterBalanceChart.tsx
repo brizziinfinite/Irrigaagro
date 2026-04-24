@@ -69,7 +69,7 @@ function CustomTooltip({ active, payload, label, lineSeg, lineCrit, cc, pm }: an
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, paddingBottom: 5, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>{label}</p>
         {dasVal !== null && (
-          <span style={{ fontSize: 10, color: '#445566', background: 'rgba(255,255,255,0.04)', borderRadius: 4, padding: '1px 5px' }}>
+          <span style={{ fontSize: 10, color: '#667788', background: 'rgba(255,255,255,0.04)', borderRadius: 4, padding: '1px 5px' }}>
             DAS {dasVal}
           </span>
         )}
@@ -92,7 +92,7 @@ function CustomTooltip({ active, payload, label, lineSeg, lineCrit, cc, pm }: an
             {isUmid && fcPct !== null && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 2 }}>
                 <div style={{ width: 7, height: 7, flexShrink: 0 }} />
-                <span style={{ fontSize: 11, color: '#445566', flex: 1 }}>% da CC:</span>
+                <span style={{ fontSize: 11, color: '#667788', flex: 1 }}>% da CC:</span>
                 <span style={{ fontSize: 12, color: color, fontWeight: 700, fontFamily: 'monospace' }}>
                   {fcPct.toFixed(0)}%
                 </span>
@@ -247,7 +247,7 @@ export default function WaterBalanceChart({
             { color: 'rgba(180,210,255,0.7)', bar: true,  label: 'Chuva'       },
             ...(hasIrrigation ? [{ color: 'rgba(0,147,208,0.8)', bar: true, label: 'Irrigação' }] : []),
           ].map(({ color, dashed, bar, label }) => (
-            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#445566' }}>
+            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#667788' }}>
               {bar
                 ? <div style={{ width: 7, height: 10, background: color, borderRadius: '2px 2px 0 0' }} />
                 : dashed
@@ -278,7 +278,7 @@ export default function WaterBalanceChart({
           </span>
         )}
         {hasVolAxis && (
-          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#334455' }}>
+          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#778899' }}>
             CC {cc!.toFixed(1)}% · PM {pm!.toFixed(1)}%
           </span>
         )}
@@ -350,7 +350,7 @@ export default function WaterBalanceChart({
               yAxisId="left"
               orientation="left"
               stroke="transparent"
-              tick={{ fill: '#334455', fontSize: 10 }}
+              tick={{ fill: '#778899', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
               width={28}
@@ -360,7 +360,7 @@ export default function WaterBalanceChart({
               orientation="right"
               domain={yDomain}
               stroke="transparent"
-              tick={{ fill: '#334455', fontSize: 10 }}
+              tick={{ fill: '#778899', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
               width={38}
@@ -369,7 +369,7 @@ export default function WaterBalanceChart({
             <XAxis
               dataKey="dateLabel"
               stroke="transparent"
-              tick={{ fill: '#334455', fontSize: 10 }}
+              tick={{ fill: '#778899', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
               dy={6}

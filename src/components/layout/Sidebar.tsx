@@ -149,7 +149,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           {/* OPERACIONAL */}
           <p style={{
             fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.09em', color: '#445566',
+            letterSpacing: '0.09em', color: '#667788',
             padding: '0 12px 10px', margin: '0 0 2px',
           }}>
             Operacional
@@ -163,7 +163,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           {/* CONFIGURAÇÃO */}
           <p style={{
             fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.09em', color: '#445566',
+            letterSpacing: '0.09em', color: '#667788',
             padding: '14px 12px 10px', margin: '0 0 2px',
             borderTop: '1px solid rgba(255,255,255,0.05)',
           }}>
@@ -219,7 +219,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             <p style={{ fontSize: 12, fontWeight: 500, color: '#e2e8f0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.email?.split('@')[0] || 'Usuário'}
             </p>
-            <p style={{ fontSize: 10, color: '#556677', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: 10, color: '#778899', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.email || ''}
             </p>
           </div>

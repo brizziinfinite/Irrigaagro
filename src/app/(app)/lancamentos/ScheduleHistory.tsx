@@ -162,9 +162,9 @@ function CancelModal({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Cancelar irrigação</p>
-            <p style={{ fontSize: 12, color: '#445566', margin: '2px 0 0' }}>{pivotName} · {fmtDateLong(schedule.date)}</p>
+            <p style={{ fontSize: 12, color: '#667788', margin: '2px 0 0' }}>{pivotName} · {fmtDateLong(schedule.date)}</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#445566', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#667788', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -323,10 +323,10 @@ function WhatsAppModal({
             </div>
             <div>
               <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Enviar por WhatsApp</p>
-              <p style={{ fontSize: 11, color: '#445566', margin: 0 }}>{schedules.length} programação(ões)</p>
+              <p style={{ fontSize: 11, color: '#667788', margin: 0 }}>{schedules.length} programação(ões)</p>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#445566', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#667788', cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -336,7 +336,7 @@ function WhatsAppModal({
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 18 }}>
           {contacts.length === 0 ? (
-            <p style={{ fontSize: 12, color: '#445566', margin: 0 }}>Nenhum contato cadastrado em WhatsApp.</p>
+            <p style={{ fontSize: 12, color: '#667788', margin: 0 }}>Nenhum contato cadastrado em WhatsApp.</p>
           ) : contacts.map(c => {
             const sel = selectedIds.has(c.id)
             return (
@@ -363,7 +363,7 @@ function WhatsAppModal({
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>{c.contact_name}</p>
-                  <p style={{ fontSize: 11, color: '#556677', margin: 0 }}>+{c.phone}</p>
+                  <p style={{ fontSize: 11, color: '#778899', margin: 0 }}>+{c.phone}</p>
                 </div>
               </button>
             )
@@ -789,9 +789,9 @@ function RescheduleModal({
               </div>
               <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>{alreadyCancelled ? 'Reprogramar' : 'Cancelar + Reprogramar'}</p>
             </div>
-            <p style={{ fontSize: 12, color: '#445566', margin: 0, paddingLeft: 40 }}>{pivotName}</p>
+            <p style={{ fontSize: 12, color: '#667788', margin: 0, paddingLeft: 40 }}>{pivotName}</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#445566', cursor: 'pointer', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#667788', cursor: 'pointer', padding: 4 }}>
             <X size={18} />
           </button>
         </div>
@@ -843,7 +843,7 @@ function RescheduleModal({
           }}
         />
         {fmtPreview && (
-          <p style={{ fontSize: 11, color: '#445566', margin: '0 0 20px', fontStyle: 'italic' }}>
+          <p style={{ fontSize: 11, color: '#667788', margin: '0 0 20px', fontStyle: 'italic' }}>
             O grid abrirá zerado a partir de <strong style={{ color: '#0093D0' }}>{fmtPreview}</strong>. Programações existentes nessa semana serão removidas.
           </p>
         )}
@@ -958,9 +958,9 @@ function BatchCard({
         {/* Pivô + data criação */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: '#c8d8e8', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {pivotName} <span style={{ color: '#445566', fontWeight: 400, fontSize: 11 }}>— {farmName}</span>
+            {pivotName} <span style={{ color: '#667788', fontWeight: 400, fontSize: 11 }}>— {farmName}</span>
           </p>
-          <p style={{ fontSize: 11, color: '#445566', margin: '1px 0 0' }}>
+          <p style={{ fontSize: 11, color: '#667788', margin: '1px 0 0' }}>
             Feita em {fmtDateTime(createdAt)} &nbsp;·&nbsp;
             {dateFrom === dateTo ? fmtDate(dateFrom) : `${fmtDate(dateFrom)} → ${fmtDate(dateTo)}`}
             &nbsp;·&nbsp; {rows.length} dia(s)
@@ -971,14 +971,14 @@ function BatchCard({
         <div style={{ display: 'flex', gap: 14, flexShrink: 0 }}>
           {avgLamina > 0 && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 8, color: '#445566', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Média</p>
+              <p style={{ fontSize: 8, color: '#667788', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Média</p>
               <p style={{ fontSize: 12, fontWeight: 700, color: '#0093D0', margin: 0, fontFamily: 'var(--font-mono)' }}>
                 {avgLamina.toFixed(1)}mm
               </p>
             </div>
           )}
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: 8, color: '#445566', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dias</p>
+            <p style={{ fontSize: 8, color: '#667788', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dias</p>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0', margin: 0, fontFamily: 'var(--font-mono)' }}>
               {planned > 0 && <span style={{ color: '#0093D0' }}>{planned}▶ </span>}
               {done > 0 && <span style={{ color: '#22c55e' }}>{done}✓ </span>}
@@ -1054,7 +1054,7 @@ function BatchCard({
           </button>
         </div>
 
-        <div style={{ color: '#334455', flexShrink: 0 }}>
+        <div style={{ color: '#778899', flexShrink: 0 }}>
           {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>
       </div>
@@ -1092,7 +1092,7 @@ function BatchCard({
 
                   {/* Setor */}
                   {s.sector_id && (
-                    <span style={{ fontSize: 10, color: '#556677', background: 'rgba(255,255,255,0.04)', padding: '1px 6px', borderRadius: 4 }}>
+                    <span style={{ fontSize: 10, color: '#778899', background: 'rgba(255,255,255,0.04)', padding: '1px 6px', borderRadius: 4 }}>
                       setor
                     </span>
                   )}
@@ -1420,7 +1420,7 @@ export function ScheduleHistory({
                           }}>
                           <span style={{
                             width: 13, height: 13, borderRadius: 3, flexShrink: 0,
-                            border: `2px solid ${selected ? '#0093D0' : '#445566'}`,
+                            border: `2px solid ${selected ? '#0093D0' : '#667788'}`,
                             background: selected ? '#0093D0' : 'transparent',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
@@ -1433,7 +1433,7 @@ export function ScheduleHistory({
                           <span style={{ fontSize: 12, fontWeight: selected ? 700 : 400, color: selected ? '#c8d8e8' : '#667788' }}>
                             {b.pivotName}
                           </span>
-                          <span style={{ fontSize: 10, color: selected ? '#0093D0' : '#445566' }}>
+                          <span style={{ fontSize: 10, color: selected ? '#0093D0' : '#667788' }}>
                             {b.dateRange} · {b.days}d
                           </span>
                         </button>
@@ -1465,7 +1465,7 @@ export function ScheduleHistory({
                           }}>
                           <span style={{
                             width: 13, height: 13, borderRadius: 3, flexShrink: 0,
-                            border: `2px solid ${selected ? '#0093D0' : '#445566'}`,
+                            border: `2px solid ${selected ? '#0093D0' : '#667788'}`,
                             background: selected ? '#0093D0' : 'transparent',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
@@ -1548,13 +1548,13 @@ export function ScheduleHistory({
             <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
               Histórico de Programações
             </p>
-            <p style={{ fontSize: 11, color: '#445566', margin: 0 }}>
+            <p style={{ fontSize: 11, color: '#667788', margin: 0 }}>
               {expanded && batches.length > 0
                 ? `${batches.length} programação(ões) encontrada(s)`
                 : 'Clique para ver programações salvas'}
             </p>
           </div>
-          <div style={{ color: '#334455', flexShrink: 0 }}>
+          <div style={{ color: '#778899', flexShrink: 0 }}>
             {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </div>
         </div>
@@ -1581,7 +1581,7 @@ export function ScheduleHistory({
                     ))}
                   </select>
                 )}
-                <span style={{ fontSize: 11, color: '#445566' }}>
+                <span style={{ fontSize: 11, color: '#667788' }}>
                   {batches.length} programação(ões)
                 </span>
               </div>
@@ -1608,9 +1608,9 @@ export function ScheduleHistory({
 
             {/* Lista de lotes */}
             {loading ? (
-              <div style={{ padding: '24px 0', textAlign: 'center', color: '#445566', fontSize: 13 }}>Carregando…</div>
+              <div style={{ padding: '24px 0', textAlign: 'center', color: '#667788', fontSize: 13 }}>Carregando…</div>
             ) : batches.length === 0 ? (
-              <div style={{ padding: '24px 0', textAlign: 'center', color: '#445566', fontSize: 13 }}>
+              <div style={{ padding: '24px 0', textAlign: 'center', color: '#667788', fontSize: 13 }}>
                 Nenhuma programação encontrada.
               </div>
             ) : (

@@ -187,7 +187,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap',
         gap: 10, padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,0.05)',
       }}>
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#556677' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#778899' }}>
           Recomendações 7 dias
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -241,7 +241,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
 
       {/* ─── Loading / Error ─── */}
       {loading && (
-        <div style={{ padding: 40, textAlign: 'center', color: '#556677', fontSize: 13 }}>
+        <div style={{ padding: 40, textAlign: 'center', color: '#778899', fontSize: 13 }}>
           Carregando previsão do tempo…
         </div>
       )}
@@ -287,7 +287,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                       minWidth: 72,
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                        <span style={{ fontSize: 9, color: '#445566', textTransform: 'capitalize', fontWeight: 600, letterSpacing: '0.05em' }}>{weekday}</span>
+                        <span style={{ fontSize: 9, color: '#667788', textTransform: 'capitalize', fontWeight: 600, letterSpacing: '0.05em' }}>{weekday}</span>
                         <span style={{ fontSize: 11, fontWeight: 700, color: '#7788aa', fontFamily: 'var(--font-mono)' }}>{dayLabel}</span>
                         {forecast ? (
                           <>
@@ -298,11 +298,11 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                               </span>
                             )}
                             {forecast.rainfall === 0 && (
-                              <span style={{ fontSize: 9, color: '#334455' }}>0mm</span>
+                              <span style={{ fontSize: 9, color: '#778899' }}>0mm</span>
                             )}
                           </>
                         ) : (
-                          <span style={{ fontSize: 9, color: '#334455' }}>—</span>
+                          <span style={{ fontSize: 9, color: '#778899' }}>—</span>
                         )}
                       </div>
                     </th>
@@ -314,7 +314,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: 36, textAlign: 'center', color: '#445566', fontSize: 13 }}>
+                  <td colSpan={8} style={{ padding: 36, textAlign: 'center', color: '#667788', fontSize: 13 }}>
                     Nenhuma safra ativa com dados suficientes.
                   </td>
                 </tr>
@@ -336,11 +336,11 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                         {rec.pivotName}
                       </p>
                     </Link>
-                    <p style={{ fontSize: 10, color: '#445566', margin: 0, marginTop: 3, whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 10, color: '#667788', margin: 0, marginTop: 3, whiteSpace: 'nowrap' }}>
                       {rec.farmName}
                     </p>
                     {rec.lastUpdated && (
-                      <p style={{ fontSize: 9, color: '#334455', margin: 0, marginTop: 2 }}>
+                      <p style={{ fontSize: 9, color: '#778899', margin: 0, marginTop: 2 }}>
                         {new Date(rec.lastUpdated + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                       </p>
                     )}
@@ -424,7 +424,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
             return (
               <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.text, display: 'inline-block', flexShrink: 0, boxShadow: `0 0 6px ${c.text}60` }} />
-                <span style={{ fontSize: 10, color: '#556677', fontWeight: 500 }}>{label}</span>
+                <span style={{ fontSize: 10, color: '#778899', fontWeight: 500 }}>{label}</span>
               </div>
             )
           })}
