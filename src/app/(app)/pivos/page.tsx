@@ -248,6 +248,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
   const [bulkDensity, setBulkDensity]     = useState(pivot?.bulk_density?.toString() ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   // Stable callback so PivotMiniMap's useEffect doesn't re-run on every render (REGRA #3)
   const handleLocationChange = useCallback((lat: number, lng: number) => {
@@ -545,8 +546,35 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             />
           </div>
 
-          {/* Preview tabela ao vivo */}
-          {previewTable && <SpeedTable rows={previewTable} />}
+          {/* Resumo da tabela ao vivo */}
+          {previewTable && (
+            <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.12)', display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+              {previewTable.filter(r => [50, 75, 100].includes(r.speed_percent)).map(r => (
+                <span key={r.speed_percent} style={{ fontSize: 12, color: '#8899aa' }}>
+                  <span style={{ color: '#0093D0', fontWeight: 600 }}>{r.speed_percent}%</span> → {r.water_depth_mm.toFixed(1)} mm · {r.duration_hours.toFixed(1)} h
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Toggle configurações avançadas */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              width: '100%', padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+              background: showAdvanced ? 'rgba(0,147,208,0.06)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${showAdvanced ? 'rgba(0,147,208,0.18)' : 'rgba(255,255,255,0.06)'}`,
+              color: showAdvanced ? '#0093D0' : '#8899aa', transition: 'all 0.2s',
+            }}
+          >
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Localização, setores, alertas e parâmetros avançados</span>
+            <ChevronRight size={14} style={{ transform: showAdvanced ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+          </button>
+
+          {showAdvanced && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Separador localização */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
@@ -1028,6 +1056,9 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             Esses valores ficam no pivô e são usados no balanço hídrico. Você ainda pode sobrescrevê-los por safra, se necessário.
           </p>
 
+          </div>
+          )} {/* fim showAdvanced */}
+
           {/* Botões */}
           <div className="flex gap-3 mt-2">
             <button
@@ -1047,13 +1078,13 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               disabled={loading}
               onClick={e => { e.preventDefault(); e.stopPropagation(); handleSubmit(e as unknown as React.FormEvent) }}
               style={{
-                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 700, letterSpacing: '0.05em',
-                background: 'linear-gradient(135deg, #00E5FF 0%, #0077B6 100%)', border: 'none', color: '#fff', cursor: 'pointer',
+                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
                 opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                boxShadow: '0 4px 15px rgba(0, 229, 255, 0.3)', transition: 'all 0.2s', textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                boxShadow: '0 2px 8px rgba(0,147,208,0.25)', transition: 'all 0.2s',
               }}
-              onMouseEnter={e => { if(!loading) e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 229, 255, 0.5)' }}
-              onMouseLeave={e => { if(!loading) e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 229, 255, 0.3)' }}
+              onMouseEnter={e => { if(!loading) { e.currentTarget.style.background = '#0082bb'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,147,208,0.35)' } }}
+              onMouseLeave={e => { if(!loading) { e.currentTarget.style.background = '#0093D0'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,147,208,0.25)' } }}
             >
               {loading && <Loader2 size={14} className="animate-spin" />}
               {isEdit ? 'SALVAR PIVÔ' : 'CRIAR PIVÔ'}
@@ -1080,109 +1111,152 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
   const speedTable = (pivot.flow_rate_m3h && pivot.time_360_h && pivot.length_m)
     ? buildSpeedTable(pivot.flow_rate_m3h, pivot.time_360_h, pivot.length_m)
     : null
+  const hasTechnicalData = !!(pivot.length_m || pivot.flow_rate_m3h)
 
   return (
-    <div 
-      style={{ 
-        background: 'rgba(15, 25, 35, 0.65)', 
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.06)', 
+    <div
+      style={{
+        background: '#0f1923',
+        border: '1px solid rgba(255,255,255,0.06)',
         borderRadius: 14,
-        transition: 'all 0.3s ease',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
         cursor: 'default',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 229, 255, 0.08)'
-        e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.2)'
+        e.currentTarget.style.borderColor = 'rgba(0,147,208,0.2)'
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.25)'
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)'
         e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+        e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* Linha principal */}
-      <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-          background: 'rgba(0, 229, 255, 0.1)', border: '1px solid rgba(0, 229, 255, 0.3)',
-          boxShadow: 'inset 0 0 10px rgba(0, 229, 255, 0.1)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <CircleDot size={20} style={{ color: '#00E5FF', filter: 'drop-shadow(0 0 4px rgba(0,229,255,0.5))' }} />
-        </div>
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0' }}>{pivot.name}</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 3 }}>
-            {pivot.length_m && <span style={{ fontSize: 12, color: '#778899' }}>{pivot.length_m} m</span>}
-            {area && <span style={{ fontSize: 12, color: '#778899' }}>{area.toFixed(1)} ha</span>}
-            {pivot.flow_rate_m3h && <span style={{ fontSize: 12, color: '#778899' }}>{pivot.flow_rate_m3h} m³/h</span>}
-            {depth100 && <span style={{ fontSize: 12, color: '#00E5FF', fontWeight: 600 }}>100% → {depth100.toFixed(1)} mm</span>}
-            {pivot.cuc_percent && <span style={{ fontSize: 12, color: '#778899' }}>CUC {pivot.cuc_percent}%</span>}
-            {pivot.latitude && pivot.longitude && (
-              <span style={{ fontSize: 12, color: '#778899', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <MapPin size={10} />
-                {pivot.latitude.toFixed(4)}, {pivot.longitude.toFixed(4)}
-              </span>
+      <div style={{ padding: '18px 20px' }}>
+        {/* Linha 1 — nome + ações */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+              background: 'rgba(0,147,208,0.1)', border: '1px solid rgba(0,147,208,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <CircleDot size={16} style={{ color: '#0093D0' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>{pivot.name}</p>
+              {pivot.farms?.name && (
+                <p style={{ fontSize: 11, color: '#8899aa', margin: '2px 0 0' }}>{pivot.farms.name}</p>
+              )}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {speedTable && (
+              <button
+                onClick={() => setExpanded(v => !v)}
+                title="Ver tabela de velocidade"
+                style={{ padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(0,147,208,0.2)', cursor: 'pointer', background: 'rgba(0,147,208,0.06)', color: '#0093D0', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 500 }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,147,208,0.12)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,147,208,0.06)'}
+              >
+                <Table2 size={12} />
+                <span>Tabela</span>
+                <ChevronRight size={11} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
+              </button>
             )}
-            {pivot.weather_source && pivot.weather_source !== 'manual' && (
-              <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(0, 229, 255, 0.08)', border: '1px solid rgba(0, 229, 255, 0.25)', color: '#00E5FF', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 500 }}>
-                {pivot.weather_source === 'nasa' ? <Satellite size={10} /> : pivot.weather_source === 'plugfield' ? <Radio size={10} /> : <Sheet size={10} />}
-                {pivot.weather_source === 'nasa' ? 'NASA POWER' : pivot.weather_source === 'plugfield' ? 'Plugfield' : 'Google Sheets'}
-              </span>
-            )}
-            {pivot.sectorCount != null && pivot.sectorCount > 0 && (
-              <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(0, 229, 255, 0.06)', border: '1px solid rgba(0, 229, 255, 0.15)', color: '#00E5FF', fontWeight: 500 }}>
-                {pivot.sectorCount} {pivot.sectorCount === 1 ? 'setor' : 'setores'}
-              </span>
-            )}
-            {pivot.operation_mode === 'conjugated' && (
-              <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 20, background: 'rgb(245 158 11 / 0.08)', border: '1px solid rgb(245 158 11 / 0.2)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <Link2 size={9} />
-                Conjugado · {pivot.return_interval_days}d
-              </span>
-            )}
-            {!pivot.length_m && !pivot.flow_rate_m3h && (
-              <span style={{ fontSize: 12, color: '#778899' }}>Dados técnicos não informados</span>
-            )}
+            <button
+              onClick={onEdit}
+              title="Editar"
+              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
+            >
+              <Pencil size={14} />
+            </button>
+            <button
+              onClick={onDelete}
+              disabled={deleting}
+              title="Excluir"
+              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
+            >
+              {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            </button>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {speedTable && (
-            <button
-              onClick={() => setExpanded(v => !v)}
-              title="Ver tabela de velocidade"
-              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', color: '#00E5FF', display: 'flex', alignItems: 'center', gap: 4, transition: 'background 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 229, 255, 0.1)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-            >
-              <Table2 size={14} />
-              <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
-            </button>
+        {/* Linha 2 — stats dominantes */}
+        {hasTechnicalData && (
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            {area != null && (
+              <div style={{ background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.12)', borderRadius: 10, padding: '10px 16px', minWidth: 90, textAlign: 'center' }}>
+                <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', margin: 0, lineHeight: 1 }}>{area.toFixed(0)}</p>
+                <p style={{ fontSize: 10, color: '#8899aa', margin: '3px 0 0', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>ha</p>
+              </div>
+            )}
+            {depth100 != null && (
+              <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.12)', borderRadius: 10, padding: '10px 16px', minWidth: 90, textAlign: 'center' }}>
+                <p style={{ fontSize: 22, fontWeight: 700, color: '#22c55e', margin: 0, lineHeight: 1 }}>{depth100.toFixed(1)}</p>
+                <p style={{ fontSize: 10, color: '#8899aa', margin: '3px 0 0', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>mm / 100%</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Linha 3 — dados secundários */}
+        {hasTechnicalData && (pivot.flow_rate_m3h || pivot.time_360_h) && (
+          <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
+            {pivot.flow_rate_m3h && (
+              <span style={{ fontSize: 12, color: '#8899aa' }}>
+                <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{pivot.flow_rate_m3h}</span> m³/h
+              </span>
+            )}
+            {pivot.time_360_h && (
+              <span style={{ fontSize: 12, color: '#8899aa' }}>
+                <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{pivot.time_360_h}</span> h / 360°
+              </span>
+            )}
+            {pivot.length_m && (
+              <span style={{ fontSize: 12, color: '#8899aa' }}>
+                <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{pivot.length_m}</span> m braço
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Linha 4 — badges e metadados */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+          {pivot.cuc_percent && (
+            <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa' }}>
+              CUC {pivot.cuc_percent}%
+            </span>
           )}
-          <button
-            onClick={onEdit}
-            title="Editar"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            onClick={onDelete}
-            disabled={deleting}
-            title="Excluir"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
-          >
-            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-          </button>
+          {pivot.latitude && pivot.longitude && (
+            <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MapPin size={9} />
+              {pivot.latitude.toFixed(4)}, {pivot.longitude.toFixed(4)}
+            </span>
+          )}
+          {pivot.weather_source && pivot.weather_source !== 'manual' && (
+            <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.15)', color: '#0093D0', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 500 }}>
+              {pivot.weather_source === 'nasa' ? <Satellite size={9} /> : pivot.weather_source === 'plugfield' ? <Radio size={9} /> : <Sheet size={9} />}
+              {pivot.weather_source === 'nasa' ? 'NASA POWER' : pivot.weather_source === 'plugfield' ? 'Plugfield' : 'Google Sheets'}
+            </span>
+          )}
+          {pivot.sectorCount != null && pivot.sectorCount > 0 && (
+            <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.15)', color: '#0093D0', fontWeight: 500 }}>
+              {pivot.sectorCount} {pivot.sectorCount === 1 ? 'setor' : 'setores'}
+            </span>
+          )}
+          {pivot.operation_mode === 'conjugated' && (
+            <span style={{ fontSize: 11, padding: '3px 8px', borderRadius: 20, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Link2 size={9} />
+              Conjugado · {pivot.return_interval_days}d
+            </span>
+          )}
+          {!hasTechnicalData && (
+            <span style={{ fontSize: 12, color: '#556677', fontStyle: 'italic' }}>Dados técnicos não informados</span>
+          )}
         </div>
       </div>
 
@@ -1275,16 +1349,15 @@ export default function PivosPage() {
             title={farms.length === 0 ? 'Cadastre uma fazenda primeiro' : undefined}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
-              padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, letterSpacing: '0.05em',
-              background: farms.length === 0 ? '#1a222c' : 'linear-gradient(135deg, #00E5FF, #0077B6)',
+              padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              background: farms.length === 0 ? '#1a222c' : '#0093D0',
               border: 'none', color: farms.length === 0 ? '#778899' : '#fff',
               cursor: farms.length === 0 ? 'not-allowed' : 'pointer',
-              boxShadow: farms.length === 0 ? 'none' : '0 4px 15px rgba(0,229,255,0.3)',
-              textShadow: farms.length === 0 ? 'none' : '0 1px 2px rgba(0,0,0,0.5)',
+              boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgba(0,147,208,0.25)',
               transition: 'all 0.2s'
             }}
-            onMouseEnter={e => { if(farms.length !== 0) e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 229, 255, 0.5)' }}
-            onMouseLeave={e => { if(farms.length !== 0) e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 229, 255, 0.3)' }}
+            onMouseEnter={e => { if(farms.length !== 0) { e.currentTarget.style.background = '#0082bb'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,147,208,0.35)' } }}
+            onMouseLeave={e => { if(farms.length !== 0) { e.currentTarget.style.background = '#0093D0'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,147,208,0.25)' } }}
           >
             <Plus size={16} />
             Novo Pivô
