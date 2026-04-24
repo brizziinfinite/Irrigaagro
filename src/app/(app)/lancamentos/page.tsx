@@ -459,46 +459,67 @@ function ConfirmacaoDiaria({
       borderRadius: 16, padding: '24px 28px', marginBottom: 28,
       boxShadow: pending.length > 0 ? '0 4px 32px rgba(245,158,11,0.08)' : '0 4px 32px rgba(34,197,94,0.06)',
     }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* Mini-hero: stat strip + header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
+        {/* Lado esquerdo: título + número âncora + subtítulo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 12,
+            width: 44, height: 44, borderRadius: 12,
             background: pending.length > 0 ? 'rgba(245,158,11,0.18)' : 'rgba(34,197,94,0.18)',
             border: `1px solid ${pending.length > 0 ? 'rgba(245,158,11,0.4)' : 'rgba(34,197,94,0.4)'}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M9 11l3 3L22 4" stroke={pending.length > 0 ? '#f59e0b' : '#22c55e'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke={pending.length > 0 ? '#f59e0b' : '#22c55e'} strokeWidth="2.2" strokeLinecap="round"/>
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.01em' }}>
-              {pending.length > 0 ? 'Confirmar irrigações de hoje' : 'Irrigações confirmadas'}
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+              Execução de hoje
             </div>
-            <div style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              {(() => {
+                const totalMm = rows.reduce((sum, r) => sum + (r.plannedMm ?? 0), 0)
+                return totalMm > 0 ? (
+                  <>
+                    <span style={{ fontSize: 44, fontWeight: 800, color: '#e2e8f0', fontFamily: 'monospace', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                      {totalMm % 1 === 0 ? totalMm : totalMm.toFixed(1)}
+                    </span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: '#556677' }}>mm</span>
+                  </>
+                ) : null
+              })()}
+            </div>
+            <div style={{ fontSize: 12, color: pending.length > 0 ? '#f59e0b' : '#22c55e', marginTop: 4, fontWeight: 600 }}>
               {pending.length > 0
-                ? `${pending.length} pendente${pending.length > 1 ? 's' : ''} de confirmação`
-                : `${done.length} irrigação${done.length > 1 ? 'ões' : ''} registrada${done.length > 1 ? 's' : ''}`}
+                ? `${pending.length} irrigação${pending.length > 1 ? 'ões' : ''} pendente${pending.length > 1 ? 's' : ''}`
+                : `${done.length} irrigação${done.length !== 1 ? 'ões' : ''} confirmada${done.length !== 1 ? 's' : ''}`}
             </div>
           </div>
         </div>
-        {pending.length > 1 && (
+        {/* Lado direito: botão Confirmar todas */}
+        {pending.length > 0 && (
           <button
             onClick={confirmAll}
             disabled={saving}
             style={{
-              padding: '11px 24px', borderRadius: 10, fontSize: 13, fontWeight: 800,
-              background: saving
-                ? 'rgba(245,158,11,0.08)'
-                : 'linear-gradient(135deg, rgba(245,158,11,0.25) 0%, rgba(245,158,11,0.15) 100%)',
-              border: '1px solid rgba(245,158,11,0.5)',
-              color: '#f59e0b', cursor: saving ? 'not-allowed' : 'pointer',
-              letterSpacing: '0.02em',
-              boxShadow: saving ? 'none' : '0 2px 12px rgba(245,158,11,0.12)',
-            }}>
-            {saving ? 'Confirmando…' : `✓ Confirmar todas (${pending.length})`}
+              padding: '13px 28px', borderRadius: 10, fontSize: 14, fontWeight: 800,
+              background: saving ? 'rgba(245,158,11,0.2)' : '#f59e0b',
+              border: 'none',
+              color: saving ? '#f59e0b' : '#0a0f14',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              letterSpacing: '0.01em',
+              boxShadow: saving ? 'none' : '0 4px 20px rgba(245,158,11,0.35)',
+              transition: 'transform 0.15s, box-shadow 0.15s',
+              alignSelf: 'center',
+            }}
+            onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.02)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
+            onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.98)' }}
+            onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.02)' }}
+          >
+            {saving ? 'Confirmando…' : pending.length > 1 ? `✓ Confirmar todas (${pending.length})` : '✓ Confirmar irrigação'}
           </button>
         )}
       </div>
@@ -2103,11 +2124,11 @@ export default function LancamentosPage() {
                 </svg>
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#8899aa' }}>Histórico de Programações</div>
-                <div style={{ fontSize: 11, color: '#445566', marginTop: 1 }}>Lotes anteriores, impressão e envio WhatsApp</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#667788' }}>Histórico de Programações</div>
+                <div style={{ fontSize: 11, color: '#334455', marginTop: 1 }}>Lotes anteriores, impressão e envio WhatsApp</div>
               </div>
             </div>
-            <div style={{ color: '#445566', flexShrink: 0 }}>
+            <div style={{ color: '#334455', flexShrink: 0 }}>
               {historyOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
           </button>
