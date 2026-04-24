@@ -455,29 +455,32 @@ function ConfirmacaoDiaria({
   return (
     <div style={{
       background: 'linear-gradient(135deg, #0a1628 0%, #0d1e2e 100%)',
-      border: pending.length > 0 ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(34,197,94,0.2)',
-      borderRadius: 16, padding: 20, marginBottom: 24,
+      border: pending.length > 0 ? '2px solid rgba(245,158,11,0.45)' : '2px solid rgba(34,197,94,0.35)',
+      borderRadius: 16, padding: '24px 28px', marginBottom: 28,
+      boxShadow: pending.length > 0 ? '0 4px 32px rgba(245,158,11,0.08)' : '0 4px 32px rgba(34,197,94,0.06)',
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 30, height: 30, borderRadius: 9,
-            background: pending.length > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(34,197,94,0.15)',
-            border: `1px solid ${pending.length > 0 ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)'}`,
+            width: 40, height: 40, borderRadius: 12,
+            background: pending.length > 0 ? 'rgba(245,158,11,0.18)' : 'rgba(34,197,94,0.18)',
+            border: `1px solid ${pending.length > 0 ? 'rgba(245,158,11,0.4)' : 'rgba(34,197,94,0.4)'}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M9 11l3 3L22 4" stroke={pending.length > 0 ? '#f59e0b' : '#22c55e'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke={pending.length > 0 ? '#f59e0b' : '#22c55e'} strokeWidth="2" strokeLinecap="round"/>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M9 11l3 3L22 4" stroke={pending.length > 0 ? '#f59e0b' : '#22c55e'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke={pending.length > 0 ? '#f59e0b' : '#22c55e'} strokeWidth="2.2" strokeLinecap="round"/>
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>Confirmar irrigações</div>
-            <div style={{ fontSize: 11, color: '#556677', marginTop: 1 }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.01em' }}>
+              {pending.length > 0 ? 'Confirmar irrigações de hoje' : 'Irrigações confirmadas'}
+            </div>
+            <div style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>
               {pending.length > 0
                 ? `${pending.length} pendente${pending.length > 1 ? 's' : ''} de confirmação`
-                : 'Todas confirmadas'}
+                : `${done.length} irrigação${done.length > 1 ? 'ões' : ''} registrada${done.length > 1 ? 's' : ''}`}
             </div>
           </div>
         </div>
@@ -486,10 +489,14 @@ function ConfirmacaoDiaria({
             onClick={confirmAll}
             disabled={saving}
             style={{
-              padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-              background: saving ? 'rgba(245,158,11,0.08)' : 'rgba(245,158,11,0.15)',
-              border: '1px solid rgba(245,158,11,0.35)',
+              padding: '11px 24px', borderRadius: 10, fontSize: 13, fontWeight: 800,
+              background: saving
+                ? 'rgba(245,158,11,0.08)'
+                : 'linear-gradient(135deg, rgba(245,158,11,0.25) 0%, rgba(245,158,11,0.15) 100%)',
+              border: '1px solid rgba(245,158,11,0.5)',
               color: '#f59e0b', cursor: saving ? 'not-allowed' : 'pointer',
+              letterSpacing: '0.02em',
+              boxShadow: saving ? 'none' : '0 2px 12px rgba(245,158,11,0.12)',
             }}>
             {saving ? 'Confirmando…' : `✓ Confirmar todas (${pending.length})`}
           </button>
@@ -1092,20 +1099,22 @@ function PivotCard({
   return (
     <div style={{
       background: '#0f1923',
-      border: `1px solid ${expanded ? 'rgba(0,147,208,0.25)' : 'rgba(255,255,255,0.06)'}`,
+      border: `1px solid ${expanded ? 'rgba(0,147,208,0.3)' : 'rgba(255,255,255,0.07)'}`,
+      borderLeft: `3px solid ${expanded ? '#0093D0' : 'rgba(0,147,208,0.35)'}`,
       borderRadius: 14,
       overflow: 'hidden',
-      transition: 'border-color 0.15s',
+      transition: 'border-color 0.15s, box-shadow 0.15s',
+      boxShadow: expanded ? '0 4px 24px rgba(0,147,208,0.07)' : 'none',
     }}>
       {/* ── Cabeçalho (sempre visível) ── */}
       <div
         onClick={() => setExpanded(e => !e)}
-        style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', userSelect: 'none' }}
+        style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer', userSelect: 'none' }}
       >
         {/* Nome + fazenda */}
         <div style={{ flex: '1 1 140px', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>{name}</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.01em' }}>{name}</span>
             {scheduledCount > 0 && (
               <span style={{
                 fontSize: 9, fontWeight: 700, color: '#0093D0',
@@ -1311,11 +1320,11 @@ function PivotCard({
 
                 {/* ── TABELA COMPACTA ── */}
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 520 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 580 }}>
                     <thead>
                       <tr>
                         {/* Coluna de label */}
-                        <th style={{ width: 90, padding: '5px 8px', textAlign: 'left' }} />
+                        <th style={{ width: 100, padding: '6px 10px', textAlign: 'left' }} />
                         {displayDays.map(date => {
                           const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
                           const isToday = date === today
@@ -1343,20 +1352,22 @@ function PivotCard({
                           }
                           return (
                             <th key={date} style={{
-                              padding: '5px 6px', textAlign: 'center', minWidth: 72,
+                              padding: '8px 6px', textAlign: 'center', minWidth: 82,
                               background: isToday
-                                ? 'rgba(34,197,94,0.10)'
+                                ? 'rgba(34,197,94,0.14)'
                                 : isCancelled
                                   ? 'rgba(239,68,68,0.06)'
                                   : isPast ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)',
                               borderRadius: '6px 6px 0 0',
-                              borderBottom: `2px solid ${isToday ? '#22c55e' : isCancelled ? '#ef4444' : 'rgba(255,255,255,0.07)'}`,
+                              borderBottom: `3px solid ${isToday ? '#22c55e' : isCancelled ? '#ef4444' : 'rgba(255,255,255,0.07)'}`,
+                              borderLeft: isToday ? '1px solid rgba(34,197,94,0.18)' : undefined,
+                              borderRight: isToday ? '1px solid rgba(34,197,94,0.18)' : undefined,
                             }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                                 <div style={{ fontSize: 9, fontWeight: 800, color: isToday ? '#22c55e' : '#445566', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                                   {isToday ? 'Hoje' : fmtWeekday(date)}
                                 </div>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: isToday ? '#e2e8f0' : isPast ? '#445566' : '#8899aa', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: isToday ? '#e2e8f0' : isPast ? '#445566' : '#8899aa', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
                                   {fmtShort(date)}
                                 </div>
                                 {isCancelled && (
@@ -1371,13 +1382,13 @@ function PivotCard({
                     <tbody>
                       {/* Linha: % Campo (read-only, visual) */}
                       <tr>
-                        <td style={{ padding: '5px 8px 2px' }}>
+                        <td style={{ padding: '8px 10px 4px' }}>
                           <span style={{ fontSize: 9, color: '#445566', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>% Campo</span>
                         </td>
                         {displayDays.map(date => {
                           const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
                           if (isExtraDay) return (
-                            <td key={date} style={{ padding: '4px 6px', textAlign: 'center', background: 'rgba(245,158,11,0.03)' }}>
+                            <td key={date} style={{ padding: '6px 8px', textAlign: 'center', background: 'rgba(245,158,11,0.03)' }}>
                               <div style={{ fontSize: 11, color: '#334455' }}>—</div>
                             </td>
                           )
@@ -1387,7 +1398,7 @@ function PivotCard({
                           const c = pctColor(dayPct, threshold)
                           const pc = pctColor(projPct, threshold)
                           return (
-                            <td key={date} style={{ padding: '4px 6px', textAlign: 'center' }}>
+                            <td key={date} style={{ padding: '6px 8px', textAlign: 'center' }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                                 <WaterBar pct={dayPct} projPct={projPct} threshold={threshold} height={28} width={8} />
                                 <div>
@@ -1408,20 +1419,20 @@ function PivotCard({
 
                       {/* Linha: Chuva */}
                       <tr>
-                        <td style={{ padding: '4px 8px' }}>
+                        <td style={{ padding: '6px 10px' }}>
                           <span style={{ fontSize: 9, color: '#22d3ee', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>🌧 Chuva mm</span>
                         </td>
                         {displayDays.map(date => {
                           const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
                           if (isExtraDay) return (
-                            <td key={date} style={{ padding: '3px 6px', background: 'rgba(245,158,11,0.03)' }}>
+                            <td key={date} style={{ padding: '5px 8px', background: 'rgba(245,158,11,0.03)' }}>
                               <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div>
                             </td>
                           )
                           const entry = grid[date] ?? emptyEntry()
                           const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
                           return (
-                            <td key={date} style={{ padding: '3px 6px' }}>
+                            <td key={date} style={{ padding: '5px 8px' }}>
                               {isCancelled ? <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div> :
                                 cellInput(entry.rainfall, v => updateDayInSector(sid, date, 'rainfall', v), { color: '#22d3ee', bg: 'rgba(34,211,238,0.07)', placeholder: '0' })}
                             </td>
@@ -1431,20 +1442,20 @@ function PivotCard({
 
                       {/* Linha: Lâmina */}
                       <tr>
-                        <td style={{ padding: '4px 8px' }}>
+                        <td style={{ padding: '6px 10px' }}>
                           <span style={{ fontSize: 9, color: '#22c55e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>💧 Lâmina mm</span>
                         </td>
                         {displayDays.map(date => {
                           const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
                           if (isExtraDay) return (
-                            <td key={date} style={{ padding: '3px 6px', background: 'rgba(245,158,11,0.03)' }}>
+                            <td key={date} style={{ padding: '5px 8px', background: 'rgba(245,158,11,0.03)' }}>
                               <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div>
                             </td>
                           )
                           const entry = grid[date] ?? emptyEntry()
                           const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
                           return (
-                            <td key={date} style={{ padding: '3px 6px' }}>
+                            <td key={date} style={{ padding: '5px 8px' }}>
                               {isCancelled ? <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div> :
                                 cellInput(entry.lamina, v => handleLaminaInline(date, v), { color: '#22c55e', bg: 'rgba(34,197,94,0.10)', placeholder: '0' })}
                             </td>
@@ -1454,20 +1465,20 @@ function PivotCard({
 
                       {/* Linha: Velocidade */}
                       <tr>
-                        <td style={{ padding: '4px 8px' }}>
+                        <td style={{ padding: '6px 10px' }}>
                           <span style={{ fontSize: 9, color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>⚙ Vel %</span>
                         </td>
                         {displayDays.map(date => {
                           const isExtraDay = pivotExtraDay !== null && date === pivotExtraDay
                           if (isExtraDay) return (
-                            <td key={date} style={{ padding: '3px 6px', background: 'rgba(245,158,11,0.03)' }}>
+                            <td key={date} style={{ padding: '5px 8px', background: 'rgba(245,158,11,0.03)' }}>
                               <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div>
                             </td>
                           )
                           const entry = grid[date] ?? emptyEntry()
                           const isCancelled = schedulesForSector.find(s => s.date === date)?.status === 'cancelled'
                           return (
-                            <td key={date} style={{ padding: '3px 6px' }}>
+                            <td key={date} style={{ padding: '5px 8px' }}>
                               {isCancelled ? <div style={{ textAlign: 'center', color: '#334455', fontSize: 11 }}>—</div> :
                                 cellInput(entry.speed, v => handleSpeedInline(date, v), {
                                   color: entry.speedAuto && entry.speed ? '#f59e0b' : '#8899aa',
@@ -1481,7 +1492,7 @@ function PivotCard({
 
                       {/* Linha: Início */}
                       <tr>
-                        <td style={{ padding: '4px 8px' }}>
+                        <td style={{ padding: '6px 10px' }}>
                           <span style={{ fontSize: 9, color: '#e2e8f0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>▶ Início</span>
                         </td>
                         {displayDays.map(date => {
@@ -1499,7 +1510,7 @@ function PivotCard({
 
                       {/* Linha: Fim (read-only, calculado) */}
                       <tr>
-                        <td style={{ padding: '4px 8px 8px' }}>
+                        <td style={{ padding: '6px 10px 10px' }}>
                           <span style={{ fontSize: 9, color: '#f59e0b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>■ Fim</span>
                         </td>
                         {displayDays.map(date => {
@@ -1639,6 +1650,9 @@ export default function LancamentosPage() {
 
   // Estado de edição de lote: qual pivô + dados do lote estão sendo editados
   const [editBatch, setEditBatch] = useState<BatchEditPayload | null>(null)
+
+  // Histórico colapsável — inicia fechado
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   // Toast de sucesso
   const [successToast, setSuccessToast] = useState<string | null>(null)
@@ -1973,7 +1987,7 @@ export default function LancamentosPage() {
           <p style={{ color: '#445566', fontSize: 14 }}>Nenhuma safra ativa encontrada.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           {metas.map(meta => {
             const pivotId = meta.context.pivot?.id ?? ''
             const isEditTarget = editBatch?.pivotId === pivotId
@@ -2002,20 +2016,62 @@ export default function LancamentosPage() {
 
       {/* Histórico de programações + impressão + WhatsApp */}
       {metas.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <ScheduleHistory
-            key={historyKey}
-            companyId={company.id}
-            today={today}
-            metas={metas.map(m => m.context)}
-            sectorsMap={Object.fromEntries(metas.map(m => [m.context.pivot?.id ?? '', m.sectors]))}
-            onSchedulesChanged={load}
-            onEditBatch={payload => {
-              setEditBatch(payload)
-              window.scrollTo({ top: 0, behavior: 'smooth' })
+        <div style={{ marginTop: 24 }}>
+          {/* Toggle colapsável */}
+          <button
+            onClick={() => setHistoryOpen(o => !o)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 20px', borderRadius: historyOpen ? '12px 12px 0 0' : 12,
+              background: '#0f1923',
+              border: historyOpen ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.06)',
+              borderBottom: historyOpen ? '1px solid rgba(255,255,255,0.04)' : undefined,
+              cursor: 'pointer', textAlign: 'left',
             }}
-            onReschedule={handleReschedule}
-          />
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 8v4l3 3" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="12" r="9" stroke="#8b5cf6" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#8899aa' }}>Histórico de Programações</div>
+                <div style={{ fontSize: 11, color: '#445566', marginTop: 1 }}>Lotes anteriores, impressão e envio WhatsApp</div>
+              </div>
+            </div>
+            <div style={{ color: '#445566', flexShrink: 0 }}>
+              {historyOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </div>
+          </button>
+
+          {historyOpen && (
+            <div style={{
+              borderRadius: '0 0 12px 12px',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderTop: 'none',
+              overflow: 'hidden',
+            }}>
+              <ScheduleHistory
+                key={historyKey}
+                companyId={company.id}
+                today={today}
+                metas={metas.map(m => m.context)}
+                sectorsMap={Object.fromEntries(metas.map(m => [m.context.pivot?.id ?? '', m.sectors]))}
+                onSchedulesChanged={load}
+                onEditBatch={payload => {
+                  setEditBatch(payload)
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
+                onReschedule={handleReschedule}
+              />
+            </div>
+          )}
         </div>
       )}
 
