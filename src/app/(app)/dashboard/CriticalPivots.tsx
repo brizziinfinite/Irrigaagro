@@ -117,7 +117,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
             fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: '#e2e8f0',
           }}>
-            Radar Tático
+            Situação por Pivô
           </span>
         </div>
         {urgentCount > 0 && (
