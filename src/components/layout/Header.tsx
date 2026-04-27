@@ -42,14 +42,21 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
       <div className="flex items-center gap-3 min-w-0">
         {/* Botão mobile */}
         <button
-          className="md:hidden p-2 rounded-xl transition-colors"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="md:hidden flex items-center justify-center rounded-xl transition-colors"
+          style={{
+            color: 'var(--color-text-secondary)',
+            width: 44,
+            height: 44,
+            minWidth: 44,
+            border: '1px solid var(--color-surface-border)',
+            background: 'var(--color-surface-elevated)',
+          }}
           onClick={onMenuClick}
           aria-label="Abrir menu"
-          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)'}
-          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-card2)'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)'}
         >
-          <Menu size={18} />
+          <Menu size={22} />
         </button>
 
         {/* Breadcrumb */}
@@ -78,8 +85,11 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
 
         {/* Notificações — badge removido até feature ser implementada */}
         <button
-          className="relative p-2 rounded-xl transition-colors"
+          className="relative flex items-center justify-center rounded-xl transition-colors"
           style={{
+            width: 44,
+            height: 44,
+            minWidth: 44,
             border: '1px solid var(--color-surface-border)',
             background: 'var(--color-surface-elevated)',
             color: 'var(--color-text-secondary)',
@@ -88,7 +98,7 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
           onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-card2)'}
           onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)'}
         >
-          <Bell size={16} />
+          <Bell size={18} />
         </button>
       </div>
     </header>

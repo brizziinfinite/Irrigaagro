@@ -31,89 +31,83 @@ export default function NewSignupEmail({
   return (
     <Html lang="pt-BR">
       <Head />
-      <Preview>Novo cadastro aguardando aprovação: {companyName ?? email}</Preview>
+      <Preview>Aprovação Pendente: {companyName ?? email} acabaram de se cadastrar.</Preview>
       <Body style={body}>
         <Container style={container}>
 
-          {/* Logo */}
-          <Section style={{ paddingBottom: 28, textAlign: 'center' as const }}>
+          {/* Admin Header */}
+          <Section style={header}>
             <EmailLogo showAdmin />
           </Section>
 
-          {/* Card */}
+          {/* Admin Notification Card */}
           <Section style={card}>
+            {/* Faixa de Alerta Administrativo */}
+            <div style={adminTopBar} />
 
-            {/* Faixa gradiente âmbar → azul */}
-            <div style={gradientBar} />
+            <Section style={content}>
 
-            <Section style={cardContent}>
-
-              {/* Ícone */}
-              <div style={iconWrap}>
-                <span style={{ fontSize: 24, lineHeight: '56px' }}>🔔</span>
-              </div>
-
-              {/* Título + data */}
-              <Text style={heading}>
-                Novo cliente aguardando aprovação
-              </Text>
-              <Text style={dateText}>{signupAt}</Text>
-
-              {/* Tabela de dados */}
-              <Section style={dataCard}>
-                {companyName && (
-                  <Row style={dataRow}>
-                    <Column style={dataLabel}>
-                      <Text style={labelText}>Empresa</Text>
-                    </Column>
-                    <Column>
-                      <Text style={valueText}>{companyName}</Text>
-                    </Column>
-                  </Row>
-                )}
-
-                <Row style={dataRow}>
-                  <Column style={dataLabel}>
-                    <Text style={labelText}>E-mail</Text>
+              {/* Notification Badge */}
+              <Section style={{ marginBottom: 24 }}>
+                <Row>
+                  <Column style={{ width: '48px' }}>
+                    <div style={iconCircle}>🔔</div>
                   </Column>
                   <Column>
-                    <Text style={valueText}>{email}</Text>
+                    <Text style={heading}>Novo Cadastro</Text>
+                    <Text style={subHeading}>Aguardando revisão e aprovação</Text>
                   </Column>
                 </Row>
+              </Section>
 
-                {userId && (
-                  <Row>
-                    <Column style={dataLabel}>
-                      <Text style={labelText}>User ID</Text>
-                    </Column>
-                    <Column>
-                      <Text style={userIdText}>{userId}</Text>
-                    </Column>
+              {/* Ficha do Cliente */}
+              <Section style={infoBox}>
+                <Text style={infoTitle}>Informações do Solicitante</Text>
+
+                <Section style={dataGrid}>
+                  <Row style={dataItem}>
+                    <Column style={labelCol}><Text style={label}>Empresa</Text></Column>
+                    <Column><Text style={value}>{companyName || 'Não informada'}</Text></Column>
                   </Row>
-                )}
+
+                  <Row style={dataItem}>
+                    <Column style={labelCol}><Text style={label}>E-mail</Text></Column>
+                    <Column><Text style={value}>{email}</Text></Column>
+                  </Row>
+
+                  <Row style={dataItem}>
+                    <Column style={labelCol}><Text style={label}>Data/Hora</Text></Column>
+                    <Column><Text style={value}>{signupAt}</Text></Column>
+                  </Row>
+
+                  <Row>
+                    <Column style={labelCol}><Text style={label}>ID Interno</Text></Column>
+                    <Column><Text style={monoValue}>{userId}</Text></Column>
+                  </Row>
+                </Section>
               </Section>
 
-              {/* CTA */}
-              <Section style={{ paddingTop: 4 }}>
-                <Button href={adminUrl} style={button}>
-                  Aprovar acesso →
+              {/* Ação do Admin */}
+              <Section style={actionSection}>
+                <Button href={adminUrl} style={primaryButton}>
+                  Aprovar no Painel Administrativo →
                 </Button>
+                <Text style={hintText}>
+                  Lembre-se: o cliente não terá acesso às funcionalidades até que esta ação seja concluída.
+                </Text>
               </Section>
-
-              <Text style={hint}>
-                O cliente vê uma tela de espera até você aprovar o acesso no painel.
-              </Text>
 
             </Section>
           </Section>
 
-          {/* Footer */}
+          {/* Footer Admin */}
           <Section style={footer}>
-            <Text style={footerText}>IrrigaAgro · Painel Administrativo</Text>
-            <Text style={footerLink}>
-              <a href="https://www.irrigaagro.com.br" style={{ color: '#0093D0', textDecoration: 'none' }}>
-                www.irrigaagro.com.br
-              </a>
+            <Text style={footerText}>IrrigaAgro HQ • Notificação de Sistema</Text>
+            <Hr style={footerDivider} />
+            <Text style={footerLinkText}>
+              <a href="https://www.irrigaagro.com.br" style={link}>Portal Corporativo</a>
+              <span style={dot}>•</span>
+              <a href="https://www.irrigaagro.com.br/admin" style={link}>Painel Admin</a>
             </Text>
           </Section>
 
@@ -126,134 +120,168 @@ export default function NewSignupEmail({
 // ─── Estilos ──────────────────────────────────────────────────────────────────
 
 const body: React.CSSProperties = {
-  backgroundColor: '#f0f4f8',
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
+  backgroundColor: '#f1f5f9',
+  fontFamily: 'Inter, -apple-system, system-ui, sans-serif',
   margin: 0,
   padding: 0,
 }
 
 const container: React.CSSProperties = {
-  maxWidth: 560,
+  maxWidth: 580,
   margin: '0 auto',
-  padding: '40px 16px',
+  padding: '40px 12px',
+}
+
+const header: React.CSSProperties = {
+  textAlign: 'center' as const,
+  paddingBottom: 32,
 }
 
 const card: React.CSSProperties = {
   backgroundColor: '#ffffff',
   borderRadius: 16,
   overflow: 'hidden',
-  boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
 }
 
-const gradientBar: React.CSSProperties = {
-  background: 'linear-gradient(135deg, #f59e0b 0%, #0093D0 100%)',
+const adminTopBar: React.CSSProperties = {
   height: 6,
-  width: '100%',
+  background: 'linear-gradient(90deg, #f59e0b 0%, #0093D0 100%)',
 }
 
-const cardContent: React.CSSProperties = {
-  padding: '40px 40px 36px',
+const content: React.CSSProperties = {
+  padding: '40px',
 }
 
-const iconWrap: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: 56,
-  height: 56,
-  borderRadius: '50%',
-  background: '#fffbeb',
-  border: '2px solid #fde68a',
-  marginBottom: 24,
+const iconCircle: React.CSSProperties = {
+  width: 40,
+  height: 40,
+  backgroundColor: '#fffbeb',
+  borderRadius: '10px',
+  border: '1px solid #fef3c7',
   textAlign: 'center',
+  fontSize: 20,
+  lineHeight: '38px',
 }
 
 const heading: React.CSSProperties = {
-  fontSize: 22,
+  fontSize: 20,
   fontWeight: 700,
   color: '#0f172a',
-  margin: '0 0 4px',
-  lineHeight: '1.3',
+  margin: 0,
+  lineHeight: 1.2,
 }
 
-const dateText: React.CSSProperties = {
-  fontSize: 13,
-  color: '#94a3b8',
-  margin: '0 0 24px',
+const subHeading: React.CSSProperties = {
+  fontSize: 14,
+  color: '#64748b',
+  margin: '2px 0 0',
 }
 
-const dataCard: React.CSSProperties = {
+const infoBox: React.CSSProperties = {
   backgroundColor: '#f8fafc',
-  borderRadius: 10,
+  borderRadius: 12,
   border: '1px solid #e2e8f0',
-  padding: '20px 24px',
-  marginBottom: 28,
+  padding: '24px',
+  margin: '32px 0',
 }
 
-const dataRow: React.CSSProperties = {
-  marginBottom: 4,
+const infoTitle: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 700,
+  color: '#475569',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  margin: '0 0 16px',
 }
 
-const dataLabel: React.CSSProperties = {
-  width: 110,
+const dataGrid: React.CSSProperties = {
+  width: '100%',
+}
+
+const dataItem: React.CSSProperties = {
+  marginBottom: 12,
+}
+
+const labelCol: React.CSSProperties = {
+  width: 100,
   verticalAlign: 'top',
 }
 
-const labelText: React.CSSProperties = {
+const label: React.CSSProperties = {
   fontSize: 12,
-  fontWeight: 600,
   color: '#94a3b8',
-  textTransform: 'uppercase',
-  letterSpacing: '0.06em',
-  margin: '6px 0',
+  margin: 0,
+  paddingTop: 2,
 }
 
-const valueText: React.CSSProperties = {
+const value: React.CSSProperties = {
   fontSize: 14,
-  color: '#0f172a',
-  margin: '6px 0',
-  fontWeight: 500,
+  fontWeight: 600,
+  color: '#1e293b',
+  margin: 0,
 }
 
-const userIdText: React.CSSProperties = {
+const monoValue: React.CSSProperties = {
   fontSize: 11,
-  color: '#94a3b8',
   fontFamily: 'monospace',
-  margin: '6px 0',
+  color: '#94a3b8',
+  margin: 0,
 }
 
-const button: React.CSSProperties = {
-  backgroundColor: '#0093D0',
+const actionSection: React.CSSProperties = {
+  textAlign: 'center' as const,
+}
+
+const primaryButton: React.CSSProperties = {
+  backgroundColor: '#0f172a',
   borderRadius: 10,
   color: '#ffffff',
   fontSize: 15,
   fontWeight: 600,
-  padding: '14px 32px',
+  padding: '16px 32px',
   textDecoration: 'none',
   display: 'inline-block',
-  boxShadow: '0 4px 14px rgba(0,147,208,0.35)',
 }
 
-const hint: React.CSSProperties = {
+const hintText: React.CSSProperties = {
   fontSize: 13,
   color: '#94a3b8',
-  margin: '20px 0 0',
-  lineHeight: '1.6',
+  lineHeight: 1.6,
+  margin: '16px 0 0',
 }
 
 const footer: React.CSSProperties = {
-  paddingTop: 24,
-  textAlign: 'center',
+  paddingTop: 32,
+  textAlign: 'center' as const,
 }
 
 const footerText: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 12,
+  fontWeight: 600,
   color: '#94a3b8',
-  margin: '0 0 4px',
+  margin: '0 0 12px',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
 }
 
-const footerLink: React.CSSProperties = {
+const footerDivider: React.CSSProperties = {
+  borderColor: '#e2e8f0',
+  margin: '0 0 12px',
+}
+
+const footerLinkText: React.CSSProperties = {
   fontSize: 12,
   color: '#cbd5e1',
-  margin: 0,
+}
+
+const link: React.CSSProperties = {
+  color: '#0093D0',
+  textDecoration: 'none',
+  fontWeight: 500,
+}
+
+const dot: React.CSSProperties = {
+  margin: '0 8px',
+  color: '#e2e8f0',
 }

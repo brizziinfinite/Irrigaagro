@@ -33,11 +33,16 @@ export function AppShell({ user, children }: AppShellProps) {
             onClick={() => setMobileOpen(false)}
           />
           {/* Drawer — mesma largura que o sidebar desktop (260px) */}
-          <div className="relative h-full w-[260px] shadow-2xl">
+          <div className="relative h-full w-[280px] shadow-2xl">
             <Sidebar user={user} onNavigate={() => setMobileOpen(false)} />
             <button
-              className="absolute top-4 right-[-44px] rounded-xl p-2"
-              style={{ background: 'var(--color-surface-card)', color: 'var(--color-text-secondary)' }}
+              className="absolute top-3 right-3 flex items-center justify-center rounded-xl"
+              style={{
+                width: 36, height: 36,
+                background: 'rgba(255,255,255,0.06)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
               onClick={() => setMobileOpen(false)}
               aria-label="Fechar"
             >
@@ -55,8 +60,8 @@ export function AppShell({ user, children }: AppShellProps) {
         />
         {/* padding responsivo: compacto no mobile, espaçoso no desktop */}
         <main
-          className="flex-1 overflow-auto px-4 py-4 md:px-8 md:py-7 lg:px-10 lg:py-7"
-          style={{ background: 'var(--color-surface-bg)', padding: '24px 28px' }}
+          className="flex-1 overflow-auto px-4 py-4 md:px-7 md:py-6 lg:px-10 lg:py-7"
+          style={{ background: 'var(--color-surface-bg)' }}
         >
           {children}
         </main>

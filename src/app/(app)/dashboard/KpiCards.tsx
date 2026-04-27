@@ -53,14 +53,14 @@ export function KpiCards({ summary }: KpiCardsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
       {cards.map(({ label, value, unit, subtitle, color, Icon }) => (
         <div key={label} style={{
           background: 'linear-gradient(145deg, rgba(18,24,32,0.95), rgba(13,18,26,0.98))',
           border: '1px solid rgba(255,255,255,0.06)',
           borderTop: `1px solid ${color}25`,
           borderRadius: 16,
-          padding: '22px 22px 18px',
+          padding: '16px 16px 14px',
           position: 'relative',
           overflow: 'hidden',
         }}>

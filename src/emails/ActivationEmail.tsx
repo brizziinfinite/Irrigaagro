@@ -21,91 +21,101 @@ export default function ActivationEmail({ companyName = 'sua empresa' }: Props) 
   return (
     <Html lang="pt-BR">
       <Head />
-      <Preview>Seu acesso ao IrrigaAgro foi liberado! Entre agora e comece a usar.</Preview>
+      <Preview>Seu acesso ao IrrigaAgro foi liberado! 🌱</Preview>
       <Body style={body}>
         <Container style={container}>
 
-          {/* Logo */}
-          <Section style={{ paddingBottom: 28, textAlign: 'center' as const }}>
+          {/* Logo Header */}
+          <Section style={header}>
             <EmailLogo />
           </Section>
 
-          {/* Card */}
+          {/* Main Card */}
           <Section style={card}>
+            {/* Faixa Gradiente Superior */}
+            <div style={topGradient} />
 
-            {/* Faixa gradiente no topo */}
-            <div style={gradientBar} />
+            <Section style={content}>
+              {/* Badge de Sucesso */}
+              <Section style={{ textAlign: 'center' as const, marginBottom: 30 }}>
+                <div style={badgeContainer}>
+                  <div style={badgeInner}>
+                    <span style={checkIcon}>✓</span>
+                  </div>
+                </div>
+              </Section>
 
-            <Section style={cardContent}>
-
-              {/* Ícone check */}
-              <div style={iconWrap}>
-                <span style={{ fontSize: 28, lineHeight: '64px' }}>✓</span>
-              </div>
-
-              {/* Título */}
-              <Text style={heading}>
-                Acesso liberado!
-              </Text>
-
-              {/* Corpo */}
-              <Text style={paragraph}>
-                Olá! Sua conta IrrigaAgro para <strong style={{ color: '#0f172a' }}>{companyName}</strong> foi aprovada e está pronta para uso.
-              </Text>
+              <Text style={heading}>Tudo pronto para o plantio!</Text>
 
               <Text style={paragraph}>
-                Você já pode acessar o sistema, cadastrar seus pivôs e safras, e começar a usar o balanço hídrico inteligente.
+                Olá! É um prazer confirmar que o acesso da <strong style={highlight}>{companyName}</strong> ao
+                <strong style={{ color: '#0093D0' }}> IrrigaAgro</strong> já está disponível.
               </Text>
 
-              {/* CTA */}
-              <Section style={{ paddingTop: 8, paddingBottom: 8 }}>
+              <Text style={paragraph}>
+                Nossa tecnologia de balanço hídrico inteligente está pronta para ajudar você a otimizar o uso da água e maximizar sua produtividade.
+              </Text>
+
+              {/* CTA Principal */}
+              <Section style={ctaArea}>
                 <Button href="https://www.irrigaagro.com.br/login" style={button}>
-                  Acessar o IrrigaAgro →
+                  Acessar Painel de Controle →
                 </Button>
+                <Text style={subText}>Clique acima para entrar no sistema</Text>
               </Section>
 
               <Hr style={divider} />
 
-              {/* Features */}
-              <Text style={featuresLabel}>O que você pode fazer agora</Text>
+              {/* Guia de Início Rápido */}
+              <Text style={label}>Como começar agora</Text>
 
-              <Row style={{ marginBottom: 8 }}>
-                <Column style={{ width: 32 }}>
-                  <Text style={featureIcon}>💧</Text>
-                </Column>
-                <Column>
-                  <Text style={featureText}>Gerenciar o balanço hídrico diário dos seus pivôs</Text>
-                </Column>
-              </Row>
+              <Section style={featureGrid}>
+                <Row style={featureRow}>
+                  <Column style={featureNumCol}>
+                    <div style={stepCircle}>1</div>
+                  </Column>
+                  <Column style={{ paddingLeft: 12 }}>
+                    <Text style={featureTitle}>Cadastre seus Pivôs</Text>
+                    <Text style={featureDesc}>Insira os dados técnicos para cálculos de precisão.</Text>
+                  </Column>
+                </Row>
 
-              <Row style={{ marginBottom: 8 }}>
-                <Column style={{ width: 32 }}>
-                  <Text style={featureIcon}>🌱</Text>
-                </Column>
-                <Column>
-                  <Text style={featureText}>Cadastrar safras e acompanhar cada fase da cultura</Text>
-                </Column>
-              </Row>
+                <Row style={featureRow}>
+                  <Column style={featureNumCol}>
+                    <div style={stepCircle}>2</div>
+                  </Column>
+                  <Column style={{ paddingLeft: 12 }}>
+                    <Text style={featureTitle}>Inicie uma Safra</Text>
+                    <Text style={featureDesc}>Defina cultura e data de plantio para monitoramento.</Text>
+                  </Column>
+                </Row>
 
-              <Row>
-                <Column style={{ width: 32 }}>
-                  <Text style={featureIcon}>📊</Text>
-                </Column>
-                <Column>
-                  <Text style={featureText}>Receber recomendações de irrigação baseadas em FAO-56</Text>
-                </Column>
-              </Row>
+                <Row style={featureRow}>
+                  <Column style={featureNumCol}>
+                    <div style={stepCircle}>3</div>
+                  </Column>
+                  <Column style={{ paddingLeft: 12 }}>
+                    <Text style={featureTitle}>Economize Água e Energia</Text>
+                    <Text style={featureDesc}>Irrigue na hora certa, na quantidade certa e reduza seus custos operacionais.</Text>
+                  </Column>
+                </Row>
+              </Section>
 
             </Section>
           </Section>
 
-          {/* Footer */}
+          {/* Footer Social/Info */}
           <Section style={footer}>
-            <Text style={footerText}>IrrigaAgro · Gestão inteligente de irrigação</Text>
-            <Text style={footerLink}>
-              <a href="https://www.irrigaagro.com.br" style={{ color: '#0093D0', textDecoration: 'none' }}>
-                www.irrigaagro.com.br
-              </a>
+            <Text style={footerBrand}>IrrigaAgro • Inteligência no Campo</Text>
+            <Text style={footerLinks}>
+              <a href="https://www.irrigaagro.com.br" style={footerLink}>Website</a>
+              <span style={dotSeparator}>•</span>
+              <a href="https://www.irrigaagro.com.br/suporte" style={footerLink}>Suporte</a>
+              <span style={dotSeparator}>•</span>
+              <a href="https://www.irrigaagro.com.br/login" style={footerLink}>Login</a>
+            </Text>
+            <Text style={legalText}>
+              Este é um e-mail automático. © 2025 IrrigaAgro Technology.
             </Text>
           </Section>
 
@@ -118,116 +128,191 @@ export default function ActivationEmail({ companyName = 'sua empresa' }: Props) 
 // ─── Estilos ──────────────────────────────────────────────────────────────────
 
 const body: React.CSSProperties = {
-  backgroundColor: '#f0f4f8',
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif',
-  margin: 0,
-  padding: 0,
+  backgroundColor: '#f8fafc',
+  fontFamily: 'Inter, -apple-system, sans-serif',
+  margin: '0',
+  padding: '0',
 }
 
 const container: React.CSSProperties = {
-  maxWidth: 560,
+  maxWidth: '600px',
   margin: '0 auto',
-  padding: '40px 16px',
+  padding: '40px 20px',
+}
+
+const header: React.CSSProperties = {
+  textAlign: 'center' as const,
+  paddingBottom: '32px',
 }
 
 const card: React.CSSProperties = {
   backgroundColor: '#ffffff',
-  borderRadius: 16,
+  borderRadius: '24px',
   overflow: 'hidden',
-  boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-  marginBottom: 0,
+  boxShadow: '0 10px 30px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.02)',
 }
 
-const gradientBar: React.CSSProperties = {
-  background: 'linear-gradient(135deg, #0093D0 0%, #22c55e 100%)',
-  height: 6,
-  width: '100%',
+const topGradient: React.CSSProperties = {
+  height: '8px',
+  background: 'linear-gradient(90deg, #0093D0 0%, #22c55e 100%)',
 }
 
-const cardContent: React.CSSProperties = {
-  padding: '40px 40px 36px',
+const content: React.CSSProperties = {
+  padding: '48px 40px',
 }
 
-const iconWrap: React.CSSProperties = {
-  display: 'inline-flex',
+const badgeContainer: React.CSSProperties = {
+  display: 'inline-block',
+  width: '72px',
+  height: '72px',
+  borderRadius: '50%',
+  backgroundColor: '#f0fdf4',
+  border: '2px solid #dcfce7',
+}
+
+const badgeInner: React.CSSProperties = {
+  display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: 64,
-  height: 64,
-  borderRadius: '50%',
-  background: '#f0fdf4',
-  border: '2px solid #bbf7d0',
-  marginBottom: 28,
-  textAlign: 'center',
+  height: '100%',
+}
+
+const checkIcon: React.CSSProperties = {
+  fontSize: '32px',
+  lineHeight: '70px',
+  color: '#16a34a',
+  fontWeight: 'bold',
 }
 
 const heading: React.CSSProperties = {
-  fontSize: 24,
-  fontWeight: 700,
+  fontSize: '28px',
+  fontWeight: '800',
   color: '#0f172a',
-  margin: '0 0 12px',
-  lineHeight: '1.3',
+  textAlign: 'center' as const,
+  margin: '0 0 16px',
+  letterSpacing: '-0.02em',
 }
 
 const paragraph: React.CSSProperties = {
-  fontSize: 15,
+  fontSize: '16px',
   color: '#475569',
-  lineHeight: '1.7',
-  margin: '0 0 16px',
+  lineHeight: '1.6',
+  textAlign: 'center' as const,
+  margin: '0 0 20px',
+}
+
+const highlight: React.CSSProperties = {
+  color: '#1e293b',
+  fontWeight: '600',
+}
+
+const ctaArea: React.CSSProperties = {
+  textAlign: 'center' as const,
+  padding: '12px 0 24px',
 }
 
 const button: React.CSSProperties = {
   backgroundColor: '#0093D0',
-  borderRadius: 10,
+  borderRadius: '12px',
   color: '#ffffff',
-  fontSize: 15,
-  fontWeight: 600,
-  padding: '14px 32px',
+  fontSize: '16px',
+  fontWeight: '700',
   textDecoration: 'none',
+  textAlign: 'center' as const,
   display: 'inline-block',
-  boxShadow: '0 4px 14px rgba(0,147,208,0.35)',
+  padding: '16px 32px',
+  boxShadow: '0 8px 20px rgba(0,147,208,0.3)',
+}
+
+const subText: React.CSSProperties = {
+  fontSize: '12px',
+  color: '#94a3b8',
+  marginTop: '12px',
 }
 
 const divider: React.CSSProperties = {
-  borderColor: '#e2e8f0',
-  margin: '32px 0',
+  borderColor: '#f1f5f9',
+  margin: '40px 0',
 }
 
-const featuresLabel: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 600,
-  color: '#94a3b8',
+const label: React.CSSProperties = {
+  fontSize: '13px',
+  fontWeight: '700',
+  color: '#64748b',
   textTransform: 'uppercase',
-  letterSpacing: '0.08em',
-  margin: '0 0 16px',
+  letterSpacing: '0.1em',
+  marginBottom: '20px',
 }
 
-const featureIcon: React.CSSProperties = {
-  fontSize: 18,
-  margin: '0 0 8px',
-  lineHeight: '1.4',
+const featureGrid: React.CSSProperties = {
+  backgroundColor: '#f8fafc',
+  borderRadius: '16px',
+  padding: '8px 20px',
 }
 
-const featureText: React.CSSProperties = {
-  fontSize: 14,
-  color: '#475569',
-  lineHeight: '1.6',
-  margin: '0 0 8px',
+const featureRow: React.CSSProperties = {
+  margin: '16px 0',
+}
+
+const featureNumCol: React.CSSProperties = {
+  width: '32px',
+}
+
+const stepCircle: React.CSSProperties = {
+  width: '24px',
+  height: '24px',
+  backgroundColor: '#0093D0',
+  borderRadius: '50%',
+  color: '#fff',
+  fontSize: '12px',
+  fontWeight: 'bold',
+  textAlign: 'center' as const,
+  lineHeight: '24px',
+}
+
+const featureTitle: React.CSSProperties = {
+  fontSize: '15px',
+  fontWeight: '700',
+  color: '#334155',
+  margin: '0 0 2px',
+}
+
+const featureDesc: React.CSSProperties = {
+  fontSize: '14px',
+  color: '#64748b',
+  margin: '0',
 }
 
 const footer: React.CSSProperties = {
-  paddingTop: 24,
-  textAlign: 'center',
+  textAlign: 'center' as const,
+  paddingTop: '32px',
 }
 
-const footerText: React.CSSProperties = {
-  fontSize: 13,
-  color: '#94a3b8',
-  margin: '0 0 4px',
+const footerBrand: React.CSSProperties = {
+  fontSize: '14px',
+  fontWeight: '600',
+  color: '#64748b',
+  margin: '0 0 8px',
+}
+
+const footerLinks: React.CSSProperties = {
+  fontSize: '13px',
+  margin: '0 0 16px',
 }
 
 const footerLink: React.CSSProperties = {
-  fontSize: 12,
+  color: '#0093D0',
+  textDecoration: 'none',
+  fontWeight: '500',
+}
+
+const dotSeparator: React.CSSProperties = {
   color: '#cbd5e1',
-  margin: 0,
+  margin: '0 8px',
+}
+
+const legalText: React.CSSProperties = {
+  fontSize: '11px',
+  color: '#94a3b8',
+  margin: '0',
 }

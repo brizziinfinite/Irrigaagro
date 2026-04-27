@@ -67,7 +67,7 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
     : '0 0 24px rgba(34,197,94,0.06), 0 12px 40px rgba(0,0,0,0.5)'
 
   return (
-    <div style={{
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between" style={{
       background: needsIrrigation
         ? 'linear-gradient(145deg, rgba(30, 16, 18, 0.97), rgba(15, 19, 24, 0.98))'
         : noPivots
@@ -76,12 +76,8 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
       border: `1px solid ${needsIrrigation ? 'rgba(239,68,68,0.18)' : noPivots ? 'rgba(255,255,255,0.05)' : 'rgba(34,197,94,0.15)'}`,
       borderTop: `2px solid ${mainColor}60`,
       borderRadius: 20,
-      padding: '28px 32px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 20,
-      flexWrap: 'wrap',
+      padding: '24px 20px',
+      gap: 16,
       boxShadow: glowShadow,
       backdropFilter: 'blur(16px)',
       position: 'relative',
@@ -179,9 +175,9 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
       </div>
 
       {/* CTA */}
-      <Link href="/manejo" style={{
-        display: 'flex', alignItems: 'center', gap: 9,
-        padding: '13px 24px', borderRadius: 14, fontSize: 13, fontWeight: 800,
+      <Link href="/manejo" className="w-full sm:w-auto" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+        padding: '14px 24px', borderRadius: 14, fontSize: 13, fontWeight: 800,
         textTransform: 'uppercase', letterSpacing: '0.05em',
         background: needsIrrigation
           ? 'linear-gradient(135deg, #dc2626, #b91c1c)'

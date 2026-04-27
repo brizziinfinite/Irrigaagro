@@ -182,28 +182,42 @@ export function DashboardClient({
   const activePivots = summary.activePivots
 
   return (
-    <div className="mx-auto w-full" style={{ maxWidth: 1400, display: 'flex', flexDirection: 'column', gap: 40, paddingBottom: 72, animation: 'fadeIn 0.4s ease-in-out' }}>
+    <div className="mx-auto w-full flex flex-col gap-6 sm:gap-10 pb-16" style={{ maxWidth: 1400, animation: 'fadeIn 0.4s ease-in-out' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}} />
 
       {/* ① Título simples e Ação Primária */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div style={{ minWidth: 0 }}>
-          <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Command Center</h1>
-          <p style={{ fontSize: 13, color: '#778899', marginTop: 5, fontWeight: 500 }}>
-            {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
-          </p>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ minWidth: 0 }}>
+            <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Command Center</h1>
+            <p style={{ fontSize: 13, color: '#778899', marginTop: 5, fontWeight: 500 }}>
+              {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
+            </p>
+          </div>
+          <Link href="/manejo" className="hidden sm:flex" style={{
+            alignItems: 'center', gap: 8,
+            padding: '11px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
+            background: 'linear-gradient(135deg, #005A8C, #0093D0)',
+            color: '#fff', textDecoration: 'none', flexShrink: 0,
+            boxShadow: '0 4px 18px rgba(0,147,208,0.4)',
+            letterSpacing: '0.01em',
+          }}>
+            <Droplets size={14} /> Manejo Diário
+          </Link>
         </div>
-        <Link href="/manejo" style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '11px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
+        {/* Mobile: botão full width abaixo do título */}
+        <Link href="/manejo" className="flex sm:hidden" style={{
+          alignItems: 'center', justifyContent: 'center', gap: 8,
+          marginTop: 14,
+          padding: '14px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700,
           background: 'linear-gradient(135deg, #005A8C, #0093D0)',
-          color: '#fff', textDecoration: 'none', flexShrink: 0,
+          color: '#fff', textDecoration: 'none',
           boxShadow: '0 4px 18px rgba(0,147,208,0.4)',
           letterSpacing: '0.01em',
         }}>
-          <Droplets size={14} /> Manejo Diário
+          <Droplets size={16} /> Manejo Diário
         </Link>
       </div>
 
