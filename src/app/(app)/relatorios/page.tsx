@@ -658,6 +658,111 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
   )
 }
 
+// ─── Hero Summary ────────────────────────────────────────────
+
+function HeroSummary({ kpis, season }: { kpis: SeasonKPIs; season: SeasonFull }) {
+  const stress = kpis.stressIndex
+  const statusLabel = stress < 10 ? 'Bom' : stress < 20 ? 'Atenção' : 'Crítico'
+  const statusColor = stress < 10 ? '#22c55e' : stress < 20 ? '#f59e0b' : '#ef4444'
+  const statusBg   = stress < 10 ? 'rgba(34,197,94,0.10)' : stress < 20 ? 'rgba(245,158,11,0.10)' : 'rgba(239,68,68,0.10)'
+
+  const totalWater = kpis.totalIrrigationMm + kpis.totalRainfallMm
+  const efficiency = totalWater > 0 ? Math.round((kpis.totalEtcMm / totalWater) * 100) : null
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #0f1923 0%, #0d1520 100%)',
+      border: `1px solid ${statusColor}30`,
+      borderRadius: 16,
+      padding: '20px 24px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        {/* Métricas rápidas */}
+        <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Status badge */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor }} />
+              <span style={{ fontSize: 10, color: '#8899aa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status da Safra</span>
+            </div>
+            <span style={{
+              display: 'inline-block', fontSize: 13, fontWeight: 700, padding: '4px 12px',
+              borderRadius: 20, background: statusBg, color: statusColor,
+              border: `1px solid ${statusColor}40`,
+            }}>{statusLabel}</span>
+          </div>
+
+          {/* Eficiência hídrica */}
+          <div>
+            <p style={{ fontSize: 10, color: '#8899aa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+              Eficiência Hídrica
+            </p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: efficiency !== null && efficiency >= 60 ? '#22c55e' : '#f59e0b', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+              {efficiency !== null ? `${efficiency}%` : '—'}
+            </p>
+          </div>
+
+          {/* Stress hídrico */}
+          <div>
+            <p style={{ fontSize: 10, color: '#8899aa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+              Stress Hídrico
+            </p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: statusColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+              {fmtNum(stress)}%
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Resumo em uma linha */}
+      <p style={{ fontSize: 12, color: '#8899aa', marginTop: 14, lineHeight: 1.5 }}>
+        {kpis.totalDays} dias monitorados
+        {kpis.irrigationEvents > 0 && ` · ${kpis.irrigationEvents} irrigações`}
+        {kpis.avgFieldCapacity > 0 && ` · CC média ${Math.round(kpis.avgFieldCapacity)}%`}
+        {kpis.totalRainfallMm > 0 && ` · ${fmtNum(kpis.totalRainfallMm)} mm de chuva`}
+        {season.crops && ` · Cultura: ${season.crops.name}`}
+      </p>
+    </div>
+  )
+}
+
+// ─── Accordion Section ────────────────────────────────────────
+
+function AccordionSection({ id, title, icon: Icon, isOpen, onToggle, children, badge }: {
+  id: string
+  title: string
+  icon: typeof BarChart2
+  isOpen: boolean
+  onToggle: (id: string) => void
+  children: React.ReactNode
+  badge?: string
+}) {
+  return (
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+      <button
+        onClick={() => onToggle(id)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+          padding: '14px 18px', background: 'transparent', border: 'none',
+          cursor: 'pointer', textAlign: 'left',
+        }}
+      >
+        <Icon size={13} style={{ color: '#0093D0', flexShrink: 0 }} />
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8899aa', flex: 1 }}>{title}</span>
+        {badge && (
+          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(0,147,208,0.12)', color: '#0093D0', fontWeight: 600 }}>{badge}</span>
+        )}
+        <ChevronDown size={14} style={{ color: '#778899', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
+      </button>
+      {isOpen && (
+        <div style={{ padding: '0 18px 18px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          <div style={{ paddingTop: 16 }}>{children}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── CSV Export ──────────────────────────────────────────────
 
 function exportCSV(records: DailyManagement[], seasonName: string) {
@@ -1047,6 +1152,19 @@ export default function RelatoriosPage() {
     [records, selectedSeason]
   )
 
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(['kpis'])
+  )
+
+  const toggleSection = useCallback((id: string) => {
+    setOpenSections(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
   // ─── Loading ────────────────────────────────────────────────
 
   if (loading) {
@@ -1068,13 +1186,13 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto' }} className="flex flex-col gap-6">
+    <div style={{ maxWidth: 960, margin: '0 auto' }} className="flex flex-col gap-4">
 
-      {/* Título */}
+      {/* Título + botão CSV */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0' }}>Relatórios de Safra</h1>
-          <p style={{ fontSize: 13, color: '#8899aa', marginTop: 2 }}>KPIs comparativos de irrigação, estresse e consumo hídrico</p>
+          <p style={{ fontSize: 13, color: '#8899aa', marginTop: 2 }}>Visão integrada de irrigação, estresse e consumo hídrico</p>
         </div>
         {records.length > 0 && (
           <button
@@ -1110,7 +1228,6 @@ export default function RelatoriosPage() {
           <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
         </div>
 
-        {/* Resumo da safra selecionada */}
         {selectedSeason && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
             {selectedSeason.crops && (
@@ -1149,10 +1266,19 @@ export default function RelatoriosPage() {
 
       {!loadingRecords && records.length > 0 && (
         <>
-          {/* ── SEÇÃO 1: KPIs principais ── */}
-          <div>
-            <SectionTitle icon={BarChart2} text="Resumo da Safra" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
+          {/* ── Hero: status em 5 segundos ── */}
+          <HeroSummary kpis={kpis} season={selectedSeason!} />
+
+          {/* ── SEÇÃO 1: KPIs (aberto por padrão) ── */}
+          <AccordionSection
+            id="kpis"
+            title="Resumo da Safra"
+            icon={BarChart2}
+            isOpen={openSections.has('kpis')}
+            onToggle={toggleSection}
+            badge={`${kpis.totalDays} dias`}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
               <KpiCard label="Total Irrigado" value={fmtNum(kpis.totalIrrigationMm)} unit="mm" color="#0093D0" icon={Droplets} />
               <KpiCard label="Precipitação Total" value={fmtNum(kpis.totalRainfallMm)} unit="mm" color="#38bdf8" icon={CloudRain} />
               <KpiCard label="ETc Acumulada" value={fmtNum(kpis.totalEtcMm)} unit="mm" color="#06b6d4" icon={Droplets}
@@ -1163,185 +1289,132 @@ export default function RelatoriosPage() {
               <KpiCard label="Dias em Estresse" value={String(kpis.stressDays)} color="#ef4444" icon={AlertTriangle}
                 sub={`de ${kpis.totalDays} dias`} />
             </div>
-
-            {/* Health gauges em destaque */}
             <HealthGauges kpis={kpis} />
-          </div>
+          </AccordionSection>
 
-          {/* ── SEÇÃO 2: Gráfico ADc% com fases ── */}
-          <div>
-            <SectionTitle icon={TrendingDown} text="Balanço Hídrico — Visão Geral da Safra" />
-            <div style={{ marginTop: 12 }}>
-              <BalanceChartSVG records={records} season={selectedSeason!} />
-            </div>
-          </div>
+          {/* ── SEÇÃO 2: Balanço Hídrico (fechado) ── */}
+          <AccordionSection
+            id="balance"
+            title="Balanço Hídrico — Visão Geral da Safra"
+            icon={TrendingDown}
+            isOpen={openSections.has('balance')}
+            onToggle={toggleSection}
+          >
+            <BalanceChartSVG records={records} season={selectedSeason!} />
+          </AccordionSection>
 
-          {/* ── SEÇÃO 3: Consumo por período ── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <PeriodTable last7={kpis.last7} last10={kpis.last10} last15={kpis.last15} />
-
-            {/* Eficiência de irrigação */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Eficiência Hídrica</span>
-              {[
-                {
-                  label: 'ETc / (Irrig + Chuva)',
-                  value: (kpis.totalIrrigationMm + kpis.totalRainfallMm) > 0
-                    ? (kpis.totalEtcMm / (kpis.totalIrrigationMm + kpis.totalRainfallMm)) * 100
-                    : null,
-                  unit: '%',
-                  desc: 'Quanto da água entrou foi consumida',
-                  good: (v: number) => v >= 60 && v <= 100,
-                },
-                {
-                  label: 'Chuva / ETc',
-                  value: kpis.totalEtcMm > 0 ? (kpis.totalRainfallMm / kpis.totalEtcMm) * 100 : null,
-                  unit: '%',
-                  desc: 'Contribuição da chuva no consumo',
-                  good: (v: number) => v >= 30,
-                },
-                {
-                  label: 'Irrigação / ETc',
-                  value: kpis.totalEtcMm > 0 ? (kpis.totalIrrigationMm / kpis.totalEtcMm) * 100 : null,
-                  unit: '%',
-                  desc: 'Dependência hídrica da irrigação',
-                  good: (v: number) => v <= 70,
-                },
-              ].map(item => {
-                const v = item.value
-                const color = v === null ? '#778899' : item.good(v) ? '#22c55e' : '#f59e0b'
-                return (
-                  <div key={item.label} style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                      <span style={{ fontSize: 11, color: '#8899aa' }}>{item.label}</span>
-                      <span style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>
-                        {v !== null ? fmtNum(v, 0) + '%' : '—'}
-                      </span>
+          {/* ── SEÇÃO 3: Consumo e Eficiência (fechado) ── */}
+          <AccordionSection
+            id="consumo"
+            title="Consumo e Eficiência Hídrica"
+            icon={Sun}
+            isOpen={openSections.has('consumo')}
+            onToggle={toggleSection}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <PeriodTable last7={kpis.last7} last10={kpis.last10} last15={kpis.last15} />
+              <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Eficiência Hídrica</span>
+                {[
+                  {
+                    label: 'ETc / (Irrig + Chuva)',
+                    value: (kpis.totalIrrigationMm + kpis.totalRainfallMm) > 0
+                      ? (kpis.totalEtcMm / (kpis.totalIrrigationMm + kpis.totalRainfallMm)) * 100
+                      : null,
+                    desc: 'Quanto da água entrou foi consumida',
+                    good: (v: number) => v >= 60 && v <= 100,
+                  },
+                  {
+                    label: 'Chuva / ETc',
+                    value: kpis.totalEtcMm > 0 ? (kpis.totalRainfallMm / kpis.totalEtcMm) * 100 : null,
+                    desc: 'Contribuição da chuva no consumo',
+                    good: (v: number) => v >= 30,
+                  },
+                  {
+                    label: 'Irrigação / ETc',
+                    value: kpis.totalEtcMm > 0 ? (kpis.totalIrrigationMm / kpis.totalEtcMm) * 100 : null,
+                    desc: 'Dependência hídrica da irrigação',
+                    good: (v: number) => v <= 70,
+                  },
+                ].map(item => {
+                  const v = item.value
+                  const color = v === null ? '#778899' : item.good(v) ? '#22c55e' : '#f59e0b'
+                  return (
+                    <div key={item.label} style={{ background: '#0f1923', borderRadius: 10, padding: '10px 14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontSize: 11, color: '#8899aa' }}>{item.label}</span>
+                        <span style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>
+                          {v !== null ? fmtNum(v, 0) + '%' : '—'}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{item.desc}</p>
                     </div>
-                    <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{item.desc}</p>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          </AccordionSection>
 
-          {/* ── SEÇÃO 4: Por fase (como Irriger) ── */}
-          <div>
-            <SectionTitle icon={Leaf} text="Análise por Fase Fenológica" />
-            <div style={{ marginTop: 12 }}>
-              <StageTable stages={kpis.byStage} />
-            </div>
-          </div>
+          {/* ── SEÇÃO 4: Fase Fenológica (fechado) ── */}
+          <AccordionSection
+            id="fenologia"
+            title="Análise por Fase Fenológica"
+            icon={Leaf}
+            isOpen={openSections.has('fenologia')}
+            onToggle={toggleSection}
+            badge={`${kpis.byStage.length} fases`}
+          >
+            <StageTable stages={kpis.byStage} />
+          </AccordionSection>
 
-          {/* ── SEÇÃO 5: Irrigações recomendado vs aplicado (como Irriga Global) ── */}
-          <div>
-            <SectionTitle icon={CheckCircle2} text="Irrigações — Recomendado vs Aplicado" />
-            <div style={{ marginTop: 12 }}>
-              <WeeklySummaryTable records={records} />
-            </div>
-          </div>
+          {/* ── SEÇÃO 5: Consumo Semanal (fechado) ── */}
+          <AccordionSection
+            id="semanal"
+            title="Consumo Hídrico Semanal"
+            icon={CheckCircle2}
+            isOpen={openSections.has('semanal')}
+            onToggle={toggleSection}
+          >
+            <WeeklySummaryTable records={records} />
+          </AccordionSection>
         </>
       )}
 
-      {/* ══ SEÇÃO ENERGIA ══════════════════════════════════════════ */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 24 }}>
-        <SectionTitle icon={Bolt} text="Conta de Energia — KPIs Elétricos" />
-
-        {/* Seletor de Pivô + Upload */}
-        <div style={{ marginTop: 12, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            {/* Seletor de pivô */}
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Pivô</label>
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={selectedPivotId}
-                  onChange={e => setSelectedPivotId(e.target.value)}
-                  style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
-                >
-                  {pivots.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} — {p.farm_name}</option>
-                  ))}
-                </select>
-                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
-              </div>
+      {/* ── SEÇÃO 6: Análise Inteligente de Energia (fechado) ── */}
+      <AccordionSection
+        id="energia"
+        title="Análise Inteligente de Energia"
+        icon={Bolt}
+        isOpen={openSections.has('energia')}
+        onToggle={toggleSection}
+        badge={energyBills.length > 0 ? `${energyBills.length} meses` : undefined}
+      >
+        {/* Seletor de Pivô */}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Pivô</label>
+            <div style={{ position: 'relative' }}>
+              <select
+                value={selectedPivotId}
+                onChange={e => setSelectedPivotId(e.target.value)}
+                style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+              >
+                {pivots.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} — {p.farm_name}</option>
+                ))}
+              </select>
+              <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
             </div>
-
-            {/* Lâmina irrigada no mês (opcional para custo/mm/ha) */}
-            <div style={{ width: 160 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Lâmina irrigada no mês (mm/ha)</label>
-              <input
-                type="number"
-                value={irrigatedMmHa}
-                onChange={e => setIrrigatedMmHa(e.target.value)}
-                placeholder="ex: 45"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
-              />
-            </div>
-          </div>
-
-          {/* Dropzone */}
-          <div>
-            <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Arquivo da conta (PDF, JPG, PNG)</label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={e => e.preventDefault()}
-              onDrop={e => {
-                e.preventDefault()
-                const f = e.dataTransfer.files[0]
-                if (f) setUploadFile(f)
-              }}
-              style={{
-                border: `2px dashed ${uploadFile ? '#0093D0' : 'rgba(255,255,255,0.06)'}`,
-                borderRadius: 12, padding: '20px 16px', textAlign: 'center',
-                cursor: 'pointer', transition: 'border-color 0.2s',
-                background: uploadFile ? 'rgba(0,147,208,0.05)' : 'transparent',
-              }}
-            >
-              <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#778899', margin: '0 auto 6px' }} />
-              <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : '#778899' }}>
-                {uploadFile ? uploadFile.name : 'Clique ou arraste o arquivo aqui'}
-              </p>
-              {!uploadFile && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>PDF, JPG ou PNG</p>}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,image/*"
-              style={{ display: 'none' }}
-              onChange={e => {
-                const f = e.target.files?.[0]
-                if (f) setUploadFile(f)
-              }}
-            />
-          </div>
-
-          {/* Botão extrair */}
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={handleEnergyUpload}
-              disabled={!uploadFile || !selectedPivotId || uploading}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                background: (!uploadFile || !selectedPivotId || uploading) ? '#0d1520' : '#0093D0',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: (!uploadFile || !selectedPivotId || uploading) ? '#778899' : '#fff',
-                cursor: (!uploadFile || !selectedPivotId || uploading) ? 'not-allowed' : 'pointer',
-                minHeight: 44,
-              }}
-            >
-              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Bolt size={14} />}
-              {uploading ? 'Extraindo com IA...' : 'Extrair com IA'}
-            </button>
-
-            {uploadResult && (
-              <span style={{ fontSize: 12, color: uploadResult.success ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
-                {uploadResult.success ? '✓ ' : '✕ '}{uploadResult.message}
-              </span>
-            )}
           </div>
         </div>
+
+        {/* Loading */}
+        {loadingBills && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 12, marginBottom: 12 }}>
+            <Loader2 size={13} className="animate-spin" style={{ color: '#0093D0' }} />
+            Carregando contas...
+          </div>
+        )}
 
         {/* KPIs do último mês */}
         {energyBills.length > 0 && (() => {
@@ -1351,7 +1424,7 @@ export default function RelatoriosPage() {
           const costMmHa = latest.cost_per_mm_ha ?? null
           const costStatus = costMmHa === null ? 'unknown' : costMmHa <= 1.5 ? 'green' : costMmHa <= 2 ? 'yellow' : 'red'
           return (
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginBottom: 14 }}>
               <p style={{ fontSize: 10, color: '#778899', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Último mês: {latest.reference_month}
               </p>
@@ -1398,45 +1471,111 @@ export default function RelatoriosPage() {
 
         {/* Gráfico histórico */}
         {energyBills.length >= 2 && (
-          <div style={{ marginTop: 14 }}>
+          <div style={{ marginBottom: 14 }}>
             <EnergyBarChart bills={energyBills} />
           </div>
         )}
 
         {/* Tabela histórico */}
         {energyBills.length > 0 && (
-          <div style={{ marginTop: 14 }}>
+          <div style={{ marginBottom: 20 }}>
             <EnergyTable bills={energyBills} />
-          </div>
-        )}
-
-        {/* Loading */}
-        {loadingBills && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 12, marginTop: 12 }}>
-            <Loader2 size={13} className="animate-spin" style={{ color: '#0093D0' }} />
-            Carregando contas...
           </div>
         )}
 
         {/* Sem dados */}
         {!loadingBills && energyBills.length === 0 && (
-          <div style={{ marginTop: 12, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
-            <Bolt size={24} style={{ color: '#778899', margin: '0 auto 10px' }} />
+          <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px', textAlign: 'center', marginBottom: 16 }}>
+            <Bolt size={22} style={{ color: '#778899', margin: '0 auto 8px' }} />
             <p style={{ fontSize: 13, color: '#778899' }}>Nenhuma conta de energia para este pivô.</p>
-            <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>Faça upload de uma conta acima para começar.</p>
+            <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>Faça upload de uma conta abaixo para começar a análise.</p>
           </div>
         )}
-      </div>
+
+        {/* Upload — sempre ao final */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Adicionar nova conta de energia
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Lâmina irrigada */}
+            <div style={{ width: 200 }}>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Lâmina irrigada no mês (mm/ha)</label>
+              <input
+                type="number"
+                value={irrigatedMmHa}
+                onChange={e => setIrrigatedMmHa(e.target.value)}
+                placeholder="ex: 45"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+              />
+            </div>
+
+            {/* Dropzone */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Arquivo da conta (PDF, JPG, PNG)</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => {
+                  e.preventDefault()
+                  const f = e.dataTransfer.files[0]
+                  if (f) setUploadFile(f)
+                }}
+                style={{
+                  border: `2px dashed ${uploadFile ? '#0093D0' : 'rgba(255,255,255,0.06)'}`,
+                  borderRadius: 12, padding: '20px 16px', textAlign: 'center',
+                  cursor: 'pointer', transition: 'border-color 0.2s',
+                  background: uploadFile ? 'rgba(0,147,208,0.05)' : 'transparent',
+                }}
+              >
+                <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#778899', margin: '0 auto 6px' }} />
+                <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : '#778899' }}>
+                  {uploadFile ? uploadFile.name : 'Clique ou arraste o arquivo aqui'}
+                </p>
+                {!uploadFile && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>PDF, JPG ou PNG</p>}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,image/*"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const f = e.target.files?.[0]
+                  if (f) setUploadFile(f)
+                }}
+              />
+            </div>
+
+            {/* Botão extrair */}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={handleEnergyUpload}
+                disabled={!uploadFile || !selectedPivotId || uploading}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                  background: (!uploadFile || !selectedPivotId || uploading) ? '#0d1520' : '#0093D0',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: (!uploadFile || !selectedPivotId || uploading) ? '#778899' : '#fff',
+                  cursor: (!uploadFile || !selectedPivotId || uploading) ? 'not-allowed' : 'pointer',
+                  minHeight: 44,
+                }}
+              >
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Bolt size={14} />}
+                {uploading ? 'Extraindo com IA...' : 'Extrair com IA'}
+              </button>
+
+              {uploadResult && (
+                <span style={{ fontSize: 12, color: uploadResult.success ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                  {uploadResult.success ? '✓ ' : '✕ '}{uploadResult.message}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </AccordionSection>
+
     </div>
   )
 }
 
-function SectionTitle({ icon: Icon, text }: { icon: typeof BarChart2; text: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <Icon size={13} style={{ color: '#0093D0' }} />
-      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>{text}</span>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-    </div>
-  )
-}
