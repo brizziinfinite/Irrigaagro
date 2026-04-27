@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { listFarmsByCompany } from '@/services/farms'
 import { listPivotsByFarmIds } from '@/services/pivots'
@@ -34,6 +34,12 @@ import {
   Phone,
   User,
   Clock,
+  Users,
+  CircleDot,
+  Zap,
+  Info,
+  Droplets,
+  CalendarDays,
 } from 'lucide-react'
 
 // ─── Tipos ───────────────────────────────────────────────────
@@ -106,9 +112,9 @@ export default function WhatsAppPage() {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
-  // Assinaturas expandidas
+  // Assinaturas — mapa por contactId para acesso rápido
   const [expandedContactId, setExpandedContactId] = useState<string | null>(null)
-  const [subscriptions, setSubscriptions] = useState<SubscriptionWithPivot[]>([])
+  const [allSubs, setAllSubs] = useState<Record<string, SubscriptionWithPivot[]>>({})
   const [loadingSubs, setLoadingSubs] = useState(false)
   const [savingSub, setSavingSub] = useState<string | null>(null)
 
@@ -132,6 +138,32 @@ export default function WhatsAppPage() {
   }, [company?.id])
 
   useEffect(() => { loadData() }, [loadData])
+
+  // ─── KPIs computados ─────────────────────────────────────
+
+  const activeContacts = useMemo(() => contacts.filter(c => c.is_active).length, [contacts])
+
+  const monitoredPivotIds = useMemo(() => {
+    const ids = new Set<string>()
+    Object.values(allSubs).flat().forEach(s => ids.add(s.pivot_id))
+    return ids.size
+  }, [allSubs])
+
+  const totalAlerts = useMemo(() => {
+    return Object.values(allSubs).flat().reduce((acc, s) => {
+      if (s.notify_irrigation) acc++
+      if (s.notify_rain) acc++
+      if (s.notify_daily_summary) acc++
+      return acc
+    }, 0)
+  }, [allSubs])
+
+  // Próximo envio: horário mais cedo dos contatos ativos
+  const nextSendHour = useMemo(() => {
+    const hours = contacts.filter(c => c.is_active).map(c => c.notification_hour)
+    if (hours.length === 0) return null
+    return Math.min(...hours)
+  }, [contacts])
 
   // ─── Modal ───────────────────────────────────────────────
 
@@ -202,6 +234,7 @@ export default function WhatsAppPage() {
       await deleteContact(id)
       setContacts(prev => prev.filter(c => c.id !== id))
       if (expandedContactId === id) setExpandedContactId(null)
+      setAllSubs(prev => { const n = { ...prev }; delete n[id]; return n })
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Erro ao excluir')
     }
@@ -215,10 +248,12 @@ export default function WhatsAppPage() {
       return
     }
     setExpandedContactId(contactId)
+    // Só busca se ainda não carregou
+    if (allSubs[contactId]) return
     setLoadingSubs(true)
     try {
       const subs = await listSubscriptionsByContact(contactId)
-      setSubscriptions(subs)
+      setAllSubs(prev => ({ ...prev, [contactId]: subs }))
     } catch (e) {
       console.error(e)
     } finally {
@@ -251,14 +286,17 @@ export default function WhatsAppPage() {
         notify_daily_summary: current.notify_daily_summary ?? false,
         [field]: !(currentSub?.[field] ?? false),
       })
-      setSubscriptions(prev => {
-        const exists = prev.find(s => s.contact_id === contactId && s.pivot_id === pivotId)
-        if (exists) return prev.map(s =>
-          s.contact_id === contactId && s.pivot_id === pivotId
-            ? { ...s, ...updated }
-            : s
-        )
-        return [...prev, { ...updated, pivots: pivots.find(p => p.id === pivotId) ? { id: pivotId, name: pivots.find(p => p.id === pivotId)!.name, farms: pivots.find(p => p.id === pivotId)!.farms } : null }]
+      setAllSubs(prev => {
+        const list = prev[contactId] ?? []
+        const exists = list.find(s => s.pivot_id === pivotId)
+        const pivot = pivots.find(p => p.id === pivotId)
+        const newEntry = { ...updated, pivots: pivot ? { id: pivotId, name: pivot.name, farms: pivot.farms } : null }
+        return {
+          ...prev,
+          [contactId]: exists
+            ? list.map(s => s.pivot_id === pivotId ? { ...s, ...updated } : s)
+            : [...list, newEntry],
+        }
       })
     } catch (e) {
       console.error(e)
@@ -271,7 +309,10 @@ export default function WhatsAppPage() {
     setSavingSub(`${contactId}-${pivotId}`)
     try {
       await deleteSubscription(contactId, pivotId)
-      setSubscriptions(prev => prev.filter(s => !(s.contact_id === contactId && s.pivot_id === pivotId)))
+      setAllSubs(prev => ({
+        ...prev,
+        [contactId]: (prev[contactId] ?? []).filter(s => s.pivot_id !== pivotId),
+      }))
     } catch (e) {
       console.error(e)
     } finally {
@@ -283,230 +324,274 @@ export default function WhatsAppPage() {
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: '#8899aa' }}>
-      <Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />
+      <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
     </div>
   )
 
   if (pageError) return (
-    <div style={{ padding: 32, color: '#ef4444' }}>{pageError}</div>
+    <div style={{ padding: 32, color: '#ef4444', fontSize: 14 }}>{pageError}</div>
   )
 
-  const expandedSubs = subscriptions.filter(s => s.contact_id === expandedContactId)
-
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 900 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <MessageSquare size={22} color="#22c55e" />
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#e2e8f0' }}>WhatsApp</h1>
-          <span style={{
-            background: 'rgba(34,197,94,0.12)', color: '#22c55e',
-            fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600,
-          }}>
-            {contacts.length} contato{contacts.length !== 1 ? 's' : ''}
-          </span>
+    <div style={{ maxWidth: 900 }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <MessageSquare size={18} style={{ color: '#22c55e' }} />
+            </div>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>
+              Central WhatsApp
+            </h1>
+          </div>
+          <p style={{ margin: 0, fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>
+            Configure quem recebe alertas de irrigação, chuva e resumo diário.
+          </p>
         </div>
         <button onClick={openCreate} style={{
-          display: 'flex', alignItems: 'center', gap: 6,
+          display: 'flex', alignItems: 'center', gap: 7,
           background: '#0093D0', color: '#fff', border: 'none',
-          borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600,
-          cursor: 'pointer', minHeight: 44,
+          borderRadius: 10, padding: '10px 18px', fontSize: 14, fontWeight: 600,
+          cursor: 'pointer', minHeight: 44, boxShadow: '0 2px 8px rgba(0,147,208,0.25)',
         }}>
           <Plus size={15} /> Novo contato
         </button>
       </div>
 
-      {/* Info box */}
-      <div style={{
-        background: 'rgba(0,147,208,0.08)', border: '1px solid rgba(0,147,208,0.2)',
-        borderRadius: 10, padding: '12px 16px', marginBottom: 24, fontSize: 13, color: '#8899aa',
-        lineHeight: 1.6,
-      }}>
-        <strong style={{ color: '#0093D0' }}>Como funciona:</strong> Cadastre os contatos que devem receber alertas via WhatsApp.
-        Para cada contato, configure quais pivôs ele monitora e quais tipos de alerta recebe
-        (irrigação, chuva, resumo diário).
+      {/* ── KPI cards ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 24 }}>
+        {[
+          { icon: <Users size={14} />, label: 'Contatos ativos', value: activeContacts, color: '#22c55e' },
+          { icon: <CircleDot size={14} />, label: 'Pivôs monitorados', value: monitoredPivotIds, color: '#0093D0' },
+          { icon: <Bell size={14} />, label: 'Alertas ativos', value: totalAlerts, color: '#f59e0b' },
+          {
+            icon: <Clock size={14} />,
+            label: 'Próximo envio',
+            value: nextSendHour !== null ? `${String(nextSendHour).padStart(2, '0')}h` : '—',
+            color: '#22d3ee',
+          },
+        ].map(kpi => (
+          <div key={kpi.label} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <span style={{ color: kpi.color }}>{kpi.icon}</span>
+              <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>{kpi.label}</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 24, fontWeight: 700, color: kpi.color, fontFamily: 'var(--font-mono)', letterSpacing: '-0.025em', lineHeight: 1 }}>
+              {kpi.value}
+            </p>
+          </div>
+        ))}
       </div>
 
-      {/* Lista de contatos */}
+      {/* ── Como funciona ── */}
+      <div style={{ background: 'rgba(0,147,208,0.04)', border: '1px solid rgba(0,147,208,0.12)', borderRadius: 12, padding: '14px 18px', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <Info size={13} style={{ color: '#0093D0' }} />
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0093D0' }}>Como funciona</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+          {[
+            { icon: <Users size={14} />, title: 'Cadastre contatos', desc: 'Adicione quem deve receber as mensagens e o horário preferido.' },
+            { icon: <CircleDot size={14} />, title: 'Vincule pivôs', desc: 'Defina quais pivôs cada pessoa monitora.' },
+            { icon: <Bell size={14} />, title: 'Configure alertas', desc: 'Escolha irrigação, chuva e/ou resumo diário por pivô.' },
+          ].map(item => (
+            <div key={item.title} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(0,147,208,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#0093D0' }}>
+                {item.icon}
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#94a3b8' }}>{item.title}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748b', lineHeight: 1.5 }}>{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Lista de contatos ── */}
       {contacts.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: '48px 24px',
-          background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 12, color: '#778899',
-        }}>
-          <MessageSquare size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
-          <p style={{ margin: 0, fontSize: 14 }}>Nenhum contato cadastrado</p>
-          <p style={{ margin: '4px 0 0', fontSize: 12 }}>Clique em "Novo contato" para começar</p>
+        <div style={{ textAlign: 'center', padding: '48px 24px', background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, color: '#778899' }}>
+          <MessageSquare size={36} style={{ marginBottom: 12, color: '#334455' }} />
+          <p style={{ margin: 0, fontSize: 14, color: '#556677' }}>Nenhum contato cadastrado</p>
+          <p style={{ margin: '4px 0 16px', fontSize: 12, color: '#445566' }}>Clique em "Novo contato" para configurar os alertas.</p>
+          <button onClick={openCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0093D0', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <Plus size={14} /> Novo contato
+          </button>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {contacts.map(contact => {
             const isExpanded = expandedContactId === contact.id
-            const contactSubs = subscriptions.filter(s => s.contact_id === contact.id)
+            const contactSubs = allSubs[contact.id] ?? []
+            const activeSubs = contactSubs.filter(s => s.notify_irrigation || s.notify_rain || s.notify_daily_summary)
+            const linkedPivotNames = contactSubs.map(s => pivots.find(p => p.id === s.pivot_id)?.name).filter(Boolean)
+
+            // Tipos de alerta únicos ativos
+            const hasIrrigation = contactSubs.some(s => s.notify_irrigation)
+            const hasRain = contactSubs.some(s => s.notify_rain)
+            const hasSummary = contactSubs.some(s => s.notify_daily_summary)
+            const hasAnySub = contactSubs.length > 0
+
+            // Status do contato
+            const statusLabel = !contact.is_active ? 'Pausado' : !hasAnySub ? 'Sem pivô' : 'Ativo'
+            const statusColor = !contact.is_active ? '#64748b' : !hasAnySub ? '#f59e0b' : '#22c55e'
+            const statusBg = !contact.is_active ? 'rgba(100,116,139,0.1)' : !hasAnySub ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)'
+            const statusBorder = !contact.is_active ? 'rgba(100,116,139,0.2)' : !hasAnySub ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'
 
             return (
-              <div key={contact.id} style={{
-                background: '#0f1923',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 12, overflow: 'hidden',
-              }}>
-                {/* Linha do contato */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '14px 16px',
-                }}>
+              <div key={contact.id} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
+
+                {/* ── Linha principal do contato ── */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 18px' }}>
+
                   {/* Avatar */}
-                  <div style={{
-                    width: 38, height: 38, borderRadius: '50%',
-                    background: contact.is_active ? 'rgba(34,197,94,0.15)' : 'rgba(85,102,119,0.2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    <User size={16} color={contact.is_active ? '#22c55e' : '#778899'} />
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: contact.is_active ? 'rgba(34,197,94,0.1)' : 'rgba(100,116,139,0.1)', border: `1px solid ${contact.is_active ? 'rgba(34,197,94,0.2)' : 'rgba(100,116,139,0.15)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <User size={16} style={{ color: contact.is_active ? '#22c55e' : '#64748b' }} />
                   </div>
 
-                  {/* Info */}
+                  {/* Info principal */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontWeight: 600, fontSize: 14, color: '#e2e8f0' }}>
+                    {/* Linha 1: nome + status */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, fontSize: 15, color: '#e2e8f0', letterSpacing: '-0.01em' }}>
                         {contact.contact_name}
                       </span>
-                      {!contact.is_active && (
-                        <span style={{
-                          fontSize: 10, background: 'rgba(85,102,119,0.2)', color: '#778899',
-                          padding: '1px 6px', borderRadius: 10,
-                        }}>inativo</span>
-                      )}
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: statusBg, color: statusColor, border: `1px solid ${statusBorder}` }}>
+                        {statusLabel}
+                      </span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 2 }}>
+
+                    {/* Linha 2: telefone + horário */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 14px', marginBottom: 8 }}>
                       <span style={{ fontSize: 12, color: '#8899aa', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Phone size={11} /> {displayPhone(contact.phone)}
+                        <Phone size={11} style={{ color: '#445566' }} /> {displayPhone(contact.phone)}
                       </span>
                       <span style={{ fontSize: 12, color: '#8899aa', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Clock size={11} /> {String(contact.notification_hour).padStart(2, '0')}h
+                        <Clock size={11} style={{ color: '#445566' }} /> Recebe às {String(contact.notification_hour).padStart(2, '0')}h
                       </span>
+                    </div>
+
+                    {/* Linha 3: chips de alertas ativos + pivôs */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      {hasIrrigation && (
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(0,147,208,0.1)', color: '#0093D0', border: '1px solid rgba(0,147,208,0.22)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <Zap size={8} /> Irrigação
+                        </span>
+                      )}
+                      {hasRain && (
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(6,182,212,0.08)', color: '#06b6d4', border: '1px solid rgba(6,182,212,0.2)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <Droplets size={8} /> Chuva
+                        </span>
+                      )}
+                      {hasSummary && (
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(34,197,94,0.08)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <CalendarDays size={8} /> Resumo diário
+                        </span>
+                      )}
+                      {linkedPivotNames.length > 0 && (
+                        <span style={{ fontSize: 10, color: '#556677', padding: '2px 6px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          {linkedPivotNames.length === 1 ? linkedPivotNames[0] : `${linkedPivotNames.length} pivôs`}
+                        </span>
+                      )}
+                      {!hasAnySub && allSubs[contact.id] !== undefined && (
+                        <span style={{ fontSize: 10, color: '#445566', fontStyle: 'italic' }}>Nenhum pivô vinculado</span>
+                      )}
                     </div>
                   </div>
 
                   {/* Ações */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
                     <button
                       onClick={() => toggleExpand(contact.id)}
-                      title="Gerenciar pivôs"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        background: isExpanded ? 'rgba(0,147,208,0.15)' : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${isExpanded ? 'rgba(0,147,208,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                        color: isExpanded ? '#0093D0' : '#8899aa',
-                        borderRadius: 7, padding: '5px 10px', fontSize: 12, cursor: 'pointer',
-                      }}
+                      title="Pivôs e alertas"
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, background: isExpanded ? 'rgba(0,147,208,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${isExpanded ? 'rgba(0,147,208,0.3)' : 'rgba(255,255,255,0.07)'}`, color: isExpanded ? '#0093D0' : '#8899aa', borderRadius: 8, padding: '6px 11px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
                     >
-                      Pivôs
+                      {activeSubs.length > 0 && (
+                        <span style={{ fontSize: 10, fontWeight: 700, background: '#0093D0', color: '#fff', borderRadius: 10, padding: '0px 5px', lineHeight: '16px' }}>{activeSubs.length}</span>
+                      )}
+                      Pivôs e alertas
                       {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                     </button>
-                    <button onClick={() => openEdit(contact)} title="Editar" style={{
-                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: 7, padding: 6, cursor: 'pointer', color: '#8899aa',
-                      display: 'flex', alignItems: 'center',
-                    }}>
-                      <Pencil size={14} />
+                    <button onClick={() => openEdit(contact)} title="Editar contato"
+                      style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'rgba(255,255,255,0.04)', color: '#556677', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
+                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                      <Pencil size={13} />
                     </button>
-                    <button onClick={() => handleDelete(contact.id)} title="Excluir" style={{
-                      background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)',
-                      borderRadius: 7, padding: 6, cursor: 'pointer', color: '#ef4444',
-                      display: 'flex', alignItems: 'center',
-                    }}>
-                      <Trash2 size={14} />
+                    <button onClick={() => handleDelete(contact.id)} title="Excluir contato"
+                      style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'rgba(255,255,255,0.04)', color: '#556677', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#ef4444'; el.style.background = 'rgba(239,68,68,0.08)'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
+                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
 
-                {/* Painel de pivôs */}
+                {/* ── Painel de pivôs expandido ── */}
                 {isExpanded && (
-                  <div style={{
-                    borderTop: '1px solid rgba(255,255,255,0.06)',
-                    background: 'rgba(0,0,0,0.2)',
-                    padding: '12px 16px',
-                  }}>
-                    {loadingSubs ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 13 }}>
-                        <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Carregando…
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)', padding: '14px 18px' }}>
+                    {loadingSubs && !allSubs[contact.id] ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#64748b', fontSize: 13 }}>
+                        <Loader2 size={13} className="animate-spin" /> Carregando pivôs…
                       </div>
                     ) : pivots.length === 0 ? (
-                      <p style={{ margin: 0, fontSize: 13, color: '#778899' }}>Nenhum pivô cadastrado.</p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#64748b' }}>Nenhum pivô cadastrado na empresa.</p>
                     ) : (
                       <div>
-                        <p style={{ margin: '0 0 10px', fontSize: 12, color: '#778899', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Configurar alertas por pivô
+                        <p style={{ margin: '0 0 10px', fontSize: 10, fontWeight: 700, color: '#445566', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                          Alertas por pivô — clique para ativar/desativar
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                           {pivots.map(pivot => {
-                            const sub = expandedSubs.find(s => s.pivot_id === pivot.id)
+                            const sub = (allSubs[contact.id] ?? []).find(s => s.pivot_id === pivot.id)
                             const key = (field: string) => `${contact.id}-${pivot.id}-${field}`
                             return (
-                              <div key={pivot.id} style={{
-                                display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
-                                background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
-                                borderRadius: 8, padding: '10px 12px',
-                              }}>
+                              <div key={pivot.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px' }}>
                                 {/* Nome pivô */}
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>
-                                    {pivot.name}
-                                  </span>
+                                <div style={{ flex: 1, minWidth: 120 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{pivot.name}</span>
                                   {pivot.farms?.name && (
-                                    <span style={{ fontSize: 11, color: '#778899', marginLeft: 6 }}>
-                                      {pivot.farms.name}
-                                    </span>
+                                    <span style={{ fontSize: 11, color: '#64748b', marginLeft: 6 }}>{pivot.farms.name}</span>
                                   )}
                                 </div>
 
-                                {/* Toggles */}
+                                {/* Toggles de alertas */}
                                 {(
                                   [
-                                    { field: 'notify_irrigation', label: 'Irrigação', color: '#0093D0' },
-                                    { field: 'notify_rain', label: 'Chuva', color: '#22d3ee' },
-                                    { field: 'notify_daily_summary', label: 'Resumo', color: '#22c55e' },
-                                  ] as const
-                                ).map(({ field, label, color }) => {
+                                    { field: 'notify_irrigation' as const, label: 'Irrigação', color: '#0093D0', icon: <Zap size={10} /> },
+                                    { field: 'notify_rain' as const, label: 'Chuva', color: '#22d3ee', icon: <Droplets size={10} /> },
+                                    { field: 'notify_daily_summary' as const, label: 'Resumo', color: '#22c55e', icon: <CalendarDays size={10} /> },
+                                  ]
+                                ).map(({ field, label, color, icon }) => {
                                   const active = sub?.[field] ?? false
-                                  const loading = savingSub === key(field)
+                                  const isLoading = savingSub === key(field)
                                   return (
                                     <button
                                       key={field}
-                                      disabled={loading}
+                                      disabled={isLoading}
                                       onClick={() => handleToggleSub(contact.id, pivot.id, field, sub as SubscriptionWithPivot | undefined)}
-                                      style={{
-                                        display: 'flex', alignItems: 'center', gap: 5,
-                                        background: active ? `${color}22` : 'rgba(255,255,255,0.04)',
-                                        border: `1px solid ${active ? `${color}44` : 'rgba(255,255,255,0.08)'}`,
-                                        color: active ? color : '#778899',
-                                        borderRadius: 6, padding: '4px 9px', fontSize: 11,
-                                        fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
-                                      }}
+                                      style={{ display: 'flex', alignItems: 'center', gap: 5, background: active ? `${color}18` : 'rgba(255,255,255,0.04)', border: `1px solid ${active ? `${color}40` : 'rgba(255,255,255,0.07)'}`, color: active ? color : '#556677', borderRadius: 7, padding: '5px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
                                     >
-                                      {loading
-                                        ? <Loader2 size={11} style={{ animation: 'spin 1s linear infinite' }} />
-                                        : active ? <Bell size={11} /> : <BellOff size={11} />
-                                      }
+                                      {isLoading ? <Loader2 size={10} className="animate-spin" /> : active ? <Bell size={10} /> : <BellOff size={10} />}
+                                      {icon}
                                       {label}
                                     </button>
                                   )
                                 })}
 
-                                {/* Remover */}
+                                {/* Remover pivô */}
                                 {sub && (
                                   <button
                                     disabled={savingSub === `${contact.id}-${pivot.id}`}
                                     onClick={() => handleRemoveSub(contact.id, pivot.id)}
-                                    title="Remover pivô"
-                                    style={{
-                                      background: 'none', border: 'none',
-                                      color: '#778899', cursor: 'pointer', padding: 4,
-                                      display: 'flex', alignItems: 'center',
-                                    }}
+                                    title="Remover todos os alertas deste pivô"
+                                    style={{ padding: 5, background: 'none', border: '1px solid transparent', borderRadius: 6, color: '#334455', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
+                                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#ef4444'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
+                                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#334455'; el.style.borderColor = 'transparent' }}
                                   >
-                                    <X size={13} />
+                                    <X size={12} />
                                   </button>
                                 )}
                               </div>
@@ -523,121 +608,89 @@ export default function WhatsAppPage() {
         </div>
       )}
 
-      {/* Modal criar/editar */}
+      {/* ── Modal criar/editar ── */}
       {showModal && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
-        }}>
-          <div style={{
-            background: '#0f1923', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 14, padding: 'clamp(16px, 4vw, 28px)', width: 420, maxWidth: '92vw',
-          }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 'clamp(16px,4vw,28px)', width: '100%', maxWidth: 440, boxShadow: '0 20px 48px -8px rgba(0,0,0,0.6)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>
                 {editingContact ? 'Editar contato' : 'Novo contato'}
               </h2>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: '#8899aa', cursor: 'pointer', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: '#778899', cursor: 'pointer', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
                 <X size={18} />
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Nome */}
-              <label style={{ fontSize: 12, color: '#8899aa', fontWeight: 600 }}>
+              <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>
                 Nome
-                <input
-                  value={form.contact_name}
-                  onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))}
-                  placeholder="Ex: João Silva"
-                  style={inputStyle}
-                />
+                <input value={form.contact_name} onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))}
+                  placeholder="Ex: João Silva" style={inputStyle} />
               </label>
 
               {/* Telefone */}
-              <label style={{ fontSize: 12, color: '#8899aa', fontWeight: 600 }}>
+              <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>
                 Telefone
                 <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                  <select
-                    value={form.country_code}
-                    onChange={e => setForm(f => ({ ...f, country_code: e.target.value }))}
-                    style={{
-                      ...inputStyle, marginTop: 0, width: 'auto', flexShrink: 0,
-                      paddingRight: 8, cursor: 'pointer',
-                    }}
-                  >
+                  <select value={form.country_code} onChange={e => setForm(f => ({ ...f, country_code: e.target.value }))}
+                    style={{ ...inputStyle, marginTop: 0, width: 'auto', flexShrink: 0, paddingRight: 8, cursor: 'pointer' }}>
                     {COUNTRY_CODES.map(c => (
                       <option key={c.code} value={c.code}>{c.flag} {c.label}</option>
                     ))}
                   </select>
-                  <input
-                    value={form.local_phone}
-                    onChange={e => setForm(f => ({ ...f, local_phone: e.target.value }))}
-                    placeholder="(18) 99999-8888"
-                    style={{ ...inputStyle, marginTop: 0, flex: 1 }}
-                  />
+                  <input value={form.local_phone} onChange={e => setForm(f => ({ ...f, local_phone: e.target.value }))}
+                    placeholder="(18) 99999-8888" style={{ ...inputStyle, marginTop: 0, flex: 1 }} />
                 </div>
-                <span style={{ fontSize: 11, color: '#778899', marginTop: 4, display: 'block' }}>
+                <span style={{ fontSize: 11, color: '#64748b', marginTop: 4, display: 'block' }}>
                   Número completo com DDD, sem espaços ou traços
                 </span>
               </label>
 
-              {/* Hora de notificação */}
-              <label style={{ fontSize: 12, color: '#8899aa', fontWeight: 600 }}>
-                Hora de notificação (0–23)
-                <input
-                  type="number"
-                  min={0} max={23}
-                  value={form.notification_hour}
+              {/* Hora */}
+              <label style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>
+                Horário de recebimento (0–23h)
+                <input type="number" min={0} max={23} value={form.notification_hour}
                   onChange={e => setForm(f => ({ ...f, notification_hour: e.target.value }))}
-                  style={inputStyle}
-                />
+                  style={inputStyle} />
+                <span style={{ fontSize: 11, color: '#64748b', marginTop: 4, display: 'block' }}>Ex: 7 = 07:00 da manhã</span>
               </label>
 
-              {/* Ativo */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#e2e8f0', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={form.is_active}
-                  onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
-                />
-                Contato ativo
-              </label>
+              {/* Ativo toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button type="button" onClick={() => setForm(f => ({ ...f, is_active: !f.is_active }))}
+                  style={{ width: 40, height: 22, borderRadius: 99, border: 'none', cursor: 'pointer', background: form.is_active ? '#0093D0' : '#1e2d40', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', top: 3, left: form.is_active ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }} />
+                </button>
+                <span style={{ fontSize: 13, color: '#e2e8f0' }}>
+                  {form.is_active ? 'Contato ativo — receberá alertas' : 'Contato pausado — não receberá alertas'}
+                </span>
+              </div>
 
               {formError && (
-                <p style={{ margin: 0, fontSize: 12, color: '#ef4444' }}>{formError}</p>
+                <p style={{ margin: 0, fontSize: 12, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '8px 12px' }}>{formError}</p>
               )}
 
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button onClick={() => setShowModal(false)} style={{
-                  flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#8899aa', borderRadius: 8, padding: '9px 0', fontSize: 13, cursor: 'pointer', minHeight: 44,
-                }}>
+                <button onClick={() => setShowModal(false)} style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', borderRadius: 9, padding: '10px 0', fontSize: 13, cursor: 'pointer', minHeight: 44 }}>
                   Cancelar
                 </button>
-                <button onClick={handleSave} disabled={saving} style={{
-                  flex: 2, background: '#0093D0', border: 'none', color: '#fff',
-                  borderRadius: 8, padding: '9px 0', fontSize: 13, fontWeight: 600,
-                  cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44,
-                }}>
-                  {saving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
-                  {saving ? 'Salvando…' : 'Salvar'}
+                <button onClick={handleSave} disabled={saving} style={{ flex: 2, background: '#0093D0', border: 'none', color: '#fff', borderRadius: 9, padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44 }}>
+                  {saving && <Loader2 size={14} className="animate-spin" />}
+                  {saving ? 'Salvando…' : 'Salvar contato'}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
 
 const inputStyle: React.CSSProperties = {
   display: 'block', width: '100%', marginTop: 6,
-  background: '#162030', border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 8, padding: '9px 12px', fontSize: 13, color: '#e2e8f0',
+  background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 9, padding: '10px 12px', fontSize: 13, color: '#e2e8f0',
   outline: 'none', boxSizing: 'border-box',
 }
