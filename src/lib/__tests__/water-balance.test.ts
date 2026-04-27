@@ -53,7 +53,7 @@ function makePivot(overrides: Partial<Pivot> = {}): Pivot {
     preferred_speed_percent: 50, min_speed_percent: 42,
     rs_correction_factor: null, rs_factor_updated_at: null, rs_factor_sample_days: null,
     field_capacity: null, wilting_point: null, bulk_density: null, f_factor: null,
-    irrigation_target_percent: null,
+    irrigation_target_percent: null, soil_texture: null,
     ...overrides,
   }
 }

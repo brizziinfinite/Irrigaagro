@@ -259,6 +259,7 @@ export interface Pivot {
   bulk_density: number | null
   f_factor: number | null
   irrigation_target_percent: number | null
+  soil_texture: string | null
 }
 
 export interface PivotInsert {
@@ -290,6 +291,7 @@ export interface PivotInsert {
   bulk_density?: number | null
   f_factor?: number | null
   irrigation_target_percent?: number | null
+  soil_texture?: string | null
 }
 
 export type PivotUpdate = Partial<PivotInsert>
