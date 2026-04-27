@@ -697,7 +697,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
               <button
                 onClick={() => onEdit(r)}
                 title="Editar registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#0093D0')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#667788')}
               >
@@ -706,7 +706,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
               <button
                 onClick={() => onDelete(r)}
                 title="Excluir registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#667788')}
               >
@@ -1150,7 +1150,7 @@ export default function ManejoPage() {
           <div style={{
             background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)',
             borderTop: '2px solid #ef4444',
-            borderRadius: 18, padding: '32px 32px 28px', width: '100%', maxWidth: 440,
+            borderRadius: 18, padding: 'clamp(16px, 4vw, 32px)', width: '100%', maxWidth: 440,
             boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
           }}>
             {/* Header do modal */}
@@ -1165,14 +1165,14 @@ export default function ManejoPage() {
               </div>
               <button
                 onClick={() => setShowQuickModal(false)}
-                style={{ background: 'transparent', border: 'none', color: '#667788', cursor: 'pointer', padding: 4 }}
+                style={{ background: 'transparent', border: 'none', color: '#667788', cursor: 'pointer', padding: 4, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Pivô + data (só leitura, informativo) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10, marginBottom: 20 }}>
               <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Pivô</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{selectedSeason?.pivots?.name ?? '—'}</div>
@@ -1269,6 +1269,7 @@ export default function ManejoPage() {
                 onClick={() => setShowQuickModal(false)}
                 style={{
                   flex: 1, padding: '13px 0', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                  minHeight: 48,
                   background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
                   color: '#778899', cursor: 'pointer',
                 }}
@@ -1280,6 +1281,7 @@ export default function ManejoPage() {
                 disabled={quickModalSaving}
                 style={{
                   flex: 2, padding: '13px 0', borderRadius: 10, fontSize: 14, fontWeight: 800,
+                  minHeight: 48,
                   background: quickModalSaving ? 'rgba(239,68,68,0.3)' : 'linear-gradient(135deg, #e02424, #c01a1a)',
                   border: 'none', color: '#fff', cursor: quickModalSaving ? 'not-allowed' : 'pointer',
                   boxShadow: quickModalSaving ? 'none' : '0 4px 20px rgba(200,30,30,0.35)',
@@ -1301,7 +1303,7 @@ export default function ManejoPage() {
           border: `1px solid ${heroBorder}`,
           borderTop: `2px solid ${heroMainColor}50`,
           borderRadius: 20,
-          padding: '32px 36px',
+          padding: 'clamp(18px, 4vw, 32px) clamp(18px, 4vw, 36px)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
           boxShadow: `0 8px 32px rgba(0,0,0,0.45)`,
           position: 'relative', overflow: 'hidden',
@@ -1413,7 +1415,7 @@ export default function ManejoPage() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 padding: '17px 32px', borderRadius: 14, fontSize: 14, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap',
+                minHeight: 52, textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap',
                 background: shouldIrrigate
                   ? 'linear-gradient(135deg, #e02424, #c01a1a)'
                   : 'linear-gradient(135deg, #0093D0, #0277b5)',
@@ -1454,7 +1456,7 @@ export default function ManejoPage() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 500,
-                letterSpacing: '0.03em', whiteSpace: 'nowrap',
+                minHeight: 44, letterSpacing: '0.03em', whiteSpace: 'nowrap',
                 background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
                 color: '#778899', cursor: 'pointer',
                 transition: 'color 0.15s ease, border-color 0.15s ease',
@@ -1885,6 +1887,7 @@ export default function ManejoPage() {
           onClick={() => setShowForm(!showForm)}
           style={{
             width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            minHeight: 52,
             background: showForm ? '#0d1520' : 'linear-gradient(90deg, #0f1923, #121c26)',
             border: showForm ? '1px solid rgba(0,147,208,0.2)' : '1px solid rgba(255,255,255,0.06)',
             color: showForm ? '#0093D0' : '#8899aa',
@@ -1900,7 +1903,7 @@ export default function ManejoPage() {
         </button>
 
         {showForm && (
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: 'clamp(16px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Fonte climática + data */}
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 items-start">
@@ -1977,7 +1980,7 @@ export default function ManejoPage() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                 padding: '17px 0', borderRadius: 12, fontSize: 14, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.06em',
+                minHeight: 52, textTransform: 'uppercase', letterSpacing: '0.06em',
                 background: calcResult ? 'linear-gradient(135deg, #0093D0, #0277b5)' : '#0d1520',
                 border: 'none', color: calcResult ? '#fff' : '#667788',
                 cursor: calcResult ? 'pointer' : 'not-allowed',
@@ -2028,6 +2031,7 @@ export default function ManejoPage() {
           onClick={() => setShowHistoryTab(!showHistoryTab)}
           style={{
             width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            minHeight: 52,
             background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
             color: '#8899aa', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
             transition: 'all 0.2s'

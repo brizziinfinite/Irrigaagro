@@ -598,8 +598,8 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div style={{
-        width: 320, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
+        width: '100%', maxWidth: 360, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 16, padding: 'clamp(16px, 4vw, 24px)', display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -610,7 +610,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
               <p style={{ fontSize: 11, color: '#8899aa', marginTop: 2 }}>Setor {sectorName}</p>
             )}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#778899', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#778899', padding: 8, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
             <X size={16} />
           </button>
         </div>
@@ -707,7 +707,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
             disabled={saving || syncing}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 13,
+              background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 13, minHeight: 44,
               opacity: (saving || syncing) ? 0.7 : 1,
             }}
           >
@@ -944,7 +944,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 style={{ color: '#e2e8f0', fontSize: 15, fontWeight: 700 }}>Importar Google Sheets</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#778899', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#778899', padding: 8, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
             <X size={16} />
           </button>
         </div>
@@ -998,8 +998,8 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <label style={{ fontSize: 12, color: '#8899aa' }}>Coluna da Data</label>
             <select value={dateCol} onChange={e => setDateCol(e.target.value)}
               style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }}>
@@ -1008,7 +1008,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
                 : [0,1,2,3,4].map(i => <option key={i} value={i}>Coluna {i}</option>)}
             </select>
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <label style={{ fontSize: 12, color: '#8899aa' }}>Coluna de mm</label>
             <select value={mmCol} onChange={e => setMmCol(e.target.value)}
               style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }}>
@@ -1026,7 +1026,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
         )}
 
         <button onClick={handleFetch} disabled={loading || !url}
-          style={{ padding: '10px', borderRadius: 8, cursor: 'pointer', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontWeight: 600, fontSize: 13, opacity: loading || !url ? 0.5 : 1 }}>
+          style={{ padding: '10px', borderRadius: 8, cursor: 'pointer', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontWeight: 600, fontSize: 13, opacity: loading || !url ? 0.5 : 1, minHeight: 44 }}>
           {loading ? 'Buscando…' : 'Pré-visualizar'}
         </button>
 
@@ -1065,7 +1065,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
             )}
 
             <button onClick={handleImport} disabled={importing}
-              style={{ padding: '11px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 13, opacity: importing ? 0.7 : 1 }}>
+              style={{ padding: '11px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 13, opacity: importing ? 0.7 : 1, minHeight: 44 }}>
               {importing ? `Importando… ${progress}%` : `Importar registros`}
             </button>
             {importing && (

@@ -639,14 +639,14 @@ function CancelModal({
     }} onClick={onClose}>
       <div style={{
         background: '#0f1923', border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: 16, padding: 28, width: 360, maxWidth: '90vw',
+        borderRadius: 16, padding: 'clamp(16px, 4vw, 28px)', width: 360, maxWidth: '90vw',
       }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Cancelar irrigação</p>
             <p style={{ fontSize: 12, color: '#667788', margin: '2px 0 0' }}>{pivotName} · {fmtShort(date)}</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#667788', cursor: 'pointer', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#667788', cursor: 'pointer', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={18} />
           </button>
         </div>
@@ -657,7 +657,7 @@ function CancelModal({
             <button key={r.value} onClick={() => setReason(r.value)} style={{
               flex: 1, padding: '8px 4px', borderRadius: 8, border: `1px solid ${reason === r.value ? r.color : 'rgba(255,255,255,0.08)'}`,
               background: reason === r.value ? `${r.color}18` : 'rgba(255,255,255,0.03)',
-              color: reason === r.value ? r.color : '#667788', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              color: reason === r.value ? r.color : '#667788', fontSize: 12, fontWeight: 600, cursor: 'pointer', minHeight: 44,
             }}>
               {r.label}
             </button>
@@ -679,13 +679,13 @@ function CancelModal({
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <button onClick={onClose} style={{
             flex: 1, padding: '10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)',
-            background: 'transparent', color: '#667788', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            background: 'transparent', color: '#667788', fontSize: 13, fontWeight: 600, cursor: 'pointer', minHeight: 44,
           }}>
             Voltar
           </button>
           <button onClick={() => onConfirm(reason, notes)} style={{
             flex: 2, padding: '10px', borderRadius: 8, border: 'none',
-            background: 'rgba(239,68,68,0.15)', color: '#ef4444', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            background: 'rgba(239,68,68,0.15)', color: '#ef4444', fontSize: 13, fontWeight: 700, cursor: 'pointer', minHeight: 44,
           }}>
             Confirmar cancelamento
           </button>

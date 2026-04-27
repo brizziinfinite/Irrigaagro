@@ -237,7 +237,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 540, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)', maxHeight: '92vh', overflowY: 'auto' }}>
+      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 'clamp(16px, 4vw, 28px)', width: '100%', maxWidth: 540, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)', maxHeight: '92vh', overflowY: 'auto' }}>
         <div className="flex items-center justify-between mb-6">
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>{isEdit ? 'Editar Safra' : 'Nova Safra'}</h2>
           <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}><X size={16} /></button>
@@ -389,13 +389,13 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             </div>
           </div>
 
-          <div className="flex gap-3 mt-2">
+          <div className="flex gap-3 mt-2 flex-wrap">
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
               Cancelar
             </button>
             <button type="submit" disabled={loading}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {loading && <Loader2 size={14} className="animate-spin" />}
               {submitLabel}
             </button>
@@ -574,20 +574,20 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           {season.is_active && season.planting_date && (
             <button onClick={onRecalculate} disabled={recalculating} title="Atualizar histórico do plantio até hoje"
-              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899' }}
+              style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onMouseEnter={e => { if (!recalculating) { (e.currentTarget as HTMLElement).style.color = '#22c55e'; (e.currentTarget as HTMLElement).style.background = 'rgba(34,197,94,0.1)' } }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
               <RefreshCw size={14} className={recalculating ? 'animate-spin' : ''} />
             </button>
           )}
           <button onClick={onEdit} title="Editar"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899' }}
+            style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0093D0'; (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.1)' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
             <Pencil size={14} />
           </button>
           <button onClick={onDelete} disabled={deleting} title="Excluir"
-            style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899' }}
+            style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#778899' }}>
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
@@ -703,7 +703,7 @@ export default function SafrasPage() {
             {pageError}
           </div>
         )}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Safras</h1>
             <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
@@ -713,7 +713,7 @@ export default function SafrasPage() {
           <button
             onClick={() => { setEditingSeason(null); setModalOpen(true) }}
             disabled={farms.length === 0}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? '#0d1520' : '#0093D0', border: 'none', color: farms.length === 0 ? '#778899' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(0 147 208 / 0.25)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? '#0d1520' : '#0093D0', border: 'none', color: farms.length === 0 ? '#778899' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(0 147 208 / 0.25)' }}
           >
             <Plus size={16} /> Nova Safra
           </button>

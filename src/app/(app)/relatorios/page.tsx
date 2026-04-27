@@ -294,7 +294,8 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
       <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Consumo por Período (Últimos)</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: 0 }}>
+      <div style={{ overflowX: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: 0, minWidth: 280 }}>
         {/* Header */}
         {['', 'ETc (mm)', 'Irrig. (mm)', 'Chuva (mm)'].map((h, i) => (
           <div key={i} style={{ padding: '8px 14px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -317,6 +318,7 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
             </div>
           </React.Fragment>
         ))}
+      </div>
       </div>
     </div>
   )
@@ -427,7 +429,7 @@ function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
                    Semana {w.weekNum} <span style={{ color: '#778899', fontWeight: 400, textTransform: 'none' }}>· {fmtDate(w.startDate)} – {fmtDate(w.endDate)}</span>
                  </span>
               </div>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, fontFamily: 'var(--font-mono)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                  <span style={{ color: '#8899aa' }} title="ETo">ETo: <span style={{ color: '#e2e8f0' }}>{fmtNum(w.eto)}</span></span>
                  <span style={{ color: '#8899aa' }} title="ETc">ETc: <span style={{ color: '#06b6d4' }}>{fmtNum(w.etc)}</span></span>
                  <span style={{ color: '#8899aa' }} title="Precipitação">Chuva: <span style={{ color: '#38bdf8' }}>{fmtNum(w.rain)}</span></span>
@@ -1081,7 +1083,7 @@ export default function RelatoriosPage() {
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 16px', borderRadius: 10, fontSize: 12, fontWeight: 600,
               background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa',
-              cursor: 'pointer',
+              cursor: 'pointer', minHeight: 44,
             }}
           >
             <Download size={13} /> Exportar CSV
@@ -1326,6 +1328,7 @@ export default function RelatoriosPage() {
                 border: '1px solid rgba(255,255,255,0.08)',
                 color: (!uploadFile || !selectedPivotId || uploading) ? '#778899' : '#fff',
                 cursor: (!uploadFile || !selectedPivotId || uploading) ? 'not-allowed' : 'pointer',
+                minHeight: 44,
               }}
             >
               {uploading ? <Loader2 size={14} className="animate-spin" /> : <Bolt size={14} />}

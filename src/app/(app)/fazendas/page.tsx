@@ -166,7 +166,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
         maxHeight: '92vh', display: 'flex', flexDirection: 'column',
       }}>
         {/* Cabeçalho fixo */}
-        <div style={{ padding: '28px 32px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+        <div style={{ padding: 'clamp(16px, 4vw, 28px) clamp(16px, 4vw, 32px) 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
               <h2 style={{ fontSize: 17, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
@@ -188,7 +188,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
         </div>
 
         {/* Corpo scrollável */}
-        <div style={{ overflowY: 'auto', padding: '20px 32px', flex: 1 }}>
+        <div style={{ overflowY: 'auto', padding: '20px clamp(16px, 4vw, 32px)', flex: 1 }}>
           {error && (
             <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 13 }}>
               {error}
@@ -319,7 +319,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
         </div>
 
         {/* Rodapé fixo */}
-        <div style={{ padding: '16px 32px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, display: 'flex', gap: 10 }}>
+        <div style={{ padding: '16px clamp(16px, 4vw, 32px) 24px', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={onClose}
@@ -457,7 +457,7 @@ export default function FazendasPage() {
         )}
 
         {/* Cabeçalho */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Fazendas</h1>
             <p style={{ fontSize: 13, color: '#8899aa', margin: '4px 0 0' }}>
@@ -468,7 +468,7 @@ export default function FazendasPage() {
             onClick={() => { setEditingFarm(null); setModalOpen(true) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
-              padding: '9px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              padding: '9px 16px', minHeight: 44, borderRadius: 10, fontSize: 13, fontWeight: 600,
               background: '#0093D0', border: '1px solid rgba(0,147,208,0.4)',
               color: '#fff', cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(0,147,208,0.2)', transition: 'all 0.2s',
@@ -595,7 +595,7 @@ export default function FazendasPage() {
                       href="/manejo"
                       style={{
                         display: 'flex', alignItems: 'center', gap: 5,
-                        padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+                        padding: '6px 12px', minHeight: 44, borderRadius: 8, fontSize: 12, fontWeight: 500,
                         color: '#0093D0', background: 'rgba(0,147,208,0.08)',
                         border: '1px solid rgba(0,147,208,0.18)', textDecoration: 'none',
                         transition: 'all 0.15s', whiteSpace: 'nowrap',
@@ -610,7 +610,7 @@ export default function FazendasPage() {
                     <button
                       onClick={() => { setEditingFarm(farm); setModalOpen(true) }}
                       title="Editar"
-                      style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s' }}
+                      style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
                     >
@@ -621,7 +621,7 @@ export default function FazendasPage() {
                       onClick={() => handleDelete(farm.id)}
                       disabled={deletingId === farm.id}
                       title="Excluir"
-                      style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s' }}
+                      style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
                     >

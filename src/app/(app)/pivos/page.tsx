@@ -440,8 +440,8 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)' }}>
       <div style={{
-        background: 'linear-gradient(145deg, rgba(15, 25, 35, 0.95), rgba(10, 15, 20, 0.98))', 
-        border: '1px solid rgba(0, 229, 255, 0.15)', borderRadius: 24, padding: 32,
+        background: 'linear-gradient(145deg, rgba(15, 25, 35, 0.95), rgba(10, 15, 20, 0.98))',
+        border: '1px solid rgba(0, 229, 255, 0.15)', borderRadius: 24, padding: 'clamp(16px, 4vw, 28px)',
         width: '100%', maxWidth: 650, boxShadow: '0 30px 60px -10px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 229, 255, 0.05)',
         maxHeight: '90vh', overflowY: 'auto',
       }}>
@@ -450,7 +450,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
             {isEdit ? 'Editar Pivô' : 'Novo Pivô'}
           </h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ padding: 8, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} />
           </button>
         </div>
@@ -507,7 +507,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           </div>
 
           {/* Comprimento + Vazão */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
             <Field
               label="Comprimento do braço"
               value={lengthM}
@@ -526,7 +526,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           </div>
 
           {/* Tempo 360° + CUC */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
             <Field
               label="Tempo 360° a 100%"
               value={time360}
@@ -696,7 +696,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
 
           {/* Formulário adicionar setor */}
           {sectorError && <p style={{ fontSize: 11, color: '#ef4444', margin: '-4px 0' }}>{sectorError}</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, alignItems: 'flex-end' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_auto]" style={{ gap: 8, alignItems: 'flex-end' }}>
             <div>
               <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Nome *</label>
               <input
@@ -1047,7 +1047,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: 12 }}>
             <Field label="Cap. Campo (CC)" value={fieldCapacity} onChange={setFieldCapacity} placeholder="32" unit="%" hint="% volumétrico" />
             <Field label="Pto. Murcha (PM)" value={wiltingPoint}   onChange={setWiltingPoint}   placeholder="14" unit="%" hint="% volumétrico" />
             <Field label="Dens. Solo (Ds)"  value={bulkDensity}   onChange={setBulkDensity}   placeholder="1.4" unit="g/cm³" />
@@ -1065,7 +1065,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               type="button"
               onClick={onClose}
               style={{
-                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500,
+                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, minHeight: 44,
                 background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer', transition: 'all 0.2s'
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#e2e8f0' }}
@@ -1078,7 +1078,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               disabled={loading}
               onClick={e => { e.preventDefault(); e.stopPropagation(); handleSubmit(e as unknown as React.FormEvent) }}
               style={{
-                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 600, minHeight: 44,
                 background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
                 opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 boxShadow: '0 2px 8px rgba(0,147,208,0.25)', transition: 'all 0.2s',
@@ -1166,7 +1166,7 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             <button
               onClick={onEdit}
               title="Editar"
-              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
+              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
             >
@@ -1176,7 +1176,7 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
               onClick={onDelete}
               disabled={deleting}
               title="Excluir"
-              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
+              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
             >
@@ -1336,7 +1336,7 @@ export default function PivosPage() {
   return (
     <>
       <div className="flex flex-col gap-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Pivôs</h1>
             <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
@@ -1350,6 +1350,7 @@ export default function PivosPage() {
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              minHeight: 44,
               background: farms.length === 0 ? '#1a222c' : '#0093D0',
               border: 'none', color: farms.length === 0 ? '#778899' : '#fff',
               cursor: farms.length === 0 ? 'not-allowed' : 'pointer',

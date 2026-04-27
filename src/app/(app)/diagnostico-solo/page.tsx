@@ -401,17 +401,19 @@ export default function DiagnosticoSoloPage() {
     <div style={{ padding: '24px 24px 80px', maxWidth: 720, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{
-          fontSize: 24, fontWeight: 700, color: '#e2e8f0',
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
-          <Droplets size={22} color="#38bdf8" />
-          Diagnóstico Manual do Solo
-        </h1>
-        <p style={{ color: '#8899aa', fontSize: 13, marginTop: 4 }}>
-          Método USDA/NRCS — Tato e aparência por profundidade
-        </p>
+      <div style={{ marginBottom: 28, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <h1 style={{
+            fontSize: 24, fontWeight: 700, color: '#e2e8f0',
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <Droplets size={22} color="#38bdf8" />
+            Diagnóstico Manual do Solo
+          </h1>
+          <p style={{ color: '#8899aa', fontSize: 13, marginTop: 4 }}>
+            Método USDA/NRCS — Tato e aparência por profundidade
+          </p>
+        </div>
       </div>
 
       {/* Step indicator */}
