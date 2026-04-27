@@ -58,10 +58,9 @@ export function AppShell({ user, children }: AppShellProps) {
           user={user}
           onMenuClick={() => setMobileOpen(true)}
         />
-        {/* padding responsivo: compacto no mobile, espaçoso no desktop */}
         <main
-          className="flex-1 overflow-auto px-4 py-4 md:px-7 md:py-6 lg:px-10 lg:py-7"
-          style={{ background: 'var(--color-surface-bg)' }}
+          className="flex-1 overflow-auto"
+          style={{ background: 'var(--color-surface-bg)', padding: '24px 28px' }}
         >
           {children}
         </main>

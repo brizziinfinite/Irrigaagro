@@ -111,51 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Initialize auth state
+  // Initialize auth state via onAuthStateChange (inclui INITIAL_SESSION)
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        setLoading(true)
-
-        // Timeout de 8s para evitar loading infinito quando o auth lock trava
-        // (bug conhecido do Supabase GoTrue com React Strict Mode)
-        const sessionPromise = supabase.auth.getSession()
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Auth session timeout — recarregue a página')), 8000)
-        )
-
-        const {
-          data: { session: currentSession },
-        } = await Promise.race([sessionPromise, timeoutPromise])
-
-        if (currentSession?.user) {
-          const authUser: AuthUser = {
-            id: currentSession.user.id,
-            email: currentSession.user.email,
-            user_metadata: currentSession.user.user_metadata,
-          }
-          setUser(authUser)
-          setSession({
-            access_token: currentSession.access_token,
-            refresh_token: currentSession.refresh_token,
-            expires_at: currentSession.expires_at || 0,
-          })
-
-          await fetchUserCompanies(currentSession.user.id)
-        }
-
-        setError(null)
-      } catch (err) {
-        console.error('Auth initialization error:', err)
-        setError(err instanceof Error ? err.message : 'Authentication error')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    initializeAuth()
-
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
@@ -172,7 +129,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           expires_at: currentSession.expires_at || 0,
         })
 
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (
+          event === 'INITIAL_SESSION' ||
+          event === 'SIGNED_IN' ||
+          event === 'TOKEN_REFRESHED'
+        ) {
           await fetchUserCompanies(currentSession.user.id)
         }
       } else {
@@ -180,6 +141,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null)
         setCompany(null)
         setCompanies([])
+      }
+
+      // Libera o loading após o primeiro evento (INITIAL_SESSION ou sem sessão)
+      if (event === 'INITIAL_SESSION') {
+        setLoading(false)
       }
     })
 

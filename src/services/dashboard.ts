@@ -5,13 +5,13 @@ import { getPivotDiagnostic, type PivotDiagnostic } from '@/services/pivot-diagn
 import {
   listManagementSeasonContexts,
   listDailyManagementBySeason,
-  getManagementExternalData,
   type ManagementSeasonContext,
 } from '@/services/management'
 import { listPivotsByFarmIds } from '@/services/pivots'
 import { listEnergyBillsByPivotIds } from '@/services/energy-bills'
+import { getWeatherDataByStationRange, getWeatherDataByFarmRange } from '@/services/weather-data'
 import type { TypedSupabaseClient } from '@/services/base'
-import type { DailyManagement, EnergyBill, Pivot, Season } from '@/types/database'
+import type { DailyManagement, EnergyBill, Pivot, Season, WeatherData } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { calcDAS, computeResolvedManagementBalance } from '@/lib/calculations/management-balance'
 
@@ -92,8 +92,29 @@ export async function getDashboardDataForUser(
   const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000)
   const today = brt.toISOString().slice(0, 10)
 
+  // Pré-busca todos os dados climáticos do período de gap em paralelo (1 query por safra, não N queries)
+  const weatherRangeBySeason = await Promise.all(
+    activeContexts.map(async ({ season, pivot, farm }, idx) => {
+      const history = allHistories[idx]
+      const lastDate = history[0]?.date ?? null
+      if (!lastDate || lastDate === today) return { seasonId: season.id, weatherMap: new Map<string, WeatherData>() }
+
+      const preferredStationId = typeof pivot?.weather_config?.station_id === 'string' && pivot.weather_config.station_id.trim()
+        ? pivot.weather_config.station_id
+        : null
+
+      const weatherRows = preferredStationId
+        ? await getWeatherDataByStationRange(preferredStationId, lastDate, today, client).catch(() => [] as WeatherData[])
+        : await getWeatherDataByFarmRange(farm.id, lastDate, today, client).catch(() => [] as WeatherData[])
+
+      const weatherMap = new Map<string, WeatherData>(weatherRows.map(w => [w.date, w]))
+      return { seasonId: season.id, weatherMap }
+    })
+  )
+  const weatherRangeMap = new Map(weatherRangeBySeason.map(r => [r.seasonId, r.weatherMap]))
+
   for (let i = 0; i < activeContexts.length; i++) {
-    const { season, crop, pivot, farm } = activeContexts[i]
+    const { season, crop, pivot } = activeContexts[i]
     const history = allHistories[i]
     const lastManagement = history[0] ?? null
     if (lastManagement) lastManagementBySeason[season.id] = lastManagement
@@ -121,15 +142,14 @@ export async function getDashboardDataForUser(
       currentAdc = lastManagement.ctda
       currentPct = lastManagement.field_capacity_percent ?? 100
     } else {
-      // Último registro é de dias anteriores: avança dia a dia usando APENAS dados do banco.
-      // NUNCA chama APIs externas aqui — o cron é responsável por buscar dados e gravar.
-      // Isso garante que o dashboard mostra valores determinísticos e estáveis entre reloads.
+      // Último registro é de dias anteriores: avança dia a dia usando dados climáticos
+      // já pré-buscados em lote (sem N queries adicionais ao banco)
       const lastDate = lastManagement.date
       const daysSinceRecord = Math.max(1, Math.round(
         (new Date(today + 'T12:00:00').getTime() - new Date(lastDate + 'T12:00:00').getTime()) / 86400000
       ))
 
-      // ETc fallback: média dos últimos 3 registros com ETc válido (mais estável que só o último)
+      // ETc fallback: média dos últimos 3 registros com ETc válido
       const recentEtcValues = history
         .filter((m: DailyManagement) => m.etc_mm != null && m.etc_mm > 0)
         .slice(0, 3)
@@ -141,49 +161,38 @@ export async function getDashboardDataForUser(
       const daysToProcess = Math.min(daysSinceRecord, 14)
       let runningAdc = lastManagement.ctda
       let runningHistory = [...history]
+      const weatherMap = weatherRangeMap.get(season.id) ?? new Map<string, WeatherData>()
 
       for (let d = 1; d <= daysToProcess; d++) {
         const gapDate = new Date(lastDate + 'T12:00:00')
         gapDate.setDate(gapDate.getDate() + d)
         const gapDateStr = gapDate.toISOString().split('T')[0]
 
-        // Busca dados climáticos APENAS do banco (weather_data + rainfall_records)
-        // Irrigação NÃO é incluída na projeção — só entra no balanço quando o
-        // agricultor confirma via Lançamentos e o cron processa (padrão FAO-56:
-        // Ii deve ser a lâmina realmente aplicada, não a planejada)
-        try {
-          const externalData = await getManagementExternalData(
-            farm.id, pivot?.id ?? null, gapDateStr, pivot, client
-          )
-          // Usa APENAS weather_data do banco — ignora geolocationWeather (Open-Meteo ao vivo)
-          const climateSnapshot = externalData.weather
+        const climateSnapshot = weatherMap.get(gapDateStr) ?? null
 
-          if (climateSnapshot) {
-            const result = computeResolvedManagementBalance({
-              context: activeContexts[i],
-              history: runningHistory,
-              date: gapDateStr,
-              tmax: climateSnapshot.temp_max != null ? String(climateSnapshot.temp_max) : '',
-              tmin: climateSnapshot.temp_min != null ? String(climateSnapshot.temp_min) : '',
-              humidity: climateSnapshot.humidity_percent != null ? String(climateSnapshot.humidity_percent) : '',
-              wind: climateSnapshot.wind_speed_ms != null ? String(climateSnapshot.wind_speed_ms) : '',
-              radiation: climateSnapshot.solar_radiation_wm2 != null ? String(climateSnapshot.solar_radiation_wm2) : '',
-              rainfall: '',
-              actualDepth: '',
-              actualSpeed: '',
-              externalData: { ...externalData, geolocationWeather: null },
-            })
-            if (result) {
-              runningAdc = result.adcNew
-              runningHistory = [
-                { ...lastManagement, date: gapDateStr, ctda: result.adcNew, field_capacity_percent: result.fieldCapacityPercent },
-                ...runningHistory,
-              ]
-              continue
-            }
+        if (climateSnapshot) {
+          const result = computeResolvedManagementBalance({
+            context: activeContexts[i],
+            history: runningHistory,
+            date: gapDateStr,
+            tmax: climateSnapshot.temp_max != null ? String(climateSnapshot.temp_max) : '',
+            tmin: climateSnapshot.temp_min != null ? String(climateSnapshot.temp_min) : '',
+            humidity: climateSnapshot.humidity_percent != null ? String(climateSnapshot.humidity_percent) : '',
+            wind: climateSnapshot.wind_speed_ms != null ? String(climateSnapshot.wind_speed_ms) : '',
+            radiation: climateSnapshot.solar_radiation_wm2 != null ? String(climateSnapshot.solar_radiation_wm2) : '',
+            rainfall: '',
+            actualDepth: '',
+            actualSpeed: '',
+            externalData: { station: null, weather: climateSnapshot, geolocationWeather: null, rainfall: null, climateSource: 'farm_station' },
+          })
+          if (result) {
+            runningAdc = result.adcNew
+            runningHistory = [
+              { ...lastManagement, date: gapDateStr, ctda: result.adcNew, field_capacity_percent: result.fieldCapacityPercent },
+              ...runningHistory,
+            ]
+            continue
           }
-        } catch {
-          // Falha ao buscar dados do banco — usa fallback ETc
         }
 
         // Fallback determinístico: apenas ETc (sem irrigação)
