@@ -507,31 +507,41 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
     ? (pct !== null && pct < threshold ? 'rgba(239,68,68,0.3)' : 'rgba(0,147,208,0.2)')
     : 'rgba(255,255,255,0.05)'
 
+  // Formata "última atualização" de forma legível
+  function fmtLastUpdate(dateStr: string): string {
+    const d = new Date(dateStr + 'T12:00:00')
+    const today = new Date(); today.setHours(12,0,0,0)
+    const diff = Math.round((today.getTime() - d.getTime()) / 86400000)
+    if (diff === 0) return 'hoje'
+    if (diff === 1) return 'ontem'
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  }
+
   return (
     <div style={{
       background: season.is_active ? 'linear-gradient(145deg, #0f1923, #0c1520)' : '#0c1318',
       border: `1px solid ${cardBorder}`,
       borderRadius: 18,
-      padding: '18px 20px',
-      boxShadow: season.is_active ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
+      padding: '22px 24px',
+      boxShadow: season.is_active ? '0 4px 24px rgba(0,0,0,0.35)' : 'none',
       transition: 'box-shadow 0.2s',
     }}>
 
       {/* ── Linha 1: nome + badges + ações ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Nome */}
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: '0 0 6px', lineHeight: 1.3 }}>{season.name}</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: '0 0 7px', lineHeight: 1.3, letterSpacing: '-0.01em' }}>{season.name}</p>
 
           {/* Badge ativa/inativa + status saúde + alerta irrigação */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgba(34,197,94,0.10)' : '#0d1520', color: season.is_active ? '#22c55e' : '#667788', border: `1px solid ${season.is_active ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.05)'}` }}>
+            <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgba(34,197,94,0.10)' : '#0d1520', color: season.is_active ? '#22c55e' : '#667788', border: `1px solid ${season.is_active ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.05)'}` }}>
               {season.is_active ? '● Ativa' : 'Inativa'}
             </span>
 
             {/* Badge de saúde hídrica */}
             {season.is_active && healthLabel && !loadingRecord && (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700, background: healthBg, color: statusColor, border: `1px solid ${healthBorder}`, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, fontWeight: 700, background: healthBg, color: statusColor, border: `1px solid ${healthBorder}`, display: 'flex', alignItems: 'center', gap: 4 }}>
                 {healthLabel === 'Ideal'
                   ? <CheckCircle2 size={9} />
                   : healthLabel === 'Crítico'
@@ -544,7 +554,7 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
             {/* Badge irrigar */}
             {season.is_active && lastRecord?.needs_irrigation && (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <AlertTriangle size={9} /> Irrigar hoje
               </span>
             )}
@@ -552,25 +562,25 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
         </div>
 
         {/* Botões de ação */}
-        <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
           {season.is_active && season.planting_date && (
             <button onClick={onRecalculate} disabled={recalculating} title="Recalcular histórico"
-              style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: 'none', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
-              onMouseEnter={e => { if (!recalculating) { (e.currentTarget as HTMLElement).style.color = '#22c55e'; (e.currentTarget as HTMLElement).style.background = 'rgba(34,197,94,0.1)' } }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
+              style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+              onMouseEnter={e => { if (!recalculating) { const el = e.currentTarget as HTMLElement; el.style.color = '#22c55e'; el.style.background = 'rgba(34,197,94,0.08)'; el.style.borderColor = 'rgba(34,197,94,0.2)' } }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
               <RefreshCw size={13} className={recalculating ? 'animate-spin' : ''} />
             </button>
           )}
           <button onClick={onEdit} title="Editar safra"
-            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0093D0'; (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.1)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
+            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
             <Pencil size={13} />
           </button>
           <button onClick={onDelete} disabled={deleting} title="Excluir safra"
-            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#778899' }}>
+            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(239,68,68,0.08)'; el.style.color = '#ef4444'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#556677'; el.style.borderColor = 'transparent' }}>
             {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
           </button>
         </div>
@@ -578,7 +588,7 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
       {/* ── Linha 2: Umidade destaque + interpretação + ETc ── */}
       {season.is_active && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
           {/* Mini-wave */}
           {loadingRecord ? (
             <div style={{ width: 64, height: 64, borderRadius: 12, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -598,22 +608,27 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
             <div style={{ flex: 1, minWidth: 0 }}>
               {pct !== null ? (
                 <>
-                  <p style={{ fontSize: 11, color: '#64748b', margin: '0 0 2px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {/* Label */}
+                  <p style={{ fontSize: 10, color: '#94a3b8', margin: '0 0 3px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                     Umidade do solo
                   </p>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: statusColor, margin: '0 0 2px', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-                    {pct.toFixed(0)}<span style={{ fontSize: 13, fontWeight: 400 }}>%</span>
+                  {/* Valor dominante */}
+                  <p style={{ fontSize: 32, fontWeight: 800, color: statusColor, margin: '0 0 2px', fontFamily: 'var(--font-mono)', lineHeight: 1, letterSpacing: '-0.025em' }}>
+                    {pct.toFixed(0)}<span style={{ fontSize: 15, fontWeight: 500, opacity: 0.75 }}>%</span>
                   </p>
+                  {/* Interpretação */}
                   {interpretation && (
-                    <p style={{ fontSize: 12, color: statusColor, opacity: 0.85, margin: 0, fontWeight: 500 }}>
+                    <p style={{ fontSize: 12, color: statusColor, opacity: 0.8, margin: '0 0 6px', fontWeight: 600 }}>
                       {interpretation}
                     </p>
                   )}
+                  {/* ETc pill */}
                   {lastRecord?.etc_mm ? (
-                    <p style={{ fontSize: 12, color: '#94a3b8', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 7, background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.18)' }}>
                       <TrendingDown size={11} style={{ color: '#06b6d4', flexShrink: 0 }} />
-                      ETc hoje: <strong style={{ color: '#06b6d4', fontFamily: 'var(--font-mono)', marginLeft: 3 }}>{lastRecord.etc_mm.toFixed(1)} mm</strong>
-                    </p>
+                      <span style={{ fontSize: 12, color: '#94a3b8' }}>ETc hoje:</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{lastRecord.etc_mm.toFixed(1)} mm</span>
+                    </div>
                   ) : null}
                 </>
               ) : (
@@ -627,21 +642,21 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
       )}
 
       {/* ── Linha 3: localização + cultura + datas ── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 12, color: '#94a3b8' }}>
-          {season.farms.name}{season.pivots ? ` · ${season.pivots.name}` : ''}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', marginBottom: 12, alignItems: 'center' }}>
+        <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500 }}>
+          {season.farms.name}{season.pivots ? <span style={{ color: '#445566' }}> · </span> : ''}{season.pivots ? season.pivots.name : ''}
         </span>
-        {season.crops && <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>🌱 {season.crops.name}</span>}
+        {season.crops && <span style={{ fontSize: 12, color: '#8899aa' }}>🌱 {season.crops.name}</span>}
         {season.planting_date && (
-          <span style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <CalendarDays size={11} />
+          <span style={{ fontSize: 12, color: '#667788', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <CalendarDays size={10} style={{ color: '#445566' }} />
             {new Date(season.planting_date + 'T12:00:00').toLocaleDateString('pt-BR')}
-            {harvestDate && ` → ${harvestDate}`}
+            {harvestDate && <><span style={{ color: '#445566' }}> → </span>{harvestDate}</>}
           </span>
         )}
         {lastRecord?.date && (
-          <span style={{ fontSize: 12, color: '#64748b' }}>
-            · atualizado {new Date(lastRecord.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+          <span style={{ fontSize: 11, color: '#445566', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <span style={{ color: '#2d3a47' }}>·</span> atualizado <strong style={{ color: '#556677', fontWeight: 600 }}>{fmtLastUpdate(lastRecord.date)}</strong>
           </span>
         )}
       </div>
