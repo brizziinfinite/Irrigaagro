@@ -193,20 +193,96 @@ function emptyKPIs(): SeasonKPIs {
   }
 }
 
+// ─── Interpretação & Score ─────────────────────────────────
+
+function calcSeasonScore(kpis: SeasonKPIs): number {
+  if (kpis.totalDays === 0) return 0
+  const stressScore = Math.max(0, 100 - kpis.stressIndex * 4)
+  const totalWater = kpis.totalIrrigationMm + kpis.totalRainfallMm
+  const effRaw = totalWater > 0 ? (kpis.totalEtcMm / totalWater) * 100 : 50
+  const effScore = Math.min(100, Math.max(0, effRaw))
+  const ccRaw = kpis.avgFieldCapacity
+  const ccScore = ccRaw >= 80 ? 100 : ccRaw >= 60 ? 80 : ccRaw >= 40 ? 50 : 20
+  return Math.round(stressScore * 0.4 + effScore * 0.3 + ccScore * 0.3)
+}
+
+function getSeasonStatusFromScore(score: number): { label: string; color: string; bg: string } {
+  if (score >= 75) return { label: 'Excelente', color: '#22c55e', bg: 'rgba(34,197,94,0.10)' }
+  if (score >= 55) return { label: 'Bom', color: '#0093D0', bg: 'rgba(0,147,208,0.10)' }
+  if (score >= 35) return { label: 'Atenção', color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' }
+  return { label: 'Crítico', color: '#ef4444', bg: 'rgba(239,68,68,0.10)' }
+}
+
+function getStressInterpretation(kpis: SeasonKPIs): string {
+  if (kpis.totalDays === 0) return ''
+  if (kpis.stressIndex < 5) return `Excelente controle hídrico: apenas ${kpis.stressDays} dia(s) abaixo do CAD — cultura sem limitação de água.`
+  if (kpis.stressIndex < 10) return `Manejo adequado com ${kpis.stressDays} dia(s) em estresse (${fmtNum(kpis.stressIndex)}%) — impacto produtivo mínimo esperado.`
+  if (kpis.stressIndex < 20) return `${kpis.stressDays} dia(s) em estresse hídrico (${fmtNum(kpis.stressIndex)}%): risco moderado de perda de produtividade — ajuste intervalos de irrigação.`
+  return `${kpis.stressDays} dia(s) em estresse severo (${fmtNum(kpis.stressIndex)}%) — impacto significativo na produtividade provável. Revisar frequência e lâmina.`
+}
+
+function getEfficiencyInterpretation(kpis: SeasonKPIs): string {
+  const totalWater = kpis.totalIrrigationMm + kpis.totalRainfallMm
+  if (totalWater === 0) return ''
+  const eff = (kpis.totalEtcMm / totalWater) * 100
+  const rainContrib = kpis.totalEtcMm > 0 ? (kpis.totalRainfallMm / kpis.totalEtcMm) * 100 : 0
+  if (eff >= 80) return `Alta eficiência: ${fmtNum(eff, 0)}% da água aplicada foi consumida pela cultura. Chuva contribuiu ${fmtNum(rainContrib, 0)}% do ETc.`
+  if (eff >= 60) return `Eficiência adequada (${fmtNum(eff, 0)}%): há margem para reduzir perdas. Chuva cobriu ${fmtNum(rainContrib, 0)}% do ETc.`
+  if (eff >= 40) return `Eficiência baixa (${fmtNum(eff, 0)}%): excesso de água aplicada ou perdas por percolação. Revise os turnos de rega.`
+  return `Eficiência muito baixa (${fmtNum(eff, 0)}%): possivelmente lâminas excessivas ou descompasso entre irrigação e demanda.`
+}
+
+function getSeasonRecommendation(kpis: SeasonKPIs): string {
+  if (kpis.totalDays === 0) return ''
+  const totalWater = kpis.totalIrrigationMm + kpis.totalRainfallMm
+  const eff = totalWater > 0 ? (kpis.totalEtcMm / totalWater) * 100 : 50
+  if (kpis.stressIndex >= 20 && eff < 60) return 'Aumentar frequência de irrigação e reduzir lâmina por evento para melhorar eficiência e eliminar estresse.'
+  if (kpis.stressIndex >= 20) return 'Aumentar frequência de irrigação — a cultura está sofrendo restrição hídrica recorrente.'
+  if (eff < 40) return 'Reduzir lâmina por evento: a cultura está recebendo mais água do que consegue consumir.'
+  if (kpis.stressIndex < 5 && eff >= 70) return 'Manejo otimizado — manter a estratégia atual de irrigação.'
+  if (kpis.avgFieldCapacity > 90) return 'CC% consistentemente alto — verificar se há excesso de irrigação ou subdimensionamento do CAD.'
+  return 'Monitorar o CC% diário e ajustar lâminas conforme a fase fenológica.'
+}
+
+function getEnergyInterpretation(bills: EnergyBill[]): string {
+  if (bills.length === 0) return ''
+  const sorted = [...bills].sort((a, b) => b.reference_month.localeCompare(a.reference_month))
+  const latest = sorted[0]
+  const reactivePct = latest.reactive_percent ?? null
+  const costMmHa = latest.cost_per_mm_ha ?? null
+  const reservedPct = latest.reserved_percent ?? null
+
+  const parts: string[] = []
+  if (reactivePct !== null) {
+    if (reactivePct <= 2) parts.push(`energia reativa dentro da meta (${fmtNum(reactivePct)}%)`)
+    else parts.push(`energia reativa elevada em ${fmtNum(reactivePct)}% — acima dos 2% recomendados, gerando cobrança adicional`)
+  }
+  if (costMmHa !== null) {
+    if (costMmHa <= 1.5) parts.push(`custo R$${fmtNum(costMmHa, 2)}/mm/ha abaixo da meta de R$1,50`)
+    else parts.push(`custo de R$${fmtNum(costMmHa, 2)}/mm/ha acima da referência de R$1,50`)
+  }
+  if (reservedPct !== null) {
+    if (reservedPct < 30) parts.push(`apenas ${fmtNum(reservedPct)}% no horário reservado — aumentar irrigação noturna para reduzir custos`)
+  }
+  if (parts.length === 0) return `Conta de ${latest.reference_month} analisada — sem alertas críticos.`
+  return `${latest.reference_month}: ${parts.join('; ')}.`
+}
+
 // ─── Sub-componentes ──────────────────────────────────────────
 
-function KpiCard({ label, value, unit, color = '#e2e8f0', icon: Icon, sub }: {
+function KpiCard({ label, value, unit, color = '#e2e8f0', icon: Icon, sub, description }: {
   label: string; value: string; unit?: string; color?: string
-  icon?: typeof Droplets; sub?: string
+  icon?: typeof Droplets; sub?: string; description?: string
 }) {
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px' }}>
       {Icon && <Icon size={14} style={{ color, marginBottom: 8 }} />}
-      <p style={{ fontSize: 22, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-        {value} <span style={{ fontSize: 12, fontWeight: 400, color: '#778899' }}>{unit}</span>
+      <p style={{ fontSize: 28, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1, letterSpacing: '-0.025em' }}>
+        {value} <span style={{ fontSize: 13, fontWeight: 400, color: '#778899' }}>{unit}</span>
       </p>
-      <p style={{ fontSize: 11, color: '#8899aa', marginTop: 5 }}>{label}</p>
-      {sub && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{sub}</p>}
+      <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{label}</p>
+      {sub && <p style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>{sub}</p>}
+      {description && <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 5, lineHeight: 1.625 }}>{description}</p>}
     </div>
   )
 }
@@ -221,7 +297,7 @@ function StressGauge({ value }: { value: number }) {
     <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', flex: 1, minWidth: 200 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <AlertTriangle size={14} style={{ color }} />
-        <span style={{ fontSize: 11, color: '#8899aa' }}>Índice de Stress Hídrico</span>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>Índice de Stress Hídrico</span>
       </div>
       <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {fmtNum(value)}%
@@ -247,7 +323,7 @@ function GaugeCard({ title, value, unit, color, desc }: {
   return (
     <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 200 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 11, color: '#8899aa', fontWeight: 600 }}>{title}</span>
+        <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{title}</span>
       </div>
       <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {fmtNum(value, 1)}{unit}
@@ -294,7 +370,8 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
       <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Consumo por Período (Últimos)</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: 0 }}>
+      <div style={{ overflowX: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: 0, minWidth: 280 }}>
         {/* Header */}
         {['', 'ETc (mm)', 'Irrig. (mm)', 'Chuva (mm)'].map((h, i) => (
           <div key={i} style={{ padding: '8px 14px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -317,6 +394,7 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
             </div>
           </React.Fragment>
         ))}
+      </div>
       </div>
     </div>
   )
@@ -427,7 +505,7 @@ function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
                    Semana {w.weekNum} <span style={{ color: '#778899', fontWeight: 400, textTransform: 'none' }}>· {fmtDate(w.startDate)} – {fmtDate(w.endDate)}</span>
                  </span>
               </div>
-              <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, fontFamily: 'var(--font-mono)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                  <span style={{ color: '#8899aa' }} title="ETo">ETo: <span style={{ color: '#e2e8f0' }}>{fmtNum(w.eto)}</span></span>
                  <span style={{ color: '#8899aa' }} title="ETc">ETc: <span style={{ color: '#06b6d4' }}>{fmtNum(w.etc)}</span></span>
                  <span style={{ color: '#8899aa' }} title="Precipitação">Chuva: <span style={{ color: '#38bdf8' }}>{fmtNum(w.rain)}</span></span>
@@ -656,6 +734,172 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
   )
 }
 
+// ─── Hero Summary ────────────────────────────────────────────
+
+function HeroSummary({ kpis, season, lastRecordDate }: { kpis: SeasonKPIs; season: SeasonFull; lastRecordDate: string | null }) {
+  const score = calcSeasonScore(kpis)
+  const status = getSeasonStatusFromScore(score)
+
+  const totalWater = kpis.totalIrrigationMm + kpis.totalRainfallMm
+  const efficiency = totalWater > 0 ? Math.round((kpis.totalEtcMm / totalWater) * 100) : null
+
+  const effColor = efficiency !== null && efficiency >= 60 ? '#22c55e' : efficiency !== null && efficiency >= 40 ? '#f59e0b' : '#ef4444'
+  const stressColor = kpis.stressIndex < 10 ? '#22c55e' : kpis.stressIndex < 20 ? '#f59e0b' : '#ef4444'
+
+  const stressInterpretation = getStressInterpretation(kpis)
+  const recommendation = getSeasonRecommendation(kpis)
+
+  // Score arc (semi-círculo visual simples)
+  const scoreColor = status.color
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #0f1923 0%, #0d1520 100%)',
+      border: `1px solid ${scoreColor}30`,
+      borderRadius: 16,
+      padding: '20px 24px',
+    }}>
+      {/* Linha principal: score + métricas */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        {/* Score + badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
+            <svg viewBox="0 0 64 64" width="64" height="64">
+              <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+              <circle cx="32" cy="32" r="28" fill="none" stroke={scoreColor} strokeWidth="6"
+                strokeDasharray={`${(score / 100) * 175.9} 175.9`}
+                strokeLinecap="round"
+                transform="rotate(-90 32 32)"
+                style={{ transition: 'stroke-dasharray 0.6s ease-out' }}
+              />
+              <text x="32" y="37" textAnchor="middle" fontSize="14" fontWeight="800" fill={scoreColor} fontFamily="var(--font-mono)">{score}</text>
+            </svg>
+          </div>
+          <div>
+            <span style={{
+              display: 'inline-block', fontSize: 13, fontWeight: 700, padding: '4px 12px',
+              borderRadius: 20, background: status.bg, color: status.color,
+              border: `1px solid ${status.color}40`, marginBottom: 4,
+            }}>{status.label}</span>
+            <p style={{ fontSize: 11, color: '#8899aa', lineHeight: 1.4, maxWidth: 160 }}>score composto: stress (40%) + eficiência (30%) + CC% (30%)</p>
+          </div>
+        </div>
+
+        {/* Métricas rápidas */}
+        <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div>
+            <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+              Eficiência Hídrica
+            </p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: effColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+              {efficiency !== null ? `${efficiency}%` : '—'}
+            </p>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3 }}>ETc / (Irrig+Chuva)</p>
+          </div>
+
+          <div>
+            <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+              Stress Hídrico
+            </p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: stressColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+              {fmtNum(kpis.stressIndex)}%
+            </p>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3 }}>{kpis.stressDays} dia(s) abaixo do CAD</p>
+          </div>
+
+          <div>
+            <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+              CC% Média
+            </p>
+            <p style={{ fontSize: 28, fontWeight: 800, color: kpis.avgFieldCapacity >= 70 ? '#22c55e' : kpis.avgFieldCapacity >= 50 ? '#f59e0b' : '#ef4444', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+              {kpis.avgFieldCapacity > 0 ? `${Math.round(kpis.avgFieldCapacity)}%` : '—'}
+            </p>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3 }}>umidade média na safra</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Interpretação */}
+      {stressInterpretation && (
+        <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(255,255,255,0.025)', borderRadius: 10, borderLeft: `3px solid ${stressColor}` }}>
+          <p style={{ fontSize: 14, color: '#cbd5e1', lineHeight: 1.625 }}>{stressInterpretation}</p>
+        </div>
+      )}
+
+      {/* Recomendação */}
+      {recommendation && (
+        <div style={{ marginTop: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          <span style={{ fontSize: 11, color: '#0093D0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0, marginTop: 2 }}>Recomendação</span>
+          <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>{recommendation}</p>
+        </div>
+      )}
+
+      {/* Rodapé: sumário + última atualização */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 8, marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5 }}>
+          {kpis.totalDays} dias monitorados
+          {kpis.irrigationEvents > 0 && ` · ${kpis.irrigationEvents} irrigações`}
+          {kpis.totalRainfallMm > 0 && ` · ${fmtNum(kpis.totalRainfallMm)} mm de chuva`}
+          {season.crops && ` · ${season.crops.name}`}
+        </p>
+        {lastRecordDate && (
+          <span style={{ fontSize: 12, color: '#8899aa' }}>
+            Última atualização: {fmtDate(lastRecordDate)}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Accordion Section ────────────────────────────────────────
+
+function AccordionSection({ id, title, icon: Icon, isOpen, onToggle, children, badge }: {
+  id: string
+  title: string
+  icon: typeof BarChart2
+  isOpen: boolean
+  onToggle: (id: string) => void
+  children: React.ReactNode
+  badge?: string
+}) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+      <button
+        onClick={() => onToggle(id)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+          padding: '14px 18px', background: hovered ? 'rgba(255,255,255,0.03)' : 'transparent',
+          border: 'none', cursor: 'pointer', textAlign: 'left',
+          transition: 'background 0.15s',
+        }}
+      >
+        <Icon size={13} style={{ color: '#0093D0', flexShrink: 0 }} />
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1', flex: 1 }}>{title}</span>
+        {badge && (
+          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(0,147,208,0.12)', color: '#0093D0', fontWeight: 600 }}>{badge}</span>
+        )}
+        <ChevronDown size={14} style={{ color: '#778899', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s ease', flexShrink: 0 }} />
+      </button>
+      {/* CSS grid animation */}
+      <div style={{
+        display: 'grid',
+        gridTemplateRows: isOpen ? '1fr' : '0fr',
+        transition: 'grid-template-rows 0.25s ease-out',
+      }}>
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{ padding: '0 18px 18px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ paddingTop: 16 }}>{children}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── CSV Export ──────────────────────────────────────────────
 
 function exportCSV(records: DailyManagement[], seasonName: string) {
@@ -700,8 +944,8 @@ function EnergyKpiCard({ label, value, unit, status, meta }: {
       <p style={{ fontSize: 20, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {value} <span style={{ fontSize: 11, fontWeight: 400, color: '#778899' }}>{unit}</span>
       </p>
-      <p style={{ fontSize: 11, color: '#8899aa', marginTop: 5 }}>{label}</p>
-      {meta && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{meta}</p>}
+      <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{label}</p>
+      {meta && <p style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>{meta}</p>}
     </div>
   )
 }
@@ -1045,6 +1289,19 @@ export default function RelatoriosPage() {
     [records, selectedSeason]
   )
 
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(['kpis'])
+  )
+
+  const toggleSection = useCallback((id: string) => {
+    setOpenSections(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
   // ─── Loading ────────────────────────────────────────────────
 
   if (loading) {
@@ -1066,25 +1323,42 @@ export default function RelatoriosPage() {
   }
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto' }} className="flex flex-col gap-6">
+    <div style={{ maxWidth: 960, margin: '0 auto' }} className="flex flex-col gap-4">
 
-      {/* Título */}
+      {/* Título + botão CSV */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0' }}>Relatórios de Safra</h1>
-          <p style={{ fontSize: 13, color: '#8899aa', marginTop: 2 }}>KPIs comparativos de irrigação, estresse e consumo hídrico</p>
+          <h1 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>Relatórios de Safra</h1>
+          {selectedSeason ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6, alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0093D0' }}>{selectedSeason.name}</span>
+              <span style={{ fontSize: 13, color: '#64748b' }}>·</span>
+              <span style={{ fontSize: 13, color: '#94a3b8' }}>{selectedSeason.farms.name}</span>
+              {selectedSeason.pivots && (
+                <>
+                  <span style={{ fontSize: 13, color: '#64748b' }}>·</span>
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>{selectedSeason.pivots.name}</span>
+                </>
+              )}
+              {selectedSeason.is_active && (
+                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'rgba(34,197,94,0.12)', color: '#22c55e', fontWeight: 600 }}>ativa</span>
+              )}
+            </div>
+          ) : (
+            <p style={{ fontSize: 14, color: '#94a3b8', marginTop: 4, lineHeight: 1.5 }}>Visão integrada de irrigação, estresse e consumo hídrico</p>
+          )}
         </div>
         {records.length > 0 && (
           <button
             onClick={() => selectedSeason && exportCSV(records, selectedSeason.name)}
             style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 16px', borderRadius: 10, fontSize: 12, fontWeight: 600,
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa',
-              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+              background: '#0093D0', border: 'none', color: '#fff',
+              cursor: 'pointer', minHeight: 44, boxShadow: '0 2px 8px rgba(0,147,208,0.3)',
             }}
           >
-            <Download size={13} /> Exportar CSV
+            <Download size={14} /> Exportar CSV
           </button>
         )}
       </div>
@@ -1108,7 +1382,6 @@ export default function RelatoriosPage() {
           <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
         </div>
 
-        {/* Resumo da safra selecionada */}
         {selectedSeason && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
             {selectedSeason.crops && (
@@ -1147,198 +1420,165 @@ export default function RelatoriosPage() {
 
       {!loadingRecords && records.length > 0 && (
         <>
-          {/* ── SEÇÃO 1: KPIs principais ── */}
-          <div>
-            <SectionTitle icon={BarChart2} text="Resumo da Safra" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
-              <KpiCard label="Total Irrigado" value={fmtNum(kpis.totalIrrigationMm)} unit="mm" color="#0093D0" icon={Droplets} />
-              <KpiCard label="Precipitação Total" value={fmtNum(kpis.totalRainfallMm)} unit="mm" color="#38bdf8" icon={CloudRain} />
+          {/* ── Hero: status em 5 segundos ── */}
+          <HeroSummary
+            kpis={kpis}
+            season={selectedSeason!}
+            lastRecordDate={records.length > 0 ? records[records.length - 1].date : null}
+          />
+
+          {/* ── SEÇÃO 1: KPIs (aberto por padrão) ── */}
+          <AccordionSection
+            id="kpis"
+            title="Resumo da Safra"
+            icon={BarChart2}
+            isOpen={openSections.has('kpis')}
+            onToggle={toggleSection}
+            badge={`${kpis.totalDays} dias`}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+              <KpiCard label="Total Irrigado" value={fmtNum(kpis.totalIrrigationMm)} unit="mm" color="#0093D0" icon={Droplets}
+                description="Soma de toda lâmina aplicada via pivô na safra." />
+              <KpiCard label="Precipitação Total" value={fmtNum(kpis.totalRainfallMm)} unit="mm" color="#38bdf8" icon={CloudRain}
+                description="Chuva registrada — complementa a irrigação na reposição hídrica." />
               <KpiCard label="ETc Acumulada" value={fmtNum(kpis.totalEtcMm)} unit="mm" color="#06b6d4" icon={Droplets}
-                sub={`ETo: ${fmtNum(kpis.totalEtoMm)} mm`} />
-              <KpiCard label="Eventos de Irrigação" value={String(kpis.irrigationEvents)} color="#8899aa" icon={Zap} />
+                sub={`ETo: ${fmtNum(kpis.totalEtoMm)} mm`}
+                description="Evapotranspiração real da cultura — demanda hídrica total." />
+              <KpiCard label="Eventos de Irrigação" value={String(kpis.irrigationEvents)} color="#8899aa" icon={Zap}
+                description="Número de dias com lâmina aplicada registrada." />
               <KpiCard label="CC% Mínimo" value={fmtNum(kpis.minFieldCapacity, 0)} unit="%" color="#f59e0b" icon={TrendingDown}
-                sub={`média: ${fmtNum(kpis.avgFieldCapacity, 0)}%`} />
+                sub={`média: ${fmtNum(kpis.avgFieldCapacity, 0)}%`}
+                description="Menor umidade registrada. Valores baixos indicam stress pontual." />
               <KpiCard label="Dias em Estresse" value={String(kpis.stressDays)} color="#ef4444" icon={AlertTriangle}
-                sub={`de ${kpis.totalDays} dias`} />
+                sub={`de ${kpis.totalDays} dias`}
+                description="Dias com CC% abaixo do CAD — cultura sob restrição hídrica." />
             </div>
-
-            {/* Health gauges em destaque */}
             <HealthGauges kpis={kpis} />
-          </div>
+          </AccordionSection>
 
-          {/* ── SEÇÃO 2: Gráfico ADc% com fases ── */}
-          <div>
-            <SectionTitle icon={TrendingDown} text="Balanço Hídrico — Visão Geral da Safra" />
-            <div style={{ marginTop: 12 }}>
-              <BalanceChartSVG records={records} season={selectedSeason!} />
-            </div>
-          </div>
+          {/* ── SEÇÃO 2: Balanço Hídrico (fechado) ── */}
+          <AccordionSection
+            id="balance"
+            title="Balanço Hídrico — Visão Geral da Safra"
+            icon={TrendingDown}
+            isOpen={openSections.has('balance')}
+            onToggle={toggleSection}
+          >
+            <BalanceChartSVG records={records} season={selectedSeason!} />
+          </AccordionSection>
 
-          {/* ── SEÇÃO 3: Consumo por período ── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <PeriodTable last7={kpis.last7} last10={kpis.last10} last15={kpis.last15} />
-
-            {/* Eficiência de irrigação */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Eficiência Hídrica</span>
-              {[
-                {
-                  label: 'ETc / (Irrig + Chuva)',
-                  value: (kpis.totalIrrigationMm + kpis.totalRainfallMm) > 0
-                    ? (kpis.totalEtcMm / (kpis.totalIrrigationMm + kpis.totalRainfallMm)) * 100
-                    : null,
-                  unit: '%',
-                  desc: 'Quanto da água entrou foi consumida',
-                  good: (v: number) => v >= 60 && v <= 100,
-                },
-                {
-                  label: 'Chuva / ETc',
-                  value: kpis.totalEtcMm > 0 ? (kpis.totalRainfallMm / kpis.totalEtcMm) * 100 : null,
-                  unit: '%',
-                  desc: 'Contribuição da chuva no consumo',
-                  good: (v: number) => v >= 30,
-                },
-                {
-                  label: 'Irrigação / ETc',
-                  value: kpis.totalEtcMm > 0 ? (kpis.totalIrrigationMm / kpis.totalEtcMm) * 100 : null,
-                  unit: '%',
-                  desc: 'Dependência hídrica da irrigação',
-                  good: (v: number) => v <= 70,
-                },
-              ].map(item => {
-                const v = item.value
-                const color = v === null ? '#778899' : item.good(v) ? '#22c55e' : '#f59e0b'
-                return (
-                  <div key={item.label} style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                      <span style={{ fontSize: 11, color: '#8899aa' }}>{item.label}</span>
-                      <span style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>
-                        {v !== null ? fmtNum(v, 0) + '%' : '—'}
-                      </span>
+          {/* ── SEÇÃO 3: Consumo e Eficiência (fechado) ── */}
+          <AccordionSection
+            id="consumo"
+            title="Consumo e Eficiência Hídrica"
+            icon={Sun}
+            isOpen={openSections.has('consumo')}
+            onToggle={toggleSection}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <PeriodTable last7={kpis.last7} last10={kpis.last10} last15={kpis.last15} />
+              <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Eficiência Hídrica</span>
+                {[
+                  {
+                    label: 'ETc / (Irrig + Chuva)',
+                    value: (kpis.totalIrrigationMm + kpis.totalRainfallMm) > 0
+                      ? (kpis.totalEtcMm / (kpis.totalIrrigationMm + kpis.totalRainfallMm)) * 100
+                      : null,
+                    desc: 'Quanto da água entrou foi consumida',
+                    good: (v: number) => v >= 60 && v <= 100,
+                  },
+                  {
+                    label: 'Chuva / ETc',
+                    value: kpis.totalEtcMm > 0 ? (kpis.totalRainfallMm / kpis.totalEtcMm) * 100 : null,
+                    desc: 'Contribuição da chuva no consumo',
+                    good: (v: number) => v >= 30,
+                  },
+                  {
+                    label: 'Irrigação / ETc',
+                    value: kpis.totalEtcMm > 0 ? (kpis.totalIrrigationMm / kpis.totalEtcMm) * 100 : null,
+                    desc: 'Dependência hídrica da irrigação',
+                    good: (v: number) => v <= 70,
+                  },
+                ].map(item => {
+                  const v = item.value
+                  const color = v === null ? '#778899' : item.good(v) ? '#22c55e' : '#f59e0b'
+                  return (
+                    <div key={item.label} style={{ background: '#0f1923', borderRadius: 10, padding: '10px 14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontSize: 11, color: '#8899aa' }}>{item.label}</span>
+                        <span style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>
+                          {v !== null ? fmtNum(v, 0) + '%' : '—'}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{item.desc}</p>
                     </div>
-                    <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{item.desc}</p>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          </AccordionSection>
 
-          {/* ── SEÇÃO 4: Por fase (como Irriger) ── */}
-          <div>
-            <SectionTitle icon={Leaf} text="Análise por Fase Fenológica" />
-            <div style={{ marginTop: 12 }}>
-              <StageTable stages={kpis.byStage} />
-            </div>
-          </div>
+          {/* ── SEÇÃO 4: Fase Fenológica (fechado) ── */}
+          <AccordionSection
+            id="fenologia"
+            title="Análise por Fase Fenológica"
+            icon={Leaf}
+            isOpen={openSections.has('fenologia')}
+            onToggle={toggleSection}
+            badge={`${kpis.byStage.length} fases`}
+          >
+            <StageTable stages={kpis.byStage} />
+          </AccordionSection>
 
-          {/* ── SEÇÃO 5: Irrigações recomendado vs aplicado (como Irriga Global) ── */}
-          <div>
-            <SectionTitle icon={CheckCircle2} text="Irrigações — Recomendado vs Aplicado" />
-            <div style={{ marginTop: 12 }}>
-              <WeeklySummaryTable records={records} />
-            </div>
-          </div>
+          {/* ── SEÇÃO 5: Consumo Semanal (fechado) ── */}
+          <AccordionSection
+            id="semanal"
+            title="Consumo Hídrico Semanal"
+            icon={CheckCircle2}
+            isOpen={openSections.has('semanal')}
+            onToggle={toggleSection}
+          >
+            <WeeklySummaryTable records={records} />
+          </AccordionSection>
         </>
       )}
 
-      {/* ══ SEÇÃO ENERGIA ══════════════════════════════════════════ */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 24 }}>
-        <SectionTitle icon={Bolt} text="Conta de Energia — KPIs Elétricos" />
-
-        {/* Seletor de Pivô + Upload */}
-        <div style={{ marginTop: 12, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            {/* Seletor de pivô */}
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Pivô</label>
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={selectedPivotId}
-                  onChange={e => setSelectedPivotId(e.target.value)}
-                  style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
-                >
-                  {pivots.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} — {p.farm_name}</option>
-                  ))}
-                </select>
-                <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
-              </div>
+      {/* ── SEÇÃO 6: Análise Inteligente de Energia (fechado) ── */}
+      <AccordionSection
+        id="energia"
+        title="Análise Inteligente de Energia"
+        icon={Bolt}
+        isOpen={openSections.has('energia')}
+        onToggle={toggleSection}
+        badge={energyBills.length > 0 ? `${energyBills.length} meses` : undefined}
+      >
+        {/* Seletor de Pivô */}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Pivô</label>
+            <div style={{ position: 'relative' }}>
+              <select
+                value={selectedPivotId}
+                onChange={e => setSelectedPivotId(e.target.value)}
+                style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+              >
+                {pivots.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} — {p.farm_name}</option>
+                ))}
+              </select>
+              <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
             </div>
-
-            {/* Lâmina irrigada no mês (opcional para custo/mm/ha) */}
-            <div style={{ width: 160 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Lâmina irrigada no mês (mm/ha)</label>
-              <input
-                type="number"
-                value={irrigatedMmHa}
-                onChange={e => setIrrigatedMmHa(e.target.value)}
-                placeholder="ex: 45"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
-              />
-            </div>
-          </div>
-
-          {/* Dropzone */}
-          <div>
-            <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Arquivo da conta (PDF, JPG, PNG)</label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={e => e.preventDefault()}
-              onDrop={e => {
-                e.preventDefault()
-                const f = e.dataTransfer.files[0]
-                if (f) setUploadFile(f)
-              }}
-              style={{
-                border: `2px dashed ${uploadFile ? '#0093D0' : 'rgba(255,255,255,0.06)'}`,
-                borderRadius: 12, padding: '20px 16px', textAlign: 'center',
-                cursor: 'pointer', transition: 'border-color 0.2s',
-                background: uploadFile ? 'rgba(0,147,208,0.05)' : 'transparent',
-              }}
-            >
-              <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#778899', margin: '0 auto 6px' }} />
-              <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : '#778899' }}>
-                {uploadFile ? uploadFile.name : 'Clique ou arraste o arquivo aqui'}
-              </p>
-              {!uploadFile && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>PDF, JPG ou PNG</p>}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,image/*"
-              style={{ display: 'none' }}
-              onChange={e => {
-                const f = e.target.files?.[0]
-                if (f) setUploadFile(f)
-              }}
-            />
-          </div>
-
-          {/* Botão extrair */}
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={handleEnergyUpload}
-              disabled={!uploadFile || !selectedPivotId || uploading}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                background: (!uploadFile || !selectedPivotId || uploading) ? '#0d1520' : '#0093D0',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: (!uploadFile || !selectedPivotId || uploading) ? '#778899' : '#fff',
-                cursor: (!uploadFile || !selectedPivotId || uploading) ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Bolt size={14} />}
-              {uploading ? 'Extraindo com IA...' : 'Extrair com IA'}
-            </button>
-
-            {uploadResult && (
-              <span style={{ fontSize: 12, color: uploadResult.success ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
-                {uploadResult.success ? '✓ ' : '✕ '}{uploadResult.message}
-              </span>
-            )}
           </div>
         </div>
+
+        {/* Loading */}
+        {loadingBills && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 12, marginBottom: 12 }}>
+            <Loader2 size={13} className="animate-spin" style={{ color: '#0093D0' }} />
+            Carregando contas...
+          </div>
+        )}
 
         {/* KPIs do último mês */}
         {energyBills.length > 0 && (() => {
@@ -1348,7 +1588,7 @@ export default function RelatoriosPage() {
           const costMmHa = latest.cost_per_mm_ha ?? null
           const costStatus = costMmHa === null ? 'unknown' : costMmHa <= 1.5 ? 'green' : costMmHa <= 2 ? 'yellow' : 'red'
           return (
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginBottom: 14 }}>
               <p style={{ fontSize: 10, color: '#778899', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Último mês: {latest.reference_month}
               </p>
@@ -1393,47 +1633,125 @@ export default function RelatoriosPage() {
           )
         })()}
 
+        {/* Interpretação do último mês */}
+        {energyBills.length > 0 && (() => {
+          const phrase = getEnergyInterpretation(energyBills)
+          if (!phrase) return null
+          const hasAlert = phrase.includes('elevada') || phrase.includes('acima') || phrase.includes('apenas')
+          return (
+            <div style={{ marginBottom: 14, padding: '10px 14px', background: 'rgba(255,255,255,0.025)', borderRadius: 10, borderLeft: `3px solid ${hasAlert ? '#f59e0b' : '#22c55e'}` }}>
+              <p style={{ fontSize: 12, color: '#aabbcc', lineHeight: 1.5 }}>{phrase}</p>
+            </div>
+          )
+        })()}
+
         {/* Gráfico histórico */}
         {energyBills.length >= 2 && (
-          <div style={{ marginTop: 14 }}>
+          <div style={{ marginBottom: 14 }}>
             <EnergyBarChart bills={energyBills} />
           </div>
         )}
 
         {/* Tabela histórico */}
         {energyBills.length > 0 && (
-          <div style={{ marginTop: 14 }}>
+          <div style={{ marginBottom: 20 }}>
             <EnergyTable bills={energyBills} />
-          </div>
-        )}
-
-        {/* Loading */}
-        {loadingBills && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 12, marginTop: 12 }}>
-            <Loader2 size={13} className="animate-spin" style={{ color: '#0093D0' }} />
-            Carregando contas...
           </div>
         )}
 
         {/* Sem dados */}
         {!loadingBills && energyBills.length === 0 && (
-          <div style={{ marginTop: 12, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
-            <Bolt size={24} style={{ color: '#778899', margin: '0 auto 10px' }} />
+          <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px', textAlign: 'center', marginBottom: 16 }}>
+            <Bolt size={22} style={{ color: '#778899', margin: '0 auto 8px' }} />
             <p style={{ fontSize: 13, color: '#778899' }}>Nenhuma conta de energia para este pivô.</p>
-            <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>Faça upload de uma conta acima para começar.</p>
+            <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>Faça upload de uma conta abaixo para começar a análise.</p>
           </div>
         )}
-      </div>
+
+        {/* Upload — sempre ao final */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Adicionar nova conta de energia
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Lâmina irrigada */}
+            <div style={{ width: 200 }}>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Lâmina irrigada no mês (mm/ha)</label>
+              <input
+                type="number"
+                value={irrigatedMmHa}
+                onChange={e => setIrrigatedMmHa(e.target.value)}
+                placeholder="ex: 45"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+              />
+            </div>
+
+            {/* Dropzone */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Arquivo da conta (PDF, JPG, PNG)</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => e.preventDefault()}
+                onDrop={e => {
+                  e.preventDefault()
+                  const f = e.dataTransfer.files[0]
+                  if (f) setUploadFile(f)
+                }}
+                style={{
+                  border: `2px dashed ${uploadFile ? '#0093D0' : 'rgba(255,255,255,0.06)'}`,
+                  borderRadius: 12, padding: '20px 16px', textAlign: 'center',
+                  cursor: 'pointer', transition: 'border-color 0.2s',
+                  background: uploadFile ? 'rgba(0,147,208,0.05)' : 'transparent',
+                }}
+              >
+                <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#778899', margin: '0 auto 6px' }} />
+                <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : '#778899' }}>
+                  {uploadFile ? uploadFile.name : 'Clique ou arraste o arquivo aqui'}
+                </p>
+                {!uploadFile && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>PDF, JPG ou PNG</p>}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,image/*"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const f = e.target.files?.[0]
+                  if (f) setUploadFile(f)
+                }}
+              />
+            </div>
+
+            {/* Botão extrair */}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={handleEnergyUpload}
+                disabled={!uploadFile || !selectedPivotId || uploading}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                  background: (!uploadFile || !selectedPivotId || uploading) ? '#0d1520' : '#0093D0',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: (!uploadFile || !selectedPivotId || uploading) ? '#778899' : '#fff',
+                  cursor: (!uploadFile || !selectedPivotId || uploading) ? 'not-allowed' : 'pointer',
+                  minHeight: 44,
+                }}
+              >
+                {uploading ? <Loader2 size={14} className="animate-spin" /> : <Bolt size={14} />}
+                {uploading ? 'Extraindo com IA...' : 'Extrair com IA'}
+              </button>
+
+              {uploadResult && (
+                <span style={{ fontSize: 12, color: uploadResult.success ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                  {uploadResult.success ? '✓ ' : '✕ '}{uploadResult.message}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </AccordionSection>
+
     </div>
   )
 }
 
-function SectionTitle({ icon: Icon, text }: { icon: typeof BarChart2; text: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <Icon size={13} style={{ color: '#0093D0' }} />
-      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>{text}</span>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-    </div>
-  )
-}

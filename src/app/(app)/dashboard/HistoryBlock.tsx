@@ -113,7 +113,7 @@ export function HistoryBlock({
           }}>
             {pivotName}
           </span>
-          <span style={{ fontSize: 11, color: '#667788', fontWeight: 500 }}>
+          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
             · últimos {chartData.length || 0} dias
           </span>
         </div>
@@ -213,7 +213,7 @@ export function HistoryBlock({
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             height: 240, marginTop: -240, position: 'relative',
-            color: '#778899', fontSize: 13,
+            color: '#94a3b8', fontSize: 14,
           }}>
             Aguardando registros de manejo.
           </div>
@@ -229,7 +229,7 @@ export function HistoryBlock({
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, boxShadow: hasData ? `0 0 6px ${color}` : 'none', opacity: hasData ? 1 : 0.4 }} />
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#778899' }}>{label}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#64748b' }}>{label}</span>
           </div>
         ))}
       </div>

@@ -296,7 +296,7 @@ export default function WhatsAppPage() {
   return (
     <div style={{ padding: '24px 28px', maxWidth: 900 }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <MessageSquare size={22} color="#22c55e" />
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#e2e8f0' }}>WhatsApp</h1>
@@ -311,7 +311,7 @@ export default function WhatsAppPage() {
           display: 'flex', alignItems: 'center', gap: 6,
           background: '#0093D0', color: '#fff', border: 'none',
           borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600,
-          cursor: 'pointer',
+          cursor: 'pointer', minHeight: 44,
         }}>
           <Plus size={15} /> Novo contato
         </button>
@@ -531,13 +531,13 @@ export default function WhatsAppPage() {
         }}>
           <div style={{
             background: '#0f1923', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 14, padding: 28, width: 420, maxWidth: '92vw',
+            borderRadius: 14, padding: 'clamp(16px, 4vw, 28px)', width: 420, maxWidth: '92vw',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
                 {editingContact ? 'Editar contato' : 'Novo contato'}
               </h2>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: '#8899aa', cursor: 'pointer' }}>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: '#8899aa', cursor: 'pointer', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <X size={18} />
               </button>
             </div>
@@ -611,7 +611,7 @@ export default function WhatsAppPage() {
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button onClick={() => setShowModal(false)} style={{
                   flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#8899aa', borderRadius: 8, padding: '9px 0', fontSize: 13, cursor: 'pointer',
+                  color: '#8899aa', borderRadius: 8, padding: '9px 0', fontSize: 13, cursor: 'pointer', minHeight: 44,
                 }}>
                   Cancelar
                 </button>
@@ -619,7 +619,7 @@ export default function WhatsAppPage() {
                   flex: 2, background: '#0093D0', border: 'none', color: '#fff',
                   borderRadius: 8, padding: '9px 0', fontSize: 13, fontWeight: 600,
                   cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44,
                 }}>
                   {saving && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
                   {saving ? 'Salvando…' : 'Salvar'}

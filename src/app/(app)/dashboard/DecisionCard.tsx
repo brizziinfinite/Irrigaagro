@@ -174,26 +174,24 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
         </div>
       </div>
 
-      {/* CTA */}
-      <Link href="/manejo" className="w-full sm:w-auto" style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-        padding: '14px 24px', borderRadius: 14, fontSize: 13, fontWeight: 800,
-        textTransform: 'uppercase', letterSpacing: '0.05em',
-        background: needsIrrigation
-          ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
-          : 'linear-gradient(135deg, #0093D0, #0284c7)',
-        color: '#FFFFFF',
-        textDecoration: 'none', flexShrink: 0,
-        boxShadow: needsIrrigation
-          ? '0 4px 16px rgba(220,38,38,0.35)'
-          : '0 4px 16px rgba(0,147,208,0.3)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative',
-      }}>
-        <Droplets size={16} strokeWidth={2.5} />
-        Manejo Diário
-        <ArrowRight size={16} strokeWidth={2.5} />
-      </Link>
+      {/* CTA — só exibe quando há urgência de irrigação */}
+      {needsIrrigation && !noPivots && (
+        <Link href="/manejo" className="w-full sm:w-auto" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+          padding: '14px 24px', borderRadius: 14, fontSize: 13, fontWeight: 800,
+          textTransform: 'uppercase', letterSpacing: '0.05em',
+          background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+          color: '#FFFFFF',
+          textDecoration: 'none', flexShrink: 0,
+          boxShadow: '0 4px 16px rgba(220,38,38,0.35)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'relative',
+        }}>
+          <Droplets size={16} strokeWidth={2.5} />
+          Irrigar Agora
+          <ArrowRight size={16} strokeWidth={2.5} />
+        </Link>
+      )}
     </div>
   )
 }

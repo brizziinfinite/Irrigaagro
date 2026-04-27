@@ -187,38 +187,12 @@ export function DashboardClient({
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}} />
 
-      {/* ① Título simples e Ação Primária */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ minWidth: 0 }}>
-            <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.03em', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Command Center</h1>
-            <p style={{ fontSize: 13, color: '#778899', marginTop: 5, fontWeight: 500 }}>
-              {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
-            </p>
-          </div>
-          <Link href="/manejo" className="hidden sm:flex" style={{
-            alignItems: 'center', gap: 8,
-            padding: '11px 20px', borderRadius: 12, fontSize: 13, fontWeight: 700,
-            background: 'linear-gradient(135deg, #005A8C, #0093D0)',
-            color: '#fff', textDecoration: 'none', flexShrink: 0,
-            boxShadow: '0 4px 18px rgba(0,147,208,0.4)',
-            letterSpacing: '0.01em',
-          }}>
-            <Droplets size={14} /> Manejo Diário
-          </Link>
-        </div>
-        {/* Mobile: botão full width abaixo do título */}
-        <Link href="/manejo" className="flex sm:hidden" style={{
-          alignItems: 'center', justifyContent: 'center', gap: 8,
-          marginTop: 14,
-          padding: '14px 20px', borderRadius: 12, fontSize: 14, fontWeight: 700,
-          background: 'linear-gradient(135deg, #005A8C, #0093D0)',
-          color: '#fff', textDecoration: 'none',
-          boxShadow: '0 4px 18px rgba(0,147,208,0.4)',
-          letterSpacing: '0.01em',
-        }}>
-          <Droplets size={16} /> Manejo Diário
-        </Link>
+      {/* ① Título */}
+      <div style={{ minWidth: 0 }}>
+        <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.03em', margin: 0 }}>Central de Controle</h1>
+        <p style={{ fontSize: 13, color: '#778899', marginTop: 5, fontWeight: 500 }}>
+          {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
+        </p>
       </div>
 
       {/* ② Bloco principal de decisão — protagonista */}
@@ -376,7 +350,7 @@ export function DashboardClient({
                   fontSize: 11, color: '#667788', textDecoration: 'none',
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}>
-                  <Info size={11} /> {summary.pivotsWithClimateFallback} fallback climático
+                  <Info size={11} /> {summary.pivotsWithClimateFallback} sem dado climático
                 </Link>
               )}
             </div>
@@ -457,7 +431,7 @@ export function DashboardClient({
                         background: 'rgba(255,255,255,0.03)',
                         border: '1px solid rgba(255,255,255,0.06)',
                       }}>
-                        Manejo <ArrowRight size={11} />
+                        Ver Manejo <ArrowRight size={11} />
                       </Link>
                     </div>
                   )
@@ -468,7 +442,7 @@ export function DashboardClient({
         )
       })()}
 
-      {/* ⑤ Hero Section: Mapa + Radar Tático */}
+      {/* ⑤ Mapa + Situação por Pivô */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         {/* Mapa do Parque */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -477,7 +451,7 @@ export function DashboardClient({
               Planta da Fazenda
             </span>
             <span style={{ fontSize: 11, color: '#778899' }}>·</span>
-            <span style={{ fontSize: 11, color: '#8899aa' }}>Visão espacial instantânea</span>
+            <span style={{ fontSize: 11, color: '#8899aa' }}>Localização dos pivôs</span>
             <span style={{ fontSize: 11, color: '#778899', marginLeft: 4 }}>·</span>
             <span style={{ fontSize: 11, fontWeight: 500, color: '#667788' }}>
               {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
@@ -497,14 +471,14 @@ export function DashboardClient({
           }))} />
         </div>
 
-        {/* Radar Tático */}
+        {/* Situação por Pivô */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#778899' }}>
-              Radar Tático
+              Situação por Pivô
             </span>
             <span style={{ fontSize: 11, color: '#778899' }}>·</span>
-            <span style={{ fontSize: 11, color: '#667788' }}>Prioridade por pivô</span>
+            <span style={{ fontSize: 11, color: '#667788' }}>Prioridade operacional</span>
           </div>
           <CriticalPivots
             pivots={pivots}

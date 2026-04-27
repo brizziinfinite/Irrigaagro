@@ -28,7 +28,7 @@ function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
           type="number" step="any" value={value} onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           style={{
-            width: '100%', padding: unit ? `${small ? 8 : 10}px ${unit.length > 2 ? 48 : 36}px ${small ? 8 : 10}px 10px` : `${small ? 8 : 10}px 10px`,
+            width: '100%', padding: unit ? `${small ? 10 : 10}px ${unit.length > 2 ? 48 : 36}px ${small ? 10 : 10}px 10px` : `${small ? 10 : 10}px 10px`,
             borderRadius: 8, fontSize: small ? 13 : 14,
             background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
           }}
@@ -146,7 +146,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
       <div style={{
-        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28,
+        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 'clamp(16px, 4vw, 28px)',
         width: '100%', maxWidth: 560, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)',
         maxHeight: '92vh', overflowY: 'auto',
       }}>
@@ -301,13 +301,13 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
           </div>
 
           {/* Botões */}
-          <div className="flex gap-3">
+          <div className="flex gap-3" style={{ flexWrap: 'wrap-reverse' }}>
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
               Cancelar
             </button>
             <button type="submit" disabled={loading}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {loading && <Loader2 size={14} className="animate-spin" />}
               {isEdit ? 'Salvar' : 'Criar'}
             </button>
@@ -517,7 +517,7 @@ export default function CulturasPage() {
   return (
     <>
       <div className="flex flex-col gap-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Culturas</h1>
             <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
@@ -526,7 +526,7 @@ export default function CulturasPage() {
           </div>
           <button
             onClick={() => { setEditingCrop(null); setModalOpen(true) }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgb(0 147 208 / 0.25)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgb(0 147 208 / 0.25)' }}
           >
             <Plus size={16} />
             Nova Cultura

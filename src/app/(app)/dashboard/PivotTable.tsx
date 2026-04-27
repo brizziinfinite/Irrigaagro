@@ -95,8 +95,8 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
       {/* Header + filtros */}
       <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#778899', display: 'block', marginBottom: 10,
+          fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
+          letterSpacing: '0.06em', color: '#cbd5e1', display: 'block', marginBottom: 10,
         }}>
           Pivôs
         </span>
@@ -106,7 +106,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
               key={key}
               onClick={() => setFilter(key)}
               style={{
-                fontSize: 10, fontWeight: 700,
+                fontSize: 11, fontWeight: 700,
                 padding: '4px 10px', borderRadius: 99,
                 cursor: 'pointer',
                 background: filter === key ? `${color}20` : 'transparent',
@@ -135,8 +135,8 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
       }}>
         {HEADERS.map(col => (
           <span key={col} style={{
-            fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#778899',
+            fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: '#94a3b8',
           }}>
             {col}
           </span>
@@ -178,7 +178,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
                 <div>
                   <p style={{ fontSize: 12, fontWeight: 600, color: '#e2e8f0', lineHeight: 1.2 }}>{pivot.name}</p>
                   {pivot.farms?.name && (
-                    <p style={{ fontSize: 10, color: '#778899', marginTop: 1 }}>{pivot.farms.name}</p>
+                    <p style={{ fontSize: 12, color: '#64748b', marginTop: 1 }}>{pivot.farms.name}</p>
                   )}
                 </div>
 
@@ -190,42 +190,42 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
                   width: 'fit-content',
                 }}>
                   <StatusIcon size={9} style={{ color: cfg.color }} />
-                  <span style={{ fontSize: 9, fontWeight: 700, color: cfg.color }}>{cfg.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: cfg.color }}>{cfg.label}</span>
                 </div>
 
                 {/* Umidade */}
                 <span style={{
-                  fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                  fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-mono)',
                   color: pctColor,
                 }}>
                   {pct !== null ? `${Math.round(pct)}%` : '—'}
                 </span>
 
                 {/* ETo */}
-                <span style={{ fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
                   {fmtVal(m?.eto_mm)}
                 </span>
 
                 {/* Chuva */}
-                <span style={{ fontSize: 12, color: '#60a5fa', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#60a5fa', fontFamily: 'var(--font-mono)' }}>
                   {fmtVal(m?.rainfall_mm)}
                 </span>
 
                 {/* Lâmina */}
-                <span style={{ fontSize: 12, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
                   {lamina != null ? `${lamina.toFixed(1)}mm` : '—'}
                 </span>
 
                 {/* Próx. irrigação */}
                 {nextIrrigation ? (
                   <Link href="/manejo" style={{
-                    fontSize: 10, fontWeight: 700, textDecoration: 'none',
+                    fontSize: 11, fontWeight: 700, textDecoration: 'none',
                     color: nextIrrigation === 'Hoje' ? '#ef4444' : '#f59e0b',
                   }}>
                     {nextIrrigation}
                   </Link>
                 ) : (
-                  <span style={{ fontSize: 11, color: '#778899' }}>—</span>
+                  <span style={{ fontSize: 12, color: '#64748b' }}>—</span>
                 )}
               </div>
             )

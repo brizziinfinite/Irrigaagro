@@ -62,15 +62,15 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#778899',
+          fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
+          letterSpacing: '0.16em', color: '#cbd5e1',
         }}>
           Umidade do Solo
         </span>
       </div>
 
       {activePivots.length === 0 ? (
-        <p style={{ fontSize: 12, color: '#778899', textAlign: 'center', padding: '12px 0' }}>
+        <p style={{ fontSize: 14, color: '#94a3b8', textAlign: 'center', padding: '12px 0' }}>
           Nenhum pivô com safra ativa.
         </p>
       ) : (
@@ -104,7 +104,7 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
                     </svg>
                   )}
                   <span style={{
-                    fontSize: 11, color: '#8899aa', fontWeight: 600,
+                    fontSize: 12, color: '#94a3b8', fontWeight: 600,
                     textAlign: 'center', maxWidth: 110,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>
@@ -129,7 +129,7 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
             ].map(({ color, label }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
-                <span style={{ fontSize: 10, color: '#778899' }}>{label}</span>
+                <span style={{ fontSize: 12, color: '#64748b' }}>{label}</span>
               </div>
             ))}
           </div>

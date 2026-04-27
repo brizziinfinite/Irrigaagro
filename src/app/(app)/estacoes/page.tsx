@@ -228,12 +228,12 @@ function StationModal({ station, farms, onClose, onSaved }: StationModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.7)' }}>
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 520, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)' }}>
+      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 'clamp(16px, 4vw, 24px)', width: '100%', maxWidth: 520, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)' }}>
         <div className="flex items-center justify-between mb-6">
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
             {isEdit ? 'Editar estação' : 'Nova estação'}
           </h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ padding: 8, minWidth: 36, minHeight: 36, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} />
           </button>
         </div>
@@ -273,10 +273,10 @@ function StationModal({ station, farms, onClose, onSaved }: StationModalProps) {
           </div>
 
           <div className="flex gap-3 mt-2">
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
               Cancelar
             </button>
-            <button type="submit" disabled={saving} style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: saving ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <button type="submit" disabled={saving} style={{ flex: 1, padding: '10px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: saving ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {saving && <Loader2 size={14} className="animate-spin" />}
               {isEdit ? 'Salvar' : 'Criar'}
             </button>
@@ -537,7 +537,7 @@ export default function EstacoesPage() {
             disabled={loading || farms.length === 0}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
-              padding: '9px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600,
+              padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600,
               background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
               boxShadow: '0 2px 8px rgb(0 147 208 / 0.25)', opacity: loading || farms.length === 0 ? 0.6 : 1,
             }}
@@ -598,10 +598,10 @@ export default function EstacoesPage() {
                             </p>
                           </button>
                           <div className="flex gap-2">
-                            <button onClick={() => { setEditingStation(station); setStationModalOpen(true) }} style={{ padding: 8, borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: '#0d1520', color: '#8899aa', cursor: 'pointer' }}>
+                            <button onClick={() => { setEditingStation(station); setStationModalOpen(true) }} style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: '#0d1520', color: '#8899aa', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Pencil size={14} />
                             </button>
-                            <button onClick={() => handleDeleteStation(station.id)} disabled={deletingStationId === station.id} style={{ padding: 8, borderRadius: 10, border: '1px solid rgb(239 68 68 / 0.25)', background: 'rgb(239 68 68 / 0.08)', color: '#f87171', cursor: 'pointer', opacity: deletingStationId === station.id ? 0.6 : 1 }}>
+                            <button onClick={() => handleDeleteStation(station.id)} disabled={deletingStationId === station.id} style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 10, border: '1px solid rgb(239 68 68 / 0.25)', background: 'rgb(239 68 68 / 0.08)', color: '#f87171', cursor: 'pointer', opacity: deletingStationId === station.id ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -686,7 +686,7 @@ export default function EstacoesPage() {
                   onClick={handleSaveWeather}
                   disabled={!selectedStationId || weatherSaving}
                   style={{
-                    padding: '10px 18px', borderRadius: 10, fontSize: 14, fontWeight: 600,
+                    padding: '10px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600,
                     background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
                     opacity: !selectedStationId || weatherSaving ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 8,
                   }}
@@ -729,7 +729,7 @@ export default function EstacoesPage() {
                         <div><p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#778899' }}>ETo</p><p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginTop: 4 }}>{row.eto_corrected_mm != null ? `${formatNumber(row.eto_corrected_mm, 2)} mm*` : row.eto_mm != null ? `${formatNumber(row.eto_mm, 2)} mm` : '—'}</p></div>
                       </div>
                     </div>
-                    <button onClick={() => handleDeleteWeather(row.id)} disabled={deletingWeatherId === row.id} style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid rgb(239 68 68 / 0.25)', background: 'rgb(239 68 68 / 0.08)', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: deletingWeatherId === row.id ? 0.6 : 1 }}>
+                    <button onClick={() => handleDeleteWeather(row.id)} disabled={deletingWeatherId === row.id} style={{ padding: '8px 12px', minHeight: 44, borderRadius: 10, border: '1px solid rgb(239 68 68 / 0.25)', background: 'rgb(239 68 68 / 0.08)', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: deletingWeatherId === row.id ? 0.6 : 1 }}>
                       <Trash2 size={14} />
                       Deletar
                     </button>

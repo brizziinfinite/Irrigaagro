@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Bell, Menu } from 'lucide-react'
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
+  '/dashboard': 'Central de Controle',
   '/manejo':    'Manejo Diário',
   '/precipitacoes': 'Precipitações',
   '/estacoes':  'Estações',

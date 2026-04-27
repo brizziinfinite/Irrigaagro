@@ -41,9 +41,9 @@ function validateDocument(v: string) {
 
 // ─── Estilos compartilhados ──────────────────────────────────
 const LABEL_STYLE: React.CSSProperties = {
-  display: 'block', fontSize: 11, fontWeight: 700,
+  display: 'block', fontSize: 13, fontWeight: 700,
   color: '#cbd5e1', marginBottom: 8,
-  letterSpacing: '0.08em', textTransform: 'uppercase',
+  letterSpacing: '0.16em', textTransform: 'uppercase',
 }
 const LABEL_SEC_STYLE: React.CSSProperties = { ...LABEL_STYLE, color: '#94a3b8' }
 
@@ -59,8 +59,8 @@ const INPUT_MAIN: React.CSSProperties = {
 }
 
 const SECTION_TITLE: React.CSSProperties = {
-  fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-  letterSpacing: '0.1em', color: '#445566',
+  fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
+  letterSpacing: '0.16em', color: '#cbd5e1',
   padding: '14px 0 10px', borderTop: '1px solid rgba(255,255,255,0.04)',
   margin: '0 0 0',
 }
@@ -166,13 +166,13 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
         maxHeight: '92vh', display: 'flex', flexDirection: 'column',
       }}>
         {/* Cabeçalho fixo */}
-        <div style={{ padding: '28px 32px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+        <div style={{ padding: 'clamp(16px, 4vw, 28px) clamp(16px, 4vw, 32px) 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', margin: 0, letterSpacing: '-0.025em' }}>
                 {isEdit ? 'Editar Fazenda' : 'Nova Fazenda'}
               </h2>
-              <p style={{ fontSize: 12, color: '#556677', margin: '3px 0 0' }}>
+              <p style={{ fontSize: 12, color: '#64748b', margin: '3px 0 0', lineHeight: 1.625 }}>
                 {isEdit ? 'Atualize os dados cadastrais' : 'Preencha as informações da fazenda'}
               </p>
             </div>
@@ -188,7 +188,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
         </div>
 
         {/* Corpo scrollável */}
-        <div style={{ overflowY: 'auto', padding: '20px 32px', flex: 1 }}>
+        <div style={{ overflowY: 'auto', padding: '20px clamp(16px, 4vw, 32px)', flex: 1 }}>
           {error && (
             <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 13 }}>
               {error}
@@ -212,7 +212,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
                 onFocus={e => { e.target.style.borderColor = '#0093D0'; e.target.style.boxShadow = '0 0 0 3px rgba(0,147,208,0.14)' }}
                 onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none' }}
               />
-              {fieldErrors.name && <p style={{ fontSize: 11, color: '#ef4444', margin: '4px 0 0' }}>{fieldErrors.name}</p>}
+              {fieldErrors.name && <p style={{ fontSize: 12, color: '#ef4444', margin: '4px 0 0' }}>{fieldErrors.name}</p>}
             </div>
 
             <p style={SECTION_TITLE}>Responsável</p>
@@ -230,7 +230,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
                 </label>
                 <input type="text" value={docNumber} onChange={e => setDocNumber(e.target.value)}
                   placeholder="000.000.000-00" style={INPUT_BASE} onFocus={inputFocus} onBlur={inputBlur} />
-                {fieldErrors.docNumber && <p style={{ fontSize: 11, color: '#ef4444', margin: '4px 0 0' }}>{fieldErrors.docNumber}</p>}
+                {fieldErrors.docNumber && <p style={{ fontSize: 12, color: '#ef4444', margin: '4px 0 0' }}>{fieldErrors.docNumber}</p>}
               </div>
             </div>
 
@@ -239,7 +239,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
                 <label style={LABEL_SEC_STYLE}>E-mail</label>
                 <input type="email" value={ownerEmail} onChange={e => setOwnerEmail(e.target.value)}
                   placeholder="email@exemplo.com" style={INPUT_BASE} onFocus={inputFocus} onBlur={inputBlur} />
-                {fieldErrors.ownerEmail && <p style={{ fontSize: 11, color: '#ef4444', margin: '4px 0 0' }}>{fieldErrors.ownerEmail}</p>}
+                {fieldErrors.ownerEmail && <p style={{ fontSize: 12, color: '#ef4444', margin: '4px 0 0' }}>{fieldErrors.ownerEmail}</p>}
               </div>
               <div>
                 <label style={LABEL_SEC_STYLE}>Celular / WhatsApp</label>
@@ -319,7 +319,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
         </div>
 
         {/* Rodapé fixo */}
-        <div style={{ padding: '16px 32px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, display: 'flex', gap: 10 }}>
+        <div style={{ padding: '16px clamp(16px, 4vw, 32px) 24px', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={onClose}
@@ -457,10 +457,10 @@ export default function FazendasPage() {
         )}
 
         {/* Cabeçalho */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Fazendas</h1>
-            <p style={{ fontSize: 13, color: '#8899aa', margin: '4px 0 0' }}>
+            <h1 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', margin: 0, letterSpacing: '-0.025em' }}>Fazendas</h1>
+            <p style={{ fontSize: 14, color: '#94a3b8', margin: '4px 0 0', lineHeight: 1.625 }}>
               {!loading && `${farms.length} ${farms.length === 1 ? 'fazenda cadastrada' : 'fazendas cadastradas'}`}
             </p>
           </div>
@@ -468,7 +468,7 @@ export default function FazendasPage() {
             onClick={() => { setEditingFarm(null); setModalOpen(true) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
-              padding: '9px 16px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              padding: '9px 16px', minHeight: 44, borderRadius: 10, fontSize: 13, fontWeight: 600,
               background: '#0093D0', border: '1px solid rgba(0,147,208,0.4)',
               color: '#fff', cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(0,147,208,0.2)', transition: 'all 0.2s',
@@ -501,7 +501,7 @@ export default function FazendasPage() {
             <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>
               Nenhuma fazenda cadastrada
             </h3>
-            <p style={{ fontSize: 14, color: '#778899', margin: '0 auto 28px', maxWidth: 320 }}>
+            <p style={{ fontSize: 14, color: '#94a3b8', margin: '0 auto 28px', maxWidth: 320, lineHeight: 1.625 }}>
               Cadastre sua primeira fazenda para começar a gerenciar sua irrigação.
             </p>
             <button
@@ -561,28 +561,28 @@ export default function FazendasPage() {
                     </p>
 
                     {/* Localização + altitude */}
-                    <p style={{ fontSize: 12, color: '#8899aa', margin: '3px 0 0' }}>
+                    <p style={{ fontSize: 12, color: '#94a3b8', margin: '3px 0 0', lineHeight: 1.625 }}>
                       {[locationStr, farm.altitude ? `${farm.altitude} m alt.` : null].filter(Boolean).join(' · ') || 'Localização não informada'}
                     </p>
 
                     {/* Responsável */}
                     {farm.owner_name && (
-                      <p style={{ fontSize: 12, color: '#667788', margin: '2px 0 0' }}>
+                      <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0', lineHeight: 1.625 }}>
                         Resp: {farm.owner_name}
-                        {farm.owner_phone && <span style={{ color: '#4a5a6a' }}> · {farm.owner_phone}</span>}
+                        {farm.owner_phone && <span style={{ color: '#64748b' }}> · {farm.owner_phone}</span>}
                       </p>
                     )}
 
                     {/* Dados operacionais */}
                     {opParts.length > 0 && (
-                      <p style={{ fontSize: 11, color: '#556677', margin: '3px 0 0' }}>
+                      <p style={{ fontSize: 12, color: '#64748b', margin: '3px 0 0', lineHeight: 1.625 }}>
                         {opParts.join(' · ')}
                       </p>
                     )}
 
                     {/* Última irrigação */}
                     {lastStr && (
-                      <p style={{ fontSize: 11, color: '#445566', margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <p style={{ fontSize: 12, color: '#64748b', margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: 4, lineHeight: 1.625 }}>
                         <Droplets size={10} style={{ color: '#0093D0', opacity: 0.6, flexShrink: 0 }} />
                         Última irrigação: {lastStr}
                       </p>
@@ -595,7 +595,7 @@ export default function FazendasPage() {
                       href="/manejo"
                       style={{
                         display: 'flex', alignItems: 'center', gap: 5,
-                        padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+                        padding: '6px 12px', minHeight: 44, borderRadius: 8, fontSize: 12, fontWeight: 500,
                         color: '#0093D0', background: 'rgba(0,147,208,0.08)',
                         border: '1px solid rgba(0,147,208,0.18)', textDecoration: 'none',
                         transition: 'all 0.15s', whiteSpace: 'nowrap',
@@ -610,7 +610,7 @@ export default function FazendasPage() {
                     <button
                       onClick={() => { setEditingFarm(farm); setModalOpen(true) }}
                       title="Editar"
-                      style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s' }}
+                      style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
                     >
@@ -621,7 +621,7 @@ export default function FazendasPage() {
                       onClick={() => handleDelete(farm.id)}
                       disabled={deletingId === farm.id}
                       title="Excluir"
-                      style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s' }}
+                      style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
                     >

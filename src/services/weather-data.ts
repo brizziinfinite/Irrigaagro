@@ -123,6 +123,46 @@ export async function deleteWeatherData(
   }
 }
 
+export async function getWeatherDataByStationRange(
+  stationId: string,
+  fromDate: string,
+  toDate: string,
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+): Promise<WeatherData[]> {
+  const { data, error } = await weatherDataTable(client)
+    .select('*')
+    .eq('station_id', stationId)
+    .gte('date', fromDate)
+    .lte('date', toDate)
+    .order('date', { ascending: true })
+
+  if (error) {
+    throw weatherDataServiceError('buscar range', error)
+  }
+
+  return (data ?? []) as WeatherData[]
+}
+
+export async function getWeatherDataByFarmRange(
+  farmId: string,
+  fromDate: string,
+  toDate: string,
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+): Promise<WeatherDataWithStation[]> {
+  const { data, error } = await weatherDataTable(client)
+    .select('*, weather_stations!inner(id, name, farm_id)')
+    .eq('weather_stations.farm_id', farmId)
+    .gte('date', fromDate)
+    .lte('date', toDate)
+    .order('date', { ascending: true })
+
+  if (error) {
+    throw weatherDataServiceError('buscar range', error)
+  }
+
+  return (data ?? []) as WeatherDataWithStation[]
+}
+
 export async function getWeatherDataByFarmDate(
   farmId: string,
   date: string,

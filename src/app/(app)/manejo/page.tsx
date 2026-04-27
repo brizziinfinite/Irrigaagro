@@ -120,7 +120,7 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
 }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>{label}</label>
       <div style={{ position: 'relative' }}>
         <input
           type={type} step={type === 'number' ? 'any' : undefined}
@@ -218,7 +218,7 @@ function SoilDiagram({
     }}>
       {/* ── Header ── */}
       <div style={{ zIndex: 2, marginBottom: 20 }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+        <p style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 4 }}>
           Análise do Solo
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -265,7 +265,7 @@ function SoilDiagram({
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none'
         }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
             Umidade C.C.
           </span>
           <span style={{
@@ -284,41 +284,41 @@ function SoilDiagram({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 'auto' }}>
 
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
-          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cultura</p>
+          <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cultura</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cropName ?? 'Não inf.'}</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cropName ?? 'Não inf.'}</span>
             <span style={{ fontSize: 11, color: '#0093D0', fontWeight: 700 }}>D{das}</span>
           </div>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 6 }}>Raiz: <span style={{ color: '#e2e8f0' }}>{Math.round(rootDepthCm)} cm</span></p>
+          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>Raiz: <span style={{ color: '#e2e8f0' }}>{Math.round(rootDepthCm)} cm</span></p>
         </div>
 
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
-          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Armazenamento</p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
-            <span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}} title="Capacidade de Água Disponível">CAD:</span> {cad.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span>
+          <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Armazenamento</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
+            <span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}} title="Capacidade de Água Disponível">CAD:</span> {cad.toFixed(1)} <span style={{ fontSize: 11, color: '#94a3b8' }}>mm</span>
           </p>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 6 }}>
+          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>
             <span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}} title="Capacidade Total de Água">CTA:</span> <span style={{ color: '#e2e8f0' }}>{cta.toFixed(1)} mm</span>
           </p>
         </div>
 
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
-          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hídrico Atual</p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
-            ADc: {adcNew.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span>
+          <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hídrico Atual</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
+            ADc: {adcNew.toFixed(1)} <span style={{ fontSize: 11, color: '#94a3b8' }}>mm</span>
           </p>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 6 }}>Falta p/ CC: <span style={{ color: '#ef4444' }}>{Math.max(0, cta - adcNew).toFixed(1)} mm</span></p>
+          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>Falta p/ CC: <span style={{ color: '#ef4444' }}>{Math.max(0, cta - adcNew).toFixed(1)} mm</span></p>
         </div>
 
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
-          <p style={{ fontSize: 10, color: '#687b8d', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 4 }}>
             <span>Limiar de Segurança</span>
             {alertThresholdPct && <span style={{ color: '#f59e0b' }}>({alertThresholdPct}%)</span>}
           </p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
-            Mín: {(cta * ((alertThresholdPct ?? 50)/100)).toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
+            Mín: {(cta * ((alertThresholdPct ?? 50)/100)).toFixed(1)} <span style={{ fontSize: 11, color: '#94a3b8' }}>mm</span>
           </p>
-          <p style={{ fontSize: 11, color: '#8899aa', marginTop: 6 }}>
+          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>
             Déficit aceito: <span style={{ color: '#e2e8f0' }}>{(cta - (cta * ((alertThresholdPct ?? 50)/100))).toFixed(1)} mm</span>
           </p>
         </div>
@@ -409,7 +409,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
             Limpar simulação
           </button>
         ) : (
-          <span style={{ fontSize: 10, color: '#667788', padding: '3px 8px', borderRadius: 20, background: '#0d1520' }}>sem chuva prevista</span>
+          <span style={{ fontSize: 11, color: '#64748b', padding: '3px 8px', borderRadius: 20, background: '#0d1520' }}>sem chuva prevista</span>
         )}
       </div>
 
@@ -428,7 +428,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                 : firstIrrigIdx === 1 ? 'Iniciar irrigação em 2 dias'
                 : `Irrigar em ${firstIrrigIdx + 1} dias (${fmtDate(days[firstIrrigIdx].date)})`}
             </p>
-            <p style={{ fontSize: 10, color: '#778899' }}>
+            <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625 }}>
               Lâmina prevista para o dia: {fmtNum(days[firstIrrigIdx].recommendedDepthMm)} mm
               {days[firstIrrigIdx].recommendedSpeedPercent !== null ? ` · Velocidade: ${days[firstIrrigIdx].recommendedSpeedPercent}%` : ''}
             </p>
@@ -629,12 +629,12 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 2, height: 10, background: '#f59e0b', opacity: 0.7 }} />
-            <span style={{ fontSize: 10, color: '#667788' }}>Limiar irrigação</span>
+            <span style={{ fontSize: 12, color: '#64748b' }}>Limiar irrigação</span>
           </div>
-          <span style={{ fontSize: 10, color: '#667788' }}>· Clique no <strong>+</strong> para simular irrigação</span>
+          <span style={{ fontSize: 12, color: '#64748b' }}>· Clique no <strong>+</strong> para simular irrigação</span>
         </div>
         {hasSimulation && (
-          <span style={{ fontSize: 10, color: '#0093D0', fontStyle: 'italic' }}>
+          <span style={{ fontSize: 12, color: '#0093D0', fontStyle: 'italic' }}>
             Valores riscados mostram a projeção sem irrigação para comparação.
           </span>
         )}
@@ -667,7 +667,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
       <div style={{ overflowX: 'auto' }}>
       <div style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         {['Data', 'DAS', 'ETo', 'ETc', 'Chuva', 'Lâmina', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
-          <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+          <span key={h} style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
       </div>
       {records.map((r, i) => {
@@ -697,7 +697,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
               <button
                 onClick={() => onEdit(r)}
                 title="Editar registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#0093D0')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#667788')}
               >
@@ -706,7 +706,7 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
               <button
                 onClick={() => onDelete(r)}
                 title="Excluir registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
                 onMouseLeave={e => (e.currentTarget.style.color = '#667788')}
               >
@@ -1090,8 +1090,8 @@ export default function ManejoPage() {
     return (
       <div style={{ maxWidth: 440, margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
         <Sprout size={32} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra ativa</h2>
-        <p style={{ fontSize: 13, color: '#778899' }}>Cadastre uma safra em <strong style={{ color: '#8899aa' }}>Safras</strong> para iniciar o manejo.</p>
+        <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', marginBottom: 8, letterSpacing: '-0.025em' }}>Nenhuma safra ativa</h2>
+        <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>Cadastre uma safra em <strong style={{ color: '#94a3b8' }}>Safras</strong> para iniciar o manejo.</p>
       </div>
     )
   }
@@ -1150,35 +1150,35 @@ export default function ManejoPage() {
           <div style={{
             background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)',
             borderTop: '2px solid #ef4444',
-            borderRadius: 18, padding: '32px 32px 28px', width: '100%', maxWidth: 440,
+            borderRadius: 18, padding: 'clamp(16px, 4vw, 32px)', width: '100%', maxWidth: 440,
             boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
           }}>
             {/* Header do modal */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
               <div>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0', margin: 0, letterSpacing: '-0.02em' }}>
+                <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', margin: 0, letterSpacing: '-0.025em' }}>
                   Lançar irrigação
                 </h2>
-                <p style={{ fontSize: 12, color: '#778899', margin: '4px 0 0' }}>
+                <p style={{ fontSize: 12, color: '#94a3b8', margin: '4px 0 0', lineHeight: 1.625 }}>
                   Confirme a lâmina aplicada para o pivô selecionado.
                 </p>
               </div>
               <button
                 onClick={() => setShowQuickModal(false)}
-                style={{ background: 'transparent', border: 'none', color: '#667788', cursor: 'pointer', padding: 4 }}
+                style={{ background: 'transparent', border: 'none', color: '#667788', cursor: 'pointer', padding: 4, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Pivô + data (só leitura, informativo) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10, marginBottom: 20 }}>
               <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Pivô</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Pivô</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{selectedSeason?.pivots?.name ?? '—'}</div>
               </div>
               <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Data</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Data</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>
                   {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </div>
@@ -1192,8 +1192,8 @@ export default function ManejoPage() {
                 borderRadius: 10, padding: '10px 14px', marginBottom: 16,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                <span style={{ fontSize: 12, color: '#8899aa' }}>Lâmina recomendada</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: '#ef4444', fontFamily: 'monospace' }}>
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>Lâmina recomendada</span>
+                <span style={{ fontSize: 28, fontWeight: 700, color: '#ef4444', fontFamily: 'monospace', letterSpacing: '-0.025em' }}>
                   {calcResult.recommendedDepthMm.toFixed(1)} mm
                 </span>
               </div>
@@ -1201,7 +1201,7 @@ export default function ManejoPage() {
 
             {/* Campo: lâmina aplicada */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 8 }}>
                 Lâmina aplicada (mm)
               </label>
               <div style={{ position: 'relative' }}>
@@ -1231,7 +1231,7 @@ export default function ManejoPage() {
 
             {/* Campo: observação (opcional) */}
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 8 }}>
                 Observação <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span>
               </label>
               <input
@@ -1269,6 +1269,7 @@ export default function ManejoPage() {
                 onClick={() => setShowQuickModal(false)}
                 style={{
                   flex: 1, padding: '13px 0', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                  minHeight: 48,
                   background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
                   color: '#778899', cursor: 'pointer',
                 }}
@@ -1280,6 +1281,7 @@ export default function ManejoPage() {
                 disabled={quickModalSaving}
                 style={{
                   flex: 2, padding: '13px 0', borderRadius: 10, fontSize: 14, fontWeight: 800,
+                  minHeight: 48,
                   background: quickModalSaving ? 'rgba(239,68,68,0.3)' : 'linear-gradient(135deg, #e02424, #c01a1a)',
                   border: 'none', color: '#fff', cursor: quickModalSaving ? 'not-allowed' : 'pointer',
                   boxShadow: quickModalSaving ? 'none' : '0 4px 20px rgba(200,30,30,0.35)',
@@ -1296,13 +1298,13 @@ export default function ManejoPage() {
           SEÇÃO 1 — HERO DE DECISÃO
           ════════════════════════════════════════════════════════ */}
       {calcResult && heroCfg ? (
-        <div style={{
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between" style={{
           background: heroMainBg,
           border: `1px solid ${heroBorder}`,
           borderTop: `2px solid ${heroMainColor}50`,
           borderRadius: 20,
-          padding: '32px 36px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
+          padding: 'clamp(18px, 4vw, 32px) clamp(18px, 4vw, 36px)',
+          gap: 20,
           boxShadow: `0 8px 32px rgba(0,0,0,0.45)`,
           position: 'relative', overflow: 'hidden',
         }}>
@@ -1394,7 +1396,7 @@ export default function ManejoPage() {
           </div>
 
           {/* Right: CTAs — primário dominante, secundário discreto */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+          <div className="flex flex-col sm:flex-shrink-0 w-full sm:w-auto" style={{ gap: 8 }}>
             {/* CTA primário: abre modal rápido se deve irrigar, senão vai para formulário */}
             <button
               onClick={() => {
@@ -1413,7 +1415,7 @@ export default function ManejoPage() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                 padding: '17px 32px', borderRadius: 14, fontSize: 14, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap',
+                minHeight: 52, textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap',
                 background: shouldIrrigate
                   ? 'linear-gradient(135deg, #e02424, #c01a1a)'
                   : 'linear-gradient(135deg, #0093D0, #0277b5)',
@@ -1454,7 +1456,7 @@ export default function ManejoPage() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 500,
-                letterSpacing: '0.03em', whiteSpace: 'nowrap',
+                minHeight: 44, letterSpacing: '0.03em', whiteSpace: 'nowrap',
                 background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
                 color: '#778899', cursor: 'pointer',
                 transition: 'color 0.15s ease, border-color 0.15s ease',
@@ -1503,7 +1505,7 @@ export default function ManejoPage() {
 
       {/* ── Seletor de safra ── */}
       <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <label style={{ fontSize: 11, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Safra</label>
+        <label style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em' }}>Safra</label>
         <div style={{ position: 'relative' }}>
           <select value={selectedSeasonId} onChange={e => setSelectedSeasonId(e.target.value)}
             style={{ width: '100%', padding: '10px 36px 10px 12px', borderRadius: 9, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
@@ -1603,9 +1605,9 @@ export default function ManejoPage() {
             },
           ].map(({ label, value, color, sub }) => (
             <div key={label}>
-              <p style={{ fontSize: 10, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{label}</p>
-              <p style={{ fontSize: 17, fontWeight: 700, color, fontFamily: 'var(--font-mono)', lineHeight: 1.15 }}>{value}</p>
-              <p style={{ fontSize: 10, color: '#778899', marginTop: 4, lineHeight: 1.3 }}>{sub}</p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{label}</p>
+              <p style={{ fontSize: 28, fontWeight: 600, color, fontFamily: 'var(--font-mono)', lineHeight: 1.15, letterSpacing: '-0.025em' }}>{value}</p>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, lineHeight: 1.625 }}>{sub}</p>
             </div>
           ))}
         </div>
@@ -1627,7 +1629,7 @@ export default function ManejoPage() {
             <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <TrendingDown size={13} style={{ color: '#0093D0' }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em' }}>
                   Se não irrigar, o que acontece?
                 </span>
               </div>
@@ -1745,7 +1747,7 @@ export default function ManejoPage() {
 
             {/* Agenda de Irrigação */}
             <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <h3 style={{ fontSize: 10, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Agenda de Irrigação</h3>
+              <h3 style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', margin: 0 }}>Agenda de Irrigação</h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12, color: '#778899' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1800,10 +1802,10 @@ export default function ManejoPage() {
             {/* Consumo de Água 7D */}
             <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 4 }}>
-                <h3 style={{ fontSize: 10, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Consumo de Água (7D)</h3>
-                <div style={{ fontSize: 10, color: '#667788', textAlign: 'right' }}>
-                  <div>Aplicado: <strong style={{ color: '#8899aa' }}>{totalWater7d.toFixed(1)} mm</strong></div>
-                  <div style={{ marginTop: 2 }}>ETc: <span style={{ color: '#667788'}}>{totalEtc7d.toFixed(1)} mm</span></div>
+                <h3 style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', margin: 0 }}>Consumo de Água (7D)</h3>
+                <div style={{ fontSize: 12, color: '#64748b', textAlign: 'right', lineHeight: 1.625 }}>
+                  <div>Aplicado: <strong style={{ color: '#94a3b8' }}>{totalWater7d.toFixed(1)} mm</strong></div>
+                  <div style={{ marginTop: 2 }}>ETc: <span style={{ color: '#64748b'}}>{totalEtc7d.toFixed(1)} mm</span></div>
                 </div>
               </div>
 
@@ -1837,7 +1839,7 @@ export default function ManejoPage() {
           ════════════════════════════════════════════════════════ */}
       {calcResult && selectedSeason ? (
         <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 20px 4px' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 12 }}>
             Análise Detalhada do Solo
           </p>
           <SoilDiagram
@@ -1885,6 +1887,7 @@ export default function ManejoPage() {
           onClick={() => setShowForm(!showForm)}
           style={{
             width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            minHeight: 52,
             background: showForm ? '#0d1520' : 'linear-gradient(90deg, #0f1923, #121c26)',
             border: showForm ? '1px solid rgba(0,147,208,0.2)' : '1px solid rgba(255,255,255,0.06)',
             color: showForm ? '#0093D0' : '#8899aa',
@@ -1900,12 +1903,12 @@ export default function ManejoPage() {
         </button>
 
         {showForm && (
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: 'clamp(16px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Fonte climática + data */}
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 items-start">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Dados Climáticos</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em' }}>Dados Climáticos</label>
                 {weatherLoading && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <Loader2 size={12} className="animate-spin" style={{ color: '#0093D0' }} />
@@ -1944,14 +1947,14 @@ export default function ManejoPage() {
             {/* ADc anterior */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)' }}>
               <Droplets size={14} style={{ color: '#0093D0', flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: '#667788' }}>ADc (Umidade) anterior:</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcPrev)} mm</span>
-              <span style={{ fontSize: 12, color: '#778899', marginLeft: 2 }}>{history.length > 0 ? '(último registro)' : '(ADc inicial da safra)'}</span>
+              <span style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>ADc (Umidade) anterior:</span>
+              <span style={{ fontSize: 28, fontWeight: 600, color: '#0093D0', fontFamily: 'var(--font-mono)', letterSpacing: '-0.025em' }}>{fmtNum(adcPrev)} mm</span>
+              <span style={{ fontSize: 12, color: '#94a3b8', marginLeft: 2 }}>{history.length > 0 ? '(último registro)' : '(ADc inicial da safra)'}</span>
             </div>
 
             {/* Irrigação realizada */}
             <div>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Irrigação Realizada <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 12 }}>Irrigação Realizada <span style={{ fontSize: 11, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14 }}>
                 <InputField label="Velocidade real" value={actualSpeed} onChange={setActualSpeed} unit="%" placeholder="60" />
                 <InputField label="Lâmina real" value={actualDepth} onChange={v => { setActualDepth(v); setDepthAutoFilled(false) }} unit="mm" placeholder="12" />
@@ -1977,7 +1980,7 @@ export default function ManejoPage() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                 padding: '17px 0', borderRadius: 12, fontSize: 14, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.06em',
+                minHeight: 52, textTransform: 'uppercase', letterSpacing: '0.06em',
                 background: calcResult ? 'linear-gradient(135deg, #0093D0, #0277b5)' : '#0d1520',
                 border: 'none', color: calcResult ? '#fff' : '#667788',
                 cursor: calcResult ? 'pointer' : 'not-allowed',
@@ -2002,7 +2005,7 @@ export default function ManejoPage() {
           ════════════════════════════════════════════════════════ */}
       {history.length >= 2 && (
         <div>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, paddingLeft: 4 }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 10, paddingLeft: 4 }}>
             Balanço Hídrico — Histórico
           </p>
           <WaterBalanceChart
@@ -2028,6 +2031,7 @@ export default function ManejoPage() {
           onClick={() => setShowHistoryTab(!showHistoryTab)}
           style={{
             width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            minHeight: 52,
             background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
             color: '#8899aa', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
             transition: 'all 0.2s'

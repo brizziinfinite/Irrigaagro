@@ -24,7 +24,7 @@ const PivotMiniMapDynamic = dynamic(
         height: 240, borderRadius: 10, background: '#0d1520',
         border: '1px solid rgba(255,255,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 12, color: '#778899',
+        fontSize: 12, color: '#94a3b8',
       }}>
         Carregando mapa…
       </div>
@@ -60,7 +60,7 @@ function SpeedTable({ rows }: { rows: SpeedTableRow[] }) {
     <div style={{ marginTop: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
         <Table2 size={13} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>
           Tabela de Velocidade
         </span>
       </div>
@@ -68,7 +68,7 @@ function SpeedTable({ rows }: { rows: SpeedTableRow[] }) {
         {/* Header */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#0d1520', padding: '8px 14px' }}>
           {['Velocidade', 'Lâmina (mm)', 'Duração (h)'].map(h => (
-            <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+            <span key={h} style={{ fontSize: 11, fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em' }}>{h}</span>
           ))}
         </div>
         {rows.map((row, i) => (
@@ -81,11 +81,11 @@ function SpeedTable({ rows }: { rows: SpeedTableRow[] }) {
               background: i % 2 === 0 ? 'transparent' : '#080e14',
             }}
           >
-            <span style={{ fontSize: 13, fontWeight: row.speed_percent === 100 ? 700 : 400, color: row.speed_percent === 100 ? '#0093D0' : '#8899aa' }}>
+            <span style={{ fontSize: 14, fontWeight: row.speed_percent === 100 ? 600 : 400, color: row.speed_percent === 100 ? '#0093D0' : '#94a3b8' }}>
               {row.speed_percent}%
             </span>
-            <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.water_depth_mm}</span>
-            <span style={{ fontSize: 13, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{row.duration_hours}</span>
+            <span style={{ fontSize: 14, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.water_depth_mm}</span>
+            <span style={{ fontSize: 14, color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>{row.duration_hours}</span>
           </div>
         ))}
       </div>
@@ -146,7 +146,7 @@ function Field({ label, value, onChange, placeholder, unit, hint, min, max }: {
 }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
         {label}
       </label>
       <div style={{ position: 'relative' }}>
@@ -167,12 +167,12 @@ function Field({ label, value, onChange, placeholder, unit, hint, min, max }: {
           onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none' }}
         />
         {unit && (
-          <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#778899', pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#94a3b8', pointerEvents: 'none' }}>
             {unit}
           </span>
         )}
       </div>
-      {hint && <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, lineHeight: 1.625 }}>{hint}</p>}
     </div>
   )
 }
@@ -440,17 +440,17 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(8px)' }}>
       <div style={{
-        background: 'linear-gradient(145deg, rgba(15, 25, 35, 0.95), rgba(10, 15, 20, 0.98))', 
-        border: '1px solid rgba(0, 229, 255, 0.15)', borderRadius: 24, padding: 32,
+        background: 'linear-gradient(145deg, rgba(15, 25, 35, 0.95), rgba(10, 15, 20, 0.98))',
+        border: '1px solid rgba(0, 229, 255, 0.15)', borderRadius: 24, padding: 'clamp(16px, 4vw, 28px)',
         width: '100%', maxWidth: 650, boxShadow: '0 30px 60px -10px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 229, 255, 0.05)',
         maxHeight: '90vh', overflowY: 'auto',
       }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
+          <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>
             {isEdit ? 'Editar Pivô' : 'Novo Pivô'}
           </h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ padding: 8, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} />
           </button>
         </div>
@@ -464,7 +464,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4" onClick={e => e.stopPropagation()}>
           {/* Fazenda */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Fazenda *</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Fazenda *</label>
             <div style={{ position: 'relative' }}>
               <select
                 value={farmId}
@@ -484,7 +484,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
 
           {/* Nome */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Nome do Pivô *</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Nome do Pivô *</label>
             <input
               type="text"
               value={name}
@@ -502,12 +502,12 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
 
           {/* Separador */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Dados Técnicos</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>Dados Técnicos</span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
           {/* Comprimento + Vazão */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
             <Field
               label="Comprimento do braço"
               value={lengthM}
@@ -526,7 +526,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           </div>
 
           {/* Tempo 360° + CUC */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 12 }}>
             <Field
               label="Tempo 360° a 100%"
               value={time360}
@@ -550,7 +550,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {previewTable && (
             <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.12)', display: 'flex', flexWrap: 'wrap', gap: 16 }}>
               {previewTable.filter(r => [50, 75, 100].includes(r.speed_percent)).map(r => (
-                <span key={r.speed_percent} style={{ fontSize: 12, color: '#8899aa' }}>
+                <span key={r.speed_percent} style={{ fontSize: 14, color: '#94a3b8' }}>
                   <span style={{ color: '#0093D0', fontWeight: 600 }}>{r.speed_percent}%</span> → {r.water_depth_mm.toFixed(1)} mm · {r.duration_hours.toFixed(1)} h
                 </span>
               ))}
@@ -579,7 +579,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {/* Separador localização */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <MapPin size={11} style={{ color: '#778899' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Localização do Pivô</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>Localização do Pivô</span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
@@ -593,7 +593,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           />
 
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
               Coordenadas (latitude e longitude)
             </label>
             <input
@@ -611,18 +611,18 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             />
             {/* Feedback de parse */}
             {coordsRaw && parsedCoords && (
-              <p style={{ fontSize: 11, color: '#0093D0', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <p style={{ fontSize: 12, color: '#0093D0', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <MapPin size={10} />
                 Lat {parsedCoords.lat.toFixed(6)}° · Lng {parsedCoords.lng.toFixed(6)}°
               </p>
             )}
             {coordsRaw && !parsedCoords && (
-              <p style={{ fontSize: 11, color: '#ef4444', marginTop: 5 }}>
+              <p style={{ fontSize: 12, color: '#ef4444', marginTop: 5 }}>
                 Formato não reconhecido. Tente: -22.879060, -50.362105
               </p>
             )}
             {!coordsRaw && (
-              <p style={{ fontSize: 11, color: '#778899', marginTop: 5 }}>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 5, lineHeight: 1.625 }}>
                 Cole do Google Maps, Google Earth ou GPS. Aceita graus/minutos/segundos ou decimal.
               </p>
             )}
@@ -631,11 +631,11 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {/* ── Setores ─────────────────────────────────────────── */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <Layers size={11} style={{ color: '#778899' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Setores</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>Setores</span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
-            <span style={{ fontSize: 10, color: '#778899' }}>opcional</span>
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>opcional</span>
           </div>
-          <p style={{ fontSize: 11, color: '#778899', margin: '-8px 0 0' }}>
+          <p style={{ fontSize: 12, color: '#94a3b8', margin: '-8px 0 0', lineHeight: 1.625 }}>
             Divida o pivô em setores para irrigação e precipitação. Sem setores = círculo completo.
           </p>
 
@@ -676,7 +676,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#0d1520', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
                     <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{s.name}</span>
                     {(s.start || s.end) && (
-                      <span style={{ fontSize: 11, color: '#778899', fontFamily: 'var(--font-mono)' }}>
+                      <span style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
                         {s.start || '—'}°–{s.end || '—'}°
                       </span>
                     )}
@@ -695,10 +695,10 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           )}
 
           {/* Formulário adicionar setor */}
-          {sectorError && <p style={{ fontSize: 11, color: '#ef4444', margin: '-4px 0' }}>{sectorError}</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 8, alignItems: 'flex-end' }}>
+          {sectorError && <p style={{ fontSize: 12, color: '#ef4444', margin: '-4px 0' }}>{sectorError}</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_auto]" style={{ gap: 8, alignItems: 'flex-end' }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Nome *</label>
+              <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 5 }}>Nome *</label>
               <input
                 type="text"
                 value={newSectorName}
@@ -711,7 +711,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Início °</label>
+              <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 5 }}>Início °</label>
               <input
                 type="number" value={newSectorStart} onChange={e => setNewSectorStart(e.target.value)}
                 placeholder="0" min={0} max={360} step="any"
@@ -721,7 +721,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Fim °</label>
+              <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 5 }}>Fim °</label>
               <input
                 type="number" value={newSectorEnd} onChange={e => setNewSectorEnd(e.target.value)}
                 placeholder="270" min={0} max={360} step="any"
@@ -738,11 +738,11 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               <Plus size={12} /> Adicionar
             </button>
           </div>
-          <p style={{ fontSize: 11, color: '#778899', margin: '-4px 0 0' }}>0=Norte, 90=Leste, sentido horário</p>
+          <p style={{ fontSize: 12, color: '#94a3b8', margin: '-4px 0 0', lineHeight: 1.625 }}>0=Norte, 90=Leste, sentido horário</p>
 
           {/* Limiar de alerta */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
               Limiar de Alerta de Irrigação
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -762,10 +762,10 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
                   {alertThreshold || 70}
                 </span>
-                <span style={{ fontSize: 10, color: '#778899' }}>%</span>
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>%</span>
               </div>
             </div>
-            <p style={{ fontSize: 11, color: '#778899', marginTop: 6 }}>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>
               Sistema avisa para irrigar quando a capacidade de campo cair abaixo deste valor.
               Padrão: 70%.
             </p>
@@ -773,7 +773,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
 
           {/* Alvo de reposição */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
               Alvo de Reposição de Irrigação
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -793,10 +793,10 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>
                   {irrigationTarget || 80}
                 </span>
-                <span style={{ fontSize: 10, color: '#778899' }}>%</span>
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>%</span>
               </div>
             </div>
-            <p style={{ fontSize: 11, color: '#778899', marginTop: 6 }}>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>
               Até onde repor após acionar a irrigação. Padrão: 80% (evita encharcamento).
             </p>
           </div>
@@ -804,7 +804,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {/* Separador operação */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <Link2 size={11} style={{ color: '#778899' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Modo de Operação</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>Modo de Operação</span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
@@ -825,7 +825,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                 }}
               >
                 <p style={{ fontSize: 13, fontWeight: 700, color: operationMode === opt.value ? '#0093D0' : '#8899aa' }}>{opt.label}</p>
-                <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{opt.desc}</p>
+                <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{opt.desc}</p>
               </button>
             ))}
           </div>
@@ -833,12 +833,12 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {/* Campos conjugado */}
           {operationMode === 'conjugated' && (
             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={{ fontSize: 11, color: '#8899aa' }}>
+              <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625 }}>
                 Configure como o pivô opera no dia a dia. O sistema projeta o déficit até a próxima volta.
               </p>
 
               <div style={{ marginBottom: 4 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Pivô Pareado (Divide a mesma bomba)</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>Pivô Pareado (Divide a mesma bomba)</label>
                 <div style={{ position: 'relative' }}>
                   <select
                     value={pairedPivotId}
@@ -860,7 +860,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Intervalo de Retorno</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>Intervalo de Retorno</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type="number" step="0.5" min="1" value={returnIntervalDays}
@@ -869,12 +869,12 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                       onFocus={e => e.target.style.borderColor = '#0093D0'}
                       onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                     />
-                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: '#778899', pointerEvents: 'none' }}>dias</span>
+                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94a3b8', pointerEvents: 'none' }}>dias</span>
                   </div>
-                  <p style={{ fontSize: 10, color: '#778899', marginTop: 3 }}>A cada quantos dias o pivô retorna</p>
+                  <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.625 }}>A cada quantos dias o pivô retorna</p>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Velocidade Preferida</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>Velocidade Preferida</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type="number" step="1" min="5" max="100" value={preferredSpeed}
@@ -884,9 +884,9 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                       onFocus={e => e.target.style.borderColor = '#0093D0'}
                       onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                     />
-                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: '#778899', pointerEvents: 'none' }}>%</span>
+                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94a3b8', pointerEvents: 'none' }}>%</span>
                   </div>
-                  <p style={{ fontSize: 10, color: '#778899', marginTop: 3 }}>
+                  <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.625 }}>
                     Velocidade do dia a dia
                     {preferredSpeed && lengthM && flowRate && time360 && (() => {
                       const d = calcDepth100(Number(flowRate), Number(time360), Number(lengthM)) * (100 / Number(preferredSpeed))
@@ -895,7 +895,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                   </p>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Velocidade Mínima Operacional</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>Velocidade Mínima Operacional</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type="number" step="1" min="5" max="100" value={minSpeedPct}
@@ -905,9 +905,9 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                       onFocus={e => e.target.style.borderColor = '#0093D0'}
                       onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                     />
-                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: '#778899', pointerEvents: 'none' }}>%</span>
+                    <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#94a3b8', pointerEvents: 'none' }}>%</span>
                   </div>
-                  <p style={{ fontSize: 10, color: '#778899', marginTop: 3 }}>
+                  <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.625 }}>
                     Limite mínimo (solo não absorve abaixo disso)
                     {minSpeedPct && lengthM && flowRate && time360 && (() => {
                       const d = calcDepth100(Number(flowRate), Number(time360), Number(lengthM)) * (100 / Number(minSpeedPct))
@@ -922,7 +922,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {/* Separador fonte climática */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
             <Satellite size={11} style={{ color: '#778899' }} />
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Fonte de Dados Climáticos</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>Fonte de Dados Climáticos</span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
@@ -946,7 +946,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               >
                 <opt.icon size={14} style={{ color: weatherSource === opt.value ? '#0093D0' : '#778899', margin: '0 auto 4px' }} />
                 <p style={{ fontSize: 11, fontWeight: 700, color: weatherSource === opt.value ? '#0093D0' : '#8899aa', marginBottom: 2 }}>{opt.label}</p>
-                <p style={{ fontSize: 9, color: '#778899', lineHeight: 1.3 }}>{opt.desc}</p>
+                <p style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.3 }}>{opt.desc}</p>
               </button>
             ))}
           </div>
@@ -954,11 +954,11 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {/* Config Plugfield */}
           {weatherSource === 'plugfield' && (
             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ fontSize: 11, color: '#8899aa' }}>
+              <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625 }}>
                 Credenciais da sua conta Plugfield. Encontre no painel em <strong style={{ color: '#e2e8f0' }}>Configurações → API</strong>.
               </p>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Device ID</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>Device ID</label>
                 <input
                   type="number"
                   value={plugfieldDeviceId}
@@ -968,10 +968,10 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                   onFocus={e => e.target.style.borderColor = '#0093D0'}
                   onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                 />
-                <p style={{ fontSize: 10, color: '#778899', marginTop: 3 }}>Número do equipamento — aparece na URL ao abrir a estação no painel Plugfield.</p>
+                <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.625 }}>Número do equipamento — aparece na URL ao abrir a estação no painel Plugfield.</p>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>Token (Authorization)</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>Token (Authorization)</label>
                 <input
                   type="password"
                   value={plugfieldToken}
@@ -983,7 +983,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>API Key (x-api-key)</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>API Key (x-api-key)</label>
                 <input
                   type="password"
                   value={plugfieldApiKey}
@@ -1000,11 +1000,11 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {/* Config Google Sheets */}
           {weatherSource === 'google_sheets' && (
             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={{ fontSize: 11, color: '#8899aa', marginBottom: 2 }}>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 2, lineHeight: 1.625 }}>
                 Cole a URL da planilha. Ela precisa estar pública ("Qualquer pessoa com o link pode ver").
               </p>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>URL da Planilha Google Sheets</label>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>URL da Planilha Google Sheets</label>
                 <input
                   type="text"
                   value={spreadsheetId}
@@ -1033,7 +1033,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {weatherSource === 'nasa' && (
             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 8 }}>
               <Satellite size={13} style={{ color: '#06b6d4', flexShrink: 0, marginTop: 1 }} />
-              <p style={{ fontSize: 11, color: '#778899', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625 }}>
                 NASA POWER fornece dados diários de temperatura, umidade, vento e radiação solar por coordenada geográfica. Gratuito e sem configuração adicional.
                 {!parsedCoords && <strong style={{ color: '#f59e0b' }}> Informe as coordenadas acima.</strong>}
               </p>
@@ -1043,16 +1043,16 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
 
           {/* Separador solo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Parâmetros de Solo</span>
+            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>Parâmetros de Solo</span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: 12 }}>
             <Field label="Cap. Campo (CC)" value={fieldCapacity} onChange={setFieldCapacity} placeholder="32" unit="%" hint="% volumétrico" />
             <Field label="Pto. Murcha (PM)" value={wiltingPoint}   onChange={setWiltingPoint}   placeholder="14" unit="%" hint="% volumétrico" />
             <Field label="Dens. Solo (Ds)"  value={bulkDensity}   onChange={setBulkDensity}   placeholder="1.4" unit="g/cm³" />
           </div>
-          <p style={{ fontSize: 11, color: '#778899', margin: '-8px 0 0' }}>
+          <p style={{ fontSize: 12, color: '#94a3b8', margin: '-8px 0 0', lineHeight: 1.625 }}>
             Esses valores ficam no pivô e são usados no balanço hídrico. Você ainda pode sobrescrevê-los por safra, se necessário.
           </p>
 
@@ -1065,7 +1065,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               type="button"
               onClick={onClose}
               style={{
-                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500,
+                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 14, fontWeight: 500, minHeight: 44,
                 background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer', transition: 'all 0.2s'
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#e2e8f0' }}
@@ -1078,7 +1078,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
               disabled={loading}
               onClick={e => { e.preventDefault(); e.stopPropagation(); handleSubmit(e as unknown as React.FormEvent) }}
               style={{
-                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 600,
+                flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 600, minHeight: 44,
                 background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
                 opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 boxShadow: '0 2px 8px rgba(0,147,208,0.25)', transition: 'all 0.2s',
@@ -1145,7 +1145,7 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             <div>
               <p style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>{pivot.name}</p>
               {pivot.farms?.name && (
-                <p style={{ fontSize: 11, color: '#8899aa', margin: '2px 0 0' }}>{pivot.farms.name}</p>
+                <p style={{ fontSize: 12, color: '#94a3b8', margin: '2px 0 0' }}>{pivot.farms.name}</p>
               )}
             </div>
           </div>
@@ -1166,7 +1166,7 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             <button
               onClick={onEdit}
               title="Editar"
-              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
+              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
             >
@@ -1176,7 +1176,7 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
               onClick={onDelete}
               disabled={deleting}
               title="Excluir"
-              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s' }}
+              style={{ padding: 7, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.2s', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
             >
@@ -1190,14 +1190,14 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
             {area != null && (
               <div style={{ background: 'rgba(0,147,208,0.06)', border: '1px solid rgba(0,147,208,0.12)', borderRadius: 10, padding: '10px 16px', minWidth: 90, textAlign: 'center' }}>
-                <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', margin: 0, lineHeight: 1 }}>{area.toFixed(0)}</p>
-                <p style={{ fontSize: 10, color: '#8899aa', margin: '3px 0 0', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>ha</p>
+                <p style={{ fontSize: 28, fontWeight: 700, color: '#e2e8f0', margin: 0, lineHeight: 1, letterSpacing: '-0.025em' }}>{area.toFixed(0)}</p>
+                <p style={{ fontSize: 12, color: '#94a3b8', margin: '3px 0 0', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>ha</p>
               </div>
             )}
             {depth100 != null && (
               <div style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.12)', borderRadius: 10, padding: '10px 16px', minWidth: 90, textAlign: 'center' }}>
-                <p style={{ fontSize: 22, fontWeight: 700, color: '#22c55e', margin: 0, lineHeight: 1 }}>{depth100.toFixed(1)}</p>
-                <p style={{ fontSize: 10, color: '#8899aa', margin: '3px 0 0', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>mm / 100%</p>
+                <p style={{ fontSize: 28, fontWeight: 700, color: '#22c55e', margin: 0, lineHeight: 1, letterSpacing: '-0.025em' }}>{depth100.toFixed(1)}</p>
+                <p style={{ fontSize: 12, color: '#94a3b8', margin: '3px 0 0', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>mm / 100%</p>
               </div>
             )}
           </div>
@@ -1255,7 +1255,7 @@ function PivotCard({ pivot, onEdit, onDelete, deleting }: {
             </span>
           )}
           {!hasTechnicalData && (
-            <span style={{ fontSize: 12, color: '#556677', fontStyle: 'italic' }}>Dados técnicos não informados</span>
+            <span style={{ fontSize: 12, color: '#64748b', fontStyle: 'italic' }}>Dados técnicos não informados</span>
           )}
         </div>
       </div>
@@ -1336,10 +1336,10 @@ export default function PivosPage() {
   return (
     <>
       <div className="flex flex-col gap-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Pivôs</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
+            <h1 className="text-xl font-bold" style={{ color: '#e2e8f0', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em' }}>Pivôs</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.625 }}>
               {pivots.length} {pivots.length === 1 ? 'pivô cadastrado' : 'pivôs cadastrados'}
             </p>
           </div>
@@ -1350,6 +1350,7 @@ export default function PivosPage() {
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              minHeight: 44,
               background: farms.length === 0 ? '#1a222c' : '#0093D0',
               border: 'none', color: farms.length === 0 ? '#778899' : '#fff',
               cursor: farms.length === 0 ? 'not-allowed' : 'pointer',
@@ -1409,7 +1410,7 @@ export default function PivosPage() {
             {Object.entries(grouped).map(([farmName, farmPivots]) => (
               <div key={farmName}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>{farmName}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>{farmName}</span>
                   <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
                 </div>
                 <div className="flex flex-col gap-3">
