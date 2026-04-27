@@ -1298,13 +1298,13 @@ export default function ManejoPage() {
           SEÇÃO 1 — HERO DE DECISÃO
           ════════════════════════════════════════════════════════ */}
       {calcResult && heroCfg ? (
-        <div style={{
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between" style={{
           background: heroMainBg,
           border: `1px solid ${heroBorder}`,
           borderTop: `2px solid ${heroMainColor}50`,
           borderRadius: 20,
           padding: 'clamp(18px, 4vw, 32px) clamp(18px, 4vw, 36px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
+          gap: 20,
           boxShadow: `0 8px 32px rgba(0,0,0,0.45)`,
           position: 'relative', overflow: 'hidden',
         }}>
@@ -1396,7 +1396,7 @@ export default function ManejoPage() {
           </div>
 
           {/* Right: CTAs — primário dominante, secundário discreto */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+          <div className="flex flex-col sm:flex-shrink-0 w-full sm:w-auto" style={{ gap: 8 }}>
             {/* CTA primário: abre modal rápido se deve irrigar, senão vai para formulário */}
             <button
               onClick={() => {
