@@ -17,6 +17,7 @@ import type { DailyManagement } from '@/types/database'
 import {
   Sprout, Plus, Pencil, Trash2, X, Loader2, ChevronDown,
   CalendarDays, Droplets, FlaskConical, TrendingDown, AlertTriangle, RefreshCw,
+  ArrowRight, CheckCircle2, TriangleAlert,
 } from 'lucide-react'
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -482,19 +483,104 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
     : pct >= threshold ? '#f59e0b'
     : '#ef4444'
 
+  // Classificação de saúde
+  const healthLabel = pct === null ? null
+    : pct >= threshold * 1.15 ? 'Ideal'
+    : pct >= threshold ? 'Atenção'
+    : 'Crítico'
+  const healthBg = pct === null ? 'transparent'
+    : pct >= threshold * 1.15 ? 'rgba(34,197,94,0.1)'
+    : pct >= threshold ? 'rgba(245,158,11,0.1)'
+    : 'rgba(239,68,68,0.1)'
+  const healthBorder = pct === null ? 'transparent'
+    : pct >= threshold * 1.15 ? 'rgba(34,197,94,0.25)'
+    : pct >= threshold ? 'rgba(245,158,11,0.25)'
+    : 'rgba(239,68,68,0.3)'
+
+  // Texto de interpretação
+  const interpretation = pct === null ? null
+    : pct >= threshold * 1.15 ? 'Condição hídrica adequada'
+    : pct >= threshold ? 'Umidade próxima do limiar'
+    : 'Umidade abaixo do ideal'
+
+  const cardBorder = season.is_active
+    ? (pct !== null && pct < threshold ? 'rgba(239,68,68,0.3)' : 'rgba(0,147,208,0.2)')
+    : 'rgba(255,255,255,0.05)'
+
   return (
     <div style={{
       background: season.is_active ? 'linear-gradient(145deg, #0f1923, #0c1520)' : '#0c1318',
-      border: `1px solid ${season.is_active ? (pct !== null && pct < threshold ? 'rgba(239,68,68,0.25)' : 'rgba(0,147,208,0.2)') : 'rgba(255,255,255,0.05)'}`,
+      border: `1px solid ${cardBorder}`,
       borderRadius: 18,
       padding: '18px 20px',
       boxShadow: season.is_active ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
       transition: 'box-shadow 0.2s',
     }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-        {/* Mini-wave ou ícone simples */}
-        {season.is_active ? (
-          loadingRecord ? (
+
+      {/* ── Linha 1: nome + badges + ações ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Nome */}
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: '0 0 6px', lineHeight: 1.3 }}>{season.name}</p>
+
+          {/* Badge ativa/inativa + status saúde + alerta irrigação */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgba(34,197,94,0.10)' : '#0d1520', color: season.is_active ? '#22c55e' : '#667788', border: `1px solid ${season.is_active ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.05)'}` }}>
+              {season.is_active ? '● Ativa' : 'Inativa'}
+            </span>
+
+            {/* Badge de saúde hídrica */}
+            {season.is_active && healthLabel && !loadingRecord && (
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700, background: healthBg, color: statusColor, border: `1px solid ${healthBorder}`, display: 'flex', alignItems: 'center', gap: 4 }}>
+                {healthLabel === 'Ideal'
+                  ? <CheckCircle2 size={9} />
+                  : healthLabel === 'Crítico'
+                  ? <TriangleAlert size={9} />
+                  : <AlertTriangle size={9} />
+                }
+                {healthLabel}
+              </span>
+            )}
+
+            {/* Badge irrigar */}
+            {season.is_active && lastRecord?.needs_irrigation && (
+              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <AlertTriangle size={9} /> Irrigar hoje
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Botões de ação */}
+        <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+          {season.is_active && season.planting_date && (
+            <button onClick={onRecalculate} disabled={recalculating} title="Recalcular histórico"
+              style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: 'none', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+              onMouseEnter={e => { if (!recalculating) { (e.currentTarget as HTMLElement).style.color = '#22c55e'; (e.currentTarget as HTMLElement).style.background = 'rgba(34,197,94,0.1)' } }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
+              <RefreshCw size={13} className={recalculating ? 'animate-spin' : ''} />
+            </button>
+          )}
+          <button onClick={onEdit} title="Editar safra"
+            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0093D0'; (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.1)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
+            <Pencil size={13} />
+          </button>
+          <button onClick={onDelete} disabled={deleting} title="Excluir safra"
+            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#778899' }}>
+            {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Linha 2: Umidade destaque + interpretação + ETc ── */}
+      {season.is_active && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+          {/* Mini-wave */}
+          {loadingRecord ? (
             <div style={{ width: 64, height: 64, borderRadius: 12, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Loader2 size={16} className="animate-spin" style={{ color: '#778899' }} />
             </div>
@@ -503,97 +589,88 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
           ) : (
             <div style={{ width: 64, height: 64, borderRadius: 12, background: 'rgba(0,147,208,0.08)', border: '1px solid rgba(0,147,208,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0, gap: 2 }}>
               <Sprout size={20} style={{ color: '#0093D0' }} />
-              <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>SEM DADOS</span>
+              <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>SEM DADOS</span>
             </div>
-          )
-        ) : (
-          <div style={{ width: 42, height: 42, borderRadius: 10, flexShrink: 0, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Sprout size={18} style={{ color: '#778899' }} />
-          </div>
-        )}
+          )}
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Título + badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>{season.name}</p>
-            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgb(34 197 94 / 0.10)' : '#0d1520', color: season.is_active ? '#22c55e' : '#667788', border: `1px solid ${season.is_active ? 'rgb(34 197 94 / 0.2)' : 'rgba(255,255,255,0.05)'}` }}>
-              {season.is_active ? '● Ativa' : 'Inativa'}
-            </span>
-            {/* Badge de alerta de irrigação */}
-            {season.is_active && lastRecord?.needs_irrigation && (
-              <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 700, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <AlertTriangle size={9} /> Irrigar
-              </span>
-            )}
-          </div>
-
-          {/* Localização e cultura */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 12, color: '#94a3b8' }}>
-              {season.farms.name}{season.pivots ? ` · ${season.pivots.name}` : ''}
-            </span>
-            {season.crops && <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>🌱 {season.crops.name}</span>}
-            {season.planting_date && (
-              <span style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <CalendarDays size={11} />
-                {new Date(season.planting_date + 'T12:00:00').toLocaleDateString('pt-BR')}
-                {harvestDate && ` → ${harvestDate}`}
-              </span>
-            )}
-          </div>
-
-          {/* Mini KPIs se safra ativa com dados */}
-          {season.is_active && lastRecord && (
-            <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, background: `${statusColor}12`, border: `1px solid ${statusColor}25` }}>
-                <Droplets size={10} style={{ color: statusColor }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: statusColor, fontFamily: 'var(--font-mono)' }}>{pct?.toFixed(0)}% umidade</span>
-              </div>
-              {lastRecord.etc_mm && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)' }}>
-                  <TrendingDown size={10} style={{ color: '#06b6d4' }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>ETc {lastRecord.etc_mm.toFixed(1)} mm</span>
-                </div>
+          {/* Texto ao lado do wave */}
+          {!loadingRecord && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {pct !== null ? (
+                <>
+                  <p style={{ fontSize: 11, color: '#64748b', margin: '0 0 2px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Umidade do solo
+                  </p>
+                  <p style={{ fontSize: 22, fontWeight: 700, color: statusColor, margin: '0 0 2px', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                    {pct.toFixed(0)}<span style={{ fontSize: 13, fontWeight: 400 }}>%</span>
+                  </p>
+                  {interpretation && (
+                    <p style={{ fontSize: 12, color: statusColor, opacity: 0.85, margin: 0, fontWeight: 500 }}>
+                      {interpretation}
+                    </p>
+                  )}
+                  {lastRecord?.etc_mm ? (
+                    <p style={{ fontSize: 12, color: '#94a3b8', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <TrendingDown size={11} style={{ color: '#06b6d4', flexShrink: 0 }} />
+                      ETc hoje: <strong style={{ color: '#06b6d4', fontFamily: 'var(--font-mono)', marginLeft: 3 }}>{lastRecord.etc_mm.toFixed(1)} mm</strong>
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.625 }}>
+                  Nenhum lançamento registrado ainda.
+                </p>
               )}
-              <span style={{ fontSize: 11, color: '#94a3b8', alignSelf: 'center' }}>
-                {lastRecord.date ? new Date(lastRecord.date + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
-              </span>
             </div>
           )}
-
-          {/* Chips de solo */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {season.field_capacity && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b', display: 'flex', alignItems: 'center', gap: 2 }}><Droplets size={9} />CC {season.field_capacity}%</span>}
-            {season.wilting_point && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b' }}>PM {season.wilting_point}%</span>}
-            {season.bulk_density && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b' }}>Ds {season.bulk_density}</span>}
-            {cta && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'rgba(0,147,208,0.08)', color: '#0093D0', border: '1px solid rgba(0,147,208,0.18)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}><FlaskConical size={9} />CTA {cta.toFixed(1)} mm</span>}
-          </div>
         </div>
+      )}
 
-        {/* Botões de ação */}
-        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-          {season.is_active && season.planting_date && (
-            <button onClick={onRecalculate} disabled={recalculating} title="Atualizar histórico do plantio até hoje"
-              style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onMouseEnter={e => { if (!recalculating) { (e.currentTarget as HTMLElement).style.color = '#22c55e'; (e.currentTarget as HTMLElement).style.background = 'rgba(34,197,94,0.1)' } }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
-              <RefreshCw size={14} className={recalculating ? 'animate-spin' : ''} />
-            </button>
-          )}
-          <button onClick={onEdit} title="Editar"
-            style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#0093D0'; (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.1)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#778899'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}>
-            <Pencil size={14} />
-          </button>
-          <button onClick={onDelete} disabled={deleting} title="Excluir"
-            style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#778899', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#778899' }}>
-            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-          </button>
-        </div>
+      {/* ── Linha 3: localização + cultura + datas ── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>
+          {season.farms.name}{season.pivots ? ` · ${season.pivots.name}` : ''}
+        </span>
+        {season.crops && <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>🌱 {season.crops.name}</span>}
+        {season.planting_date && (
+          <span style={{ fontSize: 12, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <CalendarDays size={11} />
+            {new Date(season.planting_date + 'T12:00:00').toLocaleDateString('pt-BR')}
+            {harvestDate && ` → ${harvestDate}`}
+          </span>
+        )}
+        {lastRecord?.date && (
+          <span style={{ fontSize: 12, color: '#64748b' }}>
+            · atualizado {new Date(lastRecord.date + 'T12:00:00').toLocaleDateString('pt-BR')}
+          </span>
+        )}
       </div>
+
+      {/* ── Linha 4: chips de solo ── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: season.is_active ? 14 : 0 }}>
+        {season.field_capacity && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b', display: 'flex', alignItems: 'center', gap: 2 }}><Droplets size={9} />CC {season.field_capacity}%</span>}
+        {season.wilting_point && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b' }}>PM {season.wilting_point}%</span>}
+        {season.bulk_density && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b' }}>Ds {season.bulk_density}</span>}
+        {cta && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'rgba(0,147,208,0.08)', color: '#0093D0', border: '1px solid rgba(0,147,208,0.18)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}><FlaskConical size={9} />CTA {cta.toFixed(1)} mm</span>}
+      </div>
+
+      {/* ── CTA: Abrir manejo ── */}
+      {season.is_active && (
+        <a
+          href={`/manejo?season=${season.id}`}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '8px 16px', borderRadius: 9, fontSize: 13, fontWeight: 600,
+            background: 'rgba(0,147,208,0.1)', color: '#0093D0',
+            border: '1px solid rgba(0,147,208,0.22)',
+            textDecoration: 'none', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.18)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,147,208,0.4)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(0,147,208,0.1)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,147,208,0.22)' }}
+        >
+          Abrir manejo <ArrowRight size={13} />
+        </a>
+      )}
     </div>
   )
 }
