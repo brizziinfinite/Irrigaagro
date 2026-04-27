@@ -33,6 +33,9 @@ const milho: Crop = {
   f_factor_stage2: 0.55,
   f_factor_stage3: 0.55,
   f_factor_stage4: 0.55,
+  root_initial_depth_cm: null,
+  root_growth_rate_cm_day: null,
+  root_start_das: null,
 }
 
 /** Pivô de teste com velocidade preferida 50% e mínima 42% */
@@ -49,6 +52,8 @@ function makePivot(overrides: Partial<Pivot> = {}): Pivot {
     operation_mode: 'individual', paired_pivot_id: null, return_interval_days: 1,
     preferred_speed_percent: 50, min_speed_percent: 42,
     rs_correction_factor: null, rs_factor_updated_at: null, rs_factor_sample_days: null,
+    field_capacity: null, wilting_point: null, bulk_density: null, f_factor: null,
+    irrigation_target_percent: null,
     ...overrides,
   }
 }

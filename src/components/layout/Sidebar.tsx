@@ -15,6 +15,7 @@ import {
   LogOut,
   ChevronRight,
   MessageSquare,
+  Shield,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
@@ -174,6 +175,23 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
               <NavItem key={item.path} icon={item.icon} label={item.label} path={item.path} />
             ))}
           </ul>
+
+          {/* ADMIN — apenas super-admin */}
+          {(process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).includes(user?.email ?? '') && (
+            <>
+              <p style={{
+                fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.09em', color: '#667788',
+                padding: '14px 12px 10px', margin: '0 0 2px',
+                borderTop: '1px solid rgba(255,255,255,0.05)',
+              }}>
+                Admin
+              </p>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                <NavItem icon={Shield} label="Clientes" path="/admin" />
+              </ul>
+            </>
+          )}
         </nav>
 
         {/* Safra badge */}
