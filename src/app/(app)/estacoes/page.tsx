@@ -30,6 +30,10 @@ import {
   Trash2,
   Pencil,
   X,
+  Thermometer,
+  Droplets,
+  Wind,
+  ChevronDown,
 } from 'lucide-react'
 
 interface StationFormData {
@@ -92,6 +96,35 @@ function formatDate(date: string) {
 
 function formatNumber(value: number, digits = 1) {
   return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: digits }).format(value)
+}
+
+function formatSource(source: string): string {
+  const map: Record<string, string> = {
+    manual: 'Lançamento manual',
+    plugfield: 'Plugfield (automático)',
+    plugfield_fao56: 'Plugfield — FAO-56',
+    nasa: 'NASA POWER (automático)',
+    nasa_power: 'NASA POWER (automático)',
+    google_sheets: 'Planilha Google',
+    inmet: 'INMET (automático)',
+    open_meteo: 'Open-Meteo (automático)',
+  }
+  return map[source] ?? source
+}
+
+// ─── Divisor de grupo de campos ──────────────────────────────
+function FieldGroup({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+        <span style={{ color: '#445566' }}>{icon}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748b' }}>{label}</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {children}
+      </div>
+    </div>
+  )
 }
 
 function Field({
@@ -302,6 +335,7 @@ export default function EstacoesPage() {
   const [selectedStationId, setSelectedStationId] = useState('')
   const [stationModalOpen, setStationModalOpen] = useState(false)
   const [editingStation, setEditingStation] = useState<WeatherStation | null>(null)
+  const [historyPage, setHistoryPage] = useState(10)
   const [weatherForm, setWeatherForm] = useState<WeatherFormData>({
     ...initialWeatherForm,
     date: getDefaultDateValue(),
@@ -363,6 +397,7 @@ export default function EstacoesPage() {
       return
     }
 
+    setHistoryPage(10)
     let cancelled = false
 
     const loadWeather = async () => {
@@ -519,90 +554,91 @@ export default function EstacoesPage() {
     }
   }
 
+  // Última leitura da estação selecionada
+  const lastRow = weatherRows[0] ?? null
+  const etoDisplay = lastRow
+    ? (lastRow.eto_corrected_mm != null ? formatNumber(lastRow.eto_corrected_mm, 2) : lastRow.eto_mm != null ? formatNumber(lastRow.eto_mm, 2) : null)
+    : null
+
+  const visibleRows = weatherRows.slice(0, historyPage)
+
   return (
     <>
       <div className="flex flex-col gap-5">
+        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Estações meteorológicas</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
-              {stations.length} {stations.length === 1 ? 'estação cadastrada' : 'estações cadastradas'} · clima por estação e data
+            <h1 style={{ color: '#e2e8f0', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em', margin: 0 }}>Estações meteorológicas</h1>
+            <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.625, margin: '2px 0 0' }}>
+              {stations.length} {stations.length === 1 ? 'estação cadastrada' : 'estações cadastradas'}
             </p>
           </div>
           <button
-            onClick={() => {
-              setEditingStation(null)
-              setStationModalOpen(true)
-            }}
+            onClick={() => { setEditingStation(null); setStationModalOpen(true) }}
             disabled={loading || farms.length === 0}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600,
-              background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
-              boxShadow: '0 2px 8px rgb(0 147 208 / 0.25)', opacity: loading || farms.length === 0 ? 0.6 : 1,
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,147,208,0.25)', opacity: loading || farms.length === 0 ? 0.6 : 1 }}
           >
-            <Plus size={16} />
-            Nova Estação
+            <Plus size={16} /> Nova Estação
           </button>
         </div>
 
         {loadError && (
-          <div className="px-4 py-3 rounded-xl text-sm" style={{ background: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.25)', color: '#ef4444' }}>
+          <div className="px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444' }}>
             {loadError}
           </div>
         )}
 
         {loading ? (
           <div style={{ padding: '56px 24px', textAlign: 'center', background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, color: '#8899aa' }}>
+            <Loader2 size={20} className="animate-spin" style={{ margin: '0 auto 12px', color: '#0093D0' }} />
             Carregando estações...
           </div>
         ) : (
           <div className="grid gap-5 xl:grid-cols-[1.05fr_1fr]">
+
+            {/* ── Coluna esquerda: lista de estações ── */}
             <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 24 }}>
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>Estações</p>
-                  <h2 style={{ fontSize: 17, fontWeight: 700, color: '#e2e8f0', marginTop: 4 }}>Vínculo com fazendas reais</h2>
-                </div>
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748b', margin: 0 }}>Suas estações</p>
+                <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>Clique para selecionar e registrar leituras</p>
               </div>
 
               {stations.length === 0 ? (
                 <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, color: '#8899aa' }}>
-                  <RadioTower size={32} color="#778899" style={{ margin: '0 auto 12px' }} />
-                  Nenhuma estação cadastrada.
+                  <RadioTower size={28} style={{ margin: '0 auto 12px', color: '#334455' }} />
+                  <p style={{ fontSize: 14, color: '#556677' }}>Nenhuma estação cadastrada.</p>
+                  <p style={{ fontSize: 12, color: '#445566', marginTop: 4 }}>Crie uma estação para começar a registrar dados climáticos.</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
                   {stations.map((station) => {
                     const isActive = selectedStationId === station.id
+                    const providerLabel = formatSource(station.api_provider)
                     return (
-                      <div
-                        key={station.id}
-                        style={{
-                          borderRadius: 16,
-                          border: `1px solid ${isActive ? '#2f6fcd' : 'rgba(255,255,255,0.06)'}`,
-                          background: isActive ? '#16273b' : '#0d1520',
-                          padding: 16,
-                        }}
-                      >
+                      <div key={station.id} style={{ borderRadius: 14, border: `1px solid ${isActive ? 'rgba(0,147,208,0.35)' : 'rgba(255,255,255,0.06)'}`, background: isActive ? 'rgba(0,147,208,0.06)' : '#0d1520', padding: '14px 16px', transition: 'all 0.15s' }}>
                         <div className="flex items-start justify-between gap-3">
                           <button onClick={() => setSelectedStationId(station.id)} style={{ textAlign: 'left', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', flex: 1 }}>
-                            <div className="flex items-center gap-2">
-                              <RadioTower size={16} color={isActive ? '#60a5fa' : '#0093D0'} />
-                              <span style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>{station.name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                              <RadioTower size={15} style={{ color: isActive ? '#0093D0' : '#445566', flexShrink: 0 }} />
+                              <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.01em' }}>{station.name}</span>
                             </div>
-                            <p style={{ fontSize: 13, color: '#8899aa', marginTop: 8 }}>{getFarmName(station.farm_id)}</p>
-                            <p style={{ fontSize: 12, color: '#778899', marginTop: 4 }}>
-                              provider: {station.api_provider} · device: {station.device_id || '—'}
+                            <p style={{ fontSize: 12, color: '#8899aa', margin: 0 }}>{getFarmName(station.farm_id)}</p>
+                            <p style={{ fontSize: 11, color: '#556677', marginTop: 3 }}>
+                              {providerLabel}{station.device_id ? ` · ID: ${station.device_id}` : ''}
                             </p>
                           </button>
-                          <div className="flex gap-2">
-                            <button onClick={() => { setEditingStation(station); setStationModalOpen(true) }} style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: '#0d1520', color: '#8899aa', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Pencil size={14} />
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button onClick={() => { setEditingStation(station); setStationModalOpen(true) }} title="Editar estação"
+                              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'rgba(255,255,255,0.04)', color: '#556677', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
+                              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                              <Pencil size={13} />
                             </button>
-                            <button onClick={() => handleDeleteStation(station.id)} disabled={deletingStationId === station.id} style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 10, border: '1px solid rgb(239 68 68 / 0.25)', background: 'rgb(239 68 68 / 0.08)', color: '#f87171', cursor: 'pointer', opacity: deletingStationId === station.id ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Trash2 size={14} />
+                            <button onClick={() => handleDeleteStation(station.id)} disabled={deletingStationId === station.id} title="Excluir estação"
+                              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'rgba(255,255,255,0.04)', color: '#556677', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: deletingStationId === station.id ? 0.5 : 1 }}
+                              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#ef4444'; el.style.background = 'rgba(239,68,68,0.08)'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
+                              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                              {deletingStationId === station.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                             </button>
                           </div>
                         </div>
@@ -613,130 +649,202 @@ export default function EstacoesPage() {
               )}
             </div>
 
+            {/* ── Coluna direita: formulário de lançamento ── */}
             <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 24 }}>
-              <div className="mb-4">
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>Dado climático do dia</p>
-                <h2 style={{ fontSize: 17, fontWeight: 700, color: '#e2e8f0', marginTop: 4 }}>
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748b', margin: 0 }}>Lançamento climático</p>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', margin: '4px 0 0', letterSpacing: '-0.01em' }}>
                   {selectedStation ? selectedStation.name : 'Selecione uma estação'}
                 </h2>
-                <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>
-                  Salvamento com `upsert` por estação e data para manter um registro único diário.
-                </p>
+
+                {/* Resumo última leitura */}
+                {lastRow && etoDisplay && (
+                  <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 8, background: 'rgba(0,147,208,0.08)', border: '1px solid rgba(0,147,208,0.2)' }}>
+                      <CloudSun size={11} style={{ color: '#0093D0' }} />
+                      <span style={{ fontSize: 11, color: '#94a3b8' }}>ETo:</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{etoDisplay} mm</span>
+                    </div>
+                    {lastRow.rainfall_mm != null && lastRow.rainfall_mm > 0 && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 8, background: 'rgba(6,182,212,0.07)', border: '1px solid rgba(6,182,212,0.18)' }}>
+                        <Droplets size={11} style={{ color: '#06b6d4' }} />
+                        <span style={{ fontSize: 11, color: '#94a3b8' }}>Chuva:</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{formatNumber(lastRow.rainfall_mm)} mm</span>
+                      </div>
+                    )}
+                    <span style={{ fontSize: 11, color: '#445566', alignSelf: 'center' }}>
+                      última leitura: {formatDate(lastRow.date)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {weatherError && (
-                <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.25)', color: '#ef4444' }}>
+                <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444' }}>
                   {weatherError}
                 </div>
               )}
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Estação">
-                  <SelectInput value={selectedStationId} onChange={(e) => setSelectedStationId(e.target.value)} disabled={stations.length === 0}>
-                    {stations.length === 0 ? (
-                      <option value="">Nenhuma estação disponível</option>
-                    ) : (
-                      stations.map((station) => (
-                        <option key={station.id} value={station.id}>
-                          {station.name} · {getFarmName(station.farm_id)}
-                        </option>
-                      ))
-                    )}
-                  </SelectInput>
-                </Field>
-                <Field label="Data">
-                  <TextInput type="date" value={weatherForm.date} onChange={(e) => setWeatherForm((prev) => ({ ...prev, date: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="Fonte">
-                  <TextInput value={weatherForm.source} onChange={(e) => setWeatherForm((prev) => ({ ...prev, source: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="Temp. máx. (°C)">
-                  <TextInput type="number" step="0.1" value={weatherForm.tempMax} onChange={(e) => setWeatherForm((prev) => ({ ...prev, tempMax: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="Temp. mín. (°C)">
-                  <TextInput type="number" step="0.1" value={weatherForm.tempMin} onChange={(e) => setWeatherForm((prev) => ({ ...prev, tempMin: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="Umidade (%)">
-                  <TextInput type="number" step="0.1" value={weatherForm.humidity} onChange={(e) => setWeatherForm((prev) => ({ ...prev, humidity: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="Vento (m/s)">
-                  <TextInput type="number" step="0.1" value={weatherForm.windSpeed} onChange={(e) => setWeatherForm((prev) => ({ ...prev, windSpeed: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="Radiação (W/m²)">
-                  <TextInput type="number" step="0.1" value={weatherForm.solarRadiation} onChange={(e) => setWeatherForm((prev) => ({ ...prev, solarRadiation: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="Chuva (mm)">
-                  <TextInput type="number" step="0.1" value={weatherForm.rainfall} onChange={(e) => setWeatherForm((prev) => ({ ...prev, rainfall: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="ETo (mm)">
-                  <TextInput type="number" step="0.01" value={weatherForm.eto} onChange={(e) => setWeatherForm((prev) => ({ ...prev, eto: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <Field label="ETo corrigida (mm)">
-                  <TextInput type="number" step="0.01" value={weatherForm.etoCorrected} onChange={(e) => setWeatherForm((prev) => ({ ...prev, etoCorrected: e.target.value }))} disabled={!selectedStationId || weatherSaving} />
-                </Field>
-                <div className="md:col-span-2">
-                  <Field label="Raw data (JSON)">
-                    <TextArea rows={5} value={weatherForm.rawData} onChange={(e) => setWeatherForm((prev) => ({ ...prev, rawData: e.target.value }))} disabled={!selectedStationId || weatherSaving} style={{ fontFamily: 'var(--font-mono)' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Estação + Data */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <Field label="Estação">
+                    <SelectInput value={selectedStationId} onChange={(e) => setSelectedStationId(e.target.value)} disabled={stations.length === 0}>
+                      {stations.length === 0
+                        ? <option value="">Nenhuma estação</option>
+                        : stations.map(s => <option key={s.id} value={s.id}>{s.name}</option>)
+                      }
+                    </SelectInput>
+                  </Field>
+                  <Field label="Data">
+                    <TextInput type="date" value={weatherForm.date} onChange={e => setWeatherForm(p => ({ ...p, date: e.target.value }))} disabled={!selectedStationId || weatherSaving} style={{ colorScheme: 'dark' }} />
                   </Field>
                 </div>
-              </div>
 
-              <div className="flex justify-end mt-5">
-                <button
-                  onClick={handleSaveWeather}
-                  disabled={!selectedStationId || weatherSaving}
-                  style={{
-                    padding: '10px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600,
-                    background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer',
-                    opacity: !selectedStationId || weatherSaving ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 8,
-                  }}
-                >
-                  {weatherSaving && <Loader2 size={14} className="animate-spin" />}
-                  Salvar clima
-                </button>
+                {/* Grupo: Temperatura */}
+                <FieldGroup label="Temperatura" icon={<Thermometer size={13} />}>
+                  <Field label="Máxima (°C)">
+                    <TextInput type="number" step="0.1" value={weatherForm.tempMax} onChange={e => setWeatherForm(p => ({ ...p, tempMax: e.target.value }))} disabled={!selectedStationId || weatherSaving} placeholder="—" />
+                  </Field>
+                  <Field label="Mínima (°C)">
+                    <TextInput type="number" step="0.1" value={weatherForm.tempMin} onChange={e => setWeatherForm(p => ({ ...p, tempMin: e.target.value }))} disabled={!selectedStationId || weatherSaving} placeholder="—" />
+                  </Field>
+                </FieldGroup>
+
+                {/* Grupo: Água */}
+                <FieldGroup label="Água" icon={<Droplets size={13} />}>
+                  <Field label="Chuva (mm)">
+                    <TextInput type="number" step="0.1" value={weatherForm.rainfall} onChange={e => setWeatherForm(p => ({ ...p, rainfall: e.target.value }))} disabled={!selectedStationId || weatherSaving} placeholder="—" />
+                  </Field>
+                  <Field label="Umidade (%)">
+                    <TextInput type="number" step="0.1" value={weatherForm.humidity} onChange={e => setWeatherForm(p => ({ ...p, humidity: e.target.value }))} disabled={!selectedStationId || weatherSaving} placeholder="—" />
+                  </Field>
+                </FieldGroup>
+
+                {/* Grupo: Clima */}
+                <FieldGroup label="Clima" icon={<Wind size={13} />}>
+                  <Field label="Vento (m/s)">
+                    <TextInput type="number" step="0.1" value={weatherForm.windSpeed} onChange={e => setWeatherForm(p => ({ ...p, windSpeed: e.target.value }))} disabled={!selectedStationId || weatherSaving} placeholder="—" />
+                  </Field>
+                  <Field label="Radiação (W/m²)">
+                    <TextInput type="number" step="0.1" value={weatherForm.solarRadiation} onChange={e => setWeatherForm(p => ({ ...p, solarRadiation: e.target.value }))} disabled={!selectedStationId || weatherSaving} placeholder="—" />
+                  </Field>
+                </FieldGroup>
+
+                {/* ETo — destacado */}
+                <div style={{ background: 'rgba(0,147,208,0.04)', border: '1px solid rgba(0,147,208,0.15)', borderRadius: 12, padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                    <CloudSun size={13} style={{ color: '#0093D0' }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#0093D0' }}>Evapotranspiração</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <Field label="ETo calculada (mm)">
+                      <TextInput type="number" step="0.01" value={weatherForm.eto} onChange={e => setWeatherForm(p => ({ ...p, eto: e.target.value }))} disabled={!selectedStationId || weatherSaving} placeholder="—" />
+                    </Field>
+                    <Field label="ETo corrigida (mm)">
+                      <TextInput type="number" step="0.01" value={weatherForm.etoCorrected} onChange={e => setWeatherForm(p => ({ ...p, etoCorrected: e.target.value }))} disabled={!selectedStationId || weatherSaving} placeholder="—" />
+                    </Field>
+                  </div>
+                </div>
+
+                {/* Fonte + Raw Data */}
+                <Field label="Origem dos dados">
+                  <SelectInput value={weatherForm.source} onChange={e => setWeatherForm(p => ({ ...p, source: e.target.value }))} disabled={!selectedStationId || weatherSaving}>
+                    <option value="manual">Lançamento manual</option>
+                    <option value="plugfield">Plugfield (automático)</option>
+                    <option value="plugfield_fao56">Plugfield — FAO-56</option>
+                    <option value="nasa_power">NASA POWER (automático)</option>
+                    <option value="google_sheets">Planilha Google</option>
+                    <option value="inmet">INMET (automático)</option>
+                    <option value="open_meteo">Open-Meteo (automático)</option>
+                  </SelectInput>
+                </Field>
+
+                <Field label="Dados brutos (JSON — opcional)">
+                  <TextArea rows={3} value={weatherForm.rawData} onChange={e => setWeatherForm(p => ({ ...p, rawData: e.target.value }))} disabled={!selectedStationId || weatherSaving} style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }} />
+                </Field>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                  <button onClick={handleSaveWeather} disabled={!selectedStationId || weatherSaving}
+                    style={{ padding: '10px 22px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: !selectedStationId || weatherSaving ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 2px 8px rgba(0,147,208,0.25)' }}>
+                    {weatherSaving && <Loader2 size={14} className="animate-spin" />}
+                    Salvar leitura
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
 
+        {/* ── Histórico climático ── */}
         <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 24 }}>
-          <div className="flex items-center gap-2 mb-4">
-            <CloudSun size={16} color="#0093D0" />
-            <h2 style={{ fontSize: 17, fontWeight: 700, color: '#e2e8f0' }}>Histórico climático recente</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <CloudSun size={15} style={{ color: '#0093D0' }} />
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', margin: 0, letterSpacing: '-0.01em' }}>Histórico climático</h2>
+            {weatherRows.length > 0 && (
+              <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 20, background: '#0d1520', color: '#556677', border: '1px solid rgba(255,255,255,0.05)', marginLeft: 2 }}>{weatherRows.length} registros</span>
+            )}
           </div>
 
           {weatherLoading ? (
-            <div style={{ padding: '40px 24px', textAlign: 'center', color: '#8899aa' }}>Carregando dados climáticos...</div>
+            <div style={{ padding: '32px', textAlign: 'center', color: '#556677' }}>
+              <Loader2 size={18} className="animate-spin" style={{ margin: '0 auto 10px', color: '#0093D0' }} />
+            </div>
           ) : weatherRows.length === 0 ? (
-            <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, color: '#8899aa' }}>
-              <CloudSun size={32} color="#778899" style={{ margin: '0 auto 12px' }} />
-              Nenhum `weather_data` encontrado para a estação selecionada.
+            <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, color: '#8899aa' }}>
+              <CloudSun size={28} style={{ margin: '0 auto 12px', color: '#334455' }} />
+              <p style={{ fontSize: 14, color: '#556677' }}>Nenhum registro encontrado para a estação selecionada.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
-              {weatherRows.map((row) => (
-                <div key={row.id} style={{ borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div style={{ flex: 1, minWidth: 260 }}>
-                      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>
-                        {formatDate(row.date)}
-                      </p>
-                      <p style={{ fontSize: 12, color: '#8899aa', marginTop: 6 }}>Fonte: {row.source}</p>
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" style={{ marginTop: 14 }}>
-                        <div><p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#778899' }}>Tmax</p><p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginTop: 4 }}>{row.temp_max != null ? `${formatNumber(row.temp_max)}°C` : '—'}</p></div>
-                        <div><p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#778899' }}>Tmin</p><p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginTop: 4 }}>{row.temp_min != null ? `${formatNumber(row.temp_min)}°C` : '—'}</p></div>
-                        <div><p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#778899' }}>Chuva</p><p style={{ fontSize: 14, fontWeight: 600, color: '#67e8f9', marginTop: 4 }}>{row.rainfall_mm != null ? `${formatNumber(row.rainfall_mm)} mm` : '—'}</p></div>
-                        <div><p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: '#778899' }}>ETo</p><p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginTop: 4 }}>{row.eto_corrected_mm != null ? `${formatNumber(row.eto_corrected_mm, 2)} mm*` : row.eto_mm != null ? `${formatNumber(row.eto_mm, 2)} mm` : '—'}</p></div>
-                      </div>
+            <>
+              {/* Header da tabela */}
+              <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 60px 60px 60px 60px 70px 36px', gap: 8, padding: '6px 12px', marginBottom: 4 }}>
+                {['Data', 'Origem', 'Tmax', 'Tmin', 'Chuva', 'Umid', 'ETo', ''].map(h => (
+                  <span key={h} style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#445566' }}>{h}</span>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {visibleRows.map((row) => {
+                  const etoVal = row.eto_corrected_mm != null ? row.eto_corrected_mm : row.eto_mm
+                  return (
+                    <div key={row.id} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 60px 60px 60px 60px 70px 36px', gap: 8, padding: '9px 12px', borderRadius: 10, background: '#0d1520', alignItems: 'center' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#111e2e' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520' }}
+                    >
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>{formatDate(row.date)}</span>
+                      <span style={{ fontSize: 11, color: '#556677', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={formatSource(row.source)}>{formatSource(row.source)}</span>
+                      <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.temp_max != null ? `${formatNumber(row.temp_max)}°` : '—'}</span>
+                      <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.temp_min != null ? `${formatNumber(row.temp_min)}°` : '—'}</span>
+                      <span style={{ fontSize: 12, color: row.rainfall_mm ? '#06b6d4' : '#334455', fontFamily: 'var(--font-mono)', fontWeight: row.rainfall_mm ? 700 : 400 }}>{row.rainfall_mm != null ? `${formatNumber(row.rainfall_mm)}` : '—'}</span>
+                      <span style={{ fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{row.humidity_percent != null ? `${formatNumber(row.humidity_percent)}%` : '—'}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: etoVal != null ? '#0093D0' : '#334455', fontFamily: 'var(--font-mono)' }}>{etoVal != null ? `${formatNumber(etoVal, 2)}` : '—'}</span>
+                      <button onClick={() => handleDeleteWeather(row.id)} disabled={deletingWeatherId === row.id} title="Excluir registro"
+                        style={{ padding: 6, minHeight: 28, minWidth: 28, borderRadius: 7, border: '1px solid transparent', background: 'transparent', color: '#334455', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: deletingWeatherId === row.id ? 0.5 : 1 }}
+                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#ef4444'; el.style.background = 'rgba(239,68,68,0.08)'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#334455'; el.style.background = 'transparent'; el.style.borderColor = 'transparent' }}>
+                        {deletingWeatherId === row.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                      </button>
                     </div>
-                    <button onClick={() => handleDeleteWeather(row.id)} disabled={deletingWeatherId === row.id} style={{ padding: '8px 12px', minHeight: 44, borderRadius: 10, border: '1px solid rgb(239 68 68 / 0.25)', background: 'rgb(239 68 68 / 0.08)', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: deletingWeatherId === row.id ? 0.6 : 1 }}>
-                      <Trash2 size={14} />
-                      Deletar
-                    </button>
-                  </div>
+                  )
+                })}
+              </div>
+
+              {/* Paginação */}
+              {weatherRows.length > historyPage && (
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  <button
+                    onClick={() => setHistoryPage(p => p + 10)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 9, fontSize: 13, fontWeight: 600, color: '#8899aa', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', transition: 'all 0.15s' }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#8899aa'; el.style.borderColor = 'rgba(255,255,255,0.07)' }}
+                  >
+                    <ChevronDown size={14} />
+                    Ver mais ({weatherRows.length - historyPage} restantes)
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -745,16 +853,11 @@ export default function EstacoesPage() {
         <StationModal
           station={editingStation}
           farms={farms}
-          onClose={() => {
-            setStationModalOpen(false)
-            setEditingStation(null)
-          }}
+          onClose={() => { setStationModalOpen(false); setEditingStation(null) }}
           onSaved={(saved) => {
             setStations((prev) => {
-              const exists = prev.some((station) => station.id === saved.id)
-              const next = exists
-                ? prev.map((station) => (station.id === saved.id ? saved : station))
-                : [saved, ...prev]
+              const exists = prev.some(s => s.id === saved.id)
+              const next = exists ? prev.map(s => s.id === saved.id ? saved : s) : [saved, ...prev]
               return next.sort((a, b) => a.name.localeCompare(b.name))
             })
             setSelectedStationId(saved.id)
