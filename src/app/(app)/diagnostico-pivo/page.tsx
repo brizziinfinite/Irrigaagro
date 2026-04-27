@@ -3,11 +3,20 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   AlertCircle,
+  AlertTriangle,
   BellRing,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  CloudRain,
+  Cpu,
   MapPin,
   Orbit,
+  Play,
   Sprout,
   Thermometer,
+  XCircle,
+  Zap,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import {
@@ -18,157 +27,301 @@ import {
 } from '@/services/pivot-diagnostics'
 import { listWeatherDataByStation } from '@/services/weather-data'
 import type { WeatherData } from '@/types/database'
-// isSuperAdmin removido do cliente — verificação feita via /api/auth/is-super-admin
 
 function formatDate(value: string): string {
   return new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR')
+}
+
+function formatDateRelative(value: string): string {
+  const today = new Date()
+  const d = new Date(`${value}T12:00:00`)
+  const diffDays = Math.round((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return 'hoje'
+  if (diffDays === 1) return 'ontem'
+  if (diffDays <= 7) return `há ${diffDays} dias`
+  return formatDate(value)
 }
 
 function formatNumber(value: number, decimals = 1): string {
   return value.toFixed(decimals).replace('.', ',')
 }
 
+function getNowLabel(): string {
+  return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
 function getEtoSourceLabel(source: string | null): string {
   switch (source) {
-    case 'weather_corrected':
-      return 'Estação corrigida'
-    case 'weather_raw':
-      return 'Estação bruta'
-    case 'calculated_penman_monteith':
-      return 'Penman-Monteith por geolocalização'
-    case 'manual':
-      return 'Manual'
-    default:
-      return 'Sem origem registrada'
+    case 'weather_corrected':   return 'Estação — corrigida FAO-56'
+    case 'weather_raw':         return 'Estação — leitura bruta'
+    case 'calculated_penman_monteith': return 'NASA POWER — Penman-Monteith'
+    case 'manual':              return 'Entrada manual'
+    default:                    return 'Origem desconhecida'
   }
 }
 
 function getRainfallSourceLabel(source: string): string {
   switch (source) {
-    case 'rainfall_records':
-      return 'rainfall_records'
-    case 'weather_data':
-      return 'weather_data'
-    case 'geolocalização do pivô':
-      return 'geolocalização do pivô'
-    default:
-      return 'manual/ausente'
+    case 'rainfall_records': return 'Registro de chuva'
+    case 'weather_data':     return 'Estação climática'
+    case 'geolocalização do pivô': return 'Geolocalização do pivô'
+    default:                 return 'Sem registro hoje'
   }
 }
 
-function getStatusConfig(status: PivotDiagnostic['status'] | PivotDiagnostic['automationStatus']) {
-  if (status === 'OK' || status === 'Automação pronta' || status === 'Manejo do dia já gerado') {
-    return { label: status, color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)', border: 'rgb(34 197 94 / 0.25)' }
-  }
-  if (status === 'atenção' || status === 'Automação com restrições') {
-    return { label: status, color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)', border: 'rgb(245 158 11 / 0.25)' }
-  }
-  return { label: status, color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)', border: 'rgb(239 68 68 / 0.25)' }
-}
+// ─── Tons de status ──────────────────────────────────────────────────────────
 
-interface ChipTone {
+type ToneKey = 'ok' | 'warning' | 'critical' | 'info' | 'nodata'
+
+interface Tone {
   label: string
   color: string
   bg: string
   border: string
+  icon: ReactNode
 }
 
-function StatusPill({ label, tone }: { label: string; tone: ChipTone }) {
+function getTone(key: ToneKey, label?: string): Tone {
+  const TONES: Record<ToneKey, Omit<Tone, 'label' | 'icon'> & { defaultLabel: string; defaultIcon: ReactNode }> = {
+    ok:       { defaultLabel: 'OK',       color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',   border: 'rgb(34 197 94 / 0.25)',   defaultIcon: <CheckCircle2 size={13} /> },
+    warning:  { defaultLabel: 'Atenção',  color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',  border: 'rgb(245 158 11 / 0.25)',  defaultIcon: <AlertTriangle size={13} /> },
+    critical: { defaultLabel: 'Crítico',  color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',   border: 'rgb(239 68 68 / 0.25)',   defaultIcon: <XCircle size={13} /> },
+    info:     { defaultLabel: 'Info',     color: '#06b6d4', bg: 'rgb(6 182 212 / 0.12)',   border: 'rgb(6 182 212 / 0.25)',   defaultIcon: <AlertCircle size={13} /> },
+    nodata:   { defaultLabel: 'Sem dado', color: '#778899', bg: 'rgb(119 136 153 / 0.10)', border: 'rgb(119 136 153 / 0.20)', defaultIcon: <AlertCircle size={13} /> },
+  }
+  const t = TONES[key]
+  return { label: label ?? t.defaultLabel, color: t.color, bg: t.bg, border: t.border, icon: t.defaultIcon }
+}
+
+function statusToneFromDiagnostic(status: PivotDiagnostic['status']): Tone {
+  if (status === 'OK')       return getTone('ok', 'OK')
+  if (status === 'atenção')  return getTone('warning', 'Atenção')
+  return getTone('nodata', 'Sem dados')
+}
+
+function automationToneFromDiagnostic(s: PivotDiagnostic['automationStatus']): Tone {
+  if (s === 'Automação pronta' || s === 'Manejo do dia já gerado') return getTone('ok', s)
+  if (s === 'Automação com restrições')                             return getTone('warning', s)
+  return getTone('critical', s)
+}
+
+// ─── Componentes base ────────────────────────────────────────────────────────
+
+function Pill({ tone, size = 'md' }: { tone: Tone; size?: 'sm' | 'md' }) {
+  const px = size === 'sm' ? '8px 10px' : '6px 12px'
+  const fs = size === 'sm' ? 11 : 12
   return (
     <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 6,
-      padding: '6px 10px',
-      borderRadius: 999,
-      background: tone.bg,
-      border: `1px solid ${tone.border}`,
-      color: tone.color,
-      fontSize: 11,
-      fontWeight: 700,
-      lineHeight: 1,
-      whiteSpace: 'nowrap',
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: px, borderRadius: 999,
+      background: tone.bg, border: `1px solid ${tone.border}`,
+      color: tone.color, fontSize: fs, fontWeight: 700,
+      lineHeight: 1, whiteSpace: 'nowrap', flexShrink: 0,
     }}>
-      {label}
+      {tone.icon}
+      {tone.label}
     </span>
   )
 }
 
-function SummaryCard({
-  eyebrow,
-  title,
-  value,
-  helper,
-  icon,
-  tone,
-}: {
+function SectionTitle({ children, sub }: { children: ReactNode; sub?: string }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>{children}</p>
+      {sub && <p style={{ fontSize: 12, color: '#8899aa', marginTop: 3 }}>{sub}</p>}
+    </div>
+  )
+}
+
+function InfoRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+      <span style={{ fontSize: 12, color: '#8899aa' }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: highlight ? 700 : 500, color: highlight ? '#e2e8f0' : '#c0ccd8' }}>{value}</span>
+    </div>
+  )
+}
+
+// ─── Card de métrica ─────────────────────────────────────────────────────────
+
+interface MetricCardProps {
   eyebrow: string
-  title: string
   value: string
-  helper: string
+  interpretation: string
   icon: ReactNode
-  tone?: ChipTone | null
-}) {
+  tone: Tone
+  sub?: string
+  accent?: boolean
+}
+
+function MetricCard({ eyebrow, value, interpretation, icon, tone, sub, accent }: MetricCardProps) {
   return (
     <div style={{
-      background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: accent ? `linear-gradient(135deg, ${tone.bg} 0%, #0f1923 60%)` : '#0f1923',
+      border: `1px solid ${accent ? tone.border : 'rgba(255,255,255,0.06)'}`,
       borderRadius: 16,
-      padding: 18,
+      padding: '18px 20px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 12,
-      minHeight: 180,
+      gap: 14,
     }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>{eyebrow}</p>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#8899aa', marginTop: 4 }}>{title}</p>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>{eyebrow}</p>
         <div style={{
-          width: 34,
-          height: 34,
-          borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.06)',
-          background: '#0d1520',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#8899aa',
-          flexShrink: 0,
+          width: 32, height: 32, borderRadius: 9,
+          background: tone.bg, border: `1px solid ${tone.border}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: tone.color, flexShrink: 0,
         }}>
           {icon}
         </div>
       </div>
-      <div style={{ marginTop: 'auto' }}>
-        <p style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.05, color: '#e2e8f0' }}>{value}</p>
-        <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5, marginTop: 8 }}>{helper}</p>
-        {tone ? (
-          <div style={{ marginTop: 12 }}>
-            <StatusPill label={tone.label} tone={tone} />
-          </div>
-        ) : null}
+      <div>
+        <p style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, color: '#e2e8f0', letterSpacing: '-0.02em' }}>{value}</p>
+        <p style={{ fontSize: 12, color: tone.color, fontWeight: 600, marginTop: 6, lineHeight: 1.4 }}>{interpretation}</p>
+        {sub && <p style={{ fontSize: 11, color: '#8899aa', marginTop: 4, lineHeight: 1.5 }}>{sub}</p>}
+      </div>
+      <div style={{ marginTop: 'auto', paddingTop: 4 }}>
+        <Pill tone={tone} size="sm" />
       </div>
     </div>
   )
 }
 
-function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: boolean }) {
-  // Filtra apenas linhas com eto_plugfield_mm preenchido (dados do Plugfield)
-  const calibRows = rows.filter(r => r.eto_plugfield_mm != null && r.eto_mm != null)
+// ─── Interpretações de métricas ───────────────────────────────────────────────
 
+function interpretEto(value: number | null): { text: string; tone: Tone } {
+  if (value == null) return { text: 'Sem leitura disponível — automação limitada', tone: getTone('nodata') }
+  if (value < 2)    return { text: 'Evapotranspiração baixa — plantas com baixa demanda hídrica', tone: getTone('ok', 'Baixa') }
+  if (value < 5)    return { text: 'Evapotranspiração normal — condições típicas de irrigação', tone: getTone('ok', 'Normal') }
+  if (value < 7)    return { text: 'Evapotranspiração elevada — monitorar estresse hídrico', tone: getTone('warning', 'Elevada') }
+  return { text: 'Evapotranspiração muito alta — irrigar com prioridade', tone: getTone('critical', 'Crítica') }
+}
+
+function interpretRainfall(value: number | null): { text: string; tone: Tone } {
+  if (value == null || value === 0) return { text: 'Nenhuma precipitação registrada hoje', tone: getTone('nodata', 'Sem chuva') }
+  if (value < 5)   return { text: 'Chuva insignificante — não computa no balanço hídrico', tone: getTone('warning', 'Insignificante') }
+  if (value < 15)  return { text: 'Chuva leve — pode reduzir necessidade de irrigação', tone: getTone('ok', 'Leve') }
+  if (value < 30)  return { text: 'Chuva moderada — descanso de 24-48h recomendado', tone: getTone('ok', 'Moderada') }
+  return { text: 'Chuva intensa — verificar drenagem e suspender irrigação', tone: getTone('info', 'Intensa') }
+}
+
+function interpretManagement(d: PivotDiagnostic): { text: string; tone: Tone } {
+  if (!d.lastManagement) return { text: 'Sem histórico de manejo — cálculo de balanço hídrico indisponível', tone: getTone('critical') }
+  const lm = d.lastManagement
+  if (d.hasManagementToday) {
+    const rec = lm.recommended_depth_mm ?? 0
+    const real = lm.actual_depth_mm ?? 0
+    if (Math.abs(rec - real) < 2) return { text: 'Irrigação do dia aplicada conforme recomendado', tone: getTone('ok', 'Em dia') }
+    if (real > rec) return { text: `Aplicação acima do recomendado em ${formatNumber(real - rec, 1)} mm`, tone: getTone('warning', 'Acima') }
+    return { text: `Déficit de ${formatNumber(rec - real, 1)} mm em relação ao recomendado`, tone: getTone('warning', 'Déficit') }
+  }
+  return { text: `Último registro ${formatDateRelative(lm.date)} — manejo hoje ainda não gerado`, tone: getTone('warning', 'Pendente') }
+}
+
+// ─── Botão de ação principal ──────────────────────────────────────────────────
+
+interface ActionButtonProps {
+  label: string
+  sub?: string
+  onClick?: () => void
+  disabled?: boolean
+  tone: Tone
+  icon?: ReactNode
+  loading?: boolean
+}
+
+function ActionButton({ label, sub, onClick, disabled, tone, icon, loading }: ActionButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      style={{
+        width: '100%',
+        padding: '14px 18px',
+        borderRadius: 14,
+        border: `1px solid ${disabled ? 'rgba(255,255,255,0.06)' : tone.border}`,
+        background: disabled ? '#0d1520' : tone.bg,
+        color: disabled ? '#556677' : tone.color,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        textAlign: 'left',
+        transition: 'opacity 0.15s',
+        opacity: loading ? 0.7 : 1,
+        minHeight: 56,
+      }}
+    >
+      <div style={{
+        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+        background: disabled ? 'rgba(255,255,255,0.04)' : `${tone.color}22`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: disabled ? '#556677' : tone.color,
+      }}>
+        {loading ? <span style={{ fontSize: 12 }}>...</span> : (icon ?? <Play size={16} />)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2 }}>{loading ? 'Processando...' : label}</p>
+        {sub && <p style={{ fontSize: 12, color: disabled ? '#445566' : '#8899aa', marginTop: 3, lineHeight: 1.4 }}>{sub}</p>}
+      </div>
+      {!disabled && <ChevronRight size={16} style={{ flexShrink: 0, color: '#8899aa' }} />}
+    </button>
+  )
+}
+
+// ─── Alerta card ──────────────────────────────────────────────────────────────
+
+function AlertCard({ text }: { text: string }) {
+  // Interpreta severidade pelo texto
+  const isCritical = text.toLowerCase().includes('sem safra') || text.toLowerCase().includes('sem cultura') || text.toLowerCase().includes('sem coordenada') || text.toLowerCase().includes('sem estação')
+  const tone = isCritical ? getTone('critical') : getTone('warning')
+
+  // Traduz alertas técnicos para linguagem humana
+  function humanize(t: string): { title: string; action: string } {
+    if (t.includes('sem safra') || t.includes('Sem safra')) return { title: 'Nenhuma safra ativa cadastrada', action: 'Crie uma safra para este pivô antes de gerar manejo' }
+    if (t.includes('sem cultura') || t.includes('Sem cultura')) return { title: 'Cultura não vinculada à safra', action: 'Selecione a cultura na safra ativa para calcular Kc correto' }
+    if (t.includes('sem coordenada') || t.toLowerCase().includes('coordenad')) return { title: 'Coordenadas do pivô não cadastradas', action: 'Cadastre latitude e longitude para usar fallback climático via NASA' }
+    if (t.toLowerCase().includes('estação') && t.toLowerCase().includes('sem')) return { title: 'Sem estação climática associada', action: 'Vincule uma estação ao pivô ou à fazenda para ETo mais preciso' }
+    if (t.toLowerCase().includes('eto') && t.toLowerCase().includes('sem')) return { title: 'ETo indisponível para hoje', action: 'Verifique a estação climática ou os dados NASA POWER' }
+    if (t.toLowerCase().includes('manejo')) return { title: 'Manejo não gerado hoje', action: 'Execute a automação ou registre manejo manualmente' }
+    return { title: t, action: 'Verifique e corrija para restaurar funcionamento completo' }
+  }
+
+  const { title, action } = humanize(text)
+
+  return (
+    <div style={{
+      borderRadius: 14, border: `1px solid ${tone.border}`,
+      background: tone.bg, padding: '14px 16px',
+      display: 'flex', gap: 12, alignItems: 'flex-start',
+    }}>
+      <div style={{ color: tone.color, flexShrink: 0, marginTop: 1 }}>
+        {isCritical ? <XCircle size={16} /> : <AlertTriangle size={16} />}
+      </div>
+      <div>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', lineHeight: 1.4 }}>{title}</p>
+        <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4, lineHeight: 1.5 }}>{action}</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Painel de calibração ETo (super admin) ───────────────────────────────────
+
+function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: boolean }) {
+  const calibRows = rows.filter(r => r.eto_plugfield_mm != null && r.eto_mm != null)
   const avg = calibRows.length > 0
     ? calibRows.reduce((acc, r) => acc + (r.eto_mm! - r.eto_plugfield_mm!), 0) / calibRows.length
     : null
 
-  function rowColor(diff: number): string {
+  function rowColor(diff: number) {
     const abs = Math.abs(diff)
     if (abs < 0.5) return '#22c55e'
     if (abs < 1.5) return '#f59e0b'
     return '#ef4444'
   }
-
-  function rowBg(diff: number): string {
+  function rowBg(diff: number) {
     const abs = Math.abs(diff)
     if (abs < 0.5) return 'rgb(34 197 94 / 0.06)'
     if (abs < 1.5) return 'rgb(245 158 11 / 0.06)'
@@ -180,16 +333,14 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16, alignItems: 'flex-start' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Comparativo ETo — Calibração</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>Comparativo ETo — Calibração</p>
             <span style={{
               fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
               color: '#f59e0b', background: 'rgb(245 158 11 / 0.12)', border: '1px solid rgb(245 158 11 / 0.25)',
               borderRadius: 6, padding: '3px 7px', lineHeight: 1,
             }}>SUPER ADMIN</span>
           </div>
-          <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>
-            ETo FAO-56 com Rs NASA vs valor bruto Plugfield — últimos 30 dias
-          </p>
+          <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>ETo FAO-56 com Rs NASA vs valor bruto Plugfield — últimos 30 dias</p>
         </div>
         {avg !== null && (
           <div style={{ textAlign: 'right' }}>
@@ -201,13 +352,12 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
           </div>
         )}
       </div>
-
       {loading ? (
         <p style={{ fontSize: 13, color: '#8899aa', padding: '24px 0', textAlign: 'center' }}>Carregando histórico...</p>
       ) : calibRows.length === 0 ? (
         <div style={{ borderRadius: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', padding: 16 }}>
           <p style={{ fontSize: 13, color: '#8899aa' }}>
-            Sem dados de calibração disponíveis. O campo <code style={{ color: '#f59e0b', fontSize: 12 }}>eto_plugfield_mm</code> será preenchido após o próximo ciclo do cron com dados Plugfield.
+            Sem dados de calibração. <code style={{ color: '#f59e0b', fontSize: 12 }}>eto_plugfield_mm</code> será preenchido após o próximo ciclo do cron.
           </p>
         </div>
       ) : (
@@ -227,30 +377,16 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
                 const color = rowColor(diff)
                 return (
                   <tr key={row.id} style={{ background: rowBg(diff), borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <td style={{ padding: '8px 12px', color: '#e2e8f0', whiteSpace: 'nowrap' }}>
-                      {new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR')}
-                    </td>
+                    <td style={{ padding: '8px 12px', color: '#e2e8f0', whiteSpace: 'nowrap' }}>{new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
                     <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
-                      {row.rs_source === 'nasa' ? (
-                        <span style={{ color: '#0093D0', fontWeight: 600 }}>NASA</span>
-                      ) : row.rs_source === 'plugfield_fallback' ? (
-                        <span style={{ color: '#8899aa' }}>Plugfield</span>
-                      ) : (
-                        <span style={{ color: '#778899' }}>{row.rs_source ?? '—'}</span>
-                      )}
+                      {row.rs_source === 'nasa' ? <span style={{ color: '#0093D0', fontWeight: 600 }}>NASA</span>
+                        : row.rs_source === 'plugfield_fallback' ? <span style={{ color: '#8899aa' }}>Plugfield</span>
+                        : <span style={{ color: '#778899' }}>{row.rs_source ?? '—'}</span>}
                     </td>
-                    <td style={{ padding: '8px 12px', color: '#e2e8f0', fontVariantNumeric: 'tabular-nums' }}>
-                      {row.eto_mm!.toFixed(2)} mm
-                    </td>
-                    <td style={{ padding: '8px 12px', color: '#8899aa', fontVariantNumeric: 'tabular-nums' }}>
-                      {row.eto_plugfield_mm!.toFixed(2)} mm
-                    </td>
-                    <td style={{ padding: '8px 12px', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>
-                      {diff >= 0 ? '+' : ''}{diff.toFixed(2)}
-                    </td>
-                    <td style={{ padding: '8px 12px', color, fontVariantNumeric: 'tabular-nums' }}>
-                      {diff >= 0 ? '+' : ''}{diffPct.toFixed(1)}%
-                    </td>
+                    <td style={{ padding: '8px 12px', color: '#e2e8f0', fontVariantNumeric: 'tabular-nums' }}>{row.eto_mm!.toFixed(2)} mm</td>
+                    <td style={{ padding: '8px 12px', color: '#8899aa', fontVariantNumeric: 'tabular-nums' }}>{row.eto_plugfield_mm!.toFixed(2)} mm</td>
+                    <td style={{ padding: '8px 12px', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{diff >= 0 ? '+' : ''}{diff.toFixed(2)}</td>
+                    <td style={{ padding: '8px 12px', color, fontVariantNumeric: 'tabular-nums' }}>{diff >= 0 ? '+' : ''}{diffPct.toFixed(1)}%</td>
                   </tr>
                 )
               })}
@@ -258,12 +394,8 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
             {avg !== null && (
               <tfoot>
                 <tr style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                  <td colSpan={4} style={{ padding: '8px 12px', color: '#8899aa', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                    Média do período
-                  </td>
-                  <td style={{ padding: '8px 12px', fontWeight: 800, color: avg >= 0 ? '#22c55e' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>
-                    {avg >= 0 ? '+' : ''}{avg.toFixed(2)}
-                  </td>
+                  <td colSpan={4} style={{ padding: '8px 12px', color: '#8899aa', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Média do período</td>
+                  <td style={{ padding: '8px 12px', fontWeight: 800, color: avg >= 0 ? '#22c55e' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>{avg >= 0 ? '+' : ''}{avg.toFixed(2)}</td>
                   <td style={{ padding: '8px 12px', color: '#8899aa' }}>—</td>
                 </tr>
               </tfoot>
@@ -275,8 +407,10 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
   )
 }
 
+// ─── Página principal ─────────────────────────────────────────────────────────
+
 export default function PivotDiagnosticsPage() {
-  const { company, user, loading: authLoading } = useAuth()
+  const { company, loading: authLoading } = useAuth()
   const [summaries, setSummaries] = useState<PivotDiagnosticSummary[]>([])
   const [selectedPivotId, setSelectedPivotId] = useState('')
   const [diagnostic, setDiagnostic] = useState<PivotDiagnostic | null>(null)
@@ -285,8 +419,11 @@ export default function PivotDiagnosticsPage() {
   const [error, setError] = useState<string | null>(null)
   const [etoHistory, setEtoHistory] = useState<WeatherData[]>([])
   const [etoHistoryLoading, setEtoHistoryLoading] = useState(false)
-
   const [superAdmin, setSuperAdmin] = useState(false)
+  const [nowLabel, setNowLabel] = useState('')
+  const [generatingManagement, setGeneratingManagement] = useState(false)
+
+  useEffect(() => { setNowLabel(getNowLabel()) }, [])
 
   useEffect(() => {
     fetch('/api/auth/is-super-admin')
@@ -306,194 +443,207 @@ export default function PivotDiagnosticsPage() {
       setError('Nenhuma empresa ativa encontrada')
       return
     }
-    const activeCompanyId = companyId
-
     let cancelled = false
-
     async function loadSummaries() {
       try {
         setLoading(true)
         setError(null)
-        const data = await listPivotDiagnosticSummaries(activeCompanyId)
+        const data = await listPivotDiagnosticSummaries(companyId!)
         if (cancelled) return
         setSummaries(data)
-        setSelectedPivotId((current) => current || data[0]?.pivotId || '')
-      } catch (loadError) {
-        if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar pivôs para diagnóstico')
-        }
+        setSelectedPivotId((cur) => cur || data[0]?.pivotId || '')
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Falha ao carregar pivôs')
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
-
     loadSummaries()
     return () => { cancelled = true }
   }, [authLoading, company?.id])
 
   useEffect(() => {
     const companyId = company?.id
-    if (!companyId || !selectedPivotId) {
-      setDiagnostic(null)
-      return
-    }
-    const activeCompanyId = companyId
-
+    if (!companyId || !selectedPivotId) { setDiagnostic(null); return }
     let cancelled = false
-
     async function loadDiagnostic() {
       try {
         setDiagnosticLoading(true)
         setError(null)
-        const data = await getPivotDiagnostic(activeCompanyId, selectedPivotId)
+        const data = await getPivotDiagnostic(companyId!, selectedPivotId)
         if (!cancelled) setDiagnostic(data)
-      } catch (loadError) {
-        if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar diagnóstico do pivô')
-          setDiagnostic(null)
-        }
+      } catch (e) {
+        if (!cancelled) { setError(e instanceof Error ? e.message : 'Falha ao carregar diagnóstico'); setDiagnostic(null) }
       } finally {
         if (!cancelled) setDiagnosticLoading(false)
       }
     }
-
     loadDiagnostic()
     return () => { cancelled = true }
   }, [company?.id, selectedPivotId])
 
-  // Super admin: carrega histórico de weather_data para comparativo ETo
   const etoStationId = diagnostic?.preferredStation?.id ?? diagnostic?.farmStations[0]?.id ?? null
 
   useEffect(() => {
-    if (!superAdmin || !etoStationId) {
-      setEtoHistory([])
-      return
-    }
-
+    if (!superAdmin || !etoStationId) { setEtoHistory([]); return }
     let cancelled = false
-
-    async function loadEtoHistory() {
+    async function load() {
       setEtoHistoryLoading(true)
       try {
         const data = await listWeatherDataByStation(etoStationId!, 30)
         if (!cancelled) setEtoHistory(data)
-      } catch {
-        if (!cancelled) setEtoHistory([])
-      } finally {
-        if (!cancelled) setEtoHistoryLoading(false)
-      }
+      } catch { if (!cancelled) setEtoHistory([]) }
+      finally { if (!cancelled) setEtoHistoryLoading(false) }
     }
-
-    loadEtoHistory()
+    load()
     return () => { cancelled = true }
   }, [superAdmin, etoStationId])
 
   const selectedSummary = useMemo(
-    () => summaries.find((item) => item.pivotId === selectedPivotId) ?? null,
+    () => summaries.find((s) => s.pivotId === selectedPivotId) ?? null,
     [selectedPivotId, summaries]
   )
 
-  const statusTone = diagnostic ? getStatusConfig(diagnostic.status) : null
-  const automationTone = diagnostic ? getStatusConfig(diagnostic.automationStatus) : null
+  const statusTone = useMemo(
+    () => diagnostic ? statusToneFromDiagnostic(diagnostic.status) : null,
+    [diagnostic]
+  )
+  const automationTone = useMemo(
+    () => diagnostic ? automationToneFromDiagnostic(diagnostic.automationStatus) : null,
+    [diagnostic]
+  )
+
+  const etoInterpret   = useMemo(() => interpretEto(diagnostic?.etoValue ?? null), [diagnostic])
+  const rainInterpret  = useMemo(() => interpretRainfall(diagnostic?.rainfallValue ?? null), [diagnostic])
+  const mngmInterpret  = useMemo(() => interpretManagement(diagnostic ?? { lastManagement: null, hasManagementToday: false } as unknown as PivotDiagnostic), [diagnostic])
+
+  const canGenerateManagement = useMemo(() =>
+    diagnostic?.automationStatus === 'Automação pronta' && !diagnostic.hasManagementToday,
+    [diagnostic]
+  )
+
+  async function handleGenerateManagement() {
+    if (!canGenerateManagement || generatingManagement) return
+    setGeneratingManagement(true)
+    try {
+      const res = await fetch('/api/cron/daily-balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pivotId: selectedPivotId }),
+      })
+      if (res.ok) {
+        // Recarrega diagnóstico para refletir novo manejo
+        const companyId = company?.id
+        if (companyId) {
+          const data = await getPivotDiagnostic(companyId, selectedPivotId)
+          setDiagnostic(data)
+        }
+      }
+    } catch { /* silencioso — não bloqueia a UX */ }
+    finally { setGeneratingManagement(false) }
+  }
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 32px' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 16px 40px' }}>
+
+      {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <div style={{
         background: 'linear-gradient(135deg, #0f1923 0%, #0d1520 60%, #1b2c1e 100%)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: `1px solid ${statusTone ? statusTone.border : 'rgba(255,255,255,0.06)'}`,
         borderRadius: 24,
         padding: '24px 24px 22px',
         marginBottom: 20,
+        transition: 'border-color 0.3s',
       }}>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8899aa' }}>
-          Diagnóstico operacional
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginTop: 10 }}>
-          <div style={{ maxWidth: 760 }}>
-            <h1 style={{ fontSize: 34, lineHeight: 1.05, fontWeight: 800, color: '#e2e8f0' }}>
-              Centro operacional do pivô em campo.
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8899aa' }}>
+            Diagnóstico operacional
+          </p>
+          {statusTone && <Pill tone={statusTone} size="sm" />}
+          {nowLabel && (
+            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#556677' }}>
+              <Clock size={12} /> Atualizado às {nowLabel}
+            </span>
+          )}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ maxWidth: 680 }}>
+            <h1 style={{ fontSize: 30, lineHeight: 1.1, fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.02em' }}>
+              {diagnostic
+                ? `${diagnostic.pivot.name} — ${diagnostic.farm.name}`
+                : 'Centro operacional do pivô'
+              }
             </h1>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: '#8899aa', marginTop: 10 }}>
-              Visualize rapidamente clima, ETo, chuva, safra ativa, prontidão da automação e lacunas operacionais do pivô selecionado.
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: '#8899aa', marginTop: 8 }}>
+              {diagnostic
+                ? diagnostic.status === 'OK'
+                  ? 'Todos os dados estão completos. O pivô está pronto para automação e manejo diário.'
+                  : diagnostic.status === 'atenção'
+                    ? `${diagnostic.alerts.length} lacuna(s) operacional detectada(s). Veja os alertas abaixo.`
+                    : 'Dados insuficientes para cálculo. Configure os itens em alerta para restaurar o funcionamento.'
+                : 'Selecione um pivô para visualizar o diagnóstico operacional completo.'
+              }
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            <div style={{ minWidth: 140, padding: '14px 16px', borderRadius: 16, background: 'rgb(255 255 255 / 0.04)', border: '1px solid rgb(255 255 255 / 0.08)' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ minWidth: 120, padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
               <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8899aa' }}>Pivôs</p>
-              <p style={{ fontSize: 24, fontWeight: 800, color: '#e2e8f0', marginTop: 6 }}>{summaries.length}</p>
+              <p style={{ fontSize: 26, fontWeight: 800, color: '#e2e8f0', marginTop: 4 }}>{summaries.length}</p>
             </div>
-            <div style={{ minWidth: 220, padding: '14px 16px', borderRadius: 16, background: 'rgb(255 255 255 / 0.04)', border: '1px solid rgb(255 255 255 / 0.08)' }}>
-              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8899aa' }}>Selecionado</p>
-              <p style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0', marginTop: 6, lineHeight: 1.1 }}>{selectedSummary?.pivotName ?? '—'}</p>
-            </div>
+            {diagnostic?.activeSeason && (
+              <div style={{ minWidth: 180, padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8899aa' }}>Safra ativa</p>
+                <p style={{ fontSize: 16, fontWeight: 800, color: '#e2e8f0', marginTop: 4, lineHeight: 1.2 }}>{diagnostic.activeSeason.name}</p>
+                {diagnostic.crop && <p style={{ fontSize: 11, color: '#8899aa', marginTop: 3 }}>{diagnostic.crop.name}</p>}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {error ? (
+      {/* ── ERRO GLOBAL ────────────────────────────────────────────────────── */}
+      {error && (
         <div style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 10,
-          borderRadius: 14,
-          border: '1px solid rgb(239 68 68 / 0.25)',
-          background: 'rgb(239 68 68 / 0.08)',
-          padding: '12px 14px',
-          marginBottom: 18,
-          color: '#fca5a5',
+          display: 'flex', alignItems: 'flex-start', gap: 10,
+          borderRadius: 14, border: '1px solid rgb(239 68 68 / 0.25)',
+          background: 'rgb(239 68 68 / 0.08)', padding: '12px 14px', marginBottom: 18, color: '#fca5a5',
         }}>
           <AlertCircle size={14} style={{ marginTop: 2, flexShrink: 0 }} />
           <p style={{ fontSize: 13, lineHeight: 1.5 }}>{error}</p>
         </div>
-      ) : null}
+      )}
 
+      {/* ── SELETOR DE PIVÔ ─────────────────────────────────────────────────── */}
       <div style={{
-        background: '#0f1923',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 16,
-        padding: 20,
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0,1fr) auto auto',
-        gap: 16,
-        alignItems: 'end',
-        marginBottom: 20,
+        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
+        padding: 20, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 16, alignItems: 'end', marginBottom: 20,
       }}>
         <div>
           <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 6 }}>Selecionar pivô</label>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={selectedPivotId}
-              onChange={(e) => setSelectedPivotId(e.currentTarget.value)}
-              disabled={loading || summaries.length === 0}
-              style={{
-                width: '100%',
-                padding: '10px 14px',
-                borderRadius: 10,
-                fontSize: 14,
-                background: '#0d1520',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: '#e2e8f0',
-                outline: 'none',
-              }}
-            >
-              {summaries.length > 0 ? summaries.map((item) => (
-                <option key={item.pivotId} value={item.pivotId}>
-                  {item.pivotName} · {item.farmName}
-                </option>
-              )) : <option value="">Nenhum pivô disponível</option>}
-            </select>
-          </div>
+          <select
+            value={selectedPivotId}
+            onChange={(e) => setSelectedPivotId(e.currentTarget.value)}
+            disabled={loading || summaries.length === 0}
+            style={{
+              width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
+              background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+              color: '#e2e8f0', outline: 'none',
+            }}
+          >
+            {summaries.length > 0
+              ? summaries.map((s) => <option key={s.pivotId} value={s.pivotId}>{s.pivotName} · {s.farmName}</option>)
+              : <option value="">Nenhum pivô disponível</option>}
+          </select>
         </div>
-        <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Fazenda</p>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginTop: 6 }}>{selectedSummary?.farmName ?? '—'}</p>
-        </div>
-        {statusTone ? <StatusPill label={statusTone.label} tone={statusTone} /> : null}
+        {statusTone && <Pill tone={statusTone} />}
       </div>
 
+      {/* ── LOADING / VAZIO ─────────────────────────────────────────────────── */}
       {loading || diagnosticLoading ? (
         <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: '#8899aa' }}>Carregando diagnóstico do pivô...</p>
+          <p style={{ fontSize: 14, color: '#8899aa' }}>Carregando diagnóstico...</p>
         </div>
       ) : !diagnostic ? (
         <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
@@ -501,195 +651,187 @@ export default function PivotDiagnosticsPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{
-            background: '#0f1923',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: 16,
-            padding: 20,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-              <div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Resumo operacional de hoje</p>
-                <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>Leitura rápida para decisão de manejo no pivô selecionado</p>
-              </div>
-              <StatusPill label={statusTone?.label ?? diagnostic.status} tone={statusTone ?? getStatusConfig(diagnostic.status)} />
+
+          {/* ── MÉTRICAS DO DIA ─────────────────────────────────────────────── */}
+          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 18, alignItems: 'flex-start' }}>
+              <SectionTitle sub="Leitura rápida para decisão de manejo hoje">
+                Situação atual
+              </SectionTitle>
+              {statusTone && <Pill tone={statusTone} />}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
-              <SummaryCard
-                eyebrow="Clima / ETo"
-                title="ETo mais recente"
-                value={diagnostic.etoValue != null ? `${formatNumber(diagnostic.etoValue, 2)} mm` : 'Sem ETo'}
-                helper={[
-                  getEtoSourceLabel(diagnostic.etoSource),
-                  diagnostic.etoConfidence ? `confiança ${diagnostic.etoConfidence}` : null,
-                  diagnostic.lastManagement?.date ? formatDate(diagnostic.lastManagement.date) : null,
-                ].filter(Boolean).join(' · ') || 'Sem referência disponível'}
-                icon={<Thermometer size={18} />}
-                tone={diagnostic.etoValue != null ? getStatusConfig('OK') : getStatusConfig('sem dados')}
+              <MetricCard
+                eyebrow="Evapotranspiração"
+                value={diagnostic.etoValue != null ? `${formatNumber(diagnostic.etoValue, 2)} mm` : '—'}
+                interpretation={etoInterpret.text}
+                sub={`${getEtoSourceLabel(diagnostic.etoSource)}${diagnostic.etoConfidence ? ` · ${diagnostic.etoConfidence}` : ''}`}
+                icon={<Thermometer size={16} />}
+                tone={etoInterpret.tone}
+                accent={diagnostic.etoValue != null && diagnostic.etoValue >= 5}
               />
-              <SummaryCard
-                eyebrow="Chuva"
-                title="Leitura de precipitação"
-                value={diagnostic.rainfallValue != null ? `${formatNumber(diagnostic.rainfallValue, 1)} mm` : 'Sem chuva'}
-                helper={[
-                  getRainfallSourceLabel(diagnostic.rainfallSource),
-                  diagnostic.rainfallDate ? formatDate(diagnostic.rainfallDate) : null,
-                ].filter(Boolean).join(' · ') || 'Sem referência disponível'}
-                icon={<BellRing size={18} />}
-                tone={diagnostic.rainfallValue != null ? getStatusConfig('OK') : getStatusConfig('sem dados')}
+              <MetricCard
+                eyebrow="Precipitação hoje"
+                value={diagnostic.rainfallValue != null && diagnostic.rainfallValue > 0 ? `${formatNumber(diagnostic.rainfallValue, 1)} mm` : '0 mm'}
+                interpretation={rainInterpret.text}
+                sub={`${getRainfallSourceLabel(diagnostic.rainfallSource)}${diagnostic.rainfallDate ? ` · ${formatDateRelative(diagnostic.rainfallDate)}` : ''}`}
+                icon={<CloudRain size={16} />}
+                tone={rainInterpret.tone}
               />
-              <SummaryCard
-                eyebrow="Manejo"
-                title="Último registro salvo"
+              <MetricCard
+                eyebrow="Último manejo"
                 value={
                   diagnostic.lastManagement?.recommended_depth_mm != null
-                    ? `Rec. ${formatNumber(diagnostic.lastManagement.recommended_depth_mm, 1)} mm`
-                    : 'Sem registro'
+                    ? `${formatNumber(diagnostic.lastManagement.recommended_depth_mm, 1)} mm`
+                    : '—'
                 }
-                helper={
-                  diagnostic.lastManagement
-                    ? [
-                        diagnostic.lastManagement.actual_depth_mm != null
-                          ? `Real ${formatNumber(diagnostic.lastManagement.actual_depth_mm, 1)} mm`
-                          : 'Real sem registro',
-                        formatDate(diagnostic.lastManagement.date),
-                      ].join(' · ')
-                    : 'Sem manejo salvo recente'
-                }
-                icon={<Sprout size={18} />}
-                tone={diagnostic.lastManagement ? getStatusConfig('OK') : getStatusConfig('sem dados')}
+                interpretation={mngmInterpret.text}
+                sub={diagnostic.lastManagement ? `Real: ${diagnostic.lastManagement.actual_depth_mm != null ? `${formatNumber(diagnostic.lastManagement.actual_depth_mm, 1)} mm` : 'não registrado'} · ${formatDateRelative(diagnostic.lastManagement.date)}` : ''}
+                icon={<Sprout size={16} />}
+                tone={mngmInterpret.tone}
+                accent={diagnostic.hasManagementToday}
               />
-              <SummaryCard
-                eyebrow="Fonte climática"
-                title="Rota ativa hoje"
+              <MetricCard
+                eyebrow="Rota climática"
                 value={diagnostic.climateRouteLabel}
-                helper={
+                interpretation={
+                  diagnostic.climateRoute === 'pivot_station' ? 'Dados da estação vinculada ao pivô — alta precisão'
+                    : diagnostic.climateRoute === 'farm_station' ? 'Dados da estação da fazenda — boa precisão'
+                    : diagnostic.climateRoute === 'pivot_geolocation' ? 'Dados NASA via geolocalização — precisão moderada'
+                    : 'Dados manuais ou sem fonte — precisão reduzida'
+                }
+                sub={
                   diagnostic.preferredStation?.name
-                    ? `Preferencial: ${diagnostic.preferredStation.name}`
+                    ? `Estação: ${diagnostic.preferredStation.name}`
                     : diagnostic.farmStations[0]?.name
                       ? `Fazenda: ${diagnostic.farmStations[0].name}`
-                      : 'Fallback manual/local'
+                      : 'Sem estação — usando fallback'
                 }
-                icon={<Orbit size={18} />}
-                tone={diagnostic.climateRoute === 'manual' ? getStatusConfig('atenção') : getStatusConfig('OK')}
-              />
-              <SummaryCard
-                eyebrow="Leitura geral"
-                title="Situação atual"
-                value={diagnostic.status}
-                helper={diagnostic.alerts.length > 0 ? `${diagnostic.alerts.length} alerta(s) ativo(s)` : 'Sem alertas operacionais'}
-                icon={<AlertCircle size={18} />}
-                tone={statusTone}
+                icon={<Orbit size={16} />}
+                tone={diagnostic.climateRoute === 'manual' ? getTone('warning') : getTone('ok')}
               />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-                <div>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Automação do manejo diário</p>
-                  <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>Prontidão atual para geração operacional do manejo</p>
-                </div>
-                <StatusPill label={automationTone?.label ?? diagnostic.automationStatus} tone={automationTone ?? getStatusConfig(diagnostic.automationStatus)} />
+          {/* ── AUTOMAÇÃO + CONTEXTO ─────────────────────────────────────────── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+
+            {/* Automação */}
+            <div style={{
+              background: '#0f1923',
+              border: `1px solid ${automationTone ? automationTone.border : 'rgba(255,255,255,0.06)'}`,
+              borderRadius: 16, padding: 20,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 18, alignItems: 'flex-start' }}>
+                <SectionTitle sub="Prontidão para geração automática do manejo">
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Cpu size={15} style={{ color: '#0093D0' }} />
+                    Automação do manejo
+                  </span>
+                </SectionTitle>
+                {automationTone && <Pill tone={automationTone} />}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Status da automação</p>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.automationStatus}</p>
-                  <p style={{ fontSize: 13, lineHeight: 1.6, color: '#8899aa', marginTop: 8 }}>
-                    {diagnostic.hasManagementToday ? 'O pivô já possui manejo salvo para hoje.' : diagnostic.automationReason ?? 'Sem motivo adicional registrado.'}
-                  </p>
-                </div>
-                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Ação sugerida</p>
-                  <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.suggestedAction}</p>
-                  <p style={{ fontSize: 13, lineHeight: 1.6, color: '#8899aa', marginTop: 8 }}>
-                    {diagnostic.automationReason ?? 'O pivô tem contexto suficiente para seguir com a operação.'}
-                  </p>
-                </div>
+
+              {/* Status da automação */}
+              <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16, marginBottom: 12 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899', marginBottom: 8 }}>Status</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: automationTone?.color ?? '#e2e8f0' }}>{diagnostic.automationStatus}</p>
+                <p style={{ fontSize: 12, color: '#8899aa', marginTop: 6, lineHeight: 1.6 }}>
+                  {diagnostic.hasManagementToday
+                    ? 'Manejo de hoje já foi gerado com sucesso.'
+                    : diagnostic.automationReason ?? 'Sem detalhes adicionais.'}
+                </p>
               </div>
+
+              {/* Botão de ação */}
+              <ActionButton
+                label={
+                  diagnostic.hasManagementToday
+                    ? 'Manejo já gerado hoje'
+                    : diagnostic.automationStatus === 'Automação pronta'
+                      ? 'Gerar manejo agora'
+                      : diagnostic.suggestedAction
+                }
+                sub={
+                  diagnostic.hasManagementToday
+                    ? 'O cron já processou este pivô hoje'
+                    : canGenerateManagement
+                      ? 'Calcula balanço hídrico e salva lâmina recomendada'
+                      : diagnostic.automationReason ?? undefined
+                }
+                onClick={canGenerateManagement ? handleGenerateManagement : undefined}
+                disabled={!canGenerateManagement}
+                loading={generatingManagement}
+                tone={canGenerateManagement ? getTone('ok') : automationTone ?? getTone('nodata')}
+                icon={canGenerateManagement ? <Zap size={16} /> : diagnostic.hasManagementToday ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+              />
             </div>
 
+            {/* Contexto do pivô */}
             <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-                <div>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Contexto do pivô</p>
-                  <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>Identificação, safra e vínculos principais</p>
-                </div>
-                <StatusPill label="contexto" tone={{ label: 'contexto', color: '#06b6d4', bg: 'rgb(6 182 212 / 0.12)', border: 'rgb(6 182 212 / 0.25)' }} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Pivô</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.pivot.name}</p>
-                  <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>{diagnostic.farm.name}</p>
-                </div>
-                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Coordenadas</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>
-                    {diagnostic.pivot.latitude != null && diagnostic.pivot.longitude != null
-                      ? `${formatNumber(diagnostic.pivot.latitude, 6)}, ${formatNumber(diagnostic.pivot.longitude, 6)}`
-                      : 'Sem coordenadas'}
-                  </p>
-                  <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <MapPin size={12} /> {diagnostic.pivot.latitude != null && diagnostic.pivot.longitude != null ? 'Geolocalização disponível' : 'Necessária para fallback climático'}
-                  </p>
-                </div>
-                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Safra ativa</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.activeSeason?.name ?? 'Sem safra ativa'}</p>
-                  <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>
-                    {diagnostic.activeSeason?.planting_date ? `Plantio: ${formatDate(diagnostic.activeSeason.planting_date)}` : 'Sem data de plantio'}
-                  </p>
-                </div>
-                <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>Cultura</p>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginTop: 10 }}>{diagnostic.crop?.name ?? 'Sem cultura vinculada'}</p>
-                  <p style={{ fontSize: 13, color: '#8899aa', marginTop: 6 }}>
-                    {diagnostic.preferredStation?.name
-                      ? `Estação preferencial: ${diagnostic.preferredStation.name}`
-                      : diagnostic.farmStations[0]?.name
-                        ? `Estação da fazenda: ${diagnostic.farmStations[0].name}`
-                        : 'Sem estação associada'}
-                  </p>
+              <SectionTitle sub="Identificação, safra e vínculos principais">Contexto do pivô</SectionTitle>
+              <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: '4px 16px' }}>
+                <InfoRow label="Pivô" value={diagnostic.pivot.name} highlight />
+                <InfoRow label="Fazenda" value={diagnostic.farm.name} />
+                <InfoRow
+                  label="Coordenadas"
+                  value={
+                    diagnostic.pivot.latitude != null && diagnostic.pivot.longitude != null
+                      ? `${formatNumber(diagnostic.pivot.latitude, 5)}, ${formatNumber(diagnostic.pivot.longitude, 5)}`
+                      : 'Não cadastradas'
+                  }
+                />
+                <InfoRow label="Safra ativa" value={diagnostic.activeSeason?.name ?? 'Nenhuma'} highlight={!!diagnostic.activeSeason} />
+                <InfoRow label="Plantio" value={diagnostic.activeSeason?.planting_date ? formatDate(diagnostic.activeSeason.planting_date) : '—'} />
+                <InfoRow label="Cultura" value={diagnostic.crop?.name ?? 'Sem cultura'} highlight={!!diagnostic.crop} />
+                <InfoRow
+                  label="Estação climática"
+                  value={
+                    diagnostic.preferredStation?.name
+                      ?? diagnostic.farmStations[0]?.name
+                      ?? 'Nenhuma associada'
+                  }
+                />
+                <div style={{ padding: '8px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <MapPin size={12} style={{ color: '#778899' }} />
+                  <span style={{ fontSize: 11, color: '#778899' }}>
+                    {diagnostic.pivot.latitude != null ? 'Geolocalização disponível' : 'Cadastre coordenadas para fallback NASA'}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-              <div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>Alertas e diagnóstico</p>
-                <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>Lacunas operacionais que afetam leitura e automação</p>
-              </div>
-              <StatusPill label={diagnostic.alerts.length > 0 ? `${diagnostic.alerts.length} alerta(s)` : 'sem alertas'} tone={diagnostic.alerts.length > 0 ? getStatusConfig('atenção') : getStatusConfig('OK')} />
+          {/* ── ALERTAS ──────────────────────────────────────────────────────── */}
+          <div style={{ background: '#0f1923', border: `1px solid ${diagnostic.alerts.length > 0 ? 'rgba(245,158,11,0.20)' : 'rgba(34,197,94,0.20)'}`, borderRadius: 16, padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: diagnostic.alerts.length > 0 ? 16 : 0, alignItems: 'flex-start' }}>
+              <SectionTitle sub={diagnostic.alerts.length > 0 ? 'Corrija as lacunas abaixo para restaurar o funcionamento completo' : 'Todos os dados operacionais estão completos'}>
+                {diagnostic.alerts.length > 0
+                  ? `${diagnostic.alerts.length} alerta${diagnostic.alerts.length > 1 ? 's' : ''} ativo${diagnostic.alerts.length > 1 ? 's' : ''}`
+                  : 'Sem alertas operacionais'
+                }
+              </SectionTitle>
+              <Pill tone={diagnostic.alerts.length > 0 ? getTone('warning', `${diagnostic.alerts.length} alerta${diagnostic.alerts.length > 1 ? 's' : ''}`) : getTone('ok', 'Tudo OK')} />
             </div>
             {diagnostic.alerts.length === 0 ? (
-              <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                <p style={{ fontSize: 14, color: '#8899aa' }}>Sem alertas operacionais para o pivô selecionado.</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0' }}>
+                <CheckCircle2 size={18} style={{ color: '#22c55e', flexShrink: 0 }} />
+                <p style={{ fontSize: 14, color: '#8899aa' }}>Este pivô está 100% operacional para automação e manejo diário.</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                {diagnostic.alerts.map((alert) => {
-                  const tone = alert.toLowerCase().includes('sem') ? getStatusConfig('sem dados') : getStatusConfig('atenção')
-                  return (
-                    <div key={alert} style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', lineHeight: 1.5 }}>{alert}</p>
-                        <StatusPill label={tone.label} tone={tone} />
-                      </div>
-                    </div>
-                  )
-                })}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+                {diagnostic.alerts.map((alert) => (
+                  <AlertCard key={alert} text={alert} />
+                ))}
               </div>
             )}
           </div>
 
+          {/* ── CALIBRAÇÃO ETO (super admin) ─────────────────────────────────── */}
           {superAdmin && (
             <EtoCalibrationPanel rows={etoHistory} loading={etoHistoryLoading} />
           )}
+
         </div>
       )}
     </div>
