@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import type { Crop } from '@/types/database'
 import { useAuth } from '@/hooks/useAuth'
 import { createCrop, deleteCrop, listCropsByCompany, updateCrop } from '@/services/crops'
-import { Wheat, Plus, Pencil, Trash2, X, Loader2, Lock, ChevronRight, Copy, BookOpen } from 'lucide-react'
+import { Wheat, Plus, Pencil, Trash2, X, Loader2, Lock, ChevronRight, Copy, BookOpen, Search, ArrowRight } from 'lucide-react'
 import { CROP_PRESETS, type CropPreset } from '@/lib/crop-presets'
 
 // ─── Fases FAO-56 ────────────────────────────────────────────
@@ -137,10 +137,10 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
   }
 
   const stageData = [
-    { label: 'Fase 1 — Inicial',         days: s1days, setDays: setS1days, f: f1, setF: setF1, kc: kcIni,   setKc: setKcIni,   kcLabel: 'Kc ini',   hint: 'constante' },
-    { label: 'Fase 2 — Desenvolvimento', days: s2days, setDays: setS2days, f: f2, setF: setF2, kc: null,    setKc: null,       kcLabel: null,       hint: 'interpolado' },
-    { label: 'Fase 3 — Médio',           days: s3days, setDays: setS3days, f: f3, setF: setF3, kc: kcMid,   setKc: setKcMid,   kcLabel: 'Kc mid',   hint: 'constante' },
-    { label: 'Fase 4 — Final',           days: s4days, setDays: setS4days, f: f4, setF: setF4, kc: kcFinal, setKc: setKcFinal, kcLabel: 'Kc final', hint: 'interpolado' },
+    { label: 'Fase 1 — Inicial',         days: s1days, setDays: setS1days, f: f1, setF: setF1, kc: kcIni,   setKc: setKcIni,   kcLabel: 'Kc Inicial',    hint: 'constante' },
+    { label: 'Fase 2 — Desenvolvimento', days: s2days, setDays: setS2days, f: f2, setF: setF2, kc: null,    setKc: null,       kcLabel: null,            hint: 'interpolado' },
+    { label: 'Fase 3 — Crescimento',     days: s3days, setDays: setS3days, f: f3, setF: setF3, kc: kcMid,   setKc: setKcMid,   kcLabel: 'Kc Crescimento', hint: 'constante' },
+    { label: 'Fase 4 — Final',           days: s4days, setDays: setS4days, f: f4, setF: setF4, kc: kcFinal, setKc: setKcFinal, kcLabel: 'Kc Final',      hint: 'interpolado' },
   ]
 
   return (
@@ -327,83 +327,117 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
 
   const sumDays = (crop.stage1_days ?? 0) + (crop.stage2_days ?? 0) + (crop.stage3_days ?? 0) + (crop.stage4_days ?? 0)
   const totalDays = crop.total_cycle_days ?? (sumDays > 0 ? sumDays : null)
-
   const hasStages = crop.stage1_days || crop.stage2_days || crop.stage3_days || crop.stage4_days
-
-  const stageRows = [
-    { label: 'Fase 1', days: crop.stage1_days, f: crop.f_factor_stage1, kc: crop.kc_ini,   kcLabel: 'Kc ini',      hint: 'constante' },
-    { label: 'Fase 2', days: crop.stage2_days, f: crop.f_factor_stage2, kc: null,          kcLabel: 'interpolado', hint: '' },
-    { label: 'Fase 3', days: crop.stage3_days, f: crop.f_factor_stage3, kc: crop.kc_mid,   kcLabel: 'Kc mid',      hint: 'constante' },
-    { label: 'Fase 4', days: crop.stage4_days, f: crop.f_factor_stage4, kc: crop.kc_final, kcLabel: 'Kc final',    hint: 'interpolado' },
-  ]
-
   const hasRootGrowth = crop.root_growth_rate_cm_day != null
 
+  // Kc em leitura natural — só os que existem
+  const kcParts: string[] = []
+  if (crop.kc_ini   != null) kcParts.push(`Inicial: ${crop.kc_ini}`)
+  if (crop.kc_mid   != null) kcParts.push(`Crescimento: ${crop.kc_mid}`)
+  if (crop.kc_final != null) kcParts.push(`Final: ${crop.kc_final}`)
+
+  const stageRows = [
+    { label: 'Inicial',         days: crop.stage1_days, f: crop.f_factor_stage1, kc: crop.kc_ini,   kcLabel: 'Inicial',     hint: 'constante' },
+    { label: 'Desenvolvimento', days: crop.stage2_days, f: crop.f_factor_stage2, kc: null,          kcLabel: 'interpolado', hint: '' },
+    { label: 'Crescimento',     days: crop.stage3_days, f: crop.f_factor_stage3, kc: crop.kc_mid,   kcLabel: 'Crescimento', hint: 'constante' },
+    { label: 'Final',           days: crop.stage4_days, f: crop.f_factor_stage4, kc: crop.kc_final, kcLabel: 'Final',       hint: 'interpolado' },
+  ]
+
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
+    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, transition: 'border-color 0.15s' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)' }}
+    >
       {/* Linha principal */}
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: 'rgb(0 147 208 / 0.10)', border: '1px solid rgb(0 147 208 / 0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Wheat size={16} style={{ color: '#0093D0' }} />
+      <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        {/* Ícone */}
+        <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: isCustom ? 'rgba(34,197,94,0.08)' : 'rgba(0,147,208,0.08)', border: `1px solid ${isCustom ? 'rgba(34,197,94,0.18)' : 'rgba(0,147,208,0.18)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+          <Wheat size={16} style={{ color: isCustom ? '#22c55e' : '#0093D0' }} />
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{crop.name}</p>
+          {/* 1. Nome + badge padrão */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.01em' }}>{crop.name}</p>
             {!isCustom && (
-              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 3, background: '#0d1520', color: '#778899', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <Lock size={9} /> padrão FAO-56
+              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 3, background: '#0d1520', color: '#556677', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <Lock size={8} /> FAO-56
               </span>
             )}
-            {totalDays ? <span style={{ fontSize: 11, color: '#778899' }}>{totalDays} dias</span> : null}
           </div>
-          {/* Kc resumo */}
-          <div style={{ display: 'flex', gap: 6 }}>
-            {[
-              { label: 'Kc ini',   value: crop.kc_ini },
-              { label: 'Kc mid',   value: crop.kc_mid },
-              { label: 'Kc final', value: crop.kc_final },
-            ].filter(k => k.value !== null).map(k => (
-              <div key={k.label} style={{ background: '#0d1520', borderRadius: 7, padding: '5px 10px', textAlign: 'center' }}>
-                <span style={{ fontSize: 9, color: '#778899', display: 'block' }}>{k.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{k.value}</span>
-              </div>
-            ))}
-          </div>
+
+          {/* 2. Ciclo em destaque */}
+          {totalDays ? (
+            <div style={{ marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0093D0', background: 'rgba(0,147,208,0.08)', border: '1px solid rgba(0,147,208,0.2)', padding: '2px 9px', borderRadius: 20 }}>
+                Ciclo: {totalDays} dias
+              </span>
+            </div>
+          ) : null}
+
+          {/* 3. Kc em leitura natural */}
+          {kcParts.length > 0 && (
+            <p style={{ fontSize: 12, color: '#8899aa', margin: 0, lineHeight: 1.5 }}>
+              {kcParts.map((part, i) => (
+                <span key={i}>
+                  {i > 0 && <span style={{ color: '#334455', margin: '0 5px' }}>•</span>}
+                  <span style={{ color: '#94a3b8' }}>{part.split(':')[0]}:</span>
+                  <span style={{ color: '#0093D0', fontFamily: 'var(--font-mono)', fontWeight: 700, marginLeft: 3 }}>{part.split(':')[1]}</span>
+                </span>
+              ))}
+            </p>
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        {/* Ações */}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
           {hasStages && (
-            <button onClick={() => setExpanded(v => !v)} title="Ver fases"
-              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#0093D0', display: 'flex', alignItems: 'center' }}>
+            <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Ocultar fases' : 'Ver fases detalhadas'}
+              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
               <ChevronRight size={14} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
             </button>
           )}
           {isCustom ? (
             <>
-              <button onClick={onEdit} title="Editar"
-                style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
-                <Pencil size={14} />
+              <button onClick={onEdit} title="Editar cultura"
+                style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                <Pencil size={13} />
               </button>
-              <button onClick={onDelete} disabled={deleting} title="Excluir"
-                style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(239 68 68 / 0.1)'; (e.currentTarget as HTMLElement).style.color = '#ef4444' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
-                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              <button onClick={onDelete} disabled={deleting} title="Excluir cultura"
+                style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(239,68,68,0.08)'; el.style.color = '#ef4444'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#556677'; el.style.borderColor = 'transparent' }}>
+                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               </button>
             </>
           ) : (
-            <button onClick={onDuplicate} title="Duplicar para minhas culturas"
-              style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: '#0d1520', color: '#8899aa' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgb(0 147 208 / 0.10)'; (e.currentTarget as HTMLElement).style.color = '#0093D0' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520'; (e.currentTarget as HTMLElement).style.color = '#8899aa' }}>
-              <Copy size={14} />
+            <button onClick={onDuplicate} title="Personalizar (duplicar para minhas culturas)"
+              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(0,147,208,0.08)'; el.style.color = '#0093D0'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#556677'; el.style.borderColor = 'transparent' }}>
+              <Copy size={13} />
             </button>
           )}
         </div>
       </div>
+
+      {/* CTA "Usar na safra" — só para culturas personalizadas */}
+      {isCustom && (
+        <div style={{ padding: '0 18px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <a
+            href="/safras"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#22c55e', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.18)', textDecoration: 'none', transition: 'all 0.15s' }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(34,197,94,0.13)'; el.style.borderColor = 'rgba(34,197,94,0.3)' }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(34,197,94,0.07)'; el.style.borderColor = 'rgba(34,197,94,0.18)' }}
+          >
+            Usar na safra <ArrowRight size={11} />
+          </a>
+        </div>
+      )}
 
       {/* Detalhes expandíveis das fases */}
       {expanded && (
@@ -425,24 +459,39 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
             </div>
           )}
           <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden', overflowX: 'auto' }}>
-            {/* Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', minWidth: 320, background: '#0d1520', padding: '8px 14px', gap: 8 }}>
-              {['Fase', 'Descrição', 'Dias', 'Fator f', 'Kc'].map(h => (
-                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 55px 55px 70px', minWidth: 340, background: '#0d1520', padding: '8px 14px', gap: 8 }}>
+              {['Fase', 'Período', 'Dias', 'Fator f', 'Kc'].map(h => (
+                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</span>
               ))}
             </div>
             {stageRows.map((row, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 55px 55px 70px', minWidth: 320, padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#0093D0' }}>Fase {i + 1}</span>
-                <span style={{ fontSize: 12, color: '#8899aa' }}>{['Inicial', 'Desenvolvimento', 'Médio', 'Final'][i]} <span style={{ color: '#778899', fontSize: 10 }}>{row.hint ? `(${row.hint})` : ''}</span></span>
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 55px 55px 70px', minWidth: 340, padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#0093D0' }}>Fase {i + 1}</span>
+                <span style={{ fontSize: 12, color: '#8899aa' }}>{row.label}{row.hint ? <span style={{ color: '#445566', fontSize: 10 }}> ({row.hint})</span> : ''}</span>
                 <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
                 <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.f ?? '—'}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: row.kc ? '#0093D0' : '#778899', fontFamily: 'var(--font-mono)' }}>{row.kc ?? row.kcLabel}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: row.kc != null ? '#0093D0' : '#445566', fontFamily: 'var(--font-mono)' }}>{row.kc ?? '—'}</span>
               </div>
             ))}
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Cabeçalho de seção ──────────────────────────────────────
+function SectionHeader({ label, count, custom }: { label: string; count: number; custom?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+      <div style={{ width: 3, height: 16, borderRadius: 2, background: custom ? '#22c55e' : '#0093D0', flexShrink: 0 }} />
+      <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: custom ? '#22c55e' : '#94a3b8' }}>
+        {label}
+      </span>
+      <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 20, background: '#0d1520', color: '#556677', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 600 }}>
+        {count}
+      </span>
+      <div style={{ flex: 1, height: 1, background: custom ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.04)' }} />
     </div>
   )
 }
@@ -456,6 +505,7 @@ export default function CulturasPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingCrop, setEditingCrop] = useState<Crop | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   const loadCrops = useCallback(async () => {
     if (!company?.id) {
@@ -511,26 +561,49 @@ export default function CulturasPage() {
     }
   }
 
-  const defaultCrops = crops.filter(c => c.company_id === null)
-  const customCrops  = crops.filter(c => c.company_id === company?.id)
+  const q = search.trim().toLowerCase()
+  const defaultCrops = useMemo(() => crops.filter(c => c.company_id === null && (!q || c.name.toLowerCase().includes(q))), [crops, q])
+  const customCrops  = useMemo(() => crops.filter(c => c.company_id === company?.id && (!q || c.name.toLowerCase().includes(q))), [crops, company?.id, q])
+  const totalCustom  = crops.filter(c => c.company_id === company?.id).length
+  const totalDefault = crops.filter(c => c.company_id === null).length
 
   return (
     <>
       <div className="flex flex-col gap-5">
+        {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#e2e8f0' }}>Culturas</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#8899aa' }}>
-              {defaultCrops.length} padrão · {customCrops.length} personalizada{customCrops.length !== 1 ? 's' : ''}
+            <h1 style={{ color: '#e2e8f0', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em', margin: 0 }}>Culturas</h1>
+            <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.625, margin: '2px 0 0' }}>
+              {totalDefault} padrão FAO-56 · {totalCustom} personalizada{totalCustom !== 1 ? 's' : ''}
             </p>
           </div>
           <button
             onClick={() => { setEditingCrop(null); setModalOpen(true) }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgb(0 147 208 / 0.25)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,147,208,0.25)' }}
           >
             <Plus size={16} />
             Nova Cultura
           </button>
+        </div>
+
+        {/* Busca */}
+        <div style={{ position: 'relative' }}>
+          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#445566', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar cultura..."
+            style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 10, fontSize: 14, background: '#0f1923', border: '1px solid rgba(255,255,255,0.07)', color: '#e2e8f0', outline: 'none', transition: 'border-color 0.15s' }}
+            onFocus={e => e.target.style.borderColor = '#0093D0'}
+            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.07)'}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#556677', padding: 4 }}>
+              <X size={13} />
+            </button>
+          )}
         </div>
 
         {pageError && (
@@ -545,38 +618,49 @@ export default function CulturasPage() {
           </div>
         ) : (
           <>
-            {customCrops.length > 0 && (
+            {/* Minhas Culturas */}
+            {(customCrops.length > 0 || (q && totalCustom > 0)) && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>Minhas Culturas</span>
-                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-                </div>
-                <div className="flex flex-col gap-3">
-                  {customCrops.map(c => (
-                    <CropCard key={c.id} crop={c} isCustom
-                      onEdit={() => { setEditingCrop(c); setModalOpen(true) }}
-                      onDelete={() => handleDelete(c.id)}
-                      onDuplicate={() => handleDuplicate(c)}
-                      deleting={deletingId === c.id}
-                    />
-                  ))}
-                </div>
+                <SectionHeader label="Minhas Culturas" count={customCrops.length} custom />
+                {customCrops.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {customCrops.map(c => (
+                      <CropCard key={c.id} crop={c} isCustom
+                        onEdit={() => { setEditingCrop(c); setModalOpen(true) }}
+                        onDelete={() => handleDelete(c.id)}
+                        onDuplicate={() => handleDuplicate(c)}
+                        deleting={deletingId === c.id}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: 13, color: '#445566', padding: '8px 0' }}>Nenhuma cultura personalizada encontrada para "{search}".</p>
+                )}
               </div>
             )}
 
+            {/* Culturas Padrão FAO-56 */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#778899' }}>Culturas Padrão FAO-56</span>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
-              </div>
-              <div className="flex flex-col gap-3">
-                {defaultCrops.map(c => (
-                  <CropCard key={c.id} crop={c} isCustom={false}
-                    onEdit={() => {}} onDelete={() => {}} onDuplicate={() => handleDuplicate(c)} deleting={false}
-                  />
-                ))}
-              </div>
+              <SectionHeader label="Culturas Padrão FAO-56" count={defaultCrops.length} />
+              {defaultCrops.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {defaultCrops.map(c => (
+                    <CropCard key={c.id} crop={c} isCustom={false}
+                      onEdit={() => {}} onDelete={() => {}} onDuplicate={() => handleDuplicate(c)} deleting={false}
+                    />
+                  ))}
+                </div>
+              ) : q ? (
+                <p style={{ fontSize: 13, color: '#445566', padding: '8px 0' }}>Nenhuma cultura padrão encontrada para "{search}".</p>
+              ) : null}
             </div>
+
+            {/* Nenhum resultado */}
+            {q && customCrops.length === 0 && defaultCrops.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                <p style={{ fontSize: 14, color: '#556677' }}>Nenhuma cultura encontrada para <strong style={{ color: '#8899aa' }}>{search}</strong>.</p>
+              </div>
+            )}
           </>
         )}
       </div>
