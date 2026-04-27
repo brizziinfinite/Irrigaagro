@@ -37,13 +37,13 @@ export function WeatherBlock({ lastManagementBySeason }: WeatherBlockProps) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Sun size={12} style={{ color: '#f59e0b' }} />
         <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#778899',
+          fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
+          letterSpacing: '0.16em', color: '#cbd5e1',
         }}>
           Clima Atual
         </span>
         {latest?.date && (
-          <span style={{ fontSize: 10, color: '#778899', marginLeft: 'auto' }}>
+          <span style={{ fontSize: 12, color: '#94a3b8', marginLeft: 'auto' }}>
             {new Date(latest.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
           </span>
         )}
@@ -57,11 +57,11 @@ export function WeatherBlock({ lastManagementBySeason }: WeatherBlockProps) {
         }}>
           {latest ? `${fmtVal(latest.temp_max, 0)}°` : '--°'}
         </span>
-        <span style={{ fontSize: 18, fontWeight: 600, color: '#778899', fontFamily: 'var(--font-mono)' }}>
+        <span style={{ fontSize: 18, fontWeight: 600, color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
           / {latest ? `${fmtVal(latest.temp_min, 0)}°` : '--°'}
         </span>
         {latest?.temp_max != null && latest?.temp_min != null && (
-          <span style={{ fontSize: 11, color: '#778899', marginLeft: 4 }}>
+          <span style={{ fontSize: 12, color: '#94a3b8', marginLeft: 4 }}>
             Amplitude {(latest.temp_max - latest.temp_min).toFixed(0)}°
           </span>
         )}
@@ -81,19 +81,20 @@ export function WeatherBlock({ lastManagementBySeason }: WeatherBlockProps) {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <Icon size={11} style={{ color: latest ? color : '#667788' }} />
-              <span style={{ fontSize: 9, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <span style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {label}
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
               <span style={{
-                fontSize: 18, fontWeight: 800,
-                color: latest ? color : '#778899',
+                fontSize: 28, fontWeight: 800,
+                color: latest ? color : '#94a3b8',
                 fontFamily: 'var(--font-mono)', lineHeight: 1,
+                letterSpacing: '-0.025em',
               }}>
                 {value}
               </span>
-              <span style={{ fontSize: 10, color: '#778899' }}>{unit}</span>
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>{unit}</span>
             </div>
           </div>
         ))}
@@ -107,7 +108,7 @@ export function WeatherBlock({ lastManagementBySeason }: WeatherBlockProps) {
           border: '1px solid rgba(245,158,11,0.15)',
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          <span style={{ fontSize: 11, color: '#f59e0b' }}>Aguardando dados climáticos do dia</span>
+          <span style={{ fontSize: 12, color: '#f59e0b' }}>Aguardando dados climáticos do dia</span>
         </div>
       )}
     </div>

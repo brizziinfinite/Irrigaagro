@@ -277,12 +277,12 @@ function KpiCard({ label, value, unit, color = '#e2e8f0', icon: Icon, sub, descr
   return (
     <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px' }}>
       {Icon && <Icon size={14} style={{ color, marginBottom: 8 }} />}
-      <p style={{ fontSize: 22, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-        {value} <span style={{ fontSize: 12, fontWeight: 400, color: '#778899' }}>{unit}</span>
+      <p style={{ fontSize: 28, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1, letterSpacing: '-0.025em' }}>
+        {value} <span style={{ fontSize: 13, fontWeight: 400, color: '#778899' }}>{unit}</span>
       </p>
-      <p style={{ fontSize: 11, color: '#8899aa', marginTop: 5 }}>{label}</p>
-      {sub && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{sub}</p>}
-      {description && <p style={{ fontSize: 10, color: '#556677', marginTop: 4, lineHeight: 1.4 }}>{description}</p>}
+      <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{label}</p>
+      {sub && <p style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>{sub}</p>}
+      {description && <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 5, lineHeight: 1.625 }}>{description}</p>}
     </div>
   )
 }
@@ -297,7 +297,7 @@ function StressGauge({ value }: { value: number }) {
     <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', flex: 1, minWidth: 200 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <AlertTriangle size={14} style={{ color }} />
-        <span style={{ fontSize: 11, color: '#8899aa' }}>Índice de Stress Hídrico</span>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>Índice de Stress Hídrico</span>
       </div>
       <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {fmtNum(value)}%
@@ -323,7 +323,7 @@ function GaugeCard({ title, value, unit, color, desc }: {
   return (
     <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 200 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <span style={{ fontSize: 11, color: '#8899aa', fontWeight: 600 }}>{title}</span>
+        <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{title}</span>
       </div>
       <p style={{ fontSize: 24, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {fmtNum(value, 1)}{unit}
@@ -781,40 +781,40 @@ function HeroSummary({ kpis, season, lastRecordDate }: { kpis: SeasonKPIs; seaso
               borderRadius: 20, background: status.bg, color: status.color,
               border: `1px solid ${status.color}40`, marginBottom: 4,
             }}>{status.label}</span>
-            <p style={{ fontSize: 10, color: '#556677', lineHeight: 1.3, maxWidth: 160 }}>score composto: stress (40%) + eficiência (30%) + CC% (30%)</p>
+            <p style={{ fontSize: 11, color: '#8899aa', lineHeight: 1.4, maxWidth: 160 }}>score composto: stress (40%) + eficiência (30%) + CC% (30%)</p>
           </div>
         </div>
 
         {/* Métricas rápidas */}
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'flex-start' }}>
           <div>
-            <p style={{ fontSize: 10, color: '#8899aa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+            <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
               Eficiência Hídrica
             </p>
             <p style={{ fontSize: 28, fontWeight: 800, color: effColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
               {efficiency !== null ? `${efficiency}%` : '—'}
             </p>
-            <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>ETc / (Irrig+Chuva)</p>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3 }}>ETc / (Irrig+Chuva)</p>
           </div>
 
           <div>
-            <p style={{ fontSize: 10, color: '#8899aa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+            <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
               Stress Hídrico
             </p>
             <p style={{ fontSize: 28, fontWeight: 800, color: stressColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
               {fmtNum(kpis.stressIndex)}%
             </p>
-            <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>{kpis.stressDays} dia(s) abaixo do CAD</p>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3 }}>{kpis.stressDays} dia(s) abaixo do CAD</p>
           </div>
 
           <div>
-            <p style={{ fontSize: 10, color: '#8899aa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+            <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
               CC% Média
             </p>
             <p style={{ fontSize: 28, fontWeight: 800, color: kpis.avgFieldCapacity >= 70 ? '#22c55e' : kpis.avgFieldCapacity >= 50 ? '#f59e0b' : '#ef4444', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
               {kpis.avgFieldCapacity > 0 ? `${Math.round(kpis.avgFieldCapacity)}%` : '—'}
             </p>
-            <p style={{ fontSize: 10, color: '#556677', marginTop: 2 }}>umidade média na safra</p>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3 }}>umidade média na safra</p>
           </div>
         </div>
       </div>
@@ -822,28 +822,28 @@ function HeroSummary({ kpis, season, lastRecordDate }: { kpis: SeasonKPIs; seaso
       {/* Interpretação */}
       {stressInterpretation && (
         <div style={{ marginTop: 14, padding: '10px 14px', background: 'rgba(255,255,255,0.025)', borderRadius: 10, borderLeft: `3px solid ${stressColor}` }}>
-          <p style={{ fontSize: 12, color: '#aabbcc', lineHeight: 1.5 }}>{stressInterpretation}</p>
+          <p style={{ fontSize: 14, color: '#cbd5e1', lineHeight: 1.625 }}>{stressInterpretation}</p>
         </div>
       )}
 
       {/* Recomendação */}
       {recommendation && (
         <div style={{ marginTop: 8, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-          <span style={{ fontSize: 10, color: '#0093D0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0, marginTop: 1 }}>Recomendação</span>
-          <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5 }}>{recommendation}</p>
+          <span style={{ fontSize: 11, color: '#0093D0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', flexShrink: 0, marginTop: 2 }}>Recomendação</span>
+          <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>{recommendation}</p>
         </div>
       )}
 
       {/* Rodapé: sumário + última atualização */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 8, marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-        <p style={{ fontSize: 11, color: '#778899', lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5 }}>
           {kpis.totalDays} dias monitorados
           {kpis.irrigationEvents > 0 && ` · ${kpis.irrigationEvents} irrigações`}
           {kpis.totalRainfallMm > 0 && ` · ${fmtNum(kpis.totalRainfallMm)} mm de chuva`}
           {season.crops && ` · ${season.crops.name}`}
         </p>
         {lastRecordDate && (
-          <span style={{ fontSize: 10, color: '#556677' }}>
+          <span style={{ fontSize: 12, color: '#8899aa' }}>
             Última atualização: {fmtDate(lastRecordDate)}
           </span>
         )}
@@ -878,7 +878,7 @@ function AccordionSection({ id, title, icon: Icon, isOpen, onToggle, children, b
         }}
       >
         <Icon size={13} style={{ color: '#0093D0', flexShrink: 0 }} />
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8899aa', flex: 1 }}>{title}</span>
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1', flex: 1 }}>{title}</span>
         {badge && (
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(0,147,208,0.12)', color: '#0093D0', fontWeight: 600 }}>{badge}</span>
         )}
@@ -944,8 +944,8 @@ function EnergyKpiCard({ label, value, unit, status, meta }: {
       <p style={{ fontSize: 20, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {value} <span style={{ fontSize: 11, fontWeight: 400, color: '#778899' }}>{unit}</span>
       </p>
-      <p style={{ fontSize: 11, color: '#8899aa', marginTop: 5 }}>{label}</p>
-      {meta && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{meta}</p>}
+      <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{label}</p>
+      {meta && <p style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>{meta}</p>}
     </div>
   )
 }
@@ -1328,24 +1328,24 @@ export default function RelatoriosPage() {
       {/* Título + botão CSV */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#e2e8f0' }}>Relatórios de Safra</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>Relatórios de Safra</h1>
           {selectedSeason ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6, alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#0093D0' }}>{selectedSeason.name}</span>
-              <span style={{ fontSize: 12, color: '#556677' }}>·</span>
-              <span style={{ fontSize: 12, color: '#8899aa' }}>{selectedSeason.farms.name}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0093D0' }}>{selectedSeason.name}</span>
+              <span style={{ fontSize: 13, color: '#64748b' }}>·</span>
+              <span style={{ fontSize: 13, color: '#94a3b8' }}>{selectedSeason.farms.name}</span>
               {selectedSeason.pivots && (
                 <>
-                  <span style={{ fontSize: 12, color: '#556677' }}>·</span>
-                  <span style={{ fontSize: 12, color: '#8899aa' }}>{selectedSeason.pivots.name}</span>
+                  <span style={{ fontSize: 13, color: '#64748b' }}>·</span>
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>{selectedSeason.pivots.name}</span>
                 </>
               )}
               {selectedSeason.is_active && (
-                <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: 'rgba(34,197,94,0.12)', color: '#22c55e', fontWeight: 600 }}>ativa</span>
+                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'rgba(34,197,94,0.12)', color: '#22c55e', fontWeight: 600 }}>ativa</span>
               )}
             </div>
           ) : (
-            <p style={{ fontSize: 13, color: '#8899aa', marginTop: 2 }}>Visão integrada de irrigação, estresse e consumo hídrico</p>
+            <p style={{ fontSize: 14, color: '#94a3b8', marginTop: 4, lineHeight: 1.5 }}>Visão integrada de irrigação, estresse e consumo hídrico</p>
           )}
         </div>
         {records.length > 0 && (

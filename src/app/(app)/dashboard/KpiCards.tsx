@@ -73,11 +73,11 @@ export function KpiCards({ summary }: KpiCardsProps) {
 
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
             <span style={{
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.09em',
-              color: '#667788',
+              color: '#94a3b8',
               lineHeight: 1.4,
             }}>
               {label}
@@ -103,10 +103,10 @@ export function KpiCards({ summary }: KpiCardsProps) {
             }}>
               {value}
             </span>
-            <span style={{ fontSize: 12, color: '#778899', fontWeight: 500 }}>{unit}</span>
+            <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 500 }}>{unit}</span>
           </div>
 
-          <p style={{ fontSize: 11, color: '#667788', marginTop: 10, lineHeight: 1.4, fontWeight: 500 }}>{subtitle}</p>
+          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 10, lineHeight: 1.625, fontWeight: 500 }}>{subtitle}</p>
         </div>
       ))}
     </div>

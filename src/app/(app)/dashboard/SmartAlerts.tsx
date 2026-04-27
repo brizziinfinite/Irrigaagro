@@ -65,14 +65,14 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Info size={12} style={{ color: '#f59e0b' }} />
         <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          letterSpacing: '0.06em', color: '#778899',
+          fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
+          letterSpacing: '0.16em', color: '#cbd5e1',
         }}>
           Alertas Inteligentes
         </span>
         {alerts.length > 0 && (
           <span style={{
-            marginLeft: 'auto', fontSize: 10, fontWeight: 700,
+            marginLeft: 'auto', fontSize: 11, fontWeight: 700,
             background: 'rgb(239 68 68 / 0.12)', color: '#ef4444',
             border: '1px solid rgb(239 68 68 / 0.25)',
             borderRadius: 99, padding: '1px 7px',
@@ -87,7 +87,7 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
       {alerts.length === 0 ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
           <CheckCircle2 size={14} style={{ color: '#22c55e', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, color: '#778899' }}>Nenhum alerta no momento.</span>
+          <span style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>Nenhum alerta no momento.</span>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -105,13 +105,13 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
                 border: `1px solid ${cfg.border}`,
               }}>
                 <Icon size={13} style={{ color: cfg.color, flexShrink: 0, marginTop: 1 }} />
-                <span style={{ fontSize: 12, color: '#8899aa', flex: 1, lineHeight: 1.5 }}>
+                <span style={{ fontSize: 14, color: '#94a3b8', flex: 1, lineHeight: 1.625 }}>
                   {alert.msg}
                 </span>
                 {alert.tipo === 'urgente' && (
                   <Link href="/manejo" style={{
                     flexShrink: 0,
-                    fontSize: 10, fontWeight: 700,
+                    fontSize: 11, fontWeight: 700,
                     color: '#ef4444',
                     background: 'rgb(239 68 68 / 0.12)',
                     border: '1px solid rgb(239 68 68 / 0.25)',

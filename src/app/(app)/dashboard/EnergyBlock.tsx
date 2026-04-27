@@ -30,8 +30,8 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <span style={{ fontSize: 24, filter: 'drop-shadow(0 0 10px rgba(0, 229, 255, 0.8))' }}>⚡</span>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0' }}>Energia & Custos</p>
-            <p style={{ fontSize: 13, color: '#778899', marginTop: 4 }}>
+            <p style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>Energia & Custos</p>
+            <p style={{ fontSize: 14, color: '#94a3b8', marginTop: 4, lineHeight: 1.625 }}>
               Nenhuma conta de energia registrada.
             </p>
           </div>
@@ -143,12 +143,12 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
           <span style={{ fontSize: 16, filter: 'drop-shadow(0 0 8px #CCFF00)' }}>⚡</span>
           <span style={{
             fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#e2e8f0',
+            letterSpacing: '0.16em', color: '#cbd5e1',
           }}>
             Energia & Custos da Safra
           </span>
         </div>
-        <span style={{ fontSize: 10, color: '#778899' }}>{periodoLabel}</span>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>{periodoLabel}</span>
       </div>
 
       {/* KPI Cards — 2 colunas no mobile, 4 no desktop */}
@@ -161,21 +161,22 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
             padding: '16px 18px',
           }}>
             <span style={{
-              fontSize: 10, fontWeight: 800, textTransform: 'uppercase',
-              letterSpacing: '0.06em', color: '#687b8d',
+              fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
+              letterSpacing: '0.06em', color: '#94a3b8',
             }}>
               {label}
             </span>
             <div style={{ marginTop: 8 }}>
               <span style={{
-                fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-mono)',
-                color, lineHeight: 1, textShadow: `0 0 10px ${color}50`
+                fontSize: 28, fontWeight: 900, fontFamily: 'var(--font-mono)',
+                color, lineHeight: 1, letterSpacing: '-0.025em',
+                textShadow: `0 0 10px ${color}50`
               }}>
                 {value}
               </span>
             </div>
             {sub && (
-              <span style={{ fontSize: 10, color: '#778899', marginTop: 4, display: 'block' }}>
+              <span style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, display: 'block' }}>
                 {sub}
               </span>
             )}
@@ -191,8 +192,8 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
           display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           <span style={{
-            fontSize: 11, fontWeight: 800, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#8899aa',
+            fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
+            letterSpacing: '0.16em', color: '#cbd5e1',
           }}>
             Distribuição
           </span>
@@ -204,19 +205,19 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 8, height: 8, borderRadius: 2, background: '#22c55e' }} />
-              <span style={{ fontSize: 10, color: '#778899' }}>{fpPercent}% FP</span>
+              <span style={{ fontSize: 12, color: '#64748b' }}>{fpPercent}% FP</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 8, height: 8, borderRadius: 2, background: '#f59e0b' }} />
-              <span style={{ fontSize: 10, color: '#778899' }}>{100 - fpPercent}% P</span>
+              <span style={{ fontSize: 12, color: '#64748b' }}>{100 - fpPercent}% P</span>
             </div>
           </div>
           {/* Fator de potência */}
           {fatorPotencia !== null && (
             <div style={{ marginTop: 4 }}>
-              <span style={{ fontSize: 10, color: '#778899' }}>Fator Potência: </span>
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>Fator Potência: </span>
               <span style={{
-                fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-mono)',
                 color: fatorPotencia >= 0.92 ? '#22c55e' : '#ef4444',
               }}>
                 {fatorPotencia.toFixed(2)}
@@ -231,8 +232,8 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
           display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           <span style={{
-            fontSize: 11, fontWeight: 800, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#8899aa',
+            fontSize: 12, fontWeight: 800, textTransform: 'uppercase',
+            letterSpacing: '0.16em', color: '#cbd5e1',
           }}>
             Evolução Mensal
           </span>
@@ -246,8 +247,8 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1,
                 }}>
                   <span style={{
-                    fontSize: 9, fontWeight: 700, fontFamily: 'var(--font-mono)',
-                    color: '#8899aa',
+                    fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                    color: '#94a3b8',
                   }}>
                     {fmtBrl(custo)}
                   </span>
@@ -256,7 +257,7 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
                     background: 'linear-gradient(to top, rgba(0, 229, 255, 0.2), rgba(0, 229, 255, 0.7))',
                     boxShadow: '0 0 10px rgba(0,229,255,0.2)'
                   }} />
-                  <span style={{ fontSize: 9, color: '#778899', textTransform: 'capitalize' }}>{mes}</span>
+                  <span style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>{mes}</span>
                 </div>
               )
             })}
@@ -278,7 +279,7 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
             <span style={{ fontSize: 12 }}>
               {demandaMedida <= demandaContratada ? '✅' : '🚨'}
             </span>
-            <span style={{ fontSize: 11, color: '#8899aa' }}>
+            <span style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625 }}>
               Demanda: <strong style={{
                 color: demandaMedida <= demandaContratada ? '#22c55e' : '#ef4444',
                 fontFamily: 'var(--font-mono)',
@@ -295,7 +296,7 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <span style={{ fontSize: 12 }}>⚠️</span>
-            <span style={{ fontSize: 11, color: '#8899aa' }}>
+            <span style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625 }}>
               Reativa: <strong style={{ color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>
                 {fmtBrl(reativaTotal)}
               </strong> ({reativaPercent.toFixed(1)}%) — verificar fator de potência

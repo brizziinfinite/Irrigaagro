@@ -142,15 +142,105 @@ Estação Plugfield ativa: device 3228, 248 dias históricos importados.
 
 ---
 
-## 📱 PWA / Notificações push
-**Status:** Pendente
+## ✨ Padrão Tipográfico Global
+**Status:** ✅ Implementado em 2026-04-27 · branch `feat/typography-system`
 
-O produtor precisa ser alertado no celular quando um pivô atinge status vermelho.
+Aplicado em 16 arquivos (todas as páginas + componentes do dashboard). Regras fixas:
 
-**O que implementar:**
-- `manifest.json` + service worker (Next.js PWA)
-- Edge Function que roda diariamente e envia push para pivôs críticos
-- Configuração de horário e threshold de alerta por usuário
+- **Título de página**: `fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em'`
+- **Valores KPI grandes**: `fontSize: 28, letterSpacing: '-0.025em'`
+- **Valores médios (tabela)**: `fontSize: 14, fontWeight: 600`
+- **Labels de card**: `fontSize: 12, color: '#94a3b8'`
+- **Descrições de apoio**: `fontSize: 12, color: '#94a3b8', lineHeight: 1.625`
+- **Headers de seção/accordion (uppercase)**: `fontSize: 12, color: '#cbd5e1', letterSpacing: '0.16em'`
+- **Texto corpo/parágrafo**: `fontSize: 14, color: '#94a3b8', lineHeight: 1.625`
+- **Texto terciário/muted**: `fontSize: 12, color: '#64748b'`
+- **Labels de formulário**: `fontSize: 13, color: '#94a3b8'`
+- **Rótulos badge/meta**: `fontSize: 11`
+- **REGRA**: NUNCA usar classes Tailwind (Turbopack bug → 0px). Sempre inline `style={{}}`
+
+---
+
+## 📱 PWA — Próxima sessão prioritária
+**Status:** Pendente — implementar na próxima sessão
+
+O IrrigaAgro precisa funcionar como app nativo no celular do produtor rural: instalável na tela inicial, funcionando offline (pelo menos leitura do último estado), com ícones e splash screen corretos.
+
+### O que implementar (em ordem):
+
+#### 1. Web App Manifest (`public/manifest.json`)
+```json
+{
+  "name": "IrrigaAgro",
+  "short_name": "IrrigaAgro",
+  "description": "Irrigação inteligente — monitoramento de pivôs",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0d1520",
+  "theme_color": "#0093D0",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
+```
+- Adicionar `<link rel="manifest" href="/manifest.json" />` no `layout.tsx`
+- Adicionar `<meta name="theme-color" content="#0093D0" />` e `<meta name="apple-mobile-web-app-capable" content="yes" />`
+
+#### 2. Ícones PWA (`public/icons/`)
+- Gerar `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` a partir do SVG do logo IrrigaAgro
+- Ferramenta: https://maskable.app ou sharp no Node.js
+- Maskable: padding de 20% (safe zone), fundo `#0d1520`
+
+#### 3. Service Worker com `next-pwa`
+```bash
+npm install next-pwa
+```
+Configurar em `next.config.ts`:
+```ts
+import withPWA from 'next-pwa'
+export default withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  runtimeCaching: [
+    // Cache das páginas do app
+    { urlPattern: /^\/(dashboard|manejo|relatorios|precipitacoes)/, handler: 'NetworkFirst', options: { cacheName: 'pages', expiration: { maxEntries: 20, maxAgeSeconds: 3600 } } },
+    // Cache de assets estáticos
+    { urlPattern: /\/_next\/static\//, handler: 'CacheFirst', options: { cacheName: 'next-static' } },
+  ]
+})
+```
+
+#### 4. Offline fallback (`public/offline.html`)
+- Página simples com logo e "Sem conexão — dados do último acesso disponíveis"
+- Mostrar os últimos dados cacheados do dashboard
+
+#### 5. Meta tags iOS (`app/layout.tsx`)
+```tsx
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="IrrigaAgro" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+```
+
+#### 6. Notificações Push (opcional — fase 2)
+- Usar Web Push API + `web-push` npm package
+- Tabela `push_subscriptions` no Supabase (user_id, endpoint, keys)
+- Edge Function `send-push-alert` disparada pelo cron `afternoon-alert`
+- Payload: `{ title: "Irrigar hoje", body: "Pivô Krebbs: 64% — irrigar amanhã" }`
+
+### Checklist de qualidade PWA
+- [ ] Lighthouse PWA score ≥ 90
+- [ ] Instalável no Chrome Android e Safari iOS
+- [ ] Ícone correto na tela inicial (sem fundo branco no iOS)
+- [ ] Splash screen com fundo `#0d1520`
+- [ ] Funciona offline (mostra último estado cacheado)
+- [ ] `display: standalone` (sem barra de URL)
+- [ ] Theme color `#0093D0` na status bar do Android
 
 ---
 

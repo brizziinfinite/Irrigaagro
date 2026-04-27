@@ -115,14 +115,14 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
           }} />
           <span style={{
             fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: '#e2e8f0',
+            letterSpacing: '0.16em', color: '#cbd5e1',
           }}>
             Situação por Pivô
           </span>
         </div>
         {urgentCount > 0 && (
           <span style={{
-            fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+            fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
             background: 'rgba(239,68,68,0.15)', color: '#ef4444',
             border: '1px solid rgba(239,68,68,0.3)',
             borderRadius: 8, padding: '4px 8px',
@@ -143,7 +143,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flex: 1, minHeight: 120, border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 12
         }}>
-          <p style={{ fontSize: 13, color: '#778899' }}>Nenhum pivô online.</p>
+          <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>Nenhum pivô online.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, overflowY: 'auto' }}>
@@ -201,13 +201,13 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                     ) : null}
                   </div>
 
-                  <p style={{ fontSize: 11, color: '#8899aa' }}>{pivot.farms?.name ?? ''}</p>
+                  <p style={{ fontSize: 12, color: '#94a3b8' }}>{pivot.farms?.name ?? ''}</p>
 
                   {/* Irrigar hoje: lâmina + velocidade */}
                   {needsIrrigation && (lamina != null || speed != null) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
                       {lamina != null && lamina > 0 && (
-                        <span style={{ fontSize: 11, color: '#e2e8f0', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                        <span style={{ fontSize: 14, color: '#e2e8f0', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
                           {lamina.toFixed(1)} mm
                         </span>
                       )}
@@ -226,14 +226,14 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                   {/* Projeção: irrigar em X dias */}
                   {proj && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
-                      <span style={{ fontSize: 10, color: '#778899' }}>
+                      <span style={{ fontSize: 12, color: '#64748b' }}>
                         Irrigar em{' '}
                         <span style={{ color: proj.daysAway <= 2 ? '#f59e0b' : '#8899aa', fontWeight: 700 }}>
                           {proj.daysAway === 1 ? 'amanhã' : `${proj.daysAway} dias`}
                         </span>
                       </span>
                       {proj.projectedDepthMm > 0 && (
-                        <span style={{ fontSize: 10, color: '#778899' }}>
+                        <span style={{ fontSize: 12, color: '#64748b' }}>
                           · {proj.projectedDepthMm.toFixed(1)} mm
                         </span>
                       )}
@@ -251,7 +251,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
 
                   {/* Nenhum dado disponível */}
                   {!mgmt && (
-                    <span style={{ fontSize: 10, color: '#667788' }}>Sem balanço hoje</span>
+                    <span style={{ fontSize: 12, color: '#64748b' }}>Sem balanço hoje</span>
                   )}
                 </div>
 
