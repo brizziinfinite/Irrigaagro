@@ -559,12 +559,17 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
       }))
       await onSaved()
 
-      // Recalcula manejo de forma síncrona para todos os pivôs afetados
+      // Recalcula o balanço hídrico da safra a partir da data alterada.
+      // O modal permanece aberto (com spinner) até o recálculo concluir,
+      // garantindo que o Manejo Diário já esteja atualizado quando o usuário navegar.
       setSyncing(true)
+      setSaving(false)
       await Promise.all(allTargets.map(({ pid }) => syncManagementForPivotDate(pid, date)))
       setSyncing(false)
+      onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao salvar precipitação')
+      setSyncing(false)
     } finally {
       setSaving(false)
     }
@@ -581,6 +586,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
       setSaving(false)
       await syncManagementForPivotDate(pivotId, date)
       setSyncing(false)
+      onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao excluir precipitação')
       setSaving(false)
@@ -729,10 +735,12 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
           )}
           <button
             onClick={onClose}
+            disabled={syncing}
             style={{
               padding: '10px 14px', borderRadius: 8,
               background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
-              color: '#778899', cursor: 'pointer', fontSize: 13,
+              color: '#778899', cursor: syncing ? 'not-allowed' : 'pointer', fontSize: 13,
+              opacity: syncing ? 0.4 : 1,
             }}
           >
             Cancelar
