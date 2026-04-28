@@ -1,6 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Nome do cookie que cacheia o status da company — evita query ao banco em cada request.
+// Válido por 5 minutos. Quando o admin muda o status, a API invalida o cookie.
+const COMPANY_STATUS_COOKIE = 'co_status'
+const COMPANY_STATUS_TTL_SECONDS = 300
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -23,6 +28,7 @@ export async function proxy(request: NextRequest) {
     }
   )
 
+  // getUser() valida o JWT localmente — sem round-trip ao banco na maioria dos casos
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
@@ -59,15 +65,32 @@ export async function proxy(request: NextRequest) {
   }
 
   // Verificar status da company (apenas rotas de app, não API)
+  // Usa cookie de cache para evitar query ao Supabase em cada navegação.
   if (!pathname.startsWith('/api/')) {
-    const { data: member } = await supabase
-      .from('company_members')
-      .select('company_id, companies(status)')
-      .eq('user_id', user.id)
-      .limit(1)
-      .single()
+    const cachedStatus = request.cookies.get(COMPANY_STATUS_COOKIE)?.value
 
-    const status = (member?.companies as { status?: string } | null)?.status
+    let status: string | undefined = cachedStatus
+
+    if (!cachedStatus) {
+      // Cache miss — busca no banco e grava o cookie
+      const { data: member } = await supabase
+        .from('company_members')
+        .select('company_id, companies(status)')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single()
+
+      status = (member?.companies as { status?: string } | null)?.status
+
+      if (status) {
+        supabaseResponse.cookies.set(COMPANY_STATUS_COOKIE, status, {
+          httpOnly: true,
+          sameSite: 'lax',
+          maxAge: COMPANY_STATUS_TTL_SECONDS,
+          path: '/',
+        })
+      }
+    }
 
     if (status === 'pending' || status === 'suspended') {
       return NextResponse.redirect(new URL('/aguardando', request.url))
@@ -81,3 +104,6 @@ export const config = {
   // Exclui: assets estáticos, _next, API routes (protegidas pela própria lógica delas)
   matcher: ['/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
+
+// Exporta constante para uso na API de admin ao invalidar o cookie
+export { COMPANY_STATUS_COOKIE }

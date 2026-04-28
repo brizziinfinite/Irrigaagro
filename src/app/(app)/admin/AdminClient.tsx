@@ -53,6 +53,9 @@ export function AdminClient({ companies: initial }: Props) {
     if (error) {
       setMessage({ type: 'err', text: 'Erro ao atualizar: ' + error.message })
     } else {
+      // Invalida o cookie de status cacheado para que o cliente veja a mudança imediatamente
+      document.cookie = 'co_status=; max-age=0; path=/'
+
       setCompanies(prev =>
         prev.map(c => c.id === companyId ? { ...c, status: newStatus } : c)
       )
