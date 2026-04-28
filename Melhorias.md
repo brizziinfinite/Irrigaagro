@@ -53,23 +53,21 @@ Legenda: `[ ]` pendente · `[x]` feito
 
 ---
 
-## 🔴 PRIORIDADE ALTA — Sistema de aprovação de clientes
-**Status:** Pendente — implementar na próxima sessão (2026-04-25)
+## ✅ Sistema de aprovação de clientes
+**Status:** ✅ Implementado em 2026-04-27
 
 Novo cliente se cadastra → fica em `pending` → Brizzi aprova → cliente acessa.
 
-**O que implementar (em ordem):**
-- [ ] **Migration**: `status text DEFAULT 'pending'` em `companies`
-- [ ] **Middleware** (`src/middleware.ts`): verifica `status` da company após login; `pending` → `/aguardando`
-- [ ] **Página `/aguardando`**: tela informativa para cliente aguardar aprovação
-- [ ] **Página `/admin`**: lista companies (pending/active/suspended), botões Ativar/Suspender — super-admin only
-- [ ] **Resend**: criar conta, domínio `gotejo.com.br`, `RESEND_API_KEY` nas env vars Vercel
-- [ ] **E-mail para Brizzi**: novo cadastro → notificação com nome/e-mail do cliente + link `/admin`
-- [ ] **E-mail para cliente**: ativação → e-mail automático confirmando acesso liberado
+- [x] Migration: `status text DEFAULT 'pending'` em `companies`
+- [x] `proxy.ts`: `pending`/`suspended` → `/aguardando`; `/admin` bloqueado para não super-admins
+- [x] Página `/aguardando`: polling 15s, detecta aprovação e redireciona automaticamente
+- [x] Página `/admin`: KPIs, filtros, Ativar/Suspender/Reativar
+- [x] `RESEND_API_KEY`, `ADMIN_NOTIFY_EMAIL`, `WEBHOOK_SECRET` nas env vars Vercel
+- [x] E-mail para Brizzi: notificação de novo cadastro via Resend
+- [x] E-mail para cliente: confirmação de ativação via Resend
+- [x] Trigger `on_new_user_notify` no Supabase
 
-**Dependências:**
-- `isSuperAdmin()` já existe em `src/lib/super-admin.ts`
-- Trigger `handle_new_user()` já cria a company — só adicionar `status = 'pending'`
+**Pendente:** configurar domínio `gotejo.com.br` no painel Resend para envio via domínio próprio
 
 ---
 
@@ -137,8 +135,41 @@ Estação Plugfield ativa: device 3228, 248 dias históricos importados.
 - **Phase 1** ✅ 2026-04-22 — Wizard web 5 passos, tabela `soil_manual_diagnosis`, storage bucket
 - **Phase 2** ✅ 2026-04-22 — WhatsApp state machine (`whatsapp_sessions`), edge function `diagnose-soil`
   - Flow: "diagnóstico" → lista pivôs → score 1-5 → foto/pular → resultado %CC + lâmina
-- **Phase 3** [ ] — Página `/diagnostico-solo/historico` com gráficos de evolução
+- **Phase 3** [ ] — Página `/diagnostico-solo/historico` com gráficos de evolução por pivô
 - **Phase 4** [ ] — Calibração automática do balanço quando diagnóstico diverge do calculado
+
+---
+
+## 🧱 Textura do solo — Seletor FAO-56
+**Status:** ✅ Implementado em 2026-04-27 · branch `feat/soil-texture-selector` mergeado no `main`
+
+Agricultores sem análise de laboratório podem selecionar a classe textural do solo para auto-preencher CC, PM e Ds com valores FAO-56 canônicos.
+
+- 5 cartões: Argiloso / Franco-Argiloso / Franco / Franco-Arenoso / Arenoso
+- Posicionado fora de `showAdvanced` (sempre visível no formulário de pivôs)
+- Auto-fill CC/PM/Ds ao clicar; deselect automático ao editar manualmente
+- Migration: coluna `soil_texture text` em `pivots`
+- `src/lib/soil-textures.ts`: constante `FAO_SOIL_TEXTURES` com 5 classes
+
+---
+
+## 🎨 Polish UX — Safras, Culturas, Estações, WhatsApp, Diagnóstico
+**Status:** ✅ Implementado em 2026-04-27
+
+### Safras
+Cards transformados em resumos de saúde: badge Ideal/Atenção/Crítico, umidade 32px, interpretação textual, ETc pill, CTA "Abrir manejo →", data relativa ("hoje"/"ontem").
+
+### Culturas
+Kc renomeado (Inicial/Crescimento/Final), linguagem natural, pill de ciclo, busca em tempo real, `SectionHeader` com barra colorida, CTA "Usar na safra →".
+
+### Estações
+Campos agrupados por categoria, resumo da última leitura no topo, histórico paginado (10/página), data padrão D-1, rótulos legíveis de origem, delete discreto.
+
+### WhatsApp — Central de alertas
+4 KPIs (contatos / pivôs / alertas / próximo envio), cards enriquecidos com chips de alerta e status, bloco "Como funciona", botão "Pivôs e alertas" com badge.
+
+### Diagnóstico de Pivô — Centro operacional
+Hero com borda dinâmica por status, interpretações textuais nas 4 métricas (ETo/Chuva/Manejo/Rota), botão "Gerar manejo agora" funcional, alertas humanizados com título + ação, timestamp de atualização.
 
 ---
 
