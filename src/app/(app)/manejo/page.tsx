@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { persistedFetch } from '@/lib/persistedFetch'
+import { useOnlineGuard } from '@/hooks/useOnlineGuard'
 import type { Season, Crop, Pivot, DailyManagement, Farm, DailyManagementInsert } from '@/types/database'
 import {
   getStageInfoForDas, calcCTA, calcProjection, calcRa, calcDepthForSpeed, getFFactorForDas,
@@ -35,6 +37,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Area, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceArea, Cell, AreaChart, BarChart } from 'recharts'
 import WaterBalanceChart from './WaterBalanceChart'
+import { UltimaAtualizacao } from '@/components/UltimaAtualizacao'
 
 // ─── Status semáforo ─────────────────────────────────────────
 
@@ -725,11 +728,13 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
 
 export default function ManejoPage() {
   const { company, loading: authLoading } = useAuth()
+  const { isOnline, guardAction } = useOnlineGuard()
   const [seasons, setSeasons]     = useState<SeasonFull[]>([])
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('')
   const [history, setHistory]     = useState<DailyManagement[]>([])
   const [loading, setLoading]     = useState(true)
   const [saving, setSaving]       = useState(false)
+  const [cacheInfo, setCacheInfo] = useState<{ fetchedAt: string | null; fromCache: boolean }>({ fetchedAt: null, fromCache: false })
   const [saveMsg, setSaveMsg]     = useState<string | null>(null)
   const [error, setError]         = useState<string | null>(null)
   const [weatherLoading, setWeatherLoading] = useState(false)
@@ -767,30 +772,37 @@ export default function ManejoPage() {
   const loadSeasons = useCallback(async () => {
     if (!company?.id) { setSeasons([]); setSelectedSeasonId(''); setLoading(false); return }
     setLoading(true)
-    try {
-      const contexts = await listManagementSeasonContexts(company.id)
+    const { data: contexts, fetchedAt, fromCache, error: fetchErr } = await persistedFetch(
+      `manejo:seasons:${company.id}`,
+      () => listManagementSeasonContexts(company.id)
+    )
+    setCacheInfo({ fetchedAt, fromCache })
+    if (contexts) {
       const list: SeasonFull[] = contexts.map(c => ({ ...c.season, crops: c.crop, pivots: c.pivot, farms: c.farm }))
       setSeasons(list)
       setSelectedSeasonId(cur => {
         if (cur && list.some(s => s.id === cur)) return cur
         return list.find(s => s.is_active)?.id ?? list[0]?.id ?? ''
       })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao carregar safras.')
-    } finally {
-      setLoading(false)
+    } else {
+      setError(fetchErr instanceof Error ? fetchErr.message : 'Falha ao carregar safras.')
     }
+    setLoading(false)
   }, [company?.id])
 
   useEffect(() => { if (!authLoading) loadSeasons() }, [authLoading, loadSeasons])
 
   const loadHistory = useCallback(async (seasonId: string) => {
     if (!seasonId) return
-    try {
-      const data = await listDailyManagementBySeason(seasonId)
+    const { data, fetchedAt, fromCache } = await persistedFetch(
+      `manejo:history:${seasonId}`,
+      () => listDailyManagementBySeason(seasonId)
+    )
+    if (data) {
       setHistory(data.slice(0, 30))
-    } catch (err) {
-      console.error('[manejo] loadHistory falhou:', err)
+      setCacheInfo({ fetchedAt, fromCache })
+    } else {
+      console.error('[manejo] loadHistory falhou (offline ou erro)')
       setError('Falha ao carregar histórico. Tente recarregar a página.')
       setHistory([])
     }
@@ -1137,6 +1149,13 @@ export default function ManejoPage() {
 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* Badge de cache / atualização */}
+      {(cacheInfo.fromCache || cacheInfo.fetchedAt) && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <UltimaAtualizacao fetchedAt={cacheInfo.fetchedAt} />
+        </div>
+      )}
 
       {/* ── Modal: Lançamento Rápido de Irrigação ─────────────── */}
       {showQuickModal && (
@@ -1976,7 +1995,7 @@ export default function ManejoPage() {
             )}
 
             {/* Botão salvar */}
-            <button onClick={handleSave} disabled={saving || !calcResult}
+            <button onClick={() => { if (!guardAction()) return; handleSave() }} disabled={saving || !calcResult || !isOnline}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                 padding: '17px 0', borderRadius: 12, fontSize: 14, fontWeight: 700,

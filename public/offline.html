@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IrrigaAgro — Sem conexão</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0B0F14;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 360px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 32px;
+      letter-spacing: -0.5px;
+    }
+    .logo span:first-child { color: #0093D0; }
+    .logo span:last-child  { color: #22c55e; font-weight: 300; }
+
+    .icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #e2e8f0;
+    }
+
+    p {
+      font-size: 15px;
+      color: #8899aa;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #556677;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 10px 16px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .dot.online { background: #22c55e; animation: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <span>Irriga</span><span>Agro</span>
+    </div>
+
+    <div class="icon">📡</div>
+
+    <h1>Sem conexão com a internet</h1>
+    <p>
+      O IrrigaAgro precisa de conexão para carregar dados atualizados
+      de balanço hídrico e clima. Verifique sua rede e tente novamente.
+    </p>
+
+    <div class="status" id="status">
+      <div class="dot" id="dot"></div>
+      <span id="status-text">Aguardando conexão…</span>
+    </div>
+  </div>
+
+  <script>
+    // Recarrega automaticamente ao voltar online
+    function checkOnline() {
+      if (navigator.onLine) {
+        document.getElementById('dot').classList.add('online')
+        document.getElementById('status-text').textContent = 'Conectado! Recarregando…'
+        setTimeout(() => window.location.reload(), 800)
+      }
+    }
+
+    window.addEventListener('online', checkOnline)
+
+    // Verifica periodicamente (30s)
+    setInterval(() => {
+      fetch('/manifest.json', { cache: 'no-store' })
+        .then(() => checkOnline())
+        .catch(() => {})
+    }, 30000)
+  </script>
+</body>
+</html>
