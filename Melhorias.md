@@ -67,7 +67,7 @@ Novo cliente se cadastra → fica em `pending` → Brizzi aprova → cliente ace
 - [x] E-mail para cliente: confirmação de ativação via Resend
 - [x] Trigger `on_new_user_notify` no Supabase
 
-**Pendente:** configurar domínio `gotejo.com.br` no painel Resend para envio via domínio próprio
+**Pendente:** configurar domínio `irrigaagro.com.br` no painel Resend para envio via domínio próprio
 
 ---
 
@@ -189,6 +189,23 @@ Aplicado em 16 arquivos (todas as páginas + componentes do dashboard). Regras f
 - **Labels de formulário**: `fontSize: 13, color: '#94a3b8'`
 - **Rótulos badge/meta**: `fontSize: 11`
 - **REGRA**: NUNCA usar classes Tailwind (Turbopack bug → 0px). Sempre inline `style={{}}`
+
+---
+
+## ⚡ Performance — Desktop e Mobile
+**Status:** ✅ Implementado em 2026-04-28
+
+- `proxy.ts`: cookie `co_status` (TTL 5min) elimina query ao Supabase por navegação — ganho 200-600ms por página
+- `AdminClient.tsx`: invalida cookie ao ativar/suspender empresa
+- `next.config.ts`: `compress: true` + `optimizePackageImports` para lucide-react, date-fns, recharts
+
+---
+
+## 🌧️ Precipitação → Manejo Diário (sync automático)
+**Status:** ✅ Corrigido em 2026-04-28
+
+Modal de lançamento de chuva agora aguarda o recálculo do balanço hídrico antes de fechar.
+Elimina a confusão de lançar chuva e não ver no Manejo Diário.
 
 ---
 
