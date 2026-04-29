@@ -1,7 +1,8 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AppProviders } from './providers'
 import { DM_Serif_Display } from 'next/font/google'
+import { ConnectionIndicator } from '@/components/ConnectionIndicator'
 
 const dmSerif = DM_Serif_Display({ weight: '400', subsets: ['latin'], display: 'swap' })
 
@@ -12,13 +13,57 @@ export const metadata: Metadata = {
     title: 'IrrigaAgro — Irrigação Inteligente',
     siteName: 'IrrigaAgro',
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'IrrigaAgro',
+  },
+  icons: {
+    apple: '/icons/apple-touch-icon.png',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0B0F14',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={dmSerif.className}>
+      <head>
+        {/* Service Worker registration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                    reg.addEventListener('updatefound', function() {
+                      var newSW = reg.installing;
+                      if (newSW) {
+                        newSW.addEventListener('statechange', function() {
+                          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                            if (window.__showSwUpdateToast) window.__showSwUpdateToast();
+                          }
+                        });
+                      }
+                    });
+                  });
+                });
+              }
+            `,
+          }}
+        />
+      </head>
       <body>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <ConnectionIndicator />
+          {children}
+        </AppProviders>
       </body>
     </html>
   )

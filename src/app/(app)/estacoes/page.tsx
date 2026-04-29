@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type * as React from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { persistedFetch } from '@/lib/persistedFetch'
+import { useOnlineGuard } from '@/hooks/useOnlineGuard'
+import { UltimaAtualizacao } from '@/components/UltimaAtualizacao'
 import { listFarmsByCompany } from '@/services/farms'
 import {
   createWeatherStation,
@@ -324,6 +327,8 @@ function StationModal({ station, farms, onClose, onSaved }: StationModalProps) {
 
 export default function EstacoesPage() {
   const { company, loading: authLoading } = useAuth()
+  const { isOnline, guardAction } = useOnlineGuard()
+  const [estacoesCacheInfo, setEstacoesCacheInfo] = useState<{ fetchedAt: string | null; fromCache: boolean }>({ fetchedAt: null, fromCache: false })
   const [farms, setFarms] = useState<Farm[]>([])
   const [stations, setStations] = useState<WeatherStation[]>([])
   const [weatherRows, setWeatherRows] = useState<WeatherData[]>([])
@@ -358,32 +363,35 @@ export default function EstacoesPage() {
     let cancelled = false
 
     const loadData = async () => {
-      try {
-        setLoading(true)
-        setLoadError('')
-        const farmRows = await listFarmsByCompany(company.id)
-        const stationRows = await listWeatherStationsByFarmIds(farmRows.map((farm) => farm.id))
-
+      setLoading(true)
+      setLoadError('')
+      const { data: farmRows, fetchedAt, fromCache, error } = await persistedFetch(
+        `estacoes:farms:${company.id}`,
+        () => listFarmsByCompany(company.id)
+      )
+      if (cancelled) return
+      if (farmRows) {
+        setEstacoesCacheInfo({ fetchedAt, fromCache })
+        const { data: stationRows } = await persistedFetch(
+          `estacoes:stations:${company.id}`,
+          () => listWeatherStationsByFarmIds(farmRows.map((farm) => farm.id))
+        )
         if (cancelled) return
-
         setFarms(farmRows)
-        setStations(stationRows)
+        setStations(stationRows ?? [])
         setSelectedStationId((current) => {
-          if (current && stationRows.some((station) => station.id === current)) return current
-          return stationRows[0]?.id ?? ''
+          if (current && (stationRows ?? []).some((station) => station.id === current)) return current
+          return stationRows?.[0]?.id ?? ''
         })
-      } catch (error) {
+      } else {
         if (!cancelled) {
           setLoadError(error instanceof Error ? error.message : 'Falha ao carregar estações')
           setFarms([])
           setStations([])
           setSelectedStationId('')
         }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
       }
+      if (!cancelled) setLoading(false)
     }
 
     loadData()
@@ -574,6 +582,11 @@ export default function EstacoesPage() {
             <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.625, margin: '2px 0 0' }}>
               {stations.length} {stations.length === 1 ? 'estação cadastrada' : 'estações cadastradas'}
             </p>
+            {(estacoesCacheInfo.fromCache || estacoesCacheInfo.fetchedAt) && (
+              <div style={{ marginTop: 4 }}>
+                <UltimaAtualizacao fetchedAt={estacoesCacheInfo.fetchedAt} />
+              </div>
+            )}
           </div>
           <button
             onClick={() => { setEditingStation(null); setStationModalOpen(true) }}
@@ -767,8 +780,8 @@ export default function EstacoesPage() {
                 </Field>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
-                  <button onClick={handleSaveWeather} disabled={!selectedStationId || weatherSaving}
-                    style={{ padding: '10px 22px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: !selectedStationId || weatherSaving ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 2px 8px rgba(0,147,208,0.25)' }}>
+                  <button onClick={() => { if (!guardAction()) return; handleSaveWeather() }} disabled={!selectedStationId || weatherSaving || !isOnline}
+                    style={{ padding: '10px 22px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: !selectedStationId || weatherSaving || !isOnline ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 2px 8px rgba(0,147,208,0.25)' }}>
                     {weatherSaving && <Loader2 size={14} className="animate-spin" />}
                     Salvar leitura
                   </button>

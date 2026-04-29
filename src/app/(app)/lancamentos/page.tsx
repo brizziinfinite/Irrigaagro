@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useOnlineGuard } from '@/hooks/useOnlineGuard'
 import {
   listActiveManagementSeasonContexts,
   listDailyManagementBySeason,
@@ -1717,6 +1718,7 @@ function PivotCard({
 
 export default function LancamentosPage() {
   const { company } = useAuth()
+  const { isOnline, guardAction } = useOnlineGuard()
 
   const [today, setToday] = useState('')
   const [weekOffset, setWeekOffset] = useState(0) // 0 = semana atual, -1 = anterior, etc.
@@ -2087,7 +2089,7 @@ export default function LancamentosPage() {
                 weekStart={weekStart}
                 readOnly={isPastWeek}
                 schedules={schedulesByPivot[pivotId] ?? []}
-                onSave={(entries, existingBatchId) => handleSave(meta, entries, existingBatchId)}
+                onSave={async (entries, existingBatchId) => { if (!guardAction()) return; await handleSave(meta, entries, existingBatchId) }}
                 onCancel={schedule => setCancelTarget({
                   schedule,
                   pivotName: meta.context.pivot?.name ?? meta.context.season.name,

@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { persistedFetch } from '@/lib/persistedFetch'
+import { useOnlineGuard } from '@/hooks/useOnlineGuard'
+import { UltimaAtualizacao } from '@/components/UltimaAtualizacao'
 import { listFarmsByCompany } from '@/services/farms'
 import { listPivotsByFarmIds } from '@/services/pivots'
 import { listSectorsByPivotId } from '@/services/pivot-sectors'
@@ -501,6 +504,7 @@ async function syncManagementForPivotDate(pivotId: string, date: string): Promis
 }
 
 function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, onClose, onSaved, onDeleted }: EditModalProps) {
+  const { isOnline, guardAction } = useOnlineGuard()
   const [value, setValue] = useState(existing ? String(existing.rainfall_mm) : '0')
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState(false)
@@ -709,12 +713,12 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
 
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            onClick={handleSave}
-            disabled={saving || syncing}
+            onClick={() => { if (!guardAction()) return; handleSave() }}
+            disabled={saving || syncing || !isOnline}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer',
               background: '#0093D0', color: '#fff', fontWeight: 600, fontSize: 13, minHeight: 44,
-              opacity: (saving || syncing) ? 0.7 : 1,
+              opacity: (saving || syncing || !isOnline) ? 0.7 : 1,
             }}
           >
             {saving ? 'Salvando…' : syncing ? 'Atualizando manejo…' : 'Salvar'}
@@ -1548,7 +1552,9 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
 
 export default function PrecipitacoesPage() {
   const { company, loading: authLoading } = useAuth()
+  const { isOnline } = useOnlineGuard()
   const today = useMemo(() => new Date(), [])
+  const [precipCacheInfo, setPrecipCacheInfo] = useState<{ fetchedAt: string | null; fromCache: boolean }>({ fetchedAt: null, fromCache: false })
 
   const [pivots, setPivots] = useState<PivotOption[]>([])
   const [pivotId, setPivotId] = useState<string>('')
@@ -1655,19 +1661,21 @@ export default function PrecipitacoesPage() {
   // Load all records for pivot+year (all sectors at once for comparison chart)
   const loadRecords = useCallback(async (pid: string, y: number) => {
     if (!pid) { setAllRecords([]); return }
-    try {
-      setLoadingRecords(true)
-      setLoadError('')
-      setActionError('')
-      // Busca apenas o ano visível — ~50-100 registros por ano, escala para qualquer volume
-      const data = await listRainfallByPivotIds([pid], undefined, `${y}-01-01`, `${y}-12-31`)
+    setLoadingRecords(true)
+    setLoadError('')
+    setActionError('')
+    const { data, fetchedAt, fromCache, error } = await persistedFetch(
+      `precipitacoes:records:${pid}:${y}`,
+      () => listRainfallByPivotIds([pid], undefined, `${y}-01-01`, `${y}-12-31`)
+    )
+    if (data) {
       setAllRecords(data)
-    } catch (error) {
+      setPrecipCacheInfo({ fetchedAt, fromCache })
+    } else {
       setLoadError(error instanceof Error ? error.message : 'Falha ao carregar precipitações')
       setAllRecords([])
-    } finally {
-      setLoadingRecords(false)
     }
+    setLoadingRecords(false)
   }, [])
 
   useEffect(() => {
