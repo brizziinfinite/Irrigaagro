@@ -446,8 +446,6 @@ Regras:
           const userQuestion = transcricao || rawText
           if (userQuestion) {
             const pivotIds2 = subs.map(s => s.pivot_id)
-            const yesterday2 = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-            const twoDaysAgo2 = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)
 
             const { data: seasons2 } = await supabase
               .from('seasons')
@@ -462,13 +460,13 @@ Regras:
             const { data: mgmtRows2 } = seasonIds2.length > 0
               ? await supabase.from('daily_management')
                   .select('season_id, date, field_capacity_percent, ctda, cta, etc_mm, eto_mm, kc, rainfall_mm, needs_irrigation, recommended_depth_mm, recommended_speed_percent')
-                  .in('season_id', seasonIds2).gte('date', yesterday2).order('date', { ascending: false })
+                  .in('season_id', seasonIds2).order('date', { ascending: false }).limit(seasonIds2.length * 2)
               : { data: [] }
 
             const { data: weatherRows2 } = pivotIds2.length > 0
               ? await supabase.from('weather_data')
                   .select('pivot_id, date, temp_max, temp_min, humidity_percent, wind_speed_ms, solar_radiation_wm2, eto_mm')
-                  .in('pivot_id', pivotIds2).gte('date', twoDaysAgo2).order('date', { ascending: false })
+                  .in('pivot_id', pivotIds2).order('date', { ascending: false }).limit(pivotIds2.length * 2)
               : { data: [] }
 
             const pivotContextLines2: string[] = []
@@ -479,8 +477,7 @@ Regras:
               const crop = season?.crops
               const mgmt = (mgmtRows2 ?? []).find((m: any) => m.season_id === season?.id && m.date === today)
                 ?? (mgmtRows2 ?? []).find((m: any) => m.season_id === season?.id)
-              const weather = (weatherRows2 ?? []).find((w: any) => w.pivot_id === sub.pivot_id && w.date === yesterday2)
-                ?? (weatherRows2 ?? []).find((w: any) => w.pivot_id === sub.pivot_id)
+              const weather = (weatherRows2 ?? []).find((w: any) => w.pivot_id === sub.pivot_id)
               let das2 = 0
               if (season?.planting_date) das2 = Math.max(1, Math.round((new Date(today + 'T12:00:00').getTime() - new Date(season.planting_date + 'T12:00:00').getTime()) / 86400000) + 1)
               let faseStr2 = ''
@@ -1233,7 +1230,6 @@ Critérios:
       // ── IA: Gemini com contexto real dos dados — chuva + perguntas livres ──
       messageType = 'ai_assistant'
       const today = new Date().toISOString().slice(0, 10)
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
       const geminiKey = Deno.env.get('GEMINI_API_KEY')
 
       if (!geminiKey) {
@@ -1257,25 +1253,24 @@ Critérios:
           seasonIds.push(s.id)
         }
 
-        // Últimos balanços hídricos (hoje + ontem)
+        // Últimos balanços hídricos — sem filtro de data (usa o mais recente disponível)
         const { data: mgmtRows } = seasonIds.length > 0
           ? await supabase
               .from('daily_management')
               .select('season_id, date, field_capacity_percent, ctda, cta, etc_mm, eto_mm, kc, rainfall_mm, needs_irrigation, recommended_depth_mm, recommended_speed_percent')
               .in('season_id', seasonIds)
-              .gte('date', yesterday)
               .order('date', { ascending: false })
+              .limit(seasonIds.length * 2)
           : { data: [] }
 
-        // Clima recente (ontem e anteantes)
-        const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)
+        // Clima recente — sem filtro de data (usa o mais recente disponível)
         const { data: weatherRows } = pivotIds.length > 0
           ? await supabase
               .from('weather_data')
               .select('pivot_id, date, temp_max, temp_min, humidity_percent, wind_speed_ms, solar_radiation_wm2, eto_mm')
               .in('pivot_id', pivotIds)
-              .gte('date', twoDaysAgo)
               .order('date', { ascending: false })
+              .limit(pivotIds.length * 2)
           : { data: [] }
 
         // Montar contexto por pivô
@@ -1287,8 +1282,7 @@ Critérios:
           const crop = season?.crops
           const mgmt = (mgmtRows ?? []).find((m: any) => m.season_id === season?.id && m.date === today)
             ?? (mgmtRows ?? []).find((m: any) => m.season_id === season?.id)
-          const weather = (weatherRows ?? []).find((w: any) => w.pivot_id === sub.pivot_id && w.date === yesterday)
-            ?? (weatherRows ?? []).find((w: any) => w.pivot_id === sub.pivot_id)
+          const weather = (weatherRows ?? []).find((w: any) => w.pivot_id === sub.pivot_id)
 
           let das = 0
           if (season?.planting_date) {
