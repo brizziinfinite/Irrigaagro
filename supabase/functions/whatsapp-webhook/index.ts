@@ -75,6 +75,7 @@ Mensagem: "${transcricao}"`,
 
 async function downloadMedia(messageId: string): Promise<{ base64: string; mimeType: string } | null> {
   try {
+    console.log('downloadMedia: iniciando para messageId=', messageId)
     const response = await fetch(
       `${EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${EVOLUTION_INSTANCE}`,
       {
@@ -86,12 +87,21 @@ async function downloadMedia(messageId: string): Promise<{ base64: string; mimeT
         body: JSON.stringify({ message: { key: { id: messageId } } }),
       }
     )
-    if (!response.ok) return null
-    const data = await response.json()
-    return {
-      base64: data.base64 || data.data,
-      mimeType: data.mimetype || data.mimeType || 'image/jpeg',
+    console.log('downloadMedia: status=', response.status)
+    if (!response.ok) {
+      const errBody = await response.text()
+      console.error('downloadMedia: falhou status=', response.status, 'body=', errBody.slice(0, 300))
+      return null
     }
+    const data = await response.json()
+    const base64 = data.base64 || data.data
+    const mimeType = data.mimetype || data.mimeType || 'audio/ogg'
+    console.log('downloadMedia: keys=', Object.keys(data), 'base64 len=', base64?.length ?? 0, 'mime=', mimeType)
+    if (!base64) {
+      console.error('downloadMedia: base64 vazio! data=', JSON.stringify(data).slice(0, 200))
+      return null
+    }
+    return { base64, mimeType }
   } catch (e) {
     console.error('downloadMedia error:', e)
     return null
@@ -266,7 +276,24 @@ serve(async (req) => {
     if (hasAudio) {
       messageType = 'rain_report'
 
-      const media = await downloadMedia(messageId)
+      // Tenta usar base64 já presente no payload (Evolution API com base64=true no webhook)
+      const audioMsg = data.message?.audioMessage || data.message?.pttMessage
+      const payloadBase64: string | null = data.message?.base64 || null
+      const payloadMime: string = audioMsg?.mimetype || 'audio/ogg; codecs=opus'
+
+      console.log('AUDIO: payloadBase64 len=', payloadBase64?.length ?? 0, 'mime=', payloadMime, 'messageId=', messageId)
+
+      let media: { base64: string; mimeType: string } | null = null
+
+      if (payloadBase64) {
+        // Usa o base64 já presente no payload — sem request extra
+        media = { base64: payloadBase64, mimeType: payloadMime }
+        console.log('AUDIO: usando base64 do payload')
+      } else {
+        // Fallback: tenta baixar da Evolution API
+        console.log('AUDIO: base64 ausente no payload, tentando downloadMedia')
+        media = await downloadMedia(messageId)
+      }
 
       if (!media) {
         await sendWhatsApp(phone, '❌ Não consegui processar o áudio. Tente enviar novamente ou escreva o comando.')
@@ -532,8 +559,8 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
           }
         }
 
-      } catch (e) {
-        console.error('Audio AI error:', e)
+      } catch (e: any) {
+        console.error('Audio AI error:', e?.message ?? e)
         responseText = '❌ Não consegui processar o áudio. Tente escrever:\nCHUVA VALLEY 15\nCHUVA VALLEY 15 07/04'
       }
 
