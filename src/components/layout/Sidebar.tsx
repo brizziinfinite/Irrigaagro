@@ -25,14 +25,14 @@ import IrrigaAgroLogo from '@/components/branding/IrrigaAgroLogo';
 function PivotIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="50 50 300 300" fill="none">
-      <circle cx="200" cy="200" r="120" fill="none" stroke="#0093D0" strokeWidth="4"/>
-      <circle cx="200" cy="200" r="45" fill="none" stroke="#0093D0" strokeWidth="2" opacity="0.4"/>
-      <line x1="200" y1="110" x2="200" y2="145" stroke="#0093D0" strokeWidth="3" strokeLinecap="round"/>
-      <line x1="200" y1="255" x2="200" y2="290" stroke="#0093D0" strokeWidth="3" strokeLinecap="round"/>
-      <line x1="110" y1="200" x2="145" y2="200" stroke="#0093D0" strokeWidth="3" strokeLinecap="round"/>
-      <line x1="255" y1="200" x2="290" y2="200" stroke="#0093D0" strokeWidth="3" strokeLinecap="round"/>
-      <circle cx="200" cy="200" r="8" fill="#0093D0"/>
-      <line x1="200" y1="200" x2="300" y2="130" stroke="#4ade80" strokeWidth="3" strokeLinecap="round"/>
+      <circle cx="200" cy="200" r="120" fill="none" stroke="currentColor" strokeWidth="14"/>
+      <circle cx="200" cy="200" r="45" fill="none" stroke="currentColor" strokeWidth="10"/>
+      <line x1="200" y1="110" x2="200" y2="148" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+      <line x1="200" y1="252" x2="200" y2="290" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+      <line x1="110" y1="200" x2="148" y2="200" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+      <line x1="252" y1="200" x2="290" y2="200" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+      <circle cx="200" cy="200" r="14" fill="currentColor"/>
+      <line x1="200" y1="200" x2="300" y2="130" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
     </svg>
   );
 }

@@ -201,16 +201,23 @@ Aplicado em 16 arquivos (todas as páginas + componentes do dashboard). Regras f
 
 ---
 
-## 🌧️ Precipitação → Manejo Diário (sync automático)
-**Status:** ✅ Corrigido em 2026-04-28
+## 🌧️ Precipitação ↔ Manejo Diário (sync bidirecional)
+**Status:** ✅ Corrigido e aprimorado em 2026-04-28 / 2026-04-30
 
-Modal de lançamento de chuva agora aguarda o recálculo do balanço hídrico antes de fechar.
-Elimina a confusão de lançar chuva e não ver no Manejo Diário.
+- Modal de lançamento de chuva agora aguarda o recálculo do balanço hídrico antes de fechar
+- **Trigger banco** `trg_rainfall_to_daily_management`: qualquer INSERT/UPDATE em `rainfall_records` recalcula automaticamente `rainfall_mm`, `ctda` e `field_capacity_percent` no `daily_management`
+- Corrigido `onConflict: 'pivot_id,date,sector_id'` em webhook WhatsApp e ingest-weather (estava falhando silenciosamente)
+- Krebbs agora recebe dados de chuva da estação Plugfield (faltava `gid` no `weather_config`)
 
 ---
 
-## 📱 PWA — Próxima sessão prioritária
-**Status:** Pendente — implementar na próxima sessão
+## 📱 PWA — Ícone e manifest
+**Status:** ✅ Parcialmente implementado em 2026-04-30
+
+Ícone PWA corrigido: substituído por logo oficial do IrrigaAgro (gota + barras de gráfico).
+Gerados `icon-192.png`, `icon-512.png` e `apple-touch-icon.png`.
+
+**Ainda pendente:**
 
 O IrrigaAgro precisa funcionar como app nativo no celular do produtor rural: instalável na tela inicial, funcionando offline (pelo menos leitura do último estado), com ícones e splash screen corretos.
 
@@ -289,6 +296,16 @@ export default withPWA({
 - [ ] Funciona offline (mostra último estado cacheado)
 - [ ] `display: standalone` (sem barra de URL)
 - [ ] Theme color `#0093D0` na status bar do Android
+
+---
+
+## 🎙️ WhatsApp — Processamento de áudio (voz)
+**Status:** ✅ Corrigido em 2026-04-30
+
+- `maxOutputTokens` aumentado de 512 → 1024 (JSON era cortado antes de fechar)
+- Adicionado tipo `"pergunta"` no prompt do Gemini (antes perguntas por voz caíam em `"diagnostico"`)
+- Gemini 2.5 Flash processa áudio + transcreve + classifica em 1 chamada
+- OpenAI Whisper mantido como fallback
 
 ---
 

@@ -319,40 +319,63 @@ serve(async (req) => {
 Pivôs disponíveis: ${pivotNames || 'nenhum cadastrado'}
 Data de hoje: ${today}
 
-Transcreva o áudio e classifique o tipo. Responda APENAS com JSON:
+Transcreva o áudio e classifique o tipo. Responda APENAS com JSON válido e completo:
 {
-  "transcricao": "texto do que foi dito",
-  "tipo": "chuva" | "diagnostico" | "status" | "resumo" | "desconhecido",
+  "transcricao": "texto exato do que foi dito",
+  "tipo": "chuva" | "diagnostico" | "pergunta" | "status" | "desconhecido",
   "registros": [
     { "pivo": "nome exato do pivô", "mm": número, "data": "YYYY-MM-DD" }
   ]
 }
-Regras:
-- Se mencionar chuva/milímetros/mm → tipo "chuva"
-- Se mencionar diagnóstico/umidade do solo/testar solo/verificar solo → tipo "diagnostico"
+Regras de classificação (em ordem de prioridade):
+- "chuva": mencionou chuva, milímetros, mm, precipitação com quantidade numérica
+- "diagnostico": pediu para TESTAR O SOLO fisicamente (diagnóstico manual, amostrar solo, verificar umidade do solo com a mão/sonda)
+- "pergunta": fez uma PERGUNTA sobre dados do sistema (umidade, irrigar, status, balanço, previsão, quando irrigar)
+- "status": pediu lista/resumo dos pivôs sem fazer pergunta específica
+- "desconhecido": qualquer outro caso
+Exemplos → "choveu 15mm no valley" = chuva | "qual a umidade?" = pergunta | "diagnosticar solo" = diagnostico
+- Preencha "registros" somente para tipo "chuva"
 - Se mencionar "os dois" ou "ambos", aplique a todos os pivôs disponíveis
-- Se não especificar data, use hoje (${today})
-- Nomes dos pivôs devem ser exatamente como listados acima`
+- Se não especificar data para chuva, use hoje (${today})`
 
-          const geminiResp = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'audio/ogg; codecs=opus', data: media.base64 } }] }],
-                generationConfig: { temperature: 0, maxOutputTokens: 512 }
-              })
-            }
-          )
+          console.log('GEMINI: iniciando chamada, base64 len=', media.base64.length, 'mime=', 'audio/ogg; codecs=opus')
+          let geminiResp: Response
+          try {
+            geminiResp = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'audio/ogg; codecs=opus', data: media.base64 } }] }],
+                  generationConfig: { temperature: 0, maxOutputTokens: 1024 }
+                })
+              }
+            )
+          } catch (fetchErr: any) {
+            console.error('GEMINI: fetch() threw exception:', fetchErr?.message ?? fetchErr)
+            throw fetchErr
+          }
 
+          console.log('GEMINI: status=', geminiResp.status, 'ok=', geminiResp.ok)
           if (geminiResp.ok) {
-            const geminiData = await geminiResp.json()
+            let geminiData: any
+            try {
+              geminiData = await geminiResp.json()
+            } catch (parseErr: any) {
+              const rawBody = await geminiResp.text().catch(() => '<unreadable>')
+              console.error('GEMINI: failed to parse JSON response. Raw body:', rawBody.slice(0, 500))
+              throw parseErr
+            }
             rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
-            console.log('Gemini audio response:', rawText.slice(0, 300))
+            const finishReason = geminiData.candidates?.[0]?.finishReason
+            console.log('GEMINI: finishReason=', finishReason, 'rawText len=', rawText.length, 'preview=', rawText.slice(0, 200))
+            if (!rawText && finishReason) {
+              console.warn('GEMINI: empty text, finishReason=', finishReason, 'full response=', JSON.stringify(geminiData).slice(0, 500))
+            }
           } else {
             const errBody = await geminiResp.text()
-            console.warn(`Gemini falhou (${geminiResp.status}), tentando fallback OpenAI. Erro: ${errBody.slice(0, 200)}`)
+            console.warn(`GEMINI: falhou status=${geminiResp.status}. Erro: ${errBody.slice(0, 400)}`)
           }
         }
 
@@ -424,8 +447,9 @@ Regras:
               date: reg.data || today,
               rainfall_mm: reg.mm,
               source: 'manual',
+              sector_id: null,
               notes: `Registrado via WhatsApp por ${contact.contact_name}`,
-            }, { onConflict: 'pivot_id,date' })
+            }, { onConflict: 'pivot_id,date,sector_id' })
 
             confirmLines.push(`✅ ${reg.mm}mm no pivô ${sub.pivots?.name}${dateLabel}`)
           }
@@ -560,7 +584,8 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
         }
 
       } catch (e: any) {
-        console.error('Audio AI error:', e?.message ?? e)
+        const errMsg = e?.message ?? String(e)
+        console.error('Audio AI error:', errMsg)
         responseText = '❌ Não consegui processar o áudio. Tente escrever:\nCHUVA VALLEY 15\nCHUVA VALLEY 15 07/04'
       }
 
@@ -1082,8 +1107,9 @@ Critérios:
             date: observationDate || new Date().toISOString().slice(0, 10),
             rainfall_mm: rainfall,
             source: 'manual',
+            sector_id: null,
             notes: `Registrado via WhatsApp por ${contact.contact_name}`,
-          }, { onConflict: 'pivot_id,date' })
+          }, { onConflict: 'pivot_id,date,sector_id' })
 
           responseText = `✅ Registrado: ${rainfall}mm no pivô ${name}${dateLabel}`
         }
