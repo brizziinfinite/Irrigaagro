@@ -673,7 +673,7 @@ export async function GET(req: NextRequest) {
             rainfall_mm: weatherDay.rainfall,
             source: rainfallSource,
             sector_id: null,
-          }, { onConflict: 'pivot_id,sector_id,date' })
+          }, { onConflict: 'pivot_id,date,sector_id' })
       }
     }
 
