@@ -4,15 +4,15 @@ import type { TypedSupabaseClient } from './base'
 
 const table = (client: TypedSupabaseClient) => (client as ReturnType<typeof createClient>).from('energy_bills')
 
-export async function listEnergyBillsByPivotIds(
-  pivotIds: string[],
+export async function listEnergyBillsByFarmIds(
+  farmIds: string[],
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient
 ): Promise<EnergyBill[]> {
-  if (pivotIds.length === 0) return []
+  if (farmIds.length === 0) return []
 
   const { data, error } = await table(client)
     .select('*')
-    .in('pivot_id', pivotIds)
+    .in('farm_id', farmIds)
     .order('reference_month', { ascending: false })
     .limit(120)
 

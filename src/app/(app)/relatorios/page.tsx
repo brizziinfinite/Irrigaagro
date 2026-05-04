@@ -1144,8 +1144,8 @@ export default function RelatoriosPage() {
   const [loadingRecords, setLoadingRecords] = useState(false)
 
   // ── Estado energia ──
-  const [pivots, setPivots] = useState<{ id: string; name: string; farm_name: string }[]>([])
-  const [selectedPivotId, setSelectedPivotId] = useState<string>('')
+  const [farmList, setFarmList] = useState<{ id: string; name: string }[]>([])
+  const [selectedFarmId, setSelectedFarmId] = useState<string>('')
   const [energyBills, setEnergyBills] = useState<EnergyBill[]>([])
   const [loadingBills, setLoadingBills] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -1186,44 +1186,30 @@ export default function RelatoriosPage() {
 
   useEffect(() => { loadSeasons() }, [loadSeasons])
 
-  // Carregar pivôs para seletor de energia (filtrado por empresa)
+  // Carregar fazendas para seletor de energia
   useEffect(() => {
     if (!company) return
     const supabase = createClient()
     supabase
       .from('farms')
-      .select('id')
+      .select('id, name')
       .eq('company_id', company.id)
-      .then(({ data: farms }) => {
-        const farmIds = (farms ?? []).map((f: { id: string }) => f.id)
-        if (farmIds.length === 0) { setPivots([]); return }
-        return supabase
-          .from('pivots')
-          .select('id, name, farms(name)')
-          .in('farm_id', farmIds)
-      })
-      .then((res) => {
-        const data = res?.data
-        if (!data) return
-        type PivotRow = { id: string; name: string; farms: { name: string }[] | { name: string } | null }
-        const list = (data as unknown as PivotRow[]).map(p => ({
-          id: p.id,
-          name: p.name,
-          farm_name: Array.isArray(p.farms) ? (p.farms[0]?.name ?? '') : (p.farms?.name ?? ''),
-        }))
-        setPivots(list)
-        if (list.length > 0) setSelectedPivotId(list[0].id)
+      .order('name')
+      .then(({ data }) => {
+        const list = (data ?? []) as { id: string; name: string }[]
+        setFarmList(list)
+        if (list.length > 0) setSelectedFarmId(list[0].id)
       })
   }, [company])
 
-  const loadEnergyBills = useCallback(async (pivotId: string) => {
-    if (!pivotId) return
+  const loadEnergyBills = useCallback(async (farmId: string) => {
+    if (!farmId) return
     setLoadingBills(true)
     const supabase = createClient()
     const { data } = await supabase
       .from('energy_bills')
       .select('*')
-      .eq('pivot_id', pivotId)
+      .eq('farm_id', farmId)
       .order('reference_month', { ascending: false })
       .limit(24)
     setEnergyBills((data as EnergyBill[]) ?? [])
@@ -1231,17 +1217,17 @@ export default function RelatoriosPage() {
   }, [])
 
   useEffect(() => {
-    if (selectedPivotId) loadEnergyBills(selectedPivotId)
-  }, [selectedPivotId, loadEnergyBills])
+    if (selectedFarmId) loadEnergyBills(selectedFarmId)
+  }, [selectedFarmId, loadEnergyBills])
 
   const handleEnergyUpload = useCallback(async () => {
-    if (!uploadFile || !selectedPivotId) return
+    if (!uploadFile || !selectedFarmId) return
     setUploading(true)
     setUploadResult(null)
     try {
       const fd = new FormData()
       fd.append('file', uploadFile)
-      fd.append('pivot_id', selectedPivotId)
+      fd.append('farm_id', selectedFarmId)
       if (irrigatedMmHa) fd.append('irrigated_mm_ha', irrigatedMmHa)
 
       const res = await fetch('/api/extract-energy-bill', { method: 'POST', body: fd })
@@ -1251,7 +1237,7 @@ export default function RelatoriosPage() {
         setUploadResult({ success: true, message: `Conta de ${json.bill?.reference_month ?? '?'} salva! Reativa: ${json.kpis?.reactivePct?.toFixed(1) ?? '—'}%` })
         setUploadFile(null)
         if (fileInputRef.current) fileInputRef.current.value = ''
-        loadEnergyBills(selectedPivotId)
+        loadEnergyBills(selectedFarmId)
       } else {
         setUploadResult({ success: false, message: json.error ?? 'Erro na extração' })
       }
@@ -1259,7 +1245,7 @@ export default function RelatoriosPage() {
       setUploadResult({ success: false, message: err instanceof Error ? err.message : 'Erro de rede' })
     }
     setUploading(false)
-  }, [uploadFile, selectedPivotId, irrigatedMmHa, loadEnergyBills])
+  }, [uploadFile, selectedFarmId, irrigatedMmHa, loadEnergyBills])
 
   const loadRecords = useCallback(async (seasonId: string) => {
     if (!seasonId) return
@@ -1553,18 +1539,18 @@ export default function RelatoriosPage() {
         onToggle={toggleSection}
         badge={energyBills.length > 0 ? `${energyBills.length} meses` : undefined}
       >
-        {/* Seletor de Pivô */}
+        {/* Seletor de Fazenda */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Pivô</label>
+            <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Propriedade</label>
             <div style={{ position: 'relative' }}>
               <select
-                value={selectedPivotId}
-                onChange={e => setSelectedPivotId(e.target.value)}
+                value={selectedFarmId}
+                onChange={e => setSelectedFarmId(e.target.value)}
                 style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
               >
-                {pivots.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} — {p.farm_name}</option>
+                {farmList.map(f => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
               </select>
               <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
@@ -1726,14 +1712,14 @@ export default function RelatoriosPage() {
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={handleEnergyUpload}
-                disabled={!uploadFile || !selectedPivotId || uploading}
+                disabled={!uploadFile || !selectedFarmId || uploading}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                  background: (!uploadFile || !selectedPivotId || uploading) ? '#0d1520' : '#0093D0',
+                  background: (!uploadFile || !selectedFarmId || uploading) ? '#0d1520' : '#0093D0',
                   border: '1px solid rgba(255,255,255,0.08)',
-                  color: (!uploadFile || !selectedPivotId || uploading) ? '#778899' : '#fff',
-                  cursor: (!uploadFile || !selectedPivotId || uploading) ? 'not-allowed' : 'pointer',
+                  color: (!uploadFile || !selectedFarmId || uploading) ? '#778899' : '#fff',
+                  cursor: (!uploadFile || !selectedFarmId || uploading) ? 'not-allowed' : 'pointer',
                   minHeight: 44,
                 }}
               >

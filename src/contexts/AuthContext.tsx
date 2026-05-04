@@ -5,19 +5,22 @@ import { createContext, useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 const supabase = createClient()
-import type { Company } from '@/types/database'
+import type { Company, Farm } from '@/types/database'
 
 export interface AuthContextType {
   user: AuthUser | null
   session: AuthSession | null
   company: Company | null
   companies: Company[]
+  farm: Farm | null        // fazenda ativa (null = todas)
+  farms: Farm[]            // fazendas da empresa ativa
   loading: boolean
   error: string | null
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, fullName: string) => Promise<void>
   signOut: () => Promise<void>
   switchCompany: (companyId: string) => Promise<void>
+  switchFarm: (farmId: string | null) => void  // null = todas as fazendas
 }
 
 interface AuthUser {
@@ -37,14 +40,11 @@ interface AuthSession {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const ACTIVE_COMPANY_KEY = 'irrigaagro:active_company_id'
+const ACTIVE_FARM_KEY = 'irrigaagro:active_farm_id'
 
 function getPersistedCompanyId(): string | null {
   if (typeof window === 'undefined') return null
-  try {
-    return localStorage.getItem(ACTIVE_COMPANY_KEY)
-  } catch {
-    return null
-  }
+  try { return localStorage.getItem(ACTIVE_COMPANY_KEY) } catch { return null }
 }
 
 function persistCompanyId(companyId: string | null): void {
@@ -57,9 +57,25 @@ function persistCompanyId(companyId: string | null): void {
       localStorage.removeItem(ACTIVE_COMPANY_KEY)
       document.cookie = `${ACTIVE_COMPANY_KEY}=;path=/;max-age=0`
     }
-  } catch {
-    // ignore storage errors
-  }
+  } catch { /* ignore */ }
+}
+
+function getPersistedFarmId(): string | null {
+  if (typeof window === 'undefined') return null
+  try { return localStorage.getItem(ACTIVE_FARM_KEY) } catch { return null }
+}
+
+function persistFarmId(farmId: string | null): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (farmId) {
+      localStorage.setItem(ACTIVE_FARM_KEY, farmId)
+      document.cookie = `${ACTIVE_FARM_KEY}=${farmId};path=/;max-age=${60 * 60 * 24 * 365};SameSite=Lax`
+    } else {
+      localStorage.removeItem(ACTIVE_FARM_KEY)
+      document.cookie = `${ACTIVE_FARM_KEY}=;path=/;max-age=0`
+    }
+  } catch { /* ignore */ }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -67,8 +83,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [company, setCompany] = useState<Company | null>(null)
   const [companies, setCompanies] = useState<Company[]>([])
+  const [farm, setFarm] = useState<Farm | null>(null)
+  const [farms, setFarms] = useState<Farm[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Fetch farms for a company and restore persisted farm
+  const fetchFarmsForCompany = useCallback(async (companyId: string) => {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('farms')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('name')
+      if (fetchError) throw fetchError
+      const farmList = (data ?? []) as Farm[]
+      setFarms(farmList)
+      // Restore persisted farm — only if it belongs to this company
+      const persistedId = getPersistedFarmId()
+      const restored = persistedId ? farmList.find(f => f.id === persistedId) : null
+      setFarm(restored ?? null)  // null = todas as fazendas
+    } catch (err) {
+      console.error('Failed to fetch farms:', err)
+      setFarms([])
+      setFarm(null)
+    }
+  }, [])
 
   // Fetch user's companies
   const fetchUserCompanies = useCallback(async (userId: string) => {
@@ -103,13 +143,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const restored = persistedId
           ? companiesData.find((c) => c.id === persistedId)
           : null
-        setCompany(restored ?? companiesData[0])
+        const activeCompany = restored ?? companiesData[0]
+        setCompany(activeCompany)
+        await fetchFarmsForCompany(activeCompany.id)
       }
     } catch (err) {
       console.error('Failed to fetch user companies:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch companies')
     }
-  }, [])
+  }, [fetchFarmsForCompany])
 
   // Initialize auth state via onAuthStateChange (inclui INITIAL_SESSION)
   useEffect(() => {
@@ -270,33 +312,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const switchCompany = useCallback(async (companyId: string) => {
     try {
       setError(null)
-
       const selectedCompany = companies.find((c) => c.id === companyId)
-
-      if (!selectedCompany) {
-        throw new Error('Company not found')
-      }
-
+      if (!selectedCompany) throw new Error('Company not found')
       setCompany(selectedCompany)
       persistCompanyId(selectedCompany.id)
+      // Reset farm ao trocar empresa
+      setFarm(null)
+      persistFarmId(null)
+      await fetchFarmsForCompany(selectedCompany.id)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to switch company'
       setError(errorMessage)
       throw err
     }
-  }, [companies])
+  }, [companies, fetchFarmsForCompany])
+
+  const switchFarm = useCallback((farmId: string | null) => {
+    if (farmId === null) {
+      setFarm(null)
+      persistFarmId(null)
+      return
+    }
+    const selected = farms.find(f => f.id === farmId)
+    if (!selected) return
+    setFarm(selected)
+    persistFarmId(selected.id)
+  }, [farms])
 
   const value: AuthContextType = {
     user,
     session,
     company,
     companies,
+    farm,
+    farms,
     loading,
     error,
     signIn,
     signUp,
     signOut,
     switchCompany,
+    switchFarm,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

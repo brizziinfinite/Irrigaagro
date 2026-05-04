@@ -230,7 +230,7 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
-    const pivotId = formData.get('pivot_id') as string | null
+    const farmId = formData.get('farm_id') as string | null
     const irrigatedMmHa = formData.get('irrigated_mm_ha')
       ? Number(formData.get('irrigated_mm_ha'))
       : null
@@ -238,18 +238,18 @@ export async function POST(req: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: 'Campo file obrigatório' }, { status: 400 })
     }
-    if (!pivotId) {
-      return NextResponse.json({ error: 'Campo pivot_id obrigatório' }, { status: 400 })
+    if (!farmId) {
+      return NextResponse.json({ error: 'Campo farm_id obrigatório' }, { status: 400 })
     }
 
-    // ── Validar autenticação e ownership do pivot ──
+    // ── Validar autenticação e ownership da fazenda ──
     const authClient = await createServerClient()
     const { data: { user } } = await authClient.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    // Verificar que pivot pertence a uma fazenda da empresa do usuário
+    // Verificar que fazenda pertence à empresa do usuário
     const { data: membership } = await authClient
       .from('company_members')
       .select('company_id')
@@ -260,15 +260,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Usuário sem empresa vinculada' }, { status: 403 })
     }
 
-    const { data: pivotCheck } = await authClient
-      .from('pivots')
-      .select('id, farms!inner(company_id)')
-      .eq('id', pivotId)
-      .in('farms.company_id', companyIds)
+    const { data: farmCheck } = await authClient
+      .from('farms')
+      .select('id')
+      .eq('id', farmId)
+      .in('company_id', companyIds)
       .maybeSingle()
 
-    if (!pivotCheck) {
-      return NextResponse.json({ error: 'Pivô não pertence à sua empresa' }, { status: 403 })
+    if (!farmCheck) {
+      return NextResponse.json({ error: 'Fazenda não pertence à sua empresa' }, { status: 403 })
     }
 
     const mimeType = file.type || 'image/jpeg'
@@ -314,7 +314,7 @@ export async function POST(req: NextRequest) {
     const { data: saved, error: dbError } = await supabase
       .from('energy_bills')
       .upsert({
-        pivot_id:             pivotId,
+        farm_id:              farmId,
         reference_month:      bill.reference_month!,
         kwh_total:            bill.kwh_total,
         cost_total_brl:       bill.cost_total_brl,
@@ -333,7 +333,7 @@ export async function POST(req: NextRequest) {
         cost_per_mm_ha:       costPerMmHa,
         source:               'upload',
         raw_text:             `llm:${llmUsed}`,
-      }, { onConflict: 'pivot_id,reference_month' })
+      }, { onConflict: 'farm_id,reference_month' })
       .select()
       .single()
 

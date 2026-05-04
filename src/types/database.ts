@@ -673,7 +673,7 @@ export type RainfallRecordUpdate = Partial<RainfallRecordInsert>
 
 export interface EnergyBill {
   id: string
-  pivot_id: string
+  farm_id: string
   reference_month: string
   month: string
   kwh_total: number | null
@@ -700,7 +700,7 @@ export interface EnergyBill {
 }
 
 export interface EnergyBillInsert {
-  pivot_id: string
+  farm_id: string
   reference_month: string
   kwh_total?: number | null
   cost_total_brl?: number | null

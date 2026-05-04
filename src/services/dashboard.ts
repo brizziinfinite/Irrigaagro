@@ -8,7 +8,7 @@ import {
   type ManagementSeasonContext,
 } from '@/services/management'
 import { listPivotsByFarmIds } from '@/services/pivots'
-import { listEnergyBillsByPivotIds } from '@/services/energy-bills'
+import { listEnergyBillsByFarmIds } from '@/services/energy-bills'
 import { getWeatherDataByStationRange, getWeatherDataByFarmRange } from '@/services/weather-data'
 import type { TypedSupabaseClient } from '@/services/base'
 import type { DailyManagement, EnergyBill, Pivot, Season, WeatherData } from '@/types/database'
@@ -49,18 +49,24 @@ export interface DashboardData {
 export async function getDashboardDataForUser(
   userId: string,
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
-  preferredCompanyId?: string | null
+  preferredCompanyId?: string | null,
+  preferredFarmId?: string | null   // null = todas as fazendas
 ): Promise<DashboardData> {
   // 1ª rodada: company (depende de userId)
   const company = await getUserCompanyOrThrow(userId, client, preferredCompanyId)
 
   // 2ª rodada: farms + contexts em paralelo (ambos dependem só de company.id)
-  const [farms, contexts] = await Promise.all([
+  const [allFarms, contexts] = await Promise.all([
     listFarmsByCompany(company.id, client),
     listManagementSeasonContexts(company.id, client),
   ])
 
-  const farmMap = new Map(farms.map((farm) => [farm.id, farm]))
+  // Filtrar por fazenda selecionada (null = todas)
+  const farms = preferredFarmId
+    ? allFarms.filter(f => f.id === preferredFarmId)
+    : allFarms
+
+  const farmMap = new Map(allFarms.map((farm) => [farm.id, farm]))
   const farmIds = farms.map((farm) => farm.id)
 
   // 3ª rodada: pivots + histórico de todas as safras ativas em paralelo
@@ -234,7 +240,7 @@ export async function getDashboardDataForUser(
   pivots.sort((a, b) => a.name.localeCompare(b.name))
 
   const [energyBills, diagnostics] = await Promise.all([
-    listEnergyBillsByPivotIds(pivots.map(p => p.id), client),
+    listEnergyBillsByFarmIds(farmIds, client),
     Promise.all(
       pivots.map(async (pivot) => [pivot.id, await getPivotDiagnostic(company.id, pivot.id, undefined, client)] as const)
     ),
