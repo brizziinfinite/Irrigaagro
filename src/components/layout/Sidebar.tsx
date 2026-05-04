@@ -127,7 +127,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
     <>
       {/* Sidebar */}
       <aside
-        className="h-screen w-[260px] flex flex-col"
+        className="h-full w-[260px] flex flex-col"
         style={{
           background: '#0d1520',
           borderRight: '1px solid rgba(255,255,255,0.06)',

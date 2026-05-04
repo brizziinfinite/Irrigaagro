@@ -18,7 +18,7 @@ export function AppShell({ user, children }: AppShellProps) {
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--color-surface-bg)' }}>
 
       {/* Sidebar desktop */}
-      <div className="hidden md:flex flex-shrink-0">
+      <div className="hidden md:flex flex-shrink-0 h-full">
         <Sidebar user={user} />
       </div>
 
@@ -33,7 +33,7 @@ export function AppShell({ user, children }: AppShellProps) {
             onClick={() => setMobileOpen(false)}
           />
           {/* Drawer — mesma largura que o sidebar desktop (260px) */}
-          <div className="relative h-full w-[280px] shadow-2xl">
+          <div className="relative h-full w-[280px] shadow-2xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
             <Sidebar user={user} onNavigate={() => setMobileOpen(false)} />
             <button
               className="absolute top-3 right-3 flex items-center justify-center rounded-xl"
