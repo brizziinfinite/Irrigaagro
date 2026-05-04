@@ -13,8 +13,9 @@ import {
   type PivotWithFarmName,
 } from '@/services/pivots'
 import { CircleDot, Plus, Pencil, Trash2, X, Loader2, ChevronDown, Table2, ChevronRight, MapPin, Satellite, Sheet, Hand, Radio, Link2, Layers } from 'lucide-react'
-import { FAO_SOIL_TEXTURES, SOIL_TEXTURE_KEYS, type SoilTextureKey } from '@/lib/soil-textures'
+import { type SoilTextureKey } from '@/lib/soil-textures'
 import { listSectorsByPivotId, createSector, updateSector, deleteSector } from '@/services/pivot-sectors'
+import { SoilParametersInput, type SoilParamValues } from '@/components/pivots/SoilParametersInput'
 
 const PivotMiniMapDynamic = dynamic(
   () => import('./PivotMiniMap').then(m => ({ default: m.PivotMiniMap })),
@@ -243,27 +244,19 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
   const [returnIntervalDays, setReturnIntervalDays] = useState(pivot?.return_interval_days?.toString() ?? '1')
   const [preferredSpeed, setPreferredSpeed] = useState(pivot?.preferred_speed_percent?.toString() ?? '')
   const [minSpeedPct, setMinSpeedPct] = useState(pivot?.min_speed_percent?.toString() ?? '')
-  // Parâmetros de solo
-  const [soilTexture, setSoilTexture] = useState<SoilTextureKey | ''>(
-    (pivot?.soil_texture as SoilTextureKey) ?? ''
-  )
-  const [fieldCapacity, setFieldCapacity] = useState(pivot?.field_capacity?.toString() ?? '')
-  const [wiltingPoint, setWiltingPoint]   = useState(pivot?.wilting_point?.toString() ?? '')
-  const [bulkDensity, setBulkDensity]     = useState(pivot?.bulk_density?.toString() ?? '')
-
-  // Auto-fill ao selecionar textura FAO-56
-  const handleSoilTextureSelect = useCallback((key: SoilTextureKey) => {
-    if (soilTexture === key) {
-      // Deselecionar
-      setSoilTexture('')
-    } else {
-      setSoilTexture(key)
-      const t = FAO_SOIL_TEXTURES[key]
-      setFieldCapacity(t.cc.toString())
-      setWiltingPoint(t.pm.toString())
-      setBulkDensity(t.ds.toString())
-    }
-  }, [soilTexture])
+  // Parâmetros de solo (novo componente granulométrico)
+  const [soilParams, setSoilParams] = useState<SoilParamValues>({
+    soil_input_method: (pivot as any)?.soil_input_method ?? 'granulometric',
+    soil_sand_pct:     (pivot as any)?.soil_sand_pct     ?? null,
+    soil_silt_pct:     (pivot as any)?.soil_silt_pct     ?? null,
+    soil_clay_pct:     (pivot as any)?.soil_clay_pct     ?? null,
+    soil_organic_matter_pct: (pivot as any)?.soil_organic_matter_pct ?? null,
+    soil_texture_class: (pivot as any)?.soil_texture_class ?? null,
+    field_capacity: pivot?.field_capacity ?? null,
+    wilting_point:  pivot?.wilting_point  ?? null,
+    bulk_density:   pivot?.bulk_density   ?? null,
+    soil_texture:   (pivot?.soil_texture as SoilTextureKey) ?? null,
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -337,10 +330,16 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
       return_interval_days: returnIntervalDays ? Number(returnIntervalDays) : 1,
       preferred_speed_percent: preferredSpeed ? Number(preferredSpeed) : null,
       min_speed_percent: minSpeedPct ? Number(minSpeedPct) : null,
-      field_capacity: fieldCapacity ? Number(fieldCapacity) : null,
-      wilting_point:  wiltingPoint  ? Number(wiltingPoint)  : null,
-      bulk_density:   bulkDensity   ? Number(bulkDensity)   : null,
-      soil_texture:   soilTexture || null,
+      soil_input_method:       soilParams.soil_input_method,
+      soil_sand_pct:           soilParams.soil_sand_pct,
+      soil_silt_pct:           soilParams.soil_silt_pct,
+      soil_clay_pct:           soilParams.soil_clay_pct,
+      soil_organic_matter_pct: soilParams.soil_organic_matter_pct,
+      soil_texture_class:      soilParams.soil_texture_class,
+      field_capacity:          soilParams.field_capacity,
+      wilting_point:           soilParams.wilting_point,
+      bulk_density:            soilParams.bulk_density,
+      soil_texture:            soilParams.soil_texture,
     }
 
     try {
@@ -1063,73 +1062,8 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           </div>
           )} {/* fim showAdvanced */}
 
-          {/* ── Parâmetros de Solo (SEMPRE VISÍVEL) ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '16px 0 4px' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>Parâmetros de Solo</span>
-            <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, rgba(0,229,255,0.3) 0%, rgba(255,255,255,0.02) 100%)' }} />
-          </div>
-
-          {/* Seletor de textura FAO-56 */}
-          <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625, margin: '0 0 10px' }}>
-            Selecione a textura do solo para preencher automaticamente os valores de balanço hídrico (FAO-56):
-          </p>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
-            {SOIL_TEXTURE_KEYS.map(key => {
-              const tex = FAO_SOIL_TEXTURES[key]
-              const isSelected = soilTexture === key
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleSoilTextureSelect(key)}
-                  style={{
-                    flexShrink: 0,
-                    width: 120,
-                    padding: '10px 10px 8px',
-                    borderRadius: 10,
-                    border: isSelected
-                      ? '1.5px solid #0093D0'
-                      : '1px solid rgba(255,255,255,0.08)',
-                    background: isSelected
-                      ? 'rgba(0,147,208,0.12)'
-                      : 'rgba(255,255,255,0.03)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.15s',
-                    outline: 'none',
-                  }}
-                >
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: isSelected ? '#0093D0' : '#94a3b8', textTransform: 'uppercase', marginBottom: 4 }}>
-                    {tex.label}
-                  </div>
-                  <div style={{ fontSize: 11, color: isSelected ? '#e2e8f0' : '#64748b', lineHeight: 1.4 }}>
-                    CC {tex.cc}% · PM {tex.pm}%
-                  </div>
-                  <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
-                    Ds {tex.ds} g/cm³
-                  </div>
-                  {isSelected && (
-                    <div style={{ marginTop: 5, fontSize: 9, color: '#0093D0', fontWeight: 600 }}>✓ SELECIONADO</div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-          {soilTexture && (
-            <p style={{ fontSize: 11, color: '#64748b', margin: '4px 0 0', fontStyle: 'italic' }}>
-              {FAO_SOIL_TEXTURES[soilTexture].hint} — valores preenchidos automaticamente. Você pode ajustá-los abaixo.
-            </p>
-          )}
-
-          {/* Campos manuais CC/PM/Ds — sempre visíveis para override */}
-          <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: 12, marginTop: 12 }}>
-            <Field label="Cap. Campo (CC)" value={fieldCapacity} onChange={v => { setFieldCapacity(v); setSoilTexture('') }} placeholder="32" unit="%" hint="% volumétrico" />
-            <Field label="Pto. Murcha (PM)" value={wiltingPoint}   onChange={v => { setWiltingPoint(v); setSoilTexture('') }}   placeholder="14" unit="%" hint="% volumétrico" />
-            <Field label="Dens. Solo (Ds)"  value={bulkDensity}   onChange={v => { setBulkDensity(v); setSoilTexture('') }}   placeholder="1.4" unit="g/cm³" />
-          </div>
-          <p style={{ fontSize: 12, color: '#94a3b8', margin: '-4px 0 0', lineHeight: 1.625 }}>
-            Esses valores são usados no balanço hídrico de todas as safras deste pivô.
-          </p>
+          {/* ── Parâmetros de Solo ── */}
+          <SoilParametersInput value={soilParams} onChange={setSoilParams} />
 
           {/* Botões */}
           <div className="flex gap-3 mt-2">
