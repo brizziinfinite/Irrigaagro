@@ -21,18 +21,20 @@ import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
 import IrrigaAgroLogo from '@/components/branding/IrrigaAgroLogo';
 
-// SVG icon de pivô central — mockup aprovado
+// SVG icon de pivô central — viewBox 0 0 24 24 (padrão Lucide)
 function PivotIcon({ size = 20 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="50 50 300 300" fill="none">
-      <circle cx="200" cy="200" r="120" fill="none" stroke="currentColor" strokeWidth="14"/>
-      <circle cx="200" cy="200" r="45" fill="none" stroke="currentColor" strokeWidth="10"/>
-      <line x1="200" y1="110" x2="200" y2="148" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
-      <line x1="200" y1="252" x2="200" y2="290" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
-      <line x1="110" y1="200" x2="148" y2="200" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
-      <line x1="252" y1="200" x2="290" y2="200" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
-      <circle cx="200" cy="200" r="14" fill="currentColor"/>
-      <line x1="200" y1="200" x2="300" y2="130" stroke="currentColor" strokeWidth="12" strokeLinecap="round"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {/* Círculo externo — área irrigada */}
+      <circle cx="12" cy="12" r="10" strokeWidth="1.5"/>
+      {/* Torre central */}
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+      {/* Braço principal do pivô */}
+      <line x1="12" y1="12" x2="20" y2="5" strokeWidth="1.75"/>
+      {/* Rodas de suporte no braço */}
+      <circle cx="16.5" cy="8.5" r="1" fill="currentColor" stroke="none"/>
+      {/* Trilho de irrigação (arco) */}
+      <path d="M 4.2 17 A 10 10 0 0 1 19.8 7" strokeWidth="1.5" strokeDasharray="2 1.5"/>
     </svg>
   );
 }
