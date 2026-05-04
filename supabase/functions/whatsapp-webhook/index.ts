@@ -73,6 +73,45 @@ Mensagem: "${transcricao}"`,
   return d.choices?.[0]?.message?.content || ''
 }
 
+// Helper: chama process-energy-bill e envia resultado via WhatsApp
+async function processEnergyBill(opts: {
+  supabase: ReturnType<typeof createClient>
+  phone: string
+  contact: { id: string; company_id: string }
+  media: { base64: string; mimeType: string }
+  farmId: string
+}) {
+  const { supabase, phone, contact, media, farmId } = opts
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+  const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+  const ocrResponse = await fetch(`${SUPABASE_URL}/functions/v1/process-energy-bill`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SERVICE_KEY}` },
+    body: JSON.stringify({
+      image_base64: media.base64,
+      image_mime_type: media.mimeType,
+      contact_id: contact.id,
+      farm_id: farmId,
+      company_id: contact.company_id,
+    }),
+  })
+
+  const ocrResult = await ocrResponse.json()
+  const responseText = ocrResult.success
+    ? ocrResult.confirmation_message
+    : `❌ Não consegui ler a fatura.\n\n💡 Dicas:\n- Boa iluminação\n- Enquadre toda a fatura\n- Evite sombras\n\nTente enviar novamente.`
+
+  await sendWhatsApp(phone, responseText)
+  await supabase.from('whatsapp_messages_log').insert({
+    contact_id: contact.id,
+    direction: 'outbound',
+    message_type: 'energy_bill',
+    content: responseText,
+    status: 'sent',
+  })
+}
+
 async function downloadMedia(messageId: string): Promise<{ base64: string; mimeType: string } | null> {
   try {
     console.log('downloadMedia: iniciando para messageId=', messageId)
@@ -625,67 +664,53 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
         status: 'delivered',
       })
 
-      await sendWhatsApp(phone, '⏳ Processando sua fatura de energia... Aguarde alguns segundos.')
-
       const media = await downloadMedia(messageId)
-
       if (!media) {
         await sendWhatsApp(phone, '❌ Não consegui baixar a imagem. Tente enviar novamente.')
         return new Response('ok', { status: 200 })
       }
 
-      let pivotId: string | null = null
-      if (subs.length === 1) {
-        pivotId = subs[0].pivot_id
-      } else if (imageCaption && subs.length > 1) {
-        const captionUpper = imageCaption.toUpperCase().trim()
-        const match = subs.find(s => captionUpper.includes(s.pivots?.name?.toUpperCase() ?? ''))
-        pivotId = match?.pivot_id ?? null
-      }
+      // Buscar fazendas da empresa do contato
+      const { data: farmsData } = await supabase
+        .from('farms')
+        .select('id, name')
+        .eq('company_id', contact.company_id)
+        .order('name')
 
-      if (!pivotId && subs.length > 1) {
-        const names = subs.map(s => s.pivots?.name).join(', ')
-        await sendWhatsApp(
-          phone,
-          `📍 Qual pivô é essa fatura?\n\nSeus pivôs: ${names}\n\nReenvie a foto com o nome do pivô na legenda.\nEx: foto + legenda "NORTE"`
-        )
+      const farms = (farmsData ?? []) as Array<{ id: string; name: string }>
+
+      if (farms.length === 0) {
+        await sendWhatsApp(phone, '❌ Nenhuma propriedade cadastrada. Acesse o app para cadastrar.')
         return new Response('ok', { status: 200 })
       }
 
-      const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
-      const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      // Uma fazenda → processa direto
+      if (farms.length === 1) {
+        await sendWhatsApp(phone, '⏳ Processando sua fatura de energia... Aguarde alguns segundos.')
+        await processEnergyBill({ supabase, phone, contact, media, farmId: farms[0].id })
+        return new Response('ok', { status: 200 })
+      }
 
-      const ocrResponse = await fetch(`${SUPABASE_URL}/functions/v1/process-energy-bill`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SERVICE_KEY}`,
-        },
-        body: JSON.stringify({
+      // Múltiplas fazendas → guardar imagem na sessão e perguntar qual
+      const farmList = farms.map((f, i) => `*${i + 1}.* ${f.name}`).join('\n')
+      await supabase.from('whatsapp_sessions').upsert({
+        phone_number: phone,
+        company_id: contact.company_id,
+        current_flow: 'energy_bill_farm',
+        flow_step: 'awaiting_farm_selection',
+        context: {
           image_base64: media.base64,
           image_mime_type: media.mimeType,
-          contact_id: contact.id,
-          pivot_id: pivotId,
-          company_id: contact.company_id,
-        }),
-      })
+          farms,  // [{ id, name }]
+        },
+        last_interaction: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 min
+      }, { onConflict: 'phone_number' })
 
-      const ocrResult = await ocrResponse.json()
-
-      responseText = ocrResult.success
-        ? ocrResult.confirmation_message
-        : `❌ Não consegui ler a fatura.\n\n💡 Dicas:\n- Boa iluminação\n- Enquadre toda a fatura\n- Evite sombras\n\nTente enviar novamente.`
-
-      await sendWhatsApp(phone, responseText)
-
-      await supabase.from('whatsapp_messages_log').insert({
-        contact_id: contact.id,
-        direction: 'outbound',
-        message_type: 'energy_bill',
-        content: responseText,
-        status: 'sent',
-      })
-
+      await sendWhatsApp(
+        phone,
+        `📍 *Para qual propriedade é essa fatura?*\n\n${farmList}\n\nResponda com o número.`
+      )
       return new Response('ok', { status: 200 })
     }
 
@@ -705,6 +730,35 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
       .single()
 
     const sessionExpired = session && new Date(session.expires_at) < new Date()
+
+    // ── Sessão: seleção de fazenda para fatura de energia ──────────────────────
+    if (session && !sessionExpired && session.current_flow === 'energy_bill_farm' && session.flow_step === 'awaiting_farm_selection') {
+      const numStr = msg.trim()
+      const num = parseInt(numStr, 10)
+      const farms = (session.context?.farms ?? []) as Array<{ id: string; name: string }>
+
+      if (isNaN(num) || num < 1 || num > farms.length) {
+        const farmList = farms.map((f, i) => `*${i + 1}.* ${f.name}`).join('\n')
+        await sendWhatsApp(phone, `❌ Responda com um número de 1 a ${farms.length}.\n\n${farmList}`)
+        return new Response('ok', { status: 200 })
+      }
+
+      const selectedFarm = farms[num - 1]
+
+      // Limpar sessão
+      await supabase.from('whatsapp_sessions').delete().eq('phone_number', phone)
+
+      await sendWhatsApp(phone, `⏳ Processando fatura para *${selectedFarm.name}*...`)
+
+      const media = {
+        base64: session.context.image_base64 as string,
+        mimeType: session.context.image_mime_type as string,
+      }
+
+      await processEnergyBill({ supabase, phone, contact, media, farmId: selectedFarm.id })
+      return new Response('ok', { status: 200 })
+    }
+
     const activeSession = session && !sessionExpired && session.current_flow === 'soil_diagnosis'
 
     // Se há sessão ativa de diagnóstico, QUALQUER mensagem vai para a máquina de estados

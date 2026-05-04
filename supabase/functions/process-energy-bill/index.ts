@@ -5,10 +5,15 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 
 serve(async (req) => {
   try {
-    const { image_base64, image_mime_type, contact_id, pivot_id, company_id, phone } = await req.json()
+    const { image_base64, image_mime_type, contact_id, farm_id, company_id } = await req.json()
 
     if (!image_base64) {
       return new Response(JSON.stringify({ success: false, error: 'image_base64 obrigatório' }), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    if (!farm_id) {
+      return new Response(JSON.stringify({ success: false, error: 'farm_id obrigatório' }), {
         status: 400, headers: { 'Content-Type': 'application/json' },
       })
     }
@@ -18,48 +23,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Se não tiver contact_id, buscar pelo phone
-    let resolvedContactId = contact_id
-    let resolvedCompanyId = company_id
-    let resolvedPivotId = pivot_id
-
-    if (!resolvedContactId && phone) {
-      const { data: contact } = await supabase
-        .from('whatsapp_contacts')
-        .select('id, company_id')
-        .eq('phone', phone)
-        .eq('is_active', true)
-        .single()
-
-      if (contact) {
-        resolvedContactId = contact.id
-        resolvedCompanyId = contact.company_id
-      }
-    }
-
-    // Se não tiver pivot_id, pegar o primeiro pivô da empresa
-    if (!resolvedPivotId && resolvedCompanyId) {
-      const { data: subs } = await supabase
-        .from('whatsapp_pivot_subscriptions')
-        .select('pivot_id')
-        .eq('contact_id', resolvedContactId)
-        .limit(1)
-        .single()
-
-      resolvedPivotId = subs?.pivot_id ?? null
-    }
-
     // Chamar Gemini para extrair dados da fatura
-    const prompt = `Analise esta fatura de energia elétrica e extraia as seguintes informações em JSON:
+    const prompt = `Analise esta fatura de energia elétrica e extraia os dados em JSON.
+Retorne APENAS o JSON, sem explicações, sem markdown.
 {
-  "reference_month": "YYYY-MM (mês de referência da fatura)",
-  "total_kwh": número (consumo total em kWh),
-  "total_amount": número (valor total em reais, sem R$),
-  "demand_kw": número ou null (demanda contratada/medida em kW se houver),
-  "reactive_charge": número ou null (cobrança de reativos se houver),
-  "reading_date": "YYYY-MM-DD ou null"
-}
-Responda APENAS com o JSON, sem explicações.`
+  "reference_month": "YYYY-MM",
+  "kwh_total": número ou null,
+  "cost_total_brl": número ou null,
+  "kwh_reserved": número ou null,
+  "cost_reserved_brl": número ou null,
+  "kwh_peak": número ou null,
+  "cost_peak_brl": número ou null,
+  "kwh_offpeak": número ou null,
+  "cost_offpeak_brl": número ou null,
+  "reactive_kvarh": número ou null,
+  "cost_reactive_brl": número ou null,
+  "reactive_percent": número ou null,
+  "contracted_demand_kw": número ou null,
+  "measured_demand_kw": número ou null,
+  "demand_exceeded_brl": número ou null,
+  "power_factor": número ou null
+}`
 
     const geminiResp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -70,15 +54,10 @@ Responda APENAS com o JSON, sem explicações.`
           contents: [{
             parts: [
               { text: prompt },
-              {
-                inline_data: {
-                  mime_type: image_mime_type || 'image/jpeg',
-                  data: image_base64,
-                }
-              }
+              { inline_data: { mime_type: image_mime_type || 'image/jpeg', data: image_base64 } }
             ]
           }],
-          generationConfig: { temperature: 0, maxOutputTokens: 512 }
+          generationConfig: { temperature: 0, maxOutputTokens: 1024 }
         })
       }
     )
@@ -92,8 +71,6 @@ Responda APENAS com o JSON, sem explicações.`
 
     const geminiData = await geminiResp.json()
     const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
-
-    // Extrair JSON da resposta
     const jsonMatch = rawText.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       return new Response(JSON.stringify({ success: false, error: 'Não foi possível extrair dados da fatura' }), {
@@ -103,43 +80,50 @@ Responda APENAS com o JSON, sem explicações.`
 
     const extracted = JSON.parse(jsonMatch[0])
 
-    // Verificar duplicata: mesmo pivot + mesmo mês de referência já confirmado
-    if (extracted.reference_month && resolvedPivotId) {
+    // Verificar duplicata: mesma fazenda + mesmo mês
+    if (extracted.reference_month) {
       const { data: existing } = await supabase
         .from('energy_bills')
-        .select('id, reference_month')
-        .eq('pivot_id', resolvedPivotId)
+        .select('id')
+        .eq('farm_id', farm_id)
         .eq('reference_month', extracted.reference_month)
         .limit(1)
         .single()
 
       if (existing) {
-        const confirmation_message =
-          `⚠️ *Fatura duplicada*\n\n` +
-          `Já existe uma fatura registrada para *${extracted.reference_month}*.\n\n` +
-          `Se precisar corrigir, acesse o app: https://irrigaagro.com.br`
-
-        return new Response(JSON.stringify({ success: false, confirmation_message, duplicate: true }), {
-          status: 200, headers: { 'Content-Type': 'application/json' },
-        })
+        return new Response(JSON.stringify({
+          success: false,
+          duplicate: true,
+          confirmation_message:
+            `⚠️ *Fatura duplicada*\n\nJá existe uma fatura registrada para *${extracted.reference_month}*.\n\nAcesse o app para corrigir: https://irrigaagro.com.br`,
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } })
       }
     }
 
-    // Salvar no banco como não confirmado
+    // Salvar
     const { data: bill, error: billError } = await supabase
       .from('energy_bills')
-      .insert({
-        company_id: resolvedCompanyId,
-        pivot_id: resolvedPivotId,
-        reference_month: extracted.reference_month,
-        total_kwh: extracted.total_kwh,
-        total_amount: extracted.total_amount,
-        demand_kw: extracted.demand_kw,
-        reactive_charge: extracted.reactive_charge,
-        reading_date: extracted.reading_date,
-        source: 'whatsapp',
-        confirmed: false,
-      })
+      .upsert({
+        farm_id,
+        reference_month:      extracted.reference_month,
+        kwh_total:            extracted.kwh_total,
+        cost_total_brl:       extracted.cost_total_brl,
+        kwh_reserved:         extracted.kwh_reserved,
+        cost_reserved_brl:    extracted.cost_reserved_brl,
+        kwh_peak:             extracted.kwh_peak,
+        cost_peak_brl:        extracted.cost_peak_brl,
+        kwh_offpeak:          extracted.kwh_offpeak,
+        cost_offpeak_brl:     extracted.cost_offpeak_brl,
+        reactive_kvarh:       extracted.reactive_kvarh,
+        cost_reactive_brl:    extracted.cost_reactive_brl,
+        reactive_percent:     extracted.reactive_percent,
+        contracted_demand_kw: extracted.contracted_demand_kw,
+        measured_demand_kw:   extracted.measured_demand_kw,
+        demand_exceeded_brl:  extracted.demand_exceeded_brl,
+        power_factor:         extracted.power_factor,
+        source:               'whatsapp',
+        raw_text:             `llm:gemini`,
+      }, { onConflict: 'farm_id,reference_month' })
       .select()
       .single()
 
@@ -150,18 +134,25 @@ Responda APENAS com o JSON, sem explicações.`
       })
     }
 
-    const month = extracted.reference_month || 'desconhecido'
-    const kwh = extracted.total_kwh ? `${extracted.total_kwh} kWh` : '? kWh'
-    const amount = extracted.total_amount
-      ? `R$ ${extracted.total_amount.toFixed(2).replace('.', ',')}`
+    const month = extracted.reference_month || '?'
+    const kwh = extracted.kwh_total ? `${extracted.kwh_total} kWh` : '? kWh'
+    const amount = extracted.cost_total_brl
+      ? `R$ ${Number(extracted.cost_total_brl).toFixed(2).replace('.', ',')}`
       : 'R$ ?'
+    const reactive = extracted.reactive_percent
+      ? `\n⚡ Reativa: ${Number(extracted.reactive_percent).toFixed(1)}%`
+      : ''
+    const reserved = extracted.kwh_reserved && extracted.kwh_total
+      ? `\n🕐 Reservado: ${((extracted.kwh_reserved / extracted.kwh_total) * 100).toFixed(0)}%`
+      : ''
 
     const confirmation_message =
-      `✅ *Fatura lida com sucesso!*\n\n` +
+      `✅ *Fatura salva com sucesso!*\n\n` +
       `📅 Referência: ${month}\n` +
       `⚡ Consumo: ${kwh}\n` +
-      `💰 Valor: ${amount}\n\n` +
-      `Responda *SIM* para confirmar e salvar, ou *NÃO* para descartar.`
+      `💰 Valor: ${amount}` +
+      reactive + reserved +
+      `\n\nVeja a análise completa em: https://irrigaagro.com.br/relatorios`
 
     return new Response(JSON.stringify({ success: true, confirmation_message, bill }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
