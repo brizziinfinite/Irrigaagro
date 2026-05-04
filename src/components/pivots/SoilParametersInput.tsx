@@ -3,12 +3,12 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { FAO_SOIL_TEXTURES, SOIL_TEXTURE_KEYS, type SoilTextureKey } from '@/lib/soil-textures'
 import { calculateSoilProperties } from '@/lib/soil/saxton-rawls'
-import { FlaskConical, TableProperties, CheckCircle2, AlertCircle } from 'lucide-react'
+import { FlaskConical, TableProperties, CheckCircle2, AlertCircle, Sliders } from 'lucide-react'
 
-type Mode = 'granulometric' | 'texture_table'
+type Mode = 'granulometric' | 'direct' | 'texture_table'
 
 export interface SoilParamValues {
-  soil_input_method: Mode
+  soil_input_method: 'granulometric' | 'direct' | 'texture_table'
   // Granulométrico
   soil_sand_pct: number | null
   soil_silt_pct: number | null
@@ -234,15 +234,15 @@ function GranulometricInput({ value, onChange }: Props) {
             {properties.textureClass}
           </p>
           <p style={{ fontSize: 11, color: '#64748b', margin: '0 0 16px' }}>
-            Triângulo textural USDA · PTF Saxton & Rawls (2006)
+            Classificação automática pelo triângulo textural
           </p>
 
           {/* Métricas calculadas */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, paddingTop: 14, borderTop: '1px solid rgba(34,211,238,0.12)' }}>
             {[
-              { label: 'CC', value: `${properties.fieldCapacityPct.toFixed(1)}%`, sub: '33 kPa' },
-              { label: 'PMP', value: `${properties.wiltingPointPct.toFixed(1)}%`, sub: '1500 kPa' },
-              { label: 'Ds', value: `${properties.bulkDensity} g/cm³`, sub: 'bulk density' },
+              { label: 'CC', value: `${properties.fieldCapacityPct.toFixed(1)}%`, sub: 'Cap. de Campo' },
+              { label: 'PMP', value: `${properties.wiltingPointPct.toFixed(1)}%`, sub: 'Pto. de Murcha' },
+              { label: 'Ds', value: `${properties.bulkDensity} g/cm³`, sub: 'Dens. do Solo' },
             ].map(m => (
               <div key={m.label}>
                 <p style={{ fontSize: 10, color: '#64748b', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{m.label}</p>
@@ -278,9 +278,9 @@ function GranulometricInput({ value, onChange }: Props) {
           {/* Campos de override */}
           {manualOverride && (
             <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-              <NumInput label="CC (%)" value={manualCC} onChange={setManualCC} placeholder={properties.fieldCapacityPct.toFixed(1)} unit="%" />
-              <NumInput label="PMP (%)" value={manualPM} onChange={setManualPM} placeholder={properties.wiltingPointPct.toFixed(1)} unit="%" />
-              <NumInput label="Ds (g/cm³)" value={manualDs} onChange={setManualDs} placeholder={properties.bulkDensity.toString()} unit="g/cm³" />
+              <NumInput label="CC (%)" value={manualCC} onChange={setManualCC} placeholder={properties.fieldCapacityPct.toFixed(1)} unit="%" hint="Cap. de Campo" />
+              <NumInput label="PMP (%)" value={manualPM} onChange={setManualPM} placeholder={properties.wiltingPointPct.toFixed(1)} unit="%" hint="Pto. de Murcha" />
+              <NumInput label="Ds (g/cm³)" value={manualDs} onChange={setManualDs} placeholder={properties.bulkDensity.toString()} unit="g/cm³" hint="Dens. do Solo" />
             </div>
           )}
         </div>
@@ -291,6 +291,66 @@ function GranulometricInput({ value, onChange }: Props) {
         <p style={{ fontSize: 12, color: '#f59e0b', lineHeight: 1.5, margin: 0 }}>
           ⚠️ A soma deve ser 100% (± 1%). Verifique os valores do laudo.
         </p>
+      )}
+    </div>
+  )
+}
+
+function DirectInput({ value, onChange }: Props) {
+  const [cc, setCc] = useState(value.field_capacity?.toString() ?? '')
+  const [pm, setPm] = useState(value.wilting_point?.toString() ?? '')
+  const [ds, setDs] = useState(value.bulk_density?.toString() ?? '')
+
+  const ccN = parseFloat(cc)
+  const pmN = parseFloat(pm)
+  const dsN = parseFloat(ds)
+
+  const ccErr = cc !== '' && (isNaN(ccN) || ccN <= 0 || ccN > 100) ? 'Entre 1 e 100%' : ''
+  const pmErr = pm !== '' && (isNaN(pmN) || pmN <= 0 || pmN > 100) ? 'Entre 1 e 100%' : ''
+  const dsErr = ds !== '' && (isNaN(dsN) || dsN < 0.5 || dsN > 2.5) ? 'Entre 0.5 e 2.5 g/cm³' : ''
+  const orderErr = !ccErr && !pmErr && cc !== '' && pm !== '' && ccN <= pmN
+    ? 'CC deve ser maior que PMP' : ''
+
+  useEffect(() => {
+    const valid = cc !== '' && pm !== '' && !ccErr && !pmErr && !orderErr
+    onChange({
+      ...value,
+      soil_input_method: 'direct',
+      field_capacity: valid ? ccN : null,
+      wilting_point:  valid ? pmN : null,
+      bulk_density:   ds !== '' && !dsErr ? dsN : null,
+      soil_texture_class: null,
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cc, pm, ds])
+
+  const cad = !ccErr && !pmErr && !orderErr && cc !== '' && pm !== ''
+    ? ccN - pmN : null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
+        Informe diretamente os valores do laudo de solo ou de tabelas de referência:
+      </p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        <NumInput label="Cap. Campo — CC (%)" value={cc} onChange={setCc} placeholder="30.5" unit="%" hint="% volumétrico" error={ccErr} />
+        <NumInput label="Pto. Murcha — PMP (%)" value={pm} onChange={setPm} placeholder="16.1" unit="%" hint="% volumétrico" error={pmErr || orderErr} />
+        <NumInput label="Dens. Solo — Ds (g/cm³)" value={ds} onChange={setDs} placeholder="1.2" unit="g/cm³" hint="Opcional" error={dsErr} />
+      </div>
+
+      {cad !== null && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 14px', borderRadius: 10,
+          background: 'rgba(34,197,94,0.05)',
+          border: '1px solid rgba(34,197,94,0.18)',
+        }}>
+          <span style={{ fontSize: 12, color: '#64748b' }}>CAD (água disponível = CC − PMP)</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#22c55e', fontVariantNumeric: 'tabular-nums' }}>
+            {cad.toFixed(1)}%
+          </span>
+        </div>
       )}
     </div>
   )
@@ -320,7 +380,7 @@ function TextureTableInput({ value, onChange }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-        Selecione a textura do solo para preencher automaticamente os valores de balanço hídrico (FAO-56):
+        Selecione a textura do solo para preencher automaticamente os valores de balanço hídrico:
       </p>
 
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
@@ -360,7 +420,7 @@ function TextureTableInput({ value, onChange }: Props) {
 
       {soilTexture && (
         <p style={{ fontSize: 11, color: '#64748b', margin: 0, fontStyle: 'italic' }}>
-          {FAO_SOIL_TEXTURES[soilTexture].hint} — valores preenchidos automaticamente. Você pode ajustá-los abaixo.
+          {FAO_SOIL_TEXTURES[soilTexture].hint} — valores preenchidos automaticamente.
         </p>
       )}
     </div>
@@ -368,7 +428,7 @@ function TextureTableInput({ value, onChange }: Props) {
 }
 
 export function SoilParametersInput({ value, onChange }: Props) {
-  const [mode, setMode] = useState<Mode>(value.soil_input_method ?? 'texture_table')
+  const [mode, setMode] = useState<Mode>(value.soil_input_method ?? 'texture_table' as Mode)
 
   const handleModeChange = (m: Mode) => {
     setMode(m)
@@ -386,45 +446,35 @@ export function SoilParametersInput({ value, onChange }: Props) {
       </div>
 
       {/* Toggle de modo */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <button
-          type="button"
-          onClick={() => handleModeChange('granulometric')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-            cursor: 'pointer', transition: 'all 0.15s',
-            background: mode === 'granulometric' ? 'rgba(34,211,238,0.1)' : 'rgba(255,255,255,0.03)',
-            border: mode === 'granulometric' ? '1px solid rgba(34,211,238,0.35)' : '1px solid rgba(255,255,255,0.07)',
-            color: mode === 'granulometric' ? '#22d3ee' : '#64748b',
-          }}
-        >
-          <FlaskConical size={13} />
-          Tenho análise granulométrica
-        </button>
-        <button
-          type="button"
-          onClick={() => handleModeChange('texture_table')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-            cursor: 'pointer', transition: 'all 0.15s',
-            background: mode === 'texture_table' ? 'rgba(0,147,208,0.1)' : 'rgba(255,255,255,0.03)',
-            border: mode === 'texture_table' ? '1px solid rgba(0,147,208,0.35)' : '1px solid rgba(255,255,255,0.07)',
-            color: mode === 'texture_table' ? '#0093D0' : '#64748b',
-          }}
-        >
-          <TableProperties size={13} />
-          Não tenho análise
-        </button>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+        {([
+          { m: 'texture_table' as Mode, icon: <TableProperties size={13} />, label: 'Não tenho análise',        activeColor: '#0093D0', activeBg: 'rgba(0,147,208,0.1)',  activeBorder: 'rgba(0,147,208,0.35)'  },
+          { m: 'granulometric' as Mode, icon: <FlaskConical size={13} />,    label: 'Análise granulométrica',   activeColor: '#22d3ee', activeBg: 'rgba(34,211,238,0.1)', activeBorder: 'rgba(34,211,238,0.35)' },
+          { m: 'direct'        as Mode, icon: <Sliders size={13} />,         label: 'Tenho CC / PMP / Ds',      activeColor: '#22c55e', activeBg: 'rgba(34,197,94,0.1)',  activeBorder: 'rgba(34,197,94,0.35)'  },
+        ] as const).map(({ m, icon, label, activeColor, activeBg, activeBorder }) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => handleModeChange(m)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', transition: 'all 0.15s',
+              background: mode === m ? activeBg : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${mode === m ? activeBorder : 'rgba(255,255,255,0.07)'}`,
+              color: mode === m ? activeColor : '#64748b',
+            }}
+          >
+            {icon}
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Conteúdo por modo */}
-      {mode === 'granulometric' ? (
-        <GranulometricInput value={value} onChange={onChange} />
-      ) : (
-        <TextureTableInput value={value} onChange={onChange} />
-      )}
+      {mode === 'granulometric' && <GranulometricInput value={value} onChange={onChange} />}
+      {mode === 'direct'        && <DirectInput        value={value} onChange={onChange} />}
+      {mode === 'texture_table' && <TextureTableInput  value={value} onChange={onChange} />}
     </div>
   )
 }

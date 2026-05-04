@@ -286,43 +286,43 @@ function SoilDiagram({
       {/* ── Stats Grid ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 'auto' }}>
 
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
-          <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cultura</p>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cropName ?? 'Não inf.'}</span>
-            <span style={{ fontSize: 11, color: '#0093D0', fontWeight: 700 }}>D{das}</span>
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: 14, minWidth: 0, overflow: 'hidden' }}>
+          <p style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>Cultura</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{cropName ?? 'Não inf.'}</span>
+            <span style={{ fontSize: 11, color: '#0093D0', fontWeight: 700, flexShrink: 0 }}>D{das}</span>
           </div>
-          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>Raiz: <span style={{ color: '#e2e8f0' }}>{Math.round(rootDepthCm)} cm</span></p>
+          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>Raiz: <span style={{ color: '#e2e8f0' }}>{Math.round(rootDepthCm)} cm</span></p>
         </div>
 
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
-          <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Armazenamento</p>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
-            <span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}} title="Capacidade de Água Disponível">CAD:</span> {cad.toFixed(1)} <span style={{ fontSize: 11, color: '#94a3b8' }}>mm</span>
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: 14, minWidth: 0, overflow: 'hidden' }}>
+          <p style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>Reserva</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', fontFamily: 'var(--font-mono)', margin: 0 }}>
+            CAD: {cad.toFixed(1)} <span style={{ fontSize: 10, color: '#94a3b8' }}>mm</span>
           </p>
-          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>
-            <span style={{cursor: 'help', borderBottom: '1px dotted #8899aa'}} title="Capacidade Total de Água">CTA:</span> <span style={{ color: '#e2e8f0' }}>{cta.toFixed(1)} mm</span>
+          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>
+            CTA: <span style={{ color: '#e2e8f0' }}>{cta.toFixed(1)} mm</span>
           </p>
         </div>
 
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
-          <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hídrico Atual</p>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>
-            ADc: {adcNew.toFixed(1)} <span style={{ fontSize: 11, color: '#94a3b8' }}>mm</span>
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: 14, minWidth: 0, overflow: 'hidden' }}>
+          <p style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>Hídrico Atual</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#0093D0', fontFamily: 'var(--font-mono)', margin: 0 }}>
+            ADc: {adcNew.toFixed(1)} <span style={{ fontSize: 10, color: '#94a3b8' }}>mm</span>
           </p>
-          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>Falta p/ CC: <span style={{ color: '#ef4444' }}>{Math.max(0, cta - adcNew).toFixed(1)} mm</span></p>
+          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>Falta p/ CC: <span style={{ color: '#ef4444' }}>{Math.max(0, cta - adcNew).toFixed(1)} mm</span></p>
         </div>
 
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '14px', borderRadius: 14 }}>
-          <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span>Limiar de Segurança</span>
+        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: 14, minWidth: 0, overflow: 'hidden' }}>
+          <p style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+            <span>Limiar</span>
             {alertThresholdPct && <span style={{ color: '#f59e0b' }}>({alertThresholdPct}%)</span>}
           </p>
-          <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>
-            Mín: {(cta * ((alertThresholdPct ?? 50)/100)).toFixed(1)} <span style={{ fontSize: 11, color: '#94a3b8' }}>mm</span>
+          <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', fontFamily: 'var(--font-mono)', margin: 0 }}>
+            Mín: {(cta * ((alertThresholdPct ?? 50)/100)).toFixed(1)} <span style={{ fontSize: 10, color: '#94a3b8' }}>mm</span>
           </p>
-          <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6, lineHeight: 1.625 }}>
-            Déficit aceito: <span style={{ color: '#e2e8f0' }}>{(cta - (cta * ((alertThresholdPct ?? 50)/100))).toFixed(1)} mm</span>
+          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>
+            Déficit: <span style={{ color: '#e2e8f0' }}>{(cta - (cta * ((alertThresholdPct ?? 50)/100))).toFixed(1)} mm</span>
           </p>
         </div>
 

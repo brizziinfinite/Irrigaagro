@@ -50,7 +50,9 @@ function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
 interface CropModalProps { crop: Crop | null; companyId: string; onClose: () => void; onSaved: () => void }
 
 function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
-  const isEdit = !!crop
+  // cultura padrão (company_id=null) tratada como "criar personalizada" ao salvar
+  const isDefault = !!crop && crop.company_id === null
+  const isEdit = !!crop && !isDefault
   const [name, setName] = useState(crop?.name ?? '')
   const [kcIni, setKcIni]     = useState(crop?.kc_ini?.toString() ?? '')
   const [kcMid, setKcMid]     = useState(crop?.kc_mid?.toString() ?? '')
@@ -124,6 +126,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
       if (isEdit) {
         await updateCrop(crop.id, payload)
       } else {
+        // isDefault → cria personalizada (ignora id da padrão)
         await createCrop(payload)
       }
 
@@ -152,7 +155,9 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
       }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>{isEdit ? 'Editar Cultura' : 'Nova Cultura'}</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
+            {isEdit ? 'Editar Cultura' : isDefault ? `Personalizar: ${crop.name}` : 'Nova Cultura'}
+          </h2>
           <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}>
             <X size={16} />
           </button>
@@ -177,8 +182,8 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
             />
           </div>
 
-          {/* Preset FAO-56 */}
-          {!isEdit && (
+          {/* Preset FAO-56 — só para nova cultura do zero */}
+          {!isEdit && !isDefault && (
             <div style={{ position: 'relative' }}>
               <button
                 type="button"
@@ -309,7 +314,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
             <button type="submit" disabled={loading}
               style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
               {loading && <Loader2 size={14} className="animate-spin" />}
-              {isEdit ? 'Salvar' : 'Criar'}
+              {isEdit ? 'Salvar' : isDefault ? 'Salvar como minha cultura' : 'Criar'}
             </button>
           </div>
         </form>
@@ -415,11 +420,11 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
               </button>
             </>
           ) : (
-            <button onClick={onDuplicate} title="Personalizar (duplicar para minhas culturas)"
+            <button onClick={onEdit} title="Editar / personalizar esta cultura"
               style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(0,147,208,0.08)'; el.style.color = '#0093D0'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#556677'; el.style.borderColor = 'transparent' }}>
-              <Copy size={13} />
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+              <Pencil size={13} />
             </button>
           )}
         </div>
@@ -646,7 +651,7 @@ export default function CulturasPage() {
                 <div className="flex flex-col gap-3">
                   {defaultCrops.map(c => (
                     <CropCard key={c.id} crop={c} isCustom={false}
-                      onEdit={() => {}} onDelete={() => {}} onDuplicate={() => handleDuplicate(c)} deleting={false}
+                      onEdit={() => { setEditingCrop(c); setModalOpen(true) }} onDelete={() => {}} onDuplicate={() => handleDuplicate(c)} deleting={false}
                     />
                   ))}
                 </div>
