@@ -130,13 +130,13 @@ Estação Plugfield ativa: device 3228, 248 dias históricos importados.
 ---
 
 ## 🩺 Diagnóstico Manual do Solo
-**Status:** Phase 1 + 2 ✅ — Phase 3-5 pendentes
+**Status:** Phase 1 + 2 + 3 + 4 ✅ — completo
 
 - **Phase 1** ✅ 2026-04-22 — Wizard web 5 passos, tabela `soil_manual_diagnosis`, storage bucket
 - **Phase 2** ✅ 2026-04-22 — WhatsApp state machine (`whatsapp_sessions`), edge function `diagnose-soil`
   - Flow: "diagnóstico" → lista pivôs → score 1-5 → foto/pular → resultado %CC + lâmina
-- **Phase 3** [ ] — Página `/diagnostico-solo/historico` com gráficos de evolução por pivô
-- **Phase 4** [ ] — Calibração automática do balanço quando diagnóstico diverge do calculado
+- **Phase 3** ✅ 2026-05-05 — Página `/diagnostico-solo/historico`: gráfico evolução (balanço vs diagnóstico), KPIs, lista detalhada com scores por profundidade e modal de foto
+- **Phase 4** ✅ 2026-05-05 — Calibração manual: botão aparece quando divergência ≥ 15pp, atualiza `daily_management` com nota de auditoria
 
 ---
 
@@ -155,7 +155,7 @@ Agricultor informa Areia/Silte/Argila/MO (%) e o sistema calcula CC, PMP e Ds au
 - Migration: 7 colunas em `pivots` (`soil_input_method`, `soil_sand_pct`, `soil_silt_pct`, `soil_clay_pct`, `soil_organic_matter_pct`, `soil_texture_class`, `soil_texture`)
 - Referências técnicas removidas da UI (sem FAO-56, Saxton & Rawls, PTF, kPa na tela do agricultor)
 
-**Pendente:** deploy para produção (merge `feat/granulometric-soil-input` → `main`)
+**Deploy:** ✅ Em produção — branch mergeada no main (verificado 2026-05-05)
 
 ---
 
