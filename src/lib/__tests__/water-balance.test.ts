@@ -107,11 +107,13 @@ describe('getStageInfoForDas', () => {
     expect(info.kc).toBeCloseTo(0.557, 2)
   })
 
-  it('retorna Kc mid na fase 3 (DAS=70)', () => {
+  it('retorna Kc mid na fase 3 e limita raiz prática a 40 cm (DAS=70)', () => {
     const info = getStageInfoForDas(milho, 70)
     expect(info.stage).toBe(3)
     expect(info.kc).toBe(1.20)
-    expect(info.rootDepthCm).toBe(60)
+    // Regra de produto: mesmo que a cultura informe raiz maior,
+    // solos compactados são tratados com teto prático de 40 cm.
+    expect(info.rootDepthCm).toBe(40)
   })
 
   it('interpola Kc na fase 4 (DAS=100)', () => {

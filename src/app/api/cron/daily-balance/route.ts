@@ -503,6 +503,40 @@ export async function GET(req: NextRequest) {
     const errors = results.filter((item) => item.status === 'error').length
     const status = resolveRunStatus(errors, ok)
 
+    // Alerta super admin se houve erros ou nenhuma safra processada com sucesso
+    if ((errors > 0 || ok === 0) && process.env.RESEND_API_KEY && process.env.ADMIN_NOTIFY_EMAIL) {
+      try {
+        const errorDetails = results
+          .filter(r => r.status === 'error')
+          .map(r => `• ${r.season_name}: ${r.message}`)
+          .join('\n')
+        const body = [
+          `🚨 Cron daily-balance — ${today}`,
+          ``,
+          `Resultado: ${ok} OK · ${skipped} ignorados · ${errors} erros`,
+          errors > 0 ? `\nErros:\n${errorDetails}` : '',
+          ok === 0 ? `\n⚠️ Nenhuma safra foi processada com sucesso.` : '',
+          `\nVerifique: https://irrigaagro.com.br/admin`,
+        ].join('\n')
+
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'IrrigaAgro <sistema@irrigaagro.com.br>',
+            to: [process.env.ADMIN_NOTIFY_EMAIL],
+            subject: `⚠️ Cron daily-balance com erros — ${today}`,
+            text: body,
+          }),
+        })
+      } catch {
+        // Não bloqueia o retorno se o e-mail falhar
+      }
+    }
+
     await safeUpdateRun(supabase, runId, {
       status,
       processed_count: contexts.length,

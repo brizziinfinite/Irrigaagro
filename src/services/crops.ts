@@ -40,18 +40,14 @@ export async function updateCrop(
   id: string,
   input: CropUpdate,
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient
-): Promise<Crop> {
-  const { data, error } = await cropsTable(client)
+): Promise<void> {
+  const { error } = await cropsTable(client)
     .update(input)
     .eq('id', id)
-    .select()
-    .single()
 
   if (error) {
     throw new Error(`Falha ao atualizar cultura: ${error.message}`)
   }
-
-  return data as Crop
 }
 
 export async function deleteCrop(

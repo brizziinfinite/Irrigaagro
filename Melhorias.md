@@ -140,16 +140,70 @@ Estação Plugfield ativa: device 3228, 248 dias históricos importados.
 
 ---
 
+## 🧪 Granulometria do Solo — Saxton & Rawls (2006)
+**Status:** ✅ Implementado em 2026-05-04 · branch `feat/granulometric-soil-input`
+
+Agricultor informa Areia/Silte/Argila/MO (%) e o sistema calcula CC, PMP e Ds automaticamente usando as Pedotransfer Functions (PTF) de Saxton & Rawls (2006). Três modos disponíveis:
+
+- **Modo 1 — Sem análise**: tabela de texturas (5 classes FAO-56) — fallback para quem não tem laudo
+- **Modo 2 — Análise granulométrica**: Areia/Silte/Argila/MO → CC/PMP/Ds calculados + classe textural USDA
+- **Modo 3 — CC/PMP/Ds direto**: campos manuais para quem já tem os valores do laboratório
+
+- `src/lib/soil/saxton-rawls.ts`: PTF completa (Equações 1-6), `calculateSoilProperties()`, `classifyTexture()` (triângulo USDA)
+- `src/lib/soil/__tests__/saxton-rawls.test.ts`: 14 testes Vitest passando
+- `src/components/pivots/SoilParametersInput.tsx`: componente com os 3 modos acima
+- Migration: 7 colunas em `pivots` (`soil_input_method`, `soil_sand_pct`, `soil_silt_pct`, `soil_clay_pct`, `soil_organic_matter_pct`, `soil_texture_class`, `soil_texture`)
+- Referências técnicas removidas da UI (sem FAO-56, Saxton & Rawls, PTF, kPa na tela do agricultor)
+
+**Pendente:** deploy para produção (merge `feat/granulometric-soil-input` → `main`)
+
+---
+
 ## 🧱 Textura do solo — Seletor FAO-56
-**Status:** ✅ Implementado em 2026-04-27 · branch `feat/soil-texture-selector` mergeado no `main`
+**Status:** ✅ Implementado em 2026-04-27 · ⚠️ Supersedido pelo sistema granulométrico em 2026-05-04
 
-Agricultores sem análise de laboratório podem selecionar a classe textural do solo para auto-preencher CC, PM e Ds com valores FAO-56 canônicos.
+Integrado como "Modo 1" dentro de `SoilParametersInput`. Lógica e dados mantidos em `src/lib/soil-textures.ts`.
 
-- 5 cartões: Argiloso / Franco-Argiloso / Franco / Franco-Arenoso / Arenoso
-- Posicionado fora de `showAdvanced` (sempre visível no formulário de pivôs)
-- Auto-fill CC/PM/Ds ao clicar; deselect automático ao editar manualmente
-- Migration: coluna `soil_texture text` em `pivots`
-- `src/lib/soil-textures.ts`: constante `FAO_SOIL_TEXTURES` com 5 classes
+---
+
+## 🌱 Culturas — Edição de culturas padrão
+**Status:** ✅ Implementado em 2026-05-04
+
+- Botão editar agora aparece também nas culturas padrão (system-wide, `company_id = null`)
+- Ao editar uma cultura padrão e salvar, cria automaticamente uma cópia personalizada para a empresa — sem proliferação de "(cópia)" no nome
+- Fix: `updateCrop` removido `.select().single()` que travava silenciosamente sob RLS (bug idêntico ao `updateFarm`)
+
+---
+
+## 📊 Alerta de cron com erros — super admin
+**Status:** ✅ Implementado em 2026-05-04
+
+`daily-balance/route.ts` envia e-mail via Resend para `ADMIN_NOTIFY_EMAIL` quando `errors > 0` ou `ok === 0`.
+Só o super admin recebe — agricultor não vê nada. Resolve o problema do cron que falhou em 03/05 sem nenhum aviso.
+
+---
+
+## 🌾 Multi-cultura por pivô + Rateio de energia
+**Status:** ✅ Implementado em 2026-05-04 · branch `feat/multi-season-per-pivot`
+
+Suporte a N safras ativas no mesmo pivô (ex: 200ha com soja 70ha + milho 70ha + batata doce 60ha).
+Rateio automático da conta de energia proporcional à área de cada cultura.
+
+- Migration: `area_ha numeric(8,2)` em `seasons`
+- Modal de safras: campo "Área desta cultura no pivô (ha)" — opcional (vazio = área total)
+- Sidebar: N safras ativas exibidas com contagem + nomes separados por `·`
+- Relatórios energia: bloco "Rateio de Energia por Cultura" — agrupa por pivô, calcula proporção por área, barra visual, fallback igualitário com aviso
+- Balanço hídrico: sem mudança — `daily_management` já é por `season_id`, múltiplas safras geram registros independentes automaticamente
+
+---
+
+## 📅 Cronograma de safra — marcador "hoje"
+**Status:** ✅ Implementado em 2026-05-04
+
+`PhaseTimeline` em `/safras/page.tsx` agora mostra:
+- Badge "Hoje — DAS X: Fase Mid" com cor da fase atual
+- Linha branca vertical na posição exata do dia atual na barra de fases
+- "Safra encerrada (DAS X)" quando ciclo já terminou
 
 ---
 

@@ -1147,6 +1147,7 @@ export default function RelatoriosPage() {
   const [farmList, setFarmList] = useState<{ id: string; name: string }[]>([])
   const [selectedFarmId, setSelectedFarmId] = useState<string>('')
   const [energyBills, setEnergyBills] = useState<EnergyBill[]>([])
+  const [energySeasons, setEnergySeasons] = useState<Array<{ id: string; name: string; area_ha: number | null; pivot_id: string | null; is_active: boolean; crops: { name: string } | null }>>([])
   const [loadingBills, setLoadingBills] = useState(false)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -1206,15 +1207,23 @@ export default function RelatoriosPage() {
     if (!farmId) return
     setLoadingBills(true)
     const supabase = createClient()
-    const { data } = await supabase
-      .from('energy_bills')
-      .select('*')
-      .eq('farm_id', farmId)
-      .order('reference_month', { ascending: false })
-      .limit(24)
-    setEnergyBills((data as EnergyBill[]) ?? [])
+    const [billsRes, seasonsRes] = await Promise.all([
+      supabase
+        .from('energy_bills')
+        .select('*')
+        .eq('farm_id', farmId)
+        .order('reference_month', { ascending: false })
+        .limit(24),
+      supabase
+        .from('seasons')
+        .select('id, name, area_ha, pivot_id, is_active, crops(name)')
+        .eq('farm_id', farmId)
+        .eq('is_active', true),
+    ])
+    setEnergyBills((billsRes.data as EnergyBill[]) ?? [])
+    setEnergySeasons((seasonsRes.data as unknown as typeof energySeasons) ?? [])
     setLoadingBills(false)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedFarmId) loadEnergyBills(selectedFarmId)
@@ -1644,6 +1653,87 @@ export default function RelatoriosPage() {
             <EnergyTable bills={energyBills} />
           </div>
         )}
+
+        {/* Rateio de energia por cultura */}
+        {energyBills.length > 0 && energySeasons.length > 0 && (() => {
+          const latest = energyBills[0]
+          const costTotal = latest.cost_total_brl ?? 0
+          if (costTotal === 0) return null
+
+          // Agrupar safras por pivô
+          const byPivot = new Map<string | null, typeof energySeasons>()
+          for (const s of energySeasons) {
+            const key = s.pivot_id ?? '__sem_pivo__'
+            if (!byPivot.has(key)) byPivot.set(key, [])
+            byPivot.get(key)!.push(s)
+          }
+
+          // Só mostra pivôs com 2+ culturas OU com area_ha preenchido
+          const interestingPivots = [...byPivot.entries()].filter(([, ss]) =>
+            ss.length > 1 || ss.some(s => s.area_ha !== null)
+          )
+          if (interestingPivots.length === 0) return null
+
+          return (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8, background: '#0f1923', borderRadius: '14px 14px 0 0', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <Bolt size={13} style={{ color: '#22c55e' }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Rateio de Energia por Cultura</span>
+                <span style={{ fontSize: 11, color: '#778899', marginLeft: 4 }}>— {latest.reference_month}</span>
+              </div>
+              <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderTop: 'none', borderRadius: '0 0 14px 14px', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {interestingPivots.map(([pivotKey, ss]) => {
+                  const totalArea = ss.reduce((sum, s) => sum + (s.area_ha ?? 0), 0)
+                  const hasAreas = totalArea > 0
+                  return (
+                    <div key={pivotKey}>
+                      <p style={{ fontSize: 11, color: '#778899', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                        {pivotKey === '__sem_pivo__' ? 'Sem pivô específico' : `Pivô`}
+                        {hasAreas && <span style={{ color: '#94a3b8', fontWeight: 400, marginLeft: 4 }}>({fmtNum(totalArea, 1)} ha total)</span>}
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {ss.map(s => {
+                          const pct = hasAreas && s.area_ha ? s.area_ha / totalArea : 1 / ss.length
+                          const custo = costTotal * pct
+                          const barW = Math.round(pct * 100)
+                          return (
+                            <div key={s.id} style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                                <div>
+                                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{s.name}</span>
+                                  {s.crops?.name && <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 6 }}>— {s.crops.name}</span>}
+                                </div>
+                                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                  <span style={{ fontSize: 14, fontWeight: 700, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>
+                                    R$ {fmtNum(custo, 2)}
+                                  </span>
+                                  <span style={{ fontSize: 11, color: '#778899', marginLeft: 6 }}>({fmtNum(pct * 100, 1)}%)</span>
+                                </div>
+                              </div>
+                              {/* Barra proporcional */}
+                              <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${barW}%`, background: '#22c55e', borderRadius: 99 }} />
+                              </div>
+                              {s.area_ha && (
+                                <p style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{fmtNum(s.area_ha, 1)} ha</p>
+                              )}
+                              {!s.area_ha && (
+                                <p style={{ fontSize: 11, color: '#f59e0b', marginTop: 4 }}>⚠ Área não informada — rateio igualitário</p>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+                <p style={{ fontSize: 11, color: '#64748b', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 10, marginTop: 4 }}>
+                  Custo total da conta: <strong style={{ color: '#94a3b8' }}>R$ {fmtNum(costTotal, 2)}</strong> · Rateio proporcional à área de cada cultura no pivô. Configure a área em Safras.
+                </p>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Sem dados */}
         {!loadingBills && energyBills.length === 0 && (

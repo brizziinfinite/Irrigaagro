@@ -335,6 +335,7 @@ export interface Season {
   f_factor: number | null
   initial_adc_percent: number | null
   notes: string | null
+  area_ha: number | null
 }
 
 export interface SeasonInsert {
@@ -350,6 +351,7 @@ export interface SeasonInsert {
   initial_adc_percent?: number | null
   notes?: string | null
   is_active?: boolean
+  area_ha?: number | null
 }
 
 export type SeasonUpdate = Partial<SeasonInsert>
