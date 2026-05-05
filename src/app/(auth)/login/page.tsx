@@ -91,7 +91,7 @@ function Divider({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-      <span style={{ fontSize: 11, color: '#778899', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 12, color: '#778899', fontWeight: 500 }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
     </div>
   )
@@ -345,7 +345,7 @@ export default function LoginPage() {
           {/* Name — signup only */}
           {mode === 'signup' && (
             <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Nome completo
               </label>
               <div style={{ position: 'relative' }}>
@@ -370,7 +370,7 @@ export default function LoginPage() {
 
           {/* Email */}
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               E-mail
             </label>
             <div style={{ position: 'relative' }}>
@@ -394,7 +394,7 @@ export default function LoginPage() {
 
           {/* Password */}
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               Senha
             </label>
             <div style={{ position: 'relative' }}>
@@ -417,6 +417,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                 style={{
                   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                   padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: '#778899',
@@ -455,7 +456,7 @@ export default function LoginPage() {
         </form>
 
         {/* Footer */}
-        <div style={{ marginTop: 32, textAlign: 'center', fontSize: 11, color: '#778899' }}>
+        <div style={{ marginTop: 32, textAlign: 'center', fontSize: 12, color: '#778899' }}>
           Ao continuar, você concorda com os termos de uso do IrrigaAgro.
         </div>
       </div>
