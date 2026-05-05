@@ -70,11 +70,16 @@ export function PushNotificationToggle() {
 
   if (permission === 'unsupported') return null
 
+  const baseStyle: React.CSSProperties = {
+    height: 36, padding: '0 12px', borderRadius: 12,
+    display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
+  }
+
   if (permission === 'denied') {
     return (
       <div
-        className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm"
         style={{
+          ...baseStyle,
           border: '1px solid rgba(255,255,255,0.06)',
           background: 'var(--color-surface-elevated)',
           color: 'var(--color-text-faint)',
@@ -92,8 +97,8 @@ export function PushNotificationToggle() {
       <button
         onClick={unsubscribe}
         disabled={loading}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors"
         style={{
+          ...baseStyle,
           border: '1px solid rgba(0,147,208,0.3)',
           background: 'rgba(0,147,208,0.08)',
           color: '#0093D0',
@@ -111,8 +116,9 @@ export function PushNotificationToggle() {
     <button
       onClick={subscribe}
       disabled={loading}
-      className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors"
+      className="transition-colors"
       style={{
+        ...baseStyle,
         border: '1px solid rgba(255,255,255,0.08)',
         background: 'var(--color-surface-elevated)',
         color: 'var(--color-text-secondary)',

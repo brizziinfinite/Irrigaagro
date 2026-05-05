@@ -105,8 +105,9 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
         {/* Empresa ativa */}
         {company && (
           <span
-            className="hidden sm:inline-block px-3 py-2 rounded-xl text-sm font-medium max-w-[160px] truncate"
+            className="hidden sm:inline-flex items-center rounded-xl font-medium max-w-[160px] truncate"
             style={{
+              height: 36, padding: '0 12px', fontSize: 13,
               border: '1px solid var(--color-surface-border)',
               background: 'var(--color-surface-elevated)',
               color: 'var(--color-text-secondary)',
@@ -124,14 +125,12 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
               onClick={() => setFarmMenuOpen(o => !o)}
               className="hidden sm:flex items-center gap-1.5 rounded-xl transition-colors"
               style={{
-                padding: '7px 10px',
+                height: 36, padding: '0 10px',
                 border: '1px solid var(--color-surface-border)',
                 background: farm ? 'rgba(0,147,208,0.08)' : 'var(--color-surface-elevated)',
                 color: farm ? '#0093D0' : 'var(--color-text-secondary)',
-                fontSize: 13,
-                fontWeight: 500,
-                maxWidth: 160,
-                cursor: 'pointer',
+                fontSize: 13, fontWeight: 500,
+                maxWidth: 160, cursor: 'pointer',
               }}
             >
               <MapPin size={13} style={{ flexShrink: 0 }} />
