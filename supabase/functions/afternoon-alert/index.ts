@@ -102,7 +102,7 @@ serve(async (_req) => {
       // Buscar último balanço
       const { data: mgmtRows } = await supabase
         .from('daily_management')
-        .select('season_id, field_capacity_percent, ctda, cta, etc_mm, needs_irrigation')
+        .select('season_id, date, field_capacity_percent, ctda, cta, etc_mm, needs_irrigation')
         .in('season_id', seasonIds)
         .gte('date', sinceDate)
         .order('date', { ascending: false })
@@ -132,13 +132,27 @@ serve(async (_req) => {
         const mgmt = seasonId ? mgmtBySeason[seasonId] : null
         if (!mgmt) continue
 
-        const fc = mgmt.field_capacity_percent
         const threshold = sub.pivots?.alert_threshold_percent ?? 70
-        if (fc == null || fc < threshold) continue // já crítico — resumo matinal já avisou
-
-        const adcMm: number = mgmt.ctda ?? 0
         const ctaMm: number = mgmt.cta ?? 0
         const etcMm: number = mgmt.etc_mm ?? 0
+        const rawAdcMm: number = mgmt.ctda ?? 0
+
+        // Projeta ADc para HOJE se o último registro é de dia(s) anterior(es)
+        let adcMm = rawAdcMm
+        let fc = mgmt.field_capacity_percent
+        if (mgmt.date && mgmt.date !== today && etcMm > 0 && ctaMm > 0) {
+          const lastMs = new Date(mgmt.date + 'T12:00:00').getTime()
+          const todayMs = new Date(today + 'T12:00:00').getTime()
+          const daysGap = Math.min(Math.max(1, Math.round((todayMs - lastMs) / 86400000)), 7)
+          let running = rawAdcMm
+          for (let d = 0; d < daysGap; d++) {
+            running = Math.max(0, running - etcMm)
+          }
+          adcMm = running
+          fc = ctaMm > 0 ? (running / ctaMm) * 100 : fc
+        }
+
+        if (fc == null || fc < threshold) continue // já crítico — resumo matinal já avisou
 
         // Buscar previsão de chuva
         const lat = sub.pivots?.latitude

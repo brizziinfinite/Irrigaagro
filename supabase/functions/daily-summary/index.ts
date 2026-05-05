@@ -52,6 +52,34 @@ async function fetchForecast(lat: number, lon: number): Promise<ForecastDay[]> {
  * Usa ETc de hoje como estimativa diária e desconta chuva prevista.
  * Retorna a data estimada ou null se >7 dias.
  */
+/**
+ * Avança o ADc do último registro até hoje, descontando ETc diária e somando chuvas do forecast.
+ * Alinhado com a lógica do dashboard (dashboard.ts → gap fill).
+ * Retorna { adcMm, fieldCapacityPct } projetados para hoje.
+ */
+function projectAdcToToday(
+  lastDate: string,
+  today: string,
+  adcMm: number,
+  ctaMm: number,
+  etcMm: number,
+  forecastDays: ForecastDay[],  // index 0 = hoje, index -N = dias passados (usamos rain)
+): { adcMm: number; fieldCapacityPct: number } {
+  if (lastDate === today || ctaMm <= 0) {
+    return { adcMm, fieldCapacityPct: ctaMm > 0 ? (adcMm / ctaMm) * 100 : 0 }
+  }
+  const lastMs = new Date(lastDate + 'T12:00:00').getTime()
+  const todayMs = new Date(today + 'T12:00:00').getTime()
+  const daysGap = Math.min(Math.max(1, Math.round((todayMs - lastMs) / 86400000)), 7)
+  let running = adcMm
+  for (let i = 1; i <= daysGap; i++) {
+    // forecast[0] = hoje; dias do gap são negativos no forecast, sem dado → 0 chuva
+    const rain = 0 // sem histórico climático real no gap — conservador, não soma chuva não confirmada
+    running = Math.max(0, Math.min(ctaMm, running + rain) - etcMm)
+  }
+  return { adcMm: running, fieldCapacityPct: ctaMm > 0 ? (running / ctaMm) * 100 : 0 }
+}
+
 function projectNextIrrigationDate(
   today: string,
   adcMm: number,         // ADc atual em mm
@@ -244,20 +272,29 @@ serve(async (_req) => {
           continue
         }
 
-        const fc = mgmt.field_capacity_percent != null ? mgmt.field_capacity_percent : null
         const etcMm: number = mgmt.etc_mm ?? 0
         const ctaMm: number = mgmt.cta ?? 0
-        const adcMm: number = mgmt.ctda ?? 0
+        const rawAdcMm: number = mgmt.ctda ?? 0
         const rainfall = mgmt.rainfall_mm ?? 0
+
+        // Projeta ADc para HOJE caso o último registro seja de dia(s) anterior(es)
+        // Alinhado com dashboard.ts: desconta ETc × dias de gap (conservador: sem chuva não confirmada)
+        const projected = (mgmt.date && mgmt.date !== today && etcMm > 0 && ctaMm > 0)
+          ? projectAdcToToday(mgmt.date, today, rawAdcMm, ctaMm, etcMm, forecast)
+          : { adcMm: rawAdcMm, fieldCapacityPct: mgmt.field_capacity_percent ?? (ctaMm > 0 ? (rawAdcMm / ctaMm) * 100 : 0) }
+
+        const adcMm = projected.adcMm
+        const fc: number | null = ctaMm > 0 ? projected.fieldCapacityPct : (mgmt.field_capacity_percent ?? null)
+
         const deficitMm = ctaMm > 0 ? Math.max(0, ctaMm - adcMm) : 0
 
-        // Projeção de próxima irrigação (necessária para priority_score)
+        // Projeção de próxima irrigação (necessária para priority_score) — parte do ADc já projetado para hoje
         const proj = etcMm > 0 && ctaMm > 0
           ? projectNextIrrigationDate(today, adcMm, ctaMm, threshold, etcMm, forecast)
           : null
         const daysAway = proj?.daysAway ?? 7
 
-        // Classificação de status (thresholds fixos: OK ≥75%, Atenção 70-74%, Crítico <70%)
+        // Classificação de status (paleta unificada dashboard: OK ≥75%, Atenção 60–75%, Crítico <60%)
         let statusEmoji: string
         let statusLabel: string
         if (fc == null) {
@@ -267,7 +304,7 @@ serve(async (_req) => {
           statusEmoji = '🟢'
           statusLabel = 'OK'
           okCount++
-        } else if (fc >= 70) {
+        } else if (fc >= 60) {
           statusEmoji = '🟡'
           statusLabel = 'Atenção'
           attentionCount++
