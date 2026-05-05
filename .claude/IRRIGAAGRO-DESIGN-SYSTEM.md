@@ -1,3 +1,4 @@
+
 # IrrigaAgro — Design System & Visual Standards
 
 ## Identidade Visual

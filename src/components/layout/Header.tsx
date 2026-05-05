@@ -5,6 +5,7 @@ import type { User } from '@supabase/supabase-js'
 import { useAuth } from '@/hooks/useAuth'
 import { Bell, Menu, ChevronDown, MapPin } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
+import { PushNotificationToggle } from '@/components/PushNotificationToggle'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Central de Controle',
@@ -174,23 +175,8 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
           </div>
         )}
 
-        {/* Notificações — badge removido até feature ser implementada */}
-        <button
-          className="relative flex items-center justify-center rounded-xl transition-colors"
-          style={{
-            width: 44,
-            height: 44,
-            minWidth: 44,
-            border: '1px solid var(--color-surface-border)',
-            background: 'var(--color-surface-elevated)',
-            color: 'var(--color-text-secondary)',
-          }}
-          aria-label="Notificações"
-          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-card2)'}
-          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)'}
-        >
-          <Bell size={18} />
-        </button>
+        {/* Toggle notificações push */}
+        <PushNotificationToggle />
       </div>
     </header>
   )

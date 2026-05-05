@@ -109,3 +109,50 @@ self.addEventListener('fetch', (event) => {
 
   // 5. Default: network only (deixa passar sem interferir)
 })
+
+// ─── Push ─────────────────────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+
+  let payload
+  try {
+    payload = event.data.json()
+  } catch {
+    payload = { title: 'IrrigaAgro', body: event.data.text() }
+  }
+
+  const options = {
+    body: payload.body || '',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: payload.tag || 'irrigaagro-alert',          // tag única por pivô — substitui notif anterior
+    renotify: false,
+    requireInteraction: false,
+    data: { url: payload.url || '/dashboard' },
+    vibrate: [200, 100, 200],
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || 'IrrigaAgro', options)
+  )
+})
+
+// ─── Notification Click ───────────────────────────────────────────────────────
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const targetUrl = event.notification.data?.url || '/dashboard'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Foca aba já aberta se existir
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(targetUrl)
+          return client.focus()
+        }
+      }
+      // Senão abre nova aba
+      if (clients.openWindow) return clients.openWindow(targetUrl)
+    })
+  )
+})
