@@ -47,11 +47,13 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="flex-shrink-0 px-6 md:px-8 lg:px-10 py-3 flex items-center justify-between gap-3"
+      className="flex-shrink-0 py-3 flex items-center justify-between gap-3"
       style={{
         background: 'var(--color-surface-sidebar)',
         borderBottom: '1px solid var(--color-surface-border2)',
         paddingTop: 'max(12px, env(safe-area-inset-top))',
+        paddingLeft: 'max(20px, env(safe-area-inset-left))',
+        paddingRight: 'max(20px, env(safe-area-inset-right))',
       }}
     >
       <div className="flex items-center gap-3 min-w-0">
