@@ -528,7 +528,18 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                     }
 
                     const colors = STATUS_COLORS[day.status as keyof typeof STATUS_COLORS] ?? STATUS_COLORS.verde
-                    const needsIrr = day.recommendedDepthMm > 0
+                    // Vermelho: usa recommendedDepthMm (threshold atingido — urgente)
+                    // Amarelo: usa estimatedDepthMm (lâmina projetada sem guard — previsão)
+                    const isRed    = day.status === 'vermelho'
+                    const isAmber  = day.status === 'amarelo'
+                    const showDepth = isRed
+                      ? day.recommendedDepthMm > 0
+                      : isAmber
+                        ? (day.estimatedDepthMm ?? 0) > 0
+                        : false
+                    const displayDepth = isRed ? day.recommendedDepthMm : (day.estimatedDepthMm ?? 0)
+                    const displaySpeed = isRed ? day.recommendedSpeedPercent : (day.estimatedSpeedPercent ?? null)
+                    const showSpeed = showDepth && displaySpeed != null
 
                     return (
                       <td key={date} style={{
@@ -553,15 +564,18 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                             {Math.round(day.fieldCapacityPercent)}%
                           </span>
 
-                          {/* Lâmina */}
-                          {needsIrr ? (
+                          {/* Lâmina + velocidade — vermelho (urgente) e amarelo (estimativa) */}
+                          {showDepth ? (
                             <>
-                              <span style={{ fontSize: 9, color: '#c8d4e0', fontFamily: 'var(--font-mono)', lineHeight: 1, fontWeight: 600 }}>
-                                {day.recommendedDepthMm.toFixed(1)}mm
+                              <span style={{
+                                fontSize: 9, fontFamily: 'var(--font-mono)', lineHeight: 1, fontWeight: 600,
+                                color: isAmber ? '#f59e0b' : '#c8d4e0',
+                              }}>
+                                ~{displayDepth.toFixed(1)}mm
                               </span>
-                              {day.recommendedSpeedPercent != null && (
+                              {showSpeed && (
                                 <span style={{ fontSize: 9, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-                                  {day.recommendedSpeedPercent}%
+                                  {displaySpeed}%
                                 </span>
                               )}
                             </>
