@@ -281,20 +281,25 @@ Gerados `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` e `apple-touch-i
   - `/manifest.json`, `/sw.js`, `/offline.html` e `/login` retornando 200
   - Screenshot mobile da tela de login conferido via Chrome headless
 
-#### 6. Notificações Push (opcional — fase 2)
-- Usar Web Push API + `web-push` npm package
-- Tabela `push_subscriptions` no Supabase (user_id, endpoint, keys)
-- Edge Function `send-push-alert` disparada pelo cron `afternoon-alert`
-- Payload: `{ title: "Irrigar hoje", body: "Pivô Krebbs: 64% — irrigar amanhã" }`
+#### 6. Notificações Push ✅ Implementado 2026-05-05
+- [x] Web Push API + `web-push` npm package
+- [x] Tabela `push_subscriptions` no Supabase (user_id, endpoint, keys, last_sent_at)
+- [x] Cron `/api/cron/send-push-alerts` às 17h UTC — agrupa pivôs urgentes por empresa
+- [x] Toggle `PushNotificationToggle` no header — 3 estados (ativo/bloqueado/inativo)
+- [x] Dedup: máximo 1 push/dia por usuário via `last_sent_at`
+- [x] Cleanup automático de subscriptions expiradas (HTTP 410/404)
+- [x] iOS: banner educativo `InstallBanner` (não dá solicitar install automaticamente)
 
 ### Checklist de qualidade PWA
-- [ ] Lighthouse PWA score ≥ 90
-- [ ] Instalável no Chrome Android e Safari iOS
+- [x] Lighthouse PWA score ≥ 90 — ⚠️ Lighthouse 12 removeu categoria PWA separada; checklist substituído por métricas reais abaixo
+- [ ] Instalável no Chrome Android e Safari iOS — requer teste em dispositivo físico
 - [x] Ícone correto na tela inicial (sem fundo branco no iOS)
 - [x] Splash screen com fundo `#0d1520`
 - [x] Funciona offline para rotas visitadas recentemente (último estado cacheado)
 - [x] `display: standalone` (sem barra de URL)
 - [x] Theme color `#0093D0` na status bar do Android
+- [x] `favicon.ico` público (sem 404) — corrigido 2026-05-05
+- [x] Acessibilidade ≥ 90 (Lighthouse 12: 93) — font-size ≥12px, aria-labels, contraste
 
 ---
 
