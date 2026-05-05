@@ -126,6 +126,26 @@ h1, h2, h3 {
   100% { box-shadow: 0 0 0 0 rgb(0 147 208 / 0); }
 }
 
+/* dot "live" — verde ou vermelho pulsando */
+@keyframes live-dot {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%       { transform: scale(1.5); opacity: 0.5; }
+}
+
+/* glow pulsante no DecisionCard quando tem alerta */
+@keyframes alert-glow-red {
+  0%, 100% { box-shadow: 0 0 18px rgba(239,68,68,0.08),  0 12px 40px rgba(0,0,0,0.5); }
+  50%       { box-shadow: 0 0 32px rgba(239,68,68,0.22),  0 12px 40px rgba(0,0,0,0.5); }
+}
+@keyframes alert-glow-amber {
+  0%, 100% { box-shadow: 0 0 18px rgba(245,158,11,0.08),  0 12px 40px rgba(0,0,0,0.5); }
+  50%       { box-shadow: 0 0 32px rgba(245,158,11,0.22),  0 12px 40px rgba(0,0,0,0.5); }
+}
+@keyframes alert-glow-green {
+  0%, 100% { box-shadow: 0 0 14px rgba(34,197,94,0.04),  0 12px 40px rgba(0,0,0,0.5); }
+  50%       { box-shadow: 0 0 26px rgba(34,197,94,0.13),  0 12px 40px rgba(0,0,0,0.5); }
+}
+
 /* ====== SURFACE CLASSES ====== */
 @layer utilities {
   .card {

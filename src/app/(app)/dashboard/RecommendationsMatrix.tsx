@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import type { ManagementSeasonContext } from '@/services/management'
 import {
@@ -86,8 +86,22 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [recommendations, setRecommendations] = useState<PivotRecommendation[]>([])
-  const [selectedPivotId, setSelectedPivotId] = useState<'all' | string>('all')
+  // Multi-select: empty Set = "todos"
+  const [selectedPivotIds, setSelectedPivotIds] = useState<Set<string>>(new Set())
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+
+  // Fecha dropdown ao clicar fora
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   // Chaves estáveis para deps do useEffect — evita loop infinito com objetos recriados a cada render
   const contextsKey = useMemo(() => contexts.map(c => c.season?.id).join(','), [contexts])
@@ -133,9 +147,9 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [today, contextsKey, mgmtKey, adcKey])
 
-  const filtered = selectedPivotId === 'all'
+  const filtered = selectedPivotIds.size === 0
     ? recommendations
-    : recommendations.filter(r => r.pivotId === selectedPivotId)
+    : recommendations.filter(r => selectedPivotIds.has(r.pivotId))
 
   // Aggregate forecast header (first rec with forecast, or empty)
   const headerForecast: (ForecastDay | null)[] = forecastDays.map(date => {
@@ -191,21 +205,143 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
           Recomendações 7 dias
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Pivot filter */}
-          <select
-            value={selectedPivotId}
-            onChange={e => setSelectedPivotId(e.target.value)}
-            style={{
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
-              color: '#7788aa', fontSize: 11, padding: '5px 10px', cursor: 'pointer',
-              appearance: 'none', paddingRight: 24,
-            }}
-          >
-            <option value="all">Todos os pivôs</option>
-            {recommendations.map(r => (
-              <option key={r.pivotId} value={r.pivotId}>{r.pivotName}</option>
-            ))}
-          </select>
+          {/* Pivot filter — dropdown customizado */}
+          <div ref={dropdownRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setDropdownOpen(o => !o)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                background: dropdownOpen ? 'rgba(0,147,208,0.08)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${dropdownOpen ? 'rgba(0,147,208,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                borderRadius: 8, color: selectedPivotIds.size > 0 ? '#0093D0' : '#7788aa',
+                fontSize: 12, padding: '6px 10px', cursor: 'pointer',
+                transition: 'all 0.15s',
+                fontWeight: selectedPivotIds.size > 0 ? 600 : 400,
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                <path d="M4.93 4.93a10 10 0 0 0 0 14.14"/>
+              </svg>
+              {selectedPivotIds.size === 0
+                ? 'Todos os pivôs'
+                : selectedPivotIds.size === 1
+                  ? recommendations.find(r => selectedPivotIds.has(r.pivotId))?.pivotName ?? '1 pivô'
+                  : `${selectedPivotIds.size} pivôs`}
+              <svg
+                width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                style={{ opacity: 0.6, transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+              >
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {dropdownOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 200,
+                minWidth: 220, background: '#0d1520',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 12, overflow: 'hidden',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,147,208,0.08)',
+              }}>
+                {/* Header do dropdown */}
+                <div style={{
+                  padding: '10px 14px 8px',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#556677' }}>
+                    Selecionar pivôs
+                  </span>
+                  {selectedPivotIds.size > 0 && (
+                    <button
+                      onClick={() => setSelectedPivotIds(new Set())}
+                      style={{ fontSize: 10, color: '#0093D0', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+                    >
+                      Limpar
+                    </button>
+                  )}
+                </div>
+
+                {/* Opção "Todos" */}
+                <button
+                  onClick={() => { setSelectedPivotIds(new Set()); setDropdownOpen(false) }}
+                  style={{
+                    width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 14px', fontSize: 12, cursor: 'pointer', border: 'none',
+                    background: selectedPivotIds.size === 0 ? 'rgba(0,147,208,0.08)' : 'transparent',
+                    color: selectedPivotIds.size === 0 ? '#0093D0' : '#8899aa',
+                    fontWeight: selectedPivotIds.size === 0 ? 600 : 400,
+                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={e => { if (selectedPivotIds.size > 0) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)' }}
+                  onMouseLeave={e => { if (selectedPivotIds.size > 0) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                >
+                  {/* "All" checkbox visual */}
+                  <span style={{
+                    width: 14, height: 14, borderRadius: 4, flexShrink: 0,
+                    border: `1.5px solid ${selectedPivotIds.size === 0 ? '#0093D0' : 'rgba(255,255,255,0.15)'}`,
+                    background: selectedPivotIds.size === 0 ? '#0093D0' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {selectedPivotIds.size === 0 && (
+                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth="2">
+                        <polyline points="2 5 4 7 8 3"/>
+                      </svg>
+                    )}
+                  </span>
+                  Todos os pivôs
+                </button>
+
+                {/* Pivôs individuais */}
+                {recommendations.map((r) => {
+                  const checked = selectedPivotIds.has(r.pivotId)
+                  return (
+                    <button
+                      key={r.pivotId}
+                      onClick={() => {
+                        const next = new Set(selectedPivotIds)
+                        if (checked) next.delete(r.pivotId)
+                        else next.add(r.pivotId)
+                        setSelectedPivotIds(next)
+                      }}
+                      style={{
+                        width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '9px 14px', fontSize: 12, cursor: 'pointer', border: 'none',
+                        background: checked ? 'rgba(0,147,208,0.06)' : 'transparent',
+                        color: checked ? '#0093D0' : '#8899aa',
+                        fontWeight: checked ? 600 : 400,
+                        transition: 'background 0.1s',
+                      }}
+                      onMouseEnter={e => { if (!checked) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)' }}
+                      onMouseLeave={e => { if (!checked) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                    >
+                      <span style={{
+                        width: 14, height: 14, borderRadius: 4, flexShrink: 0,
+                        border: `1.5px solid ${checked ? '#0093D0' : 'rgba(255,255,255,0.15)'}`,
+                        background: checked ? '#0093D0' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.1s',
+                      }}>
+                        {checked && (
+                          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth="2">
+                            <polyline points="2 5 4 7 8 3"/>
+                          </svg>
+                        )}
+                      </span>
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {r.pivotName}
+                      </span>
+                      {r.farmName && (
+                        <span style={{ fontSize: 10, color: '#445566', flexShrink: 0 }}>{r.farmName}</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Share button */}
           <button
@@ -276,29 +412,57 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                   const d = new Date(date + 'T12:00:00')
                   const dayLabel = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
                   const weekday = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').slice(0, 3)
+                  const hasRain = (forecast?.rainfall ?? 0) > 0
+                  const rainMm = forecast?.rainfall ?? 0
+                  // Intensidade do destaque: leve <5mm, médio 5-15mm, forte >15mm
+                  const rainIntensity = rainMm >= 15 ? 'heavy' : rainMm >= 5 ? 'moderate' : 'light'
+                  const rainBg = hasRain
+                    ? rainIntensity === 'heavy'   ? 'rgba(37,99,235,0.22)'
+                    : rainIntensity === 'moderate' ? 'rgba(59,130,246,0.16)'
+                    : 'rgba(96,165,250,0.10)'
+                    : 'rgba(16,22,30,0.5)'
+                  const rainBorderTop = hasRain
+                    ? rainIntensity === 'heavy'   ? '3px solid rgba(59,130,246,0.85)'
+                    : rainIntensity === 'moderate' ? '3px solid rgba(96,165,250,0.7)'
+                    : '3px solid rgba(147,197,253,0.5)'
+                    : '3px solid transparent'
 
                   return (
                     <th key={date} style={{
-                      padding: '12px 6px',
+                      padding: '10px 6px 12px',
                       textAlign: 'center',
                       borderBottom: '1px solid rgba(255,255,255,0.05)',
                       borderRight: '1px solid rgba(255,255,255,0.04)',
-                      background: 'rgba(16,22,30,0.5)',
+                      background: rainBg,
+                      borderTop: rainBorderTop,
                       minWidth: 72,
+                      transition: 'background 0.2s',
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                        <span style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize', fontWeight: 600, letterSpacing: '0.05em' }}>{weekday}</span>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>{dayLabel}</span>
+                        <span style={{
+                          fontSize: 11, textTransform: 'capitalize', fontWeight: 600, letterSpacing: '0.05em',
+                          color: hasRain ? '#93c5fd' : '#64748b',
+                        }}>{weekday}</span>
+                        <span style={{
+                          fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-mono)',
+                          color: hasRain ? '#bfdbfe' : '#94a3b8',
+                        }}>{dayLabel}</span>
                         {forecast ? (
                           <>
-                            <WeatherIconSvg icon={forecast.icon} size={16} />
-                            {forecast.rainfall > 0 && (
-                              <span style={{ fontSize: 9, color: '#60a5fa', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-                                {forecast.rainfall.toFixed(0)}mm
+                            <WeatherIconSvg icon={forecast.icon} size={hasRain ? 18 : 16} />
+                            {hasRain ? (
+                              <span style={{
+                                fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 800,
+                                color: rainIntensity === 'heavy' ? '#93c5fd' : rainIntensity === 'moderate' ? '#bfdbfe' : '#dbeafe',
+                                background: rainIntensity === 'heavy' ? 'rgba(37,99,235,0.3)' : 'rgba(96,165,250,0.18)',
+                                border: `1px solid ${rainIntensity === 'heavy' ? 'rgba(59,130,246,0.55)' : 'rgba(147,197,253,0.35)'}`,
+                                borderRadius: 99, padding: '2px 7px', lineHeight: 1.5,
+                                boxShadow: rainIntensity === 'heavy' ? '0 0 8px rgba(59,130,246,0.25)' : 'none',
+                              }}>
+                                {rainMm.toFixed(0)}mm
                               </span>
-                            )}
-                            {forecast.rainfall === 0 && (
-                              <span style={{ fontSize: 9, color: '#778899' }}>0mm</span>
+                            ) : (
+                              <span style={{ fontSize: 9, color: '#334455' }}>0mm</span>
                             )}
                           </>
                         ) : (
@@ -348,23 +512,41 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
 
                   {/* Projection cells */}
                   {forecastDays.map((date, di) => {
+                    const forecast = headerForecast[di]
+                    const hasRain = (forecast?.rainfall ?? 0) > 0
                     const day = rec.projection.find(p => p.date === date)
                     if (!day) {
                       return (
-                        <td key={date} style={{ padding: '8px 4px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td key={date} style={{
+                          padding: '8px 4px', textAlign: 'center',
+                          borderRight: '1px solid rgba(255,255,255,0.04)',
+                          background: hasRain ? 'rgba(37,99,235,0.09)' : 'transparent',
+                        }}>
                           <span style={{ fontSize: 10, color: '#2a3444' }}>—</span>
                         </td>
                       )
                     }
 
                     const colors = STATUS_COLORS[day.status as keyof typeof STATUS_COLORS] ?? STATUS_COLORS.verde
-                    const needsIrr = day.recommendedDepthMm > 0
+                    // Vermelho: usa recommendedDepthMm (threshold atingido — urgente)
+                    // Amarelo: usa estimatedDepthMm (lâmina projetada sem guard — previsão)
+                    const isRed    = day.status === 'vermelho'
+                    const isAmber  = day.status === 'amarelo'
+                    const showDepth = isRed
+                      ? day.recommendedDepthMm > 0
+                      : isAmber
+                        ? (day.estimatedDepthMm ?? 0) > 0
+                        : false
+                    const displayDepth = isRed ? day.recommendedDepthMm : (day.estimatedDepthMm ?? 0)
+                    const displaySpeed = isRed ? day.recommendedSpeedPercent : (day.estimatedSpeedPercent ?? null)
+                    const showSpeed = showDepth && displaySpeed != null
 
                     return (
                       <td key={date} style={{
                         padding: '7px 4px',
                         textAlign: 'center',
                         borderRight: di < 6 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                        background: hasRain ? 'rgba(37,99,235,0.09)' : 'transparent',
                       }}>
                         <div style={{
                           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
@@ -382,15 +564,18 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                             {Math.round(day.fieldCapacityPercent)}%
                           </span>
 
-                          {/* Lâmina */}
-                          {needsIrr ? (
+                          {/* Lâmina + velocidade — vermelho (urgente) e amarelo (estimativa) */}
+                          {showDepth ? (
                             <>
-                              <span style={{ fontSize: 9, color: '#c8d4e0', fontFamily: 'var(--font-mono)', lineHeight: 1, fontWeight: 600 }}>
-                                {day.recommendedDepthMm.toFixed(1)}mm
+                              <span style={{
+                                fontSize: 9, fontFamily: 'var(--font-mono)', lineHeight: 1, fontWeight: 600,
+                                color: isAmber ? '#f59e0b' : '#c8d4e0',
+                              }}>
+                                ~{displayDepth.toFixed(1)}mm
                               </span>
-                              {day.recommendedSpeedPercent != null && (
+                              {showSpeed && (
                                 <span style={{ fontSize: 9, fontWeight: 700, color: '#0093D0', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-                                  {day.recommendedSpeedPercent}%
+                                  {displaySpeed}%
                                 </span>
                               )}
                             </>

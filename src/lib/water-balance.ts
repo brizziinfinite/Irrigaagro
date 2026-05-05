@@ -515,7 +515,9 @@ export interface ProjectionDay {
   cad: number
   fieldCapacityPercent: number
   status: IrrigationStatus
-  recommendedDepthMm: number
+  recommendedDepthMm: number      // lâmina se já atingiu o threshold (vermelho)
+  estimatedDepthMm: number        // lâmina estimada para repor ao alvo (amarelo+vermelho)
+  estimatedSpeedPercent: number | null  // velocidade para a lâmina estimada
   recommendedSpeedPercent: number | null
   isIrrigationDay: boolean  // true = primeiro dia abaixo da CAD
 }
@@ -594,9 +596,20 @@ export function calcProjection(params: {
     // Lâmina necessária para atingir o alvo neste dia (acumula à medida que o solo seca)
     const recommendedDepthMm = calcRecommendedIrrigation(dry.cta, dry.cad, adcDry, alertThresholdPct, irrigationTargetPct)
 
+    // Lâmina estimada para repor ao alvo, sem guard do threshold — exibida em amarelo também
+    const estimatedDepthMm = (() => {
+      if (recommendedDepthMm > 0) return recommendedDepthMm
+      if (dry.cta <= 0) return 0
+      const replenishTo = irrigationTargetPct != null ? (irrigationTargetPct / 100) * dry.cta : dry.cta
+      return Math.max(0, replenishTo - adcDry)
+    })()
+
     // Velocidade que o pivô precisaria andar para aplicar essa lâmina
     const recommendedSpeedPercent = pivot && recommendedDepthMm > 0
       ? findRecommendedSpeed(pivot, recommendedDepthMm)
+      : null
+    const estimatedSpeedPercent = pivot && estimatedDepthMm > 0
+      ? findRecommendedSpeed(pivot, estimatedDepthMm)
       : null
 
     // Respeita irrigationByDay externo (simulação manual pelo usuário)
@@ -617,6 +630,8 @@ export function calcProjection(params: {
       fieldCapacityPercent,
       status,
       recommendedDepthMm,
+      estimatedDepthMm,
+      estimatedSpeedPercent,
       recommendedSpeedPercent,
       isIrrigationDay: recommendedDepthMm > 0,
     })

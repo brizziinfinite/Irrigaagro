@@ -5,6 +5,7 @@ import type { User } from '@supabase/supabase-js'
 import { useAuth } from '@/hooks/useAuth'
 import { Bell, Menu, ChevronDown, MapPin } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
+import { PushNotificationToggle } from '@/components/PushNotificationToggle'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Central de Controle',
@@ -81,6 +82,22 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
           <span style={{ color: 'var(--color-text-faint)' }} className="hidden sm:inline">IrrigaAgro</span>
           <span style={{ color: 'var(--color-surface-border)' }} className="hidden sm:inline">/</span>
           <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{pageTitle}</span>
+          {/* Dot "live" — só no dashboard */}
+          {pathname === '/dashboard' && (
+            <span
+              title="Dados ao vivo"
+              style={{
+                display: 'inline-block',
+                width: 7, height: 7,
+                borderRadius: '50%',
+                background: '#22c55e',
+                boxShadow: '0 0 6px rgba(34,197,94,0.8)',
+                animation: 'live-dot 2.4s ease-in-out infinite',
+                flexShrink: 0,
+                marginLeft: 2,
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -88,8 +105,9 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
         {/* Empresa ativa */}
         {company && (
           <span
-            className="hidden sm:inline-block px-3 py-2 rounded-xl text-sm font-medium max-w-[160px] truncate"
+            className="hidden sm:inline-flex items-center rounded-xl font-medium max-w-[160px] truncate"
             style={{
+              height: 36, padding: '0 12px', fontSize: 13,
               border: '1px solid var(--color-surface-border)',
               background: 'var(--color-surface-elevated)',
               color: 'var(--color-text-secondary)',
@@ -107,14 +125,12 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
               onClick={() => setFarmMenuOpen(o => !o)}
               className="hidden sm:flex items-center gap-1.5 rounded-xl transition-colors"
               style={{
-                padding: '7px 10px',
+                height: 36, padding: '0 10px',
                 border: '1px solid var(--color-surface-border)',
                 background: farm ? 'rgba(0,147,208,0.08)' : 'var(--color-surface-elevated)',
                 color: farm ? '#0093D0' : 'var(--color-text-secondary)',
-                fontSize: 13,
-                fontWeight: 500,
-                maxWidth: 160,
-                cursor: 'pointer',
+                fontSize: 13, fontWeight: 500,
+                maxWidth: 160, cursor: 'pointer',
               }}
             >
               <MapPin size={13} style={{ flexShrink: 0 }} />
@@ -174,23 +190,8 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
           </div>
         )}
 
-        {/* Notificações — badge removido até feature ser implementada */}
-        <button
-          className="relative flex items-center justify-center rounded-xl transition-colors"
-          style={{
-            width: 44,
-            height: 44,
-            minWidth: 44,
-            border: '1px solid var(--color-surface-border)',
-            background: 'var(--color-surface-elevated)',
-            color: 'var(--color-text-secondary)',
-          }}
-          aria-label="Notificações"
-          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-card2)'}
-          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)'}
-        >
-          <Bell size={18} />
-        </button>
+        {/* Toggle notificações push */}
+        <PushNotificationToggle />
       </div>
     </header>
   )
