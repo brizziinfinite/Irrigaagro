@@ -92,6 +92,14 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
 
   const hasAction = needsIrrigationToday || needsAttention
 
+  // Animação pulsante só quando há alerta (verde = "vivo" mas discreto, vermelho/amber = urgente)
+  const pulseAnimation = needsIrrigationToday
+    ? 'alert-glow-red 2.8s ease-in-out infinite'
+    : needsAttention
+      ? 'alert-glow-amber 3.2s ease-in-out infinite'
+      : noPivots ? undefined
+      : 'alert-glow-green 4s ease-in-out infinite'
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between" style={{
       background: bgGradient,
@@ -104,6 +112,7 @@ export function DecisionCard({ pivots, activeSeasons, lastManagementByPivot, sum
       backdropFilter: 'blur(16px)',
       position: 'relative',
       overflow: 'hidden',
+      animation: pulseAnimation,
     }}>
       {/* Glow top-left ambient */}
       <div style={{

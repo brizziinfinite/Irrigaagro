@@ -82,6 +82,22 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
           <span style={{ color: 'var(--color-text-faint)' }} className="hidden sm:inline">IrrigaAgro</span>
           <span style={{ color: 'var(--color-surface-border)' }} className="hidden sm:inline">/</span>
           <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{pageTitle}</span>
+          {/* Dot "live" — só no dashboard */}
+          {pathname === '/dashboard' && (
+            <span
+              title="Dados ao vivo"
+              style={{
+                display: 'inline-block',
+                width: 7, height: 7,
+                borderRadius: '50%',
+                background: '#22c55e',
+                boxShadow: '0 0 6px rgba(34,197,94,0.8)',
+                animation: 'live-dot 2.4s ease-in-out infinite',
+                flexShrink: 0,
+                marginLeft: 2,
+              }}
+            />
+          )}
         </div>
       </div>
 
