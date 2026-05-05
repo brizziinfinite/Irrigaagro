@@ -15,7 +15,7 @@ export default function IrrigaAgroLogo({
 }: IrrigaAgroLogoProps) {
   // Gota maior: ocupa a altura total incluindo a tagline
   const wordSize = Math.round(size * 0.92)
-  const tagSize = Math.round(size * 0.24)
+  const tagSize = Math.max(12, Math.round(size * 0.24))
   const totalH = Math.round(size + tagSize * 1.6)   // altura total = wordmark + gap + tagline
   const iconH = totalH
   const iconW = Math.round(totalH * 0.84)
