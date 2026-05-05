@@ -266,75 +266,20 @@ Aplicado em 16 arquivos (todas as páginas + componentes do dashboard). Regras f
 ---
 
 ## 📱 PWA — Ícone e manifest
-**Status:** ✅ Parcialmente implementado em 2026-04-30
+**Status:** ✅ Implementado em 2026-05-05 · pendente validação em aparelho
 
 Ícone PWA corrigido: substituído por logo oficial do IrrigaAgro (gota + barras de gráfico).
-Gerados `icon-192.png`, `icon-512.png` e `apple-touch-icon.png`.
+Gerados `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` e `apple-touch-icon.png`.
 
-**Ainda pendente:**
-
-O IrrigaAgro precisa funcionar como app nativo no celular do produtor rural: instalável na tela inicial, funcionando offline (pelo menos leitura do último estado), com ícones e splash screen corretos.
-
-### O que implementar (em ordem):
-
-#### 1. Web App Manifest (`public/manifest.json`)
-```json
-{
-  "name": "IrrigaAgro",
-  "short_name": "IrrigaAgro",
-  "description": "Irrigação inteligente — monitoramento de pivôs",
-  "start_url": "/dashboard",
-  "display": "standalone",
-  "background_color": "#0d1520",
-  "theme_color": "#0093D0",
-  "orientation": "portrait-primary",
-  "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ]
-}
-```
-- Adicionar `<link rel="manifest" href="/manifest.json" />` no `layout.tsx`
-- Adicionar `<meta name="theme-color" content="#0093D0" />` e `<meta name="apple-mobile-web-app-capable" content="yes" />`
-
-#### 2. Ícones PWA (`public/icons/`)
-- Gerar `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` a partir do SVG do logo IrrigaAgro
-- Ferramenta: https://maskable.app ou sharp no Node.js
-- Maskable: padding de 20% (safe zone), fundo `#0d1520`
-
-#### 3. Service Worker com `next-pwa`
-```bash
-npm install next-pwa
-```
-Configurar em `next.config.ts`:
-```ts
-import withPWA from 'next-pwa'
-export default withPWA({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  runtimeCaching: [
-    // Cache das páginas do app
-    { urlPattern: /^\/(dashboard|manejo|relatorios|precipitacoes)/, handler: 'NetworkFirst', options: { cacheName: 'pages', expiration: { maxEntries: 20, maxAgeSeconds: 3600 } } },
-    // Cache de assets estáticos
-    { urlPattern: /\/_next\/static\//, handler: 'CacheFirst', options: { cacheName: 'next-static' } },
-  ]
-})
-```
-
-#### 4. Offline fallback (`public/offline.html`)
-- Página simples com logo e "Sem conexão — dados do último acesso disponíveis"
-- Mostrar os últimos dados cacheados do dashboard
-
-#### 5. Meta tags iOS (`app/layout.tsx`)
-```tsx
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="IrrigaAgro" />
-<link rel="apple-touch-icon" href="/icons/icon-192.png" />
-```
+- `public/manifest.json`: `start_url` em `/dashboard`, `display: standalone`, orientação portrait, theme color da marca e ícone maskable dedicado
+- `src/app/layout.tsx`: manifest, iOS web app metadata, apple touch icon, viewport fit e `themeColor: #0093D0`
+- `src/proxy.ts`: libera `manifest.json`, `sw.js`, `offline.html` e `/icons/*` sem redirecionar para login
+- `public/sw.js`: service worker manual com cache-first para assets e network-first para rotas principais visitadas (`/dashboard`, `/manejo`, `/relatorios`, `/precipitacoes`, `/lancamentos`)
+- `public/offline.html`: fallback sem conexão com mensagem de último estado carregado
+- Supabase e `/api/*` ficam fora do cache para não servir dados/ações sensíveis obsoletas
+- Deploy de produção validado em `https://irrigaagro.com.br`:
+  - `/manifest.json`, `/sw.js`, `/offline.html` e `/login` retornando 200
+  - Screenshot mobile da tela de login conferido via Chrome headless
 
 #### 6. Notificações Push (opcional — fase 2)
 - Usar Web Push API + `web-push` npm package
@@ -345,11 +290,11 @@ export default withPWA({
 ### Checklist de qualidade PWA
 - [ ] Lighthouse PWA score ≥ 90
 - [ ] Instalável no Chrome Android e Safari iOS
-- [ ] Ícone correto na tela inicial (sem fundo branco no iOS)
-- [ ] Splash screen com fundo `#0d1520`
-- [ ] Funciona offline (mostra último estado cacheado)
-- [ ] `display: standalone` (sem barra de URL)
-- [ ] Theme color `#0093D0` na status bar do Android
+- [x] Ícone correto na tela inicial (sem fundo branco no iOS)
+- [x] Splash screen com fundo `#0d1520`
+- [x] Funciona offline para rotas visitadas recentemente (último estado cacheado)
+- [x] `display: standalone` (sem barra de URL)
+- [x] Theme color `#0093D0` na status bar do Android
 
 ---
 

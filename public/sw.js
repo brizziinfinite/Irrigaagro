@@ -2,17 +2,29 @@
 // Estratégias:
 //   - BYPASS: tudo que passa por *.supabase.co (nunca cachear dados do banco)
 //   - cache-first: assets estáticos (_next/static, icons, manifest)
-//   - network-first: HTML/navegação (sempre tenta rede; offline.html como fallback)
+//   - network-first: HTML/navegação (sempre tenta rede; cache visitado como fallback)
 
-const CACHE_NAME = 'irrigaagro-v1'
+const CACHE_NAME = 'irrigaagro-v2'
 const OFFLINE_URL = '/offline.html'
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/icons/icon-512-maskable.png',
   '/icons/apple-touch-icon.png',
 ]
+const CACHEABLE_APP_ROUTES = [
+  '/dashboard',
+  '/manejo',
+  '/relatorios',
+  '/precipitacoes',
+  '/lancamentos',
+]
+
+function isCacheableNavigation(url) {
+  return CACHEABLE_APP_ROUTES.some((route) => url.pathname === route || url.pathname.startsWith(`${route}/`))
+}
 
 // ─── Install ──────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
@@ -73,12 +85,24 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // 4. Network-first: HTML / navegação
+  // 4. Network-first: HTML / navegação. Salva rotas visitadas para abrir o
+  // último estado conhecido quando o produtor estiver sem sinal no campo.
   if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
-      fetch(request).catch(() =>
-        caches.match(OFFLINE_URL).then((r) => r || new Response('Offline', { status: 503 }))
-      )
+      fetch(request)
+        .then((response) => {
+          if (request.method === 'GET' && response.ok && !response.redirected && isCacheableNavigation(url)) {
+            const clone = response.clone()
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)))
+          }
+          return response
+        })
+        .catch(() =>
+          caches.match(request)
+            .then((cached) => cached || caches.match('/dashboard'))
+            .then((cached) => cached || caches.match(OFFLINE_URL))
+            .then((fallback) => fallback || new Response('Offline', { status: 503 }))
+        )
     )
     return
   }

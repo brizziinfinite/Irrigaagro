@@ -1,10 +1,10 @@
 {
   "name": "IrrigaAgro",
   "short_name": "IrrigaAgro",
-  "description": "Gestão de irrigação inteligente com balanço hídrico FAO-56",
+  "description": "Irrigação inteligente — monitoramento de pivôs",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0B0F14",
+  "background_color": "#0D1520",
   "theme_color": "#0093D0",
   "orientation": "portrait-primary",
   "icons": [
@@ -18,7 +18,13 @@
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/apple-touch-icon.png",

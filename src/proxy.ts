@@ -7,6 +7,17 @@ const COMPANY_STATUS_COOKIE = 'co_status'
 const COMPANY_STATUS_TTL_SECONDS = 300
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (
+    pathname === '/manifest.json' ||
+    pathname === '/sw.js' ||
+    pathname === '/offline.html' ||
+    pathname.startsWith('/icons/')
+  ) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -30,8 +41,6 @@ export async function proxy(request: NextRequest) {
 
   // getUser() valida o JWT localmente — sem round-trip ao banco na maioria dos casos
   const { data: { user } } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl
 
   // Rotas públicas — nunca verificar status aqui
   if (
