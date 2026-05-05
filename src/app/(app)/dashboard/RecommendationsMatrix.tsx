@@ -417,15 +417,15 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                   // Intensidade do destaque: leve <5mm, médio 5-15mm, forte >15mm
                   const rainIntensity = rainMm >= 15 ? 'heavy' : rainMm >= 5 ? 'moderate' : 'light'
                   const rainBg = hasRain
-                    ? rainIntensity === 'heavy'   ? 'rgba(37,99,235,0.13)'
-                    : rainIntensity === 'moderate' ? 'rgba(59,130,246,0.09)'
-                    : 'rgba(96,165,250,0.06)'
+                    ? rainIntensity === 'heavy'   ? 'rgba(37,99,235,0.22)'
+                    : rainIntensity === 'moderate' ? 'rgba(59,130,246,0.16)'
+                    : 'rgba(96,165,250,0.10)'
                     : 'rgba(16,22,30,0.5)'
                   const rainBorderTop = hasRain
-                    ? rainIntensity === 'heavy'   ? '2px solid rgba(59,130,246,0.6)'
-                    : rainIntensity === 'moderate' ? '2px solid rgba(96,165,250,0.45)'
-                    : '2px solid rgba(147,197,253,0.3)'
-                    : '2px solid transparent'
+                    ? rainIntensity === 'heavy'   ? '3px solid rgba(59,130,246,0.85)'
+                    : rainIntensity === 'moderate' ? '3px solid rgba(96,165,250,0.7)'
+                    : '3px solid rgba(147,197,253,0.5)'
+                    : '3px solid transparent'
 
                   return (
                     <th key={date} style={{
@@ -452,16 +452,17 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                             <WeatherIconSvg icon={forecast.icon} size={hasRain ? 18 : 16} />
                             {hasRain ? (
                               <span style={{
-                                fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700,
-                                color: rainIntensity === 'heavy' ? '#60a5fa' : rainIntensity === 'moderate' ? '#93c5fd' : '#bfdbfe',
-                                background: rainIntensity === 'heavy' ? 'rgba(37,99,235,0.2)' : 'rgba(96,165,250,0.12)',
-                                border: `1px solid ${rainIntensity === 'heavy' ? 'rgba(59,130,246,0.35)' : 'rgba(147,197,253,0.2)'}`,
-                                borderRadius: 99, padding: '1px 6px', lineHeight: 1.5,
+                                fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 800,
+                                color: rainIntensity === 'heavy' ? '#93c5fd' : rainIntensity === 'moderate' ? '#bfdbfe' : '#dbeafe',
+                                background: rainIntensity === 'heavy' ? 'rgba(37,99,235,0.3)' : 'rgba(96,165,250,0.18)',
+                                border: `1px solid ${rainIntensity === 'heavy' ? 'rgba(59,130,246,0.55)' : 'rgba(147,197,253,0.35)'}`,
+                                borderRadius: 99, padding: '2px 7px', lineHeight: 1.5,
+                                boxShadow: rainIntensity === 'heavy' ? '0 0 8px rgba(59,130,246,0.25)' : 'none',
                               }}>
                                 {rainMm.toFixed(0)}mm
                               </span>
                             ) : (
-                              <span style={{ fontSize: 9, color: '#445566' }}>0mm</span>
+                              <span style={{ fontSize: 9, color: '#334455' }}>0mm</span>
                             )}
                           </>
                         ) : (
@@ -519,7 +520,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                         <td key={date} style={{
                           padding: '8px 4px', textAlign: 'center',
                           borderRight: '1px solid rgba(255,255,255,0.04)',
-                          background: hasRain ? 'rgba(37,99,235,0.04)' : 'transparent',
+                          background: hasRain ? 'rgba(37,99,235,0.09)' : 'transparent',
                         }}>
                           <span style={{ fontSize: 10, color: '#2a3444' }}>—</span>
                         </td>
@@ -534,7 +535,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                         padding: '7px 4px',
                         textAlign: 'center',
                         borderRight: di < 6 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-                        background: hasRain ? 'rgba(37,99,235,0.04)' : 'transparent',
+                        background: hasRain ? 'rgba(37,99,235,0.09)' : 'transparent',
                       }}>
                         <div style={{
                           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
