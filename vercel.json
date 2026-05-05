@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/daily-summary",
-      "schedule": "0 11 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/afternoon-alert",
