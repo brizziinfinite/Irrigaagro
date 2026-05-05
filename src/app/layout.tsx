@@ -20,7 +20,12 @@ export const metadata: Metadata = {
     title: 'IrrigaAgro',
   },
   icons: {
-    apple: '/icons/apple-touch-icon.png',
+    apple: [
+      { url: '/icons/apple-touch-icon.png',     sizes: '180x180' },
+      { url: '/icons/apple-touch-icon-167.png',  sizes: '167x167' },
+      { url: '/icons/apple-touch-icon-152.png',  sizes: '152x152' },
+      { url: '/icons/apple-touch-icon-120.png',  sizes: '120x120' },
+    ],
   },
 }
 
