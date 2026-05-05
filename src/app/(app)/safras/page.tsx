@@ -42,14 +42,62 @@ function PhaseTimeline({ plantingDate, crop }: { plantingDate: string; crop: Cro
   const totalDays = stages.reduce((s, f) => s + (f.days ?? 0), 0)
   if (totalDays === 0) return null
   const start = new Date(plantingDate + 'T12:00:00')
+
+  // DAS atual e fase atual
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  const dasAtual = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+  const todayPct = Math.min(Math.max(dasAtual / totalDays, 0), 1) * 100
+  const emCurso = dasAtual >= 0 && dasAtual < totalDays
+
+  // Qual fase está hoje
+  let faseAtual: { label: string; color: string } | null = null
+  if (emCurso) {
+    let acc = 0
+    for (const s of stages) {
+      acc += s.days ?? 0
+      if (dasAtual < acc) { faseAtual = s; break }
+    }
+  }
+
   let cursor = 0
   return (
     <div style={{ marginTop: 10 }}>
-      <div style={{ display: 'flex', height: 5, borderRadius: 99, overflow: 'hidden', gap: 1 }}>
-        {stages.map((s, i) => (
-          <div key={i} style={{ width: `${((s.days ?? 0) / totalDays) * 100}%`, background: s.color }} />
-        ))}
+      {/* Badge fase atual */}
+      {faseAtual && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <span style={{ fontSize: 11, color: '#94a3b8' }}>Hoje — DAS {dasAtual}:</span>
+          <span style={{
+            fontSize: 11, fontWeight: 700, color: faseAtual.color,
+            background: `${faseAtual.color}22`, borderRadius: 4,
+            padding: '1px 6px', border: `1px solid ${faseAtual.color}44`
+          }}>
+            Fase {faseAtual.label}
+          </span>
+        </div>
+      )}
+      {dasAtual >= totalDays && (
+        <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>Safra encerrada (DAS {dasAtual})</div>
+      )}
+
+      {/* Barra de fases com marcador hoje */}
+      <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', height: 5, borderRadius: 99, overflow: 'hidden', gap: 1 }}>
+          {stages.map((s, i) => (
+            <div key={i} style={{ width: `${((s.days ?? 0) / totalDays) * 100}%`, background: s.color }} />
+          ))}
+        </div>
+        {/* Marcador "hoje" */}
+        {emCurso && (
+          <div style={{
+            position: 'absolute', top: -3, left: `${todayPct}%`,
+            transform: 'translateX(-50%)',
+            width: 2, height: 11, background: '#fff', borderRadius: 2,
+            boxShadow: '0 0 4px rgba(255,255,255,0.6)',
+          }} />
+        )}
       </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
         {stages.map((s, i) => {
           const stageStart = addDays(start, cursor)
@@ -146,6 +194,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
   const [fFactor, setFFactor]         = useState(season?.f_factor?.toString() ?? '')
   const [initialAdc, setInitialAdc]   = useState(season?.initial_adc_percent?.toString() ?? '100')
   const [notes, setNotes]             = useState(season?.notes ?? '')
+  const [areaHa, setAreaHa]           = useState(season?.area_ha?.toString() ?? '')
   const [isActive, setIsActive]       = useState(season?.is_active ?? true)
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState('')
@@ -189,6 +238,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
       initial_adc_percent: initialAdc ? Number(initialAdc) : null,
       notes: notes.trim() || null,
       is_active: isActive,
+      area_ha: areaHa ? Number(areaHa) : null,
     }
 
     try {
@@ -361,6 +411,15 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
               <PhaseTimeline plantingDate={plantingDate} crop={selectedCrop} />
             </div>
           )}
+
+          <NumField
+            label="Área desta cultura no pivô (ha)"
+            value={areaHa}
+            onChange={setAreaHa}
+            placeholder="Ex: 70"
+            unit="ha"
+            hint="Opcional. Se vazio, assume área total do pivô. Preencha quando há mais de uma cultura no mesmo pivô para rateio da conta de energia."
+          />
 
           <NumField label="ADc Inicial no Plantio (Umidade %)" value={initialAdc} onChange={setInitialAdc}
             placeholder="100" unit="%" hint="% da CTA disponível no momento do plantio (normalmente 100%)" />

@@ -30,9 +30,8 @@ const PIVOT_STATUS_CONFIG: Record<PivotIrrigationStatus, { label: string; color:
   vermelho: { label: 'Crítico',     color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',   border: 'rgb(239 68 68 / 0.25)'  },
 }
 
-function resolvePivotStatus(adcMm: number, _cadMm: number, ctaMm: number, _threshold: number | null): PivotIrrigationStatus {
-  // Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
-  const pct = ctaMm > 0 ? (adcMm / ctaMm) * 100 : 100
+function resolvePivotStatus(pct: number): PivotIrrigationStatus {
+  // Paleta unificada com dashboard: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
   if (pct >= 75) return 'verde'
   if (pct >= 60) return 'amarelo'
   return 'vermelho'
@@ -51,6 +50,7 @@ interface SoilDiagramRichProps {
   ctaMm: number
   cadMm: number
   adcMm: number
+  fieldCapacityPct: number   // do banco — mesma fonte que a dashboard
   recommendedDepthMm: number
   eto: number | null
   etc: number | null
@@ -67,11 +67,11 @@ interface SoilDiagramRichProps {
 }
 
 function SoilDiagramRich({
-  ctaMm, cadMm, adcMm, recommendedDepthMm,
+  ctaMm, cadMm, adcMm, fieldCapacityPct, recommendedDepthMm,
   eto, etc, kc, das, cropStage, rootDepthCm,
   cropName, farmName, pivotName, date, areaHa, alertThresholdPct,
 }: SoilDiagramRichProps) {
-  const status = resolvePivotStatus(adcMm, cadMm, ctaMm, alertThresholdPct)
+  const status = resolvePivotStatus(fieldCapacityPct)
   const cfg = PIVOT_STATUS_CONFIG[status]
   const stageLabels = ['', 'Inicial', 'Desenv.', 'Médio', 'Final']
   const cropEmojis: Record<string, string> = {
@@ -93,52 +93,55 @@ function SoilDiagramRich({
   return (
     <div style={{ background: '#0f1923', border: `1px solid ${cfg.border}`, borderRadius: 14, overflow: 'hidden' }}>
 
-      {/* ── Header: info da safra ── */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
-        <div>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#e2e8f0', lineHeight: 1.3 }}>{pivotName}</p>
-          <p style={{ fontSize: 12, color: '#778899', marginTop: 2 }}>
-            <span style={{ color: '#8899aa' }}>{farmName}</span>
-            {cropName && <> · <span style={{ color: '#0093D0' }}>{cropName}</span></>}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+      {/* ── Header: pivô + safra ── */}
+      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        {/* Nome + fazenda + cultura */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: '#e2e8f0', lineHeight: 1.3 }}>{pivotName}</p>
+            <p style={{ fontSize: 11, color: '#778899', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {farmName}{cropName && <> · <span style={{ color: '#0093D0' }}>{cropName}</span></>}
+            </p>
+          </div>
           {recommendedDepthMm > 0 && (
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Irrigar Hoje</p>
-              <p style={{ fontSize: 18, fontWeight: 800, color: cfg.color, fontFamily: 'var(--font-mono)' }}>{fmtNum(recommendedDepthMm)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <p style={{ fontSize: 9, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Irrigar Hoje</p>
+              <p style={{ fontSize: 16, fontWeight: 800, color: cfg.color, fontFamily: 'var(--font-mono)' }}>
+                {fmtNum(recommendedDepthMm)} <span style={{ fontSize: 10, color: '#8899aa' }}>mm</span>
+              </p>
             </div>
           )}
+        </div>
+
+        {/* Métricas em linha compacta */}
+        <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
           {areaHa != null && (
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Área</p>
-              <p style={{ fontSize: 18, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{areaHa.toFixed(1)} <span style={{ fontSize: 11, color: '#8899aa' }}>ha</span></p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+              <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Área</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{areaHa.toFixed(1)}</span>
+              <span style={{ fontSize: 10, color: '#667788' }}>ha</span>
             </div>
           )}
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETo</p>
-            <p style={{ fontSize: 18, fontWeight: 800, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtNum(eto)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETo</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtNum(eto)}</span>
+            <span style={{ fontSize: 10, color: '#667788' }}>mm</span>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 10, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETc</p>
-            <p style={{ fontSize: 18, fontWeight: 800, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(etc)} <span style={{ fontSize: 11, color: '#8899aa' }}>mm</span></p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETc</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(etc)}</span>
+            <span style={{ fontSize: 10, color: '#667788' }}>mm</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Fase</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{cropStage}ª</span>
+            <span style={{ fontSize: 10, color: '#667788' }}>· DAS {das}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Data</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{fmtDate(date)}</span>
           </div>
         </div>
-      </div>
-
-      {/* ── Linha secundária: Cultura / Fase / Data ── */}
-      <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-        {[
-          { label: 'Cultura', value: cropName ?? '—' },
-          { label: 'Fase', value: `${cropStage}ª (${das} dias)` },
-          { label: 'Data', value: fmtDate(date) },
-          { label: 'DAS', value: `${das}` },
-        ].map(({ label, value }) => (
-          <div key={label}>
-            <p style={{ fontSize: 10, fontWeight: 700, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
-            <p style={{ fontSize: 13, color: '#e2e8f0', marginTop: 1 }}>{value}</p>
-          </div>
-        ))}
       </div>
 
       {/* ── Bloco ETc + emoji Pill Premium ── */}
@@ -639,6 +642,7 @@ export function PivotDetailClient({ pivot, farm, context, history, today }: Prop
                 ctaMm={ctaMm}
                 cadMm={cadMm}
                 adcMm={adcMm}
+                fieldCapacityPct={lastMgmt?.field_capacity_percent ?? adcPct}
                 recommendedDepthMm={deficitMm}
                 eto={lastMgmt?.eto_mm ?? null}
                 etc={lastMgmt?.etc_mm ?? null}

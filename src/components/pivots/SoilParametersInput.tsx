@@ -380,7 +380,7 @@ function TextureTableInput({ value, onChange }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-        Selecione a textura do solo para preencher automaticamente os valores de balanço hídrico:
+        Selecione a textura do solo para preencher automaticamente os valores de balanço hídrico. Você pode ajustar depois:
       </p>
 
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>

@@ -63,7 +63,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut, company } = useAuth();
-  const [activeSeasonName, setActiveSeasonName] = useState<string | null>(null);
+  const [activeSeasons, setActiveSeasons] = useState<{ name: string }[]>([]);
 
   useEffect(() => {
     if (!company?.id) return;
@@ -73,9 +73,8 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
       .select('name, farms!inner(company_id)')
       .eq('is_active', true)
       .eq('farms.company_id', company.id)
-      .limit(1)
       .then(({ data }) => {
-        setActiveSeasonName(data?.[0]?.name ?? null);
+        setActiveSeasons((data ?? []) as { name: string }[]);
       });
   }, [company?.id]);
 
@@ -205,11 +204,11 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           border: '1px solid rgba(0,147,208,0.15)',
         }}>
           <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#22c55e', margin: '0 0 3px' }}>
-            Safra ativa
+            {activeSeasons.length > 1 ? `${activeSeasons.length} safras ativas` : 'Safra ativa'}
           </p>
-          {activeSeasonName ? (
+          {activeSeasons.length > 0 ? (
             <p style={{ fontSize: 11, color: '#e2e8f0', margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {activeSeasonName}
+              {activeSeasons.length === 1 ? activeSeasons[0].name : activeSeasons.map(s => s.name).join(' · ')}
             </p>
           ) : (
             <p style={{ fontSize: 11, color: '#8899aa', margin: 0 }}>
