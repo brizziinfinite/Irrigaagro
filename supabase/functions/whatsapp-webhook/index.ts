@@ -112,9 +112,12 @@ async function processEnergyBill(opts: {
   })
 }
 
-async function downloadMedia(messageId: string): Promise<{ base64: string; mimeType: string } | null> {
+async function downloadMedia(messageId: string, remoteJid?: string, fromMe?: boolean): Promise<{ base64: string; mimeType: string } | null> {
   try {
     console.log('downloadMedia: iniciando para messageId=', messageId)
+    const key: Record<string, unknown> = { id: messageId }
+    if (remoteJid) key.remoteJid = remoteJid
+    if (fromMe !== undefined) key.fromMe = fromMe
     const response = await fetch(
       `${EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${EVOLUTION_INSTANCE}`,
       {
@@ -123,7 +126,7 @@ async function downloadMedia(messageId: string): Promise<{ base64: string; mimeT
           'Content-Type': 'application/json',
           'apikey': EVOLUTION_API_KEY!,
         },
-        body: JSON.stringify({ message: { key: { id: messageId } } }),
+        body: JSON.stringify({ message: { key } }),
       }
     )
     console.log('downloadMedia: status=', response.status)
@@ -331,7 +334,7 @@ serve(async (req) => {
       } else {
         // Fallback: tenta baixar da Evolution API
         console.log('AUDIO: base64 ausente no payload, tentando downloadMedia')
-        media = await downloadMedia(messageId)
+        media = await downloadMedia(messageId, remoteJid, fromMe)
       }
 
       if (!media) {
@@ -695,7 +698,7 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
         status: 'delivered',
       })
 
-      const media = await downloadMedia(messageId)
+      const media = await downloadMedia(messageId, remoteJid, fromMe)
       if (!media) {
         await sendWhatsApp(phone, '❌ Não consegui baixar a imagem. Tente enviar novamente.')
         return new Response('ok', { status: 200 })
@@ -935,7 +938,7 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
       const behaviorRange = ctx.behavior_range as number
 
       // Download da imagem
-      const media = await downloadMedia(messageId)
+      const media = await downloadMedia(messageId, remoteJid, fromMe)
       let photoUrl: string | null = null
       let aiAnalysis = null
 
