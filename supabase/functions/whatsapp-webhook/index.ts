@@ -528,8 +528,39 @@ Exemplos → "choveu 15mm no valley" = chuva | "qual a umidade?" = pergunta | "d
           }
 
         } else if (parsed.tipo === 'status') {
-          const names = subs.map(s => `📍 ${s.pivots?.name}`).join('\n') || 'Nenhum pivô cadastrado'
-          responseText = `⚡ *Status dos seus pivôs:*\n\n${names}`
+          const pivotIds_st = subs.map(s => s.pivot_id)
+          const { data: seasons_st } = await supabase
+            .from('seasons')
+            .select('id, pivot_id')
+            .in('pivot_id', pivotIds_st)
+            .eq('is_active', true)
+          const seasonIds_st = (seasons_st ?? []).map((s: any) => s.id)
+          const seasonByPivot_st: Record<string, string> = {}
+          for (const s of seasons_st ?? []) seasonByPivot_st[s.pivot_id] = s.id
+          let lastBalance_st: Record<string, any> = {}
+          if (seasonIds_st.length > 0) {
+            const { data: recs_st } = await supabase
+              .from('daily_management')
+              .select('season_id, date, field_capacity_percent, etc_mm, recommended_depth_mm, needs_irrigation')
+              .in('season_id', seasonIds_st)
+              .order('date', { ascending: false })
+              .limit(seasonIds_st.length * 5)
+            for (const r of recs_st ?? []) {
+              if (!lastBalance_st[r.season_id]) lastBalance_st[r.season_id] = r
+            }
+          }
+          const lines_st = subs.map(s => {
+            const name = s.pivots?.name ?? 'Pivô'
+            const sid = seasonByPivot_st[s.pivot_id]
+            const b = sid ? lastBalance_st[sid] : null
+            if (!b) return `📍 *${name}*\n   ⚠️ Sem dados recentes`
+            const fc = b.field_capacity_percent != null ? `${Math.round(b.field_capacity_percent)}%` : '—'
+            const etc = b.etc_mm != null ? `${b.etc_mm.toFixed(1)}mm` : '—'
+            const lam = b.recommended_depth_mm != null ? `${b.recommended_depth_mm.toFixed(1)}mm` : '—'
+            const status = b.needs_irrigation ? '🔴 Irrigar' : '🟢 OK'
+            return `📍 *${name}*\n   💧 FC: ${fc} | ETc: ${etc}\n   Lâmina rec.: ${lam} | ${status}`
+          })
+          responseText = `⚡ *Status dos seus pivôs:*\n\n${lines_st.join('\n\n') || 'Nenhum pivô cadastrado'}`
 
         } else {
           // Pergunta livre por voz → Gemini assistente agrícola com contexto real
@@ -1326,8 +1357,39 @@ Critérios:
 
     } else if (msg === 'STATUS') {
       messageType = 'manual'
-      const names = subs.map(s => `📍 ${s.pivots?.name}`).join('\n') || 'Nenhum pivô cadastrado'
-      responseText = `⚡ *Status dos seus pivôs:*\n\n${names}`
+      const pivotIds_st2 = subs.map(s => s.pivot_id)
+      const { data: seasons_st2 } = await supabase
+        .from('seasons')
+        .select('id, pivot_id')
+        .in('pivot_id', pivotIds_st2)
+        .eq('is_active', true)
+      const seasonIds_st2 = (seasons_st2 ?? []).map((s: any) => s.id)
+      const seasonByPivot_st2: Record<string, string> = {}
+      for (const s of seasons_st2 ?? []) seasonByPivot_st2[s.pivot_id] = s.id
+      let lastBalance_st2: Record<string, any> = {}
+      if (seasonIds_st2.length > 0) {
+        const { data: recs_st2 } = await supabase
+          .from('daily_management')
+          .select('season_id, date, field_capacity_percent, etc_mm, recommended_depth_mm, needs_irrigation')
+          .in('season_id', seasonIds_st2)
+          .order('date', { ascending: false })
+          .limit(seasonIds_st2.length * 5)
+        for (const r of recs_st2 ?? []) {
+          if (!lastBalance_st2[r.season_id]) lastBalance_st2[r.season_id] = r
+        }
+      }
+      const lines_st2 = subs.map(s => {
+        const name = s.pivots?.name ?? 'Pivô'
+        const sid = seasonByPivot_st2[s.pivot_id]
+        const b = sid ? lastBalance_st2[sid] : null
+        if (!b) return `📍 *${name}*\n   ⚠️ Sem dados recentes`
+        const fc = b.field_capacity_percent != null ? `${Math.round(b.field_capacity_percent)}%` : '—'
+        const etc = b.etc_mm != null ? `${b.etc_mm.toFixed(1)}mm` : '—'
+        const lam = b.recommended_depth_mm != null ? `${b.recommended_depth_mm.toFixed(1)}mm` : '—'
+        const status = b.needs_irrigation ? '🔴 Irrigar' : '🟢 OK'
+        return `📍 *${name}*\n   💧 FC: ${fc} | ETc: ${etc}\n   Lâmina rec.: ${lam} | ${status}`
+      })
+      responseText = `⚡ *Status dos seus pivôs:*\n\n${lines_st2.join('\n\n') || 'Nenhum pivô cadastrado'}`
 
     } else if (msg === 'RESUMO') {
       messageType = 'daily_summary'
