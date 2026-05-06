@@ -93,7 +93,7 @@ export default function IrrigaAgroLogo({
             fontFamily: "'Inter', system-ui, sans-serif",
             fontSize: tagSize,
             fontWeight: 400,
-            letterSpacing: '0.18em',
+            letterSpacing: '0.10em',
             color: 'rgba(255,255,255,0.45)',
             whiteSpace: 'nowrap',
             textTransform: 'uppercase',
