@@ -25,6 +25,9 @@ export interface NdviTalhaoResponse {
   alertas: string[]
   error?: string
   message?: string
+  sem_credenciais?: boolean
+  ultima_atualizacao?: string | null
+  dias_desde_ultima?: number | null
 }
 
 export interface NdviComparativoItem {
@@ -149,22 +152,30 @@ export function useNdvi(pivotId: string | null) {
 export function useRefreshNdvi() {
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<NdviTalhaoResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const mutate = useCallback(async (pivotId: string, onSuccess?: (data: NdviTalhaoResponse) => void) => {
+  const mutate = useCallback(async (
+    params: { pivot_id?: string; talhao_id?: string },
+    onSuccess?: (data: NdviTalhaoResponse) => void
+  ) => {
     setPending(true)
+    setError(null)
     try {
       const supabase = createClient()
-      const { data, error } = await supabase.functions.invoke('ndvi-fetch', {
-        body: { pivot_id: pivotId, forcar_refresh: true },
+      const { data, error: fnError } = await supabase.functions.invoke('ndvi-fetch', {
+        body: { ...params, forcar_refresh: true },
       })
-      if (error) throw new Error(error.message)
+      if (fnError) throw new Error(fnError.message)
       const res = data as NdviTalhaoResponse
+      if (res.error) throw new Error(res.message ?? res.error)
       setResult(res)
       onSuccess?.(res)
+    } catch (err) {
+      setError(String(err instanceof Error ? err.message : err))
     } finally {
       setPending(false)
     }
   }, [])
 
-  return { mutate, pending, result }
+  return { mutate, pending, result, error }
 }

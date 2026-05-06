@@ -160,8 +160,17 @@ serve(async (req) => {
             .select('*')
             .eq(cacheField, cacheValue)
             .order('data_imagem', { ascending: true })
+          const ultimaDataCache = historico?.length ? historico[historico.length - 1]?.data_imagem : null
+          const diasDesdeUltimaCache = ultimaDataCache
+            ? Math.floor((Date.now() - new Date(ultimaDataCache).getTime()) / 86400000)
+            : null
           return new Response(
-            JSON.stringify({ pivot_id, talhao_id, entity_name: entityName, historico: historico ?? [], alertas: [] }),
+            JSON.stringify({
+              pivot_id, talhao_id, entity_name: entityName,
+              historico: historico ?? [], alertas: [],
+              ultima_atualizacao: ultimaDataCache,
+              dias_desde_ultima: diasDesdeUltimaCache,
+            }),
             { headers: { ...CORS, 'Content-Type': 'application/json' } }
           )
         }
@@ -170,12 +179,30 @@ serve(async (req) => {
 
     // Check if Planet API Key configured
     if (!planetApiKey) {
+      // Return sem_credenciais=true with whatever cache exists
+      const { data: cacheExistente } = await supabaseAdmin
+        .from('ndvi_cache')
+        .select('*')
+        .eq(cacheField, cacheValue)
+        .order('data_imagem', { ascending: true })
+      const ultimaData = cacheExistente?.length
+        ? cacheExistente[cacheExistente.length - 1]?.data_imagem
+        : null
+      const diasDesdeUltima = ultimaData
+        ? Math.floor((Date.now() - new Date(ultimaData).getTime()) / 86400000)
+        : null
       return new Response(
         JSON.stringify({
+          pivot_id, talhao_id, entity_name: entityName,
+          historico: cacheExistente ?? [],
+          alertas: [],
+          sem_credenciais: true,
+          ultima_atualizacao: ultimaData,
+          dias_desde_ultima: diasDesdeUltima,
           error: 'SENTINEL_NOT_CONFIGURED',
           message: 'Configure PLANET_API_KEY nas Edge Function Secrets',
         }),
-        { status: 422, headers: { ...CORS, 'Content-Type': 'application/json' } }
+        { headers: { ...CORS, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -352,8 +379,18 @@ serve(async (req) => {
       .eq(cacheField, cacheValue)
       .order('data_imagem', { ascending: true })
 
+    const ultimaDataFinal = (historico ?? []).length ? historico![historico!.length - 1]?.data_imagem : null
+    const diasDesdeUltimaFinal = ultimaDataFinal
+      ? Math.floor((Date.now() - new Date(ultimaDataFinal).getTime()) / 86400000)
+      : null
+
     return new Response(
-      JSON.stringify({ pivot_id, talhao_id, entity_name: entityName, historico: historico ?? [], alertas }),
+      JSON.stringify({
+        pivot_id, talhao_id, entity_name: entityName,
+        historico: historico ?? [], alertas,
+        ultima_atualizacao: ultimaDataFinal,
+        dias_desde_ultima: diasDesdeUltimaFinal,
+      }),
       { headers: { ...CORS, 'Content-Type': 'application/json' } }
     )
   } catch (err) {

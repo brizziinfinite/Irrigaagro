@@ -32,6 +32,8 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
   ReferenceLine, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import PivotSpinner from '@/components/ui/PivotSpinner'
 
 const TalhaoMapDrawDynamic = dynamic(
@@ -56,23 +58,94 @@ const COR_MAP = {
 
 type DiagCor = keyof typeof COR_MAP
 
-function gerarDiagnostico(ndvi: number | null, tendencia: 'subindo' | 'caindo' | 'estavel' | null, variacaoPct: number | null) {
+function gerarDiagnostico(
+  ndvi: number | null,
+  tendencia: 'subindo' | 'caindo' | 'estavel' | null,
+  variacaoPct: number | null,
+  nuvens: number | null,
+): { cor: DiagCor; titulo: string; descricao: string; recomendacao: string } | null {
   if (ndvi == null) return null
   const caindo = tendencia === 'caindo'
   const subindo = tendencia === 'subindo'
-  if (ndvi < 0.2) return { cor: 'red' as DiagCor, titulo: 'Vegetação severamente comprometida', descricao: 'NDVI extremamente baixo. Solo exposto, cultura morta ou falha severa.', recomendacao: 'Verificar in loco imediatamente. Avaliar replantio.' }
-  if (ndvi < 0.35) return { cor: 'red' as DiagCor, titulo: 'Vegetação em situação crítica', descricao: caindo ? `Queda de ${variacaoPct != null ? Math.abs(variacaoPct).toFixed(1) + '%' : ''} detectada. Estresse severo.` : 'Biomassa muito baixa.', recomendacao: 'Verificar irrigação, pragas e doenças.' }
-  if (ndvi < 0.5) return { cor: (caindo ? 'amber' : 'yellow') as DiagCor, titulo: caindo ? 'Vegetação em alerta' : 'Desenvolvimento moderado', descricao: caindo ? `Declínio de ${variacaoPct != null ? Math.abs(variacaoPct).toFixed(1) + '%' : ''}.` : 'Vigor abaixo do potencial.', recomendacao: 'Revisar irrigação e fertirrigação.' }
-  if (ndvi < 0.65) return { cor: 'yellow' as DiagCor, titulo: subindo ? 'Vegetação em recuperação' : 'Vegetação moderada', descricao: subindo ? `Melhora de ${variacaoPct != null ? variacaoPct.toFixed(1) + '%' : ''}.` : 'Dentro do esperado.', recomendacao: 'Manter manejo. Observar uniformidade.' }
-  if (ndvi < 0.8) return { cor: 'green' as DiagCor, titulo: 'Vegetação saudável e vigorosa', descricao: 'Alta atividade fotossintética. Bom potencial produtivo.', recomendacao: 'Manter irrigação e nutrição.' }
-  return { cor: 'emerald' as DiagCor, titulo: 'Vegetação em condição máxima', descricao: 'NDVI excelente. Biomassa máxima.', recomendacao: 'Nenhuma intervenção necessária.' }
+  const altaNuvens = nuvens != null && nuvens > 60
+  const caindoForte = caindo && variacaoPct != null && variacaoPct < -15
+  const ndviStr = ndvi.toFixed(2)
+  const varPct = variacaoPct != null ? variacaoPct.toFixed(0) + '%' : '—'
+
+  if (altaNuvens) return {
+    cor: 'amber',
+    titulo: 'Cobertura de nuvens alta',
+    descricao: `${nuvens!.toFixed(0)}% de nuvens. NDVI de ${ndviStr} pode estar subestimado.`,
+    recomendacao: 'Aguardar período de céu limpo para leitura mais precisa.',
+  }
+  if (ndvi < 0.2) return {
+    cor: 'red',
+    titulo: 'Vegetação severamente comprometida',
+    descricao: caindo
+      ? `NDVI em ${ndviStr} e em queda — situação crítica e agravando. Possível perda de stand, senescência acelerada ou estresse hídrico severo.`
+      : `NDVI em ${ndviStr} indica cobertura vegetal mínima. Solo exposto, emergência falha ou estágio inicial muito precoce.`,
+    recomendacao: 'Visitar talhão imediatamente. Verificar stand, disponibilidade hídrica e pragas de solo.',
+  }
+  if (ndvi < 0.35) return {
+    cor: 'red',
+    titulo: 'Vegetação em situação crítica',
+    descricao: caindoForte
+      ? `NDVI em ${ndviStr} com queda acentuada (${varPct}). Declínio acelerado — possível doença, praga ou estresse severo.`
+      : subindo
+      ? `NDVI em ${ndviStr}, mas com tendência positiva. Cultura pode estar em estabelecimento ou se recuperando.`
+      : `NDVI em ${ndviStr} indica baixa atividade fotossintética. Cultura pode estar em dormência ou sob estresse.`,
+    recomendacao: 'Priorizar monitoramento de campo. Verificar nutrição, irrigação e patógenos.',
+  }
+  if (ndvi < 0.5) return {
+    cor: caindo ? 'amber' : 'yellow',
+    titulo: caindo ? 'Vegetação em alerta — queda detectada' : 'Vegetação em desenvolvimento moderado',
+    descricao: caindo
+      ? `NDVI em ${ndviStr} com tendência de queda (${varPct}). Monitorar se o declínio representa início de senescência ou estresse.`
+      : subindo
+      ? `NDVI em ${ndviStr} em ascensão — cultura provavelmente em fase de crescimento ativo.`
+      : `NDVI em ${ndviStr} indica cobertura moderada. Esperado em fases de desenvolvimento inicial ou pós-emergência.`,
+    recomendacao: caindo
+      ? 'Inspecionar campo. Avaliar déficit hídrico, deficiências nutricionais ou doenças foliares.'
+      : 'Garantir disponibilidade de nutrientes e água para suportar crescimento.',
+  }
+  if (ndvi < 0.65) return {
+    cor: 'yellow',
+    titulo: caindo ? 'Vegetação saudável em leve declínio' : subindo ? 'Vegetação em pleno desenvolvimento' : 'Vegetação moderada — dentro do esperado',
+    descricao: caindo
+      ? `NDVI em ${ndviStr} com queda. Pode indicar início de maturação ou estresse pontual.`
+      : subindo
+      ? `NDVI em ${ndviStr} e crescendo — cultura em fase vegetativa ativa com boa cobertura do dossel.`
+      : `NDVI em ${ndviStr}. Boa atividade fotossintética e cobertura adequada para a fase.`,
+    recomendacao: caindo
+      ? 'Verificar se declínio é parte do ciclo normal (maturação) ou sinal de problema.'
+      : 'Manter manejo. Checar necessidade de adubação de cobertura se ainda em fase vegetativa.',
+  }
+  if (ndvi < 0.8) return {
+    cor: 'green',
+    titulo: caindo ? 'Vegetação saudável — atenção à queda' : 'Vegetação saudável e vigorosa',
+    descricao: caindo
+      ? `NDVI em ${ndviStr} com tendência de queda (${varPct}). Pode ser início natural de senescência ou queda precoce.`
+      : `NDVI em ${ndviStr}. Excelente cobertura e alta atividade fotossintética. Cultura em ótimo estado.`,
+    recomendacao: caindo
+      ? 'Confirmar se é senescência esperada para o estágio. Se não for, investigar causas.'
+      : 'Manter manejo. Condição favorável para bom potencial produtivo.',
+  }
+  return {
+    cor: 'emerald',
+    titulo: 'Vegetação em condição máxima',
+    descricao: `NDVI em ${ndviStr} — nível excepcional de vigor. Dossel fechado, alta atividade fotossintética e excelente cobertura do solo.`,
+    recomendacao: 'Manter manejo. Monitorar doenças que preferem condições de dossel fechado (fungos).',
+  }
 }
 
 function fmtData(iso: string) {
-  return new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  return format(parseISO(iso), "d MMM yyyy", { locale: ptBR })
+}
+function fmtDataCurta(iso: string) {
+  return format(parseISO(iso), "dd/MM", { locale: ptBR })
 }
 function diasAtras(iso: string) {
-  const diff = Math.floor((Date.now() - new Date(iso + 'T12:00:00Z').getTime()) / 86400000)
+  const diff = Math.floor((Date.now() - parseISO(iso).getTime()) / 86400000)
   if (diff === 0) return 'hoje'
   if (diff === 1) return 'ontem'
   return `${diff}d atrás`
@@ -172,7 +245,7 @@ function NdviTooltip({ active, payload, label }: { active?: boolean; payload?: A
 
 // ─── Detalhe NDVI de um item (pivô ou talhão) ─────────────────────────────────
 function NdviDetalhe({
-  name, detalhe, loadingDetalhe, hasPolygon, compSel, onRefresh, refreshing,
+  name, detalhe, loadingDetalhe, hasPolygon, compSel, onRefresh, refreshing, refreshError,
 }: {
   name: string
   detalhe: NdviTalhaoResponse | null
@@ -181,19 +254,33 @@ function NdviDetalhe({
   compSel: NdviComparativoItem | null
   onRefresh: () => void
   refreshing: boolean
+  refreshError?: string | null
 }) {
   const ultimoNdvi: NdviRegistro | null = detalhe?.historico
     ? ([...detalhe.historico].reverse().find(h => h.ndvi_medio != null) ?? null) : null
-  const diag = gerarDiagnostico(ultimoNdvi?.ndvi_medio ?? null, compSel?.tendencia ?? null, compSel?.variacaoPct ?? null)
+  const diag = gerarDiagnostico(
+    ultimoNdvi?.ndvi_medio ?? null,
+    compSel?.tendencia ?? null,
+    compSel?.variacaoPct ?? null,
+    ultimoNdvi?.cobertura_nuvens_pct ?? null,
+  )
   const dadosGrafico = (detalhe?.historico ?? []).filter(h => h.ndvi_medio != null)
-    .map(h => ({ data: fmtData(h.data_imagem), ndvi: Number(h.ndvi_medio!.toFixed(4)) }))
+    .map(h => ({ data: fmtDataCurta(h.data_imagem), ndvi: Number(h.ndvi_medio!.toFixed(4)) }))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <div>
           <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{name}</div>
-          {ultimoNdvi?.data_imagem && <div style={{ fontSize: 11, color: C.muted }}>Última leitura: {fmtData(ultimoNdvi.data_imagem)} · {diasAtras(ultimoNdvi.data_imagem)}</div>}
+          {detalhe?.ultima_atualizacao
+            ? <div style={{ fontSize: 11, color: C.muted }}>
+                Última imagem: {fmtData(detalhe.ultima_atualizacao)}
+                {detalhe.dias_desde_ultima != null && ` · ${detalhe.dias_desde_ultima}d atrás`}
+              </div>
+            : ultimoNdvi?.data_imagem
+            ? <div style={{ fontSize: 11, color: C.muted }}>Última leitura: {fmtData(ultimoNdvi.data_imagem)} · {diasAtras(ultimoNdvi.data_imagem)}</div>
+            : null
+          }
         </div>
         <button onClick={onRefresh} disabled={refreshing || loadingDetalhe} style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.brand, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600, opacity: refreshing ? 0.6 : 1, minHeight: 36 }}>
           <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : undefined }} />
@@ -201,13 +288,25 @@ function NdviDetalhe({
         </button>
       </div>
 
-      {detalhe?.error === 'SENTINEL_NOT_CONFIGURED' && (
+      {detalhe?.sem_credenciais && (
         <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 10 }}>
-          <AlertTriangle size={16} color={C.amber} style={{ flexShrink: 0, marginTop: 1 }} />
+          <Info size={16} color={C.amber} style={{ flexShrink: 0, marginTop: 1 }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>Sentinel Hub não configurado</div>
-            <div style={{ fontSize: 12, color: '#fcd34d', marginTop: 2 }}>Configure <code>PLANET_API_KEY</code> nos Secrets da Edge Function.</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>Credenciais Sentinel Hub não configuradas</div>
+            <div style={{ fontSize: 12, color: '#fcd34d', marginTop: 2 }}>
+              Configure <code>PLANET_API_KEY</code> nos Secrets da Edge Function para buscar imagens de satélite reais.
+            </div>
           </div>
+        </div>
+      )}
+
+      {refreshError && refreshError !== 'SENTINEL_NOT_CONFIGURED' && (
+        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertTriangle size={16} color={C.red} style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: 12, color: '#fca5a5' }}>{refreshError}</div>
+          </div>
+          <button onClick={onRefresh} style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: '#f87171', cursor: 'pointer' }}>Tentar novamente</button>
         </div>
       )}
 
@@ -233,11 +332,38 @@ function NdviDetalhe({
 
       {ultimoNdvi?.imagem_url && (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
-          <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Imagem NDVI · {ultimoNdvi.data_imagem && fmtData(ultimoNdvi.data_imagem)}</div>
+            {ultimoNdvi.cobertura_nuvens_pct != null && (
+              <span style={{ fontSize: 10, color: ultimoNdvi.cobertura_nuvens_pct > 60 ? C.amber : C.muted }}>
+                ☁ {ultimoNdvi.cobertura_nuvens_pct.toFixed(0)}% nuvens
+              </span>
+            )}
           </div>
-          <img src={ultimoNdvi.imagem_url} alt="NDVI" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover' }} />
-          <div style={{ padding: '8px 14px 12px' }}><LegendaNdvi /></div>
+          <div style={{ position: 'relative' }}>
+            <img src={ultimoNdvi.imagem_url} alt="NDVI" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover' }} />
+            {/* Badge NDVI sobreposto */}
+            {ultimoNdvi.ndvi_medio != null && (() => {
+              const cls = classificarNdvi(ultimoNdvi.ndvi_medio)
+              return (
+                <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(13,21,32,0.85)', border: `1px solid ${cls.cor}66`, borderRadius: 10, padding: '6px 12px', backdropFilter: 'blur(4px)' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: cls.cor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{ultimoNdvi.ndvi_medio.toFixed(2)}</div>
+                  <div style={{ fontSize: 9, color: cls.cor, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>{cls.label}</div>
+                </div>
+              )
+            })()}
+          </div>
+          {/* Legenda inline de cores (barra compacta) */}
+          <div style={{ padding: '8px 14px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 2 }}>
+              {['#dc1e14','#dc5000','#c8c800','#00c800','#009600'].map((c, i) => (
+                <div key={i} style={{ width: 20, height: 12, borderRadius: 3, background: c }} />
+              ))}
+            </div>
+            <span style={{ fontSize: 10, color: C.muted }}>baixo → alto NDVI</span>
+            <div style={{ flex: 1 }} />
+            <LegendaNdvi />
+          </div>
         </div>
       )}
 
@@ -274,7 +400,7 @@ function NdviDetalhe({
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                  {['Data', 'NDVI Médio', 'Mín', 'Máx', 'Classificação'].map(h => (
+                  {['Data', 'NDVI Médio', 'Mín', 'Máx', 'Nuvens %', 'Classificação'].map(h => (
                     <th key={h} style={{ padding: '8px 12px', color: C.muted, fontWeight: 600, textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -288,6 +414,9 @@ function NdviDetalhe({
                       <td style={{ padding: '8px 12px', color: cls.cor, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{r.ndvi_medio != null ? r.ndvi_medio.toFixed(3) : '—'}</td>
                       <td style={{ padding: '8px 12px', color: C.sec, fontVariantNumeric: 'tabular-nums' }}>{r.ndvi_min != null ? r.ndvi_min.toFixed(3) : '—'}</td>
                       <td style={{ padding: '8px 12px', color: C.sec, fontVariantNumeric: 'tabular-nums' }}>{r.ndvi_max != null ? r.ndvi_max.toFixed(3) : '—'}</td>
+                      <td style={{ padding: '8px 12px', color: r.cobertura_nuvens_pct != null && r.cobertura_nuvens_pct > 60 ? C.amber : C.sec, fontVariantNumeric: 'tabular-nums' }}>
+                        {r.cobertura_nuvens_pct != null ? r.cobertura_nuvens_pct.toFixed(0) + '%' : '—'}
+                      </td>
                       <td style={{ padding: '8px 12px' }}>
                         <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: cls.corFundo + '22', color: cls.cor, border: `1px solid ${cls.cor}44`, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{cls.label}</span>
                       </td>
@@ -302,11 +431,21 @@ function NdviDetalhe({
 
       {loadingDetalhe && <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><PivotSpinner size={40} label="Buscando dados..." /></div>}
 
-      {!loadingDetalhe && detalhe?.historico?.length === 0 && !detalhe?.error && (
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 24px', textAlign: 'center' }}>
-          <Satellite size={32} color={C.muted} style={{ marginBottom: 10 }} />
-          <div style={{ fontSize: 14, color: C.sec, marginBottom: 6 }}>Nenhum dado NDVI ainda</div>
-          <div style={{ fontSize: 12, color: C.muted }}>Clique em <strong style={{ color: C.brand }}>Atualizar via Satélite</strong> para buscar imagens do Sentinel-2.</div>
+      {!loadingDetalhe && detalhe?.historico?.length === 0 && !detalhe?.sem_credenciais && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '36px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+          <Satellite size={36} color={C.muted} />
+          <div style={{ fontSize: 14, fontWeight: 600, color: C.sec }}>Nenhuma imagem disponível nos últimos 120 dias</div>
+          <div style={{ fontSize: 12, color: C.muted, maxWidth: 280 }}>
+            {hasPolygon
+              ? 'Clique em "Atualizar via Satélite" para buscar imagens do Sentinel-2.'
+              : 'Desenhe o polígono para habilitar o monitoramento por satélite.'}
+          </div>
+          {hasPolygon && (
+            <button onClick={onRefresh} disabled={refreshing} style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, background: C.brand, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontSize: 12, fontWeight: 600, opacity: refreshing ? 0.6 : 1 }}>
+              <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : undefined }} />
+              Atualizar agora
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -456,7 +595,8 @@ export default function NdviPage() {
   // Modal talhão
   const [modalTalhao, setModalTalhao] = useState<Talhao | null | 'new'>(null)
 
-  const { mutate: refreshNdvi, pending: refreshing } = useRefreshNdvi()
+  const { mutate: refreshNdvi, pending: refreshing, error: refreshErrorPivot } = useRefreshNdvi()
+  const { mutate: refreshNdviTalhao, pending: refreshingTalhao, error: refreshErrorTalhao } = useRefreshNdvi()
 
   const loadData = useCallback(async () => {
     if (!company?.id) return
@@ -608,8 +748,9 @@ export default function NdviPage() {
                   loadingDetalhe={loadingPivotDetalhe}
                   hasPolygon={!!pivots.find(p => p.id === pivotSel)?.polygon_geojson}
                   compSel={ndviComparativoPivots.find(c => c.pivot_id === pivotSel) ?? null}
-                  onRefresh={() => refreshNdvi(pivotSel!, (res) => { setPivotDetalhe(res) })}
+                  onRefresh={() => refreshNdvi({ pivot_id: pivotSel! }, (res) => { setPivotDetalhe(res) })}
                   refreshing={refreshing}
+                  refreshError={refreshErrorPivot}
                 />
               )}
             </div>
@@ -663,12 +804,9 @@ export default function NdviPage() {
                     loadingDetalhe={loadingTalhaoDetalhe}
                     hasPolygon={!!talhoes.find(t => t.id === talhaoSel)?.polygon_geojson}
                     compSel={ndviComparativoTalhoes.find(c => c.pivot_id === talhaoSel) ?? null}
-                    onRefresh={() => {
-                      const supabase = createClient()
-                      supabase.functions.invoke('ndvi-fetch', { body: { talhao_id: talhaoSel, forcar_refresh: true } })
-                        .then(({ data }) => { if (data) setTalhaoDetalhe(data) })
-                    }}
-                    refreshing={false}
+                    onRefresh={() => refreshNdviTalhao({ talhao_id: talhaoSel! }, (res) => { setTalhaoDetalhe(res) })}
+                    refreshing={refreshingTalhao}
+                    refreshError={refreshErrorTalhao}
                   />
                 )}
               </div>
