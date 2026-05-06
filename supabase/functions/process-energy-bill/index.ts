@@ -23,9 +23,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Detectar PDF pelos magic bytes (%PDF) caso mimeType venha errado
-    const isPdf = image_mime_type?.includes('pdf') ||
-      atob(image_base64.slice(0, 8)).startsWith('%PDF')
+    // Detectar PDF pelo mimeType ou pelos magic bytes (%PDF)
+    let isPdf = image_mime_type?.includes('pdf') ?? false
+    if (!isPdf) {
+      try {
+        const header = atob(image_base64.slice(0, 8))
+        if (header.startsWith('%PDF')) isPdf = true
+      } catch (_) { /* ignora erro de decodificação */ }
+    }
     const effectiveMime = isPdf ? 'application/pdf'
       : (image_mime_type && !['application/octet-stream', 'audio/ogg'].includes(image_mime_type))
         ? image_mime_type
@@ -86,14 +91,23 @@ serve(async (req) => {
 
     const geminiData = await geminiResp.json()
     const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      return new Response(JSON.stringify({ success: false, error: 'Não foi possível extrair dados da fatura' }), {
-        status: 200, headers: { 'Content-Type': 'application/json' },
-      })
-    }
+    console.log('gemini rawText len=', rawText.length, 'finish=', geminiData.candidates?.[0]?.finishReason)
 
-    const extracted = JSON.parse(jsonMatch[0])
+    let extracted: Record<string, unknown>
+    try {
+      // responseMimeType=application/json → texto já é JSON direto
+      const cleaned = rawText.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim()
+      extracted = JSON.parse(cleaned)
+    } catch (_) {
+      // fallback: extrair primeiro bloco JSON
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        return new Response(JSON.stringify({ success: false, error: `Não foi possível extrair dados da fatura. rawText: ${rawText.slice(0,200)}` }), {
+          status: 200, headers: { 'Content-Type': 'application/json' },
+        })
+      }
+      extracted = JSON.parse(jsonMatch[0])
+    }
 
     // Verificar duplicata: mesma fazenda + mesmo mês
     if (extracted.reference_month) {
