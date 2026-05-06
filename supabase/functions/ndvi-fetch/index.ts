@@ -6,7 +6,10 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// ── Sentinel Hub ──────────────────────────────────────────────────────────────
+// ── Planet / Sentinel Hub ─────────────────────────────────────────────────────
+// Auth: API Key direto (sem OAuth) — header: "Authorization: api-key <KEY>"
+const SH_BASE = 'https://services.sentinel-hub.com'
+
 const CACHE_DIAS = 10
 const DIAS_HISTORICO = 120
 const PERIODO = 'P30D'
@@ -52,22 +55,8 @@ function evaluatePixel(s) {
   return [r, g, b, 1];
 }`
 
-async function getToken(clientId: string, clientSecret: string): Promise<string> {
-  const res = await fetch(
-    'https://services.sentinel-hub.com/auth/realms/main/protocol/openid-connect/token',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: clientId,
-        client_secret: clientSecret,
-      }),
-    }
-  )
-  if (!res.ok) throw new Error(`Sentinel auth failed: ${res.status}`)
-  const data = await res.json()
-  return data.access_token
+function shHeaders(apiKey: string) {
+  return { Authorization: `api-key ${apiKey}`, 'Content-Type': 'application/json' }
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -77,8 +66,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const sentinelClientId = Deno.env.get('SENTINEL_CLIENT_ID')
-    const sentinelClientSecret = Deno.env.get('SENTINEL_CLIENT_SECRET')
+    const planetApiKey = Deno.env.get('PLANET_API_KEY') ?? Deno.env.get('SENTINEL_CLIENT_ID')
 
     // Validate caller
     const authHeader = req.headers.get('authorization') ?? ''
@@ -158,12 +146,12 @@ serve(async (req) => {
       }
     }
 
-    // Check if Sentinel credentials configured
-    if (!sentinelClientId || !sentinelClientSecret) {
+    // Check if Planet API Key configured
+    if (!planetApiKey) {
       return new Response(
         JSON.stringify({
           error: 'SENTINEL_NOT_CONFIGURED',
-          message: 'Configure SENTINEL_CLIENT_ID e SENTINEL_CLIENT_SECRET nas Edge Function Secrets',
+          message: 'Configure PLANET_API_KEY nas Edge Function Secrets',
         }),
         { status: 422, headers: { ...CORS, 'Content-Type': 'application/json' } }
       )
@@ -179,8 +167,6 @@ serve(async (req) => {
         { status: 422, headers: { ...CORS, 'Content-Type': 'application/json' } }
       )
     }
-
-    const token = await getToken(sentinelClientId, sentinelClientSecret)
 
     // Date range
     const agora = new Date()
@@ -208,7 +194,7 @@ serve(async (req) => {
 
     const statsRes = await fetch('https://services.sentinel-hub.com/api/v1/statistics', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `api-key ${planetApiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(statsPayload),
     })
 
@@ -289,7 +275,7 @@ serve(async (req) => {
 
       const imgRes = await fetch('https://services.sentinel-hub.com/api/v1/process', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `api-key ${planetApiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(processPayload),
       })
 
