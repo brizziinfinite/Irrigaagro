@@ -38,24 +38,28 @@ serve(async (req) => {
 
     console.log('process-energy-bill: mime_orig=', image_mime_type, 'effective=', effectiveMime, 'base64_len=', image_base64.length)
 
-    const prompt = `Analise esta fatura de energia elétrica brasileira (distribuidoras como Energisa, CPFL, Enel, Cemig, COPEL, Neoenergia) e extraia os campos abaixo.
+    const prompt = `Analise esta fatura de energia elétrica brasileira (Energisa, CPFL, Enel, Cemig, COPEL, Neoenergia) e extraia os campos abaixo.
 
-REGRAS CRÍTICAS:
+ATENÇÃO — DISTINÇÃO FUNDAMENTAL:
+- Linhas com unidade KWH = ENERGIA (consumo)
+- Linhas com unidade KW = DEMANDA (potência contratada) — NÃO confundir com energia
+
+CAMPOS A EXTRAIR:
 - reference_month: formato YYYY-MM (ex: "2026-03" para Março/2026)
-- cost_total_brl: valor do campo "TOTAL A PAGAR" ou "Total" no rodapé da fatura
-- kwh_total: consumo total kWh — use o campo "Consumo Ativo" ou some Ponta+ForaPonta+Reservado
-- kwh_peak: kWh no horário PONTA — linha "TUSD em kWh - Ponta" ou "Energia Ativa Ponta"
-- cost_peak_brl: somar TODOS os itens de PONTA com valor positivo (TUSD Ponta + TE Ponta). IGNORAR linhas de CRÉDITO, DÉBITO, APCEI
-- kwh_offpeak: kWh FORA DE PONTA — linha "TUSD em kWh - Fora Ponta" ou "Energia Ativa Fora Ponta"
-- cost_offpeak_brl: somar TODOS os itens de FORA DE PONTA com valor positivo. IGNORAR linhas de CRÉDITO, DÉBITO, APCEI
-- kwh_reserved: kWh RESERVADO (HR) — se não existir na fatura use 0
-- cost_reserved_brl: custo RESERVADO — se não existir use 0
-- reactive_kvarh: kVArh reativo excedente (linha "Energia Reativa" ou "Excedente Reativo")
-- cost_reactive_brl: R$ cobrado pela energia reativa
-- contracted_demand_kw: demanda contratada em kW (campo "Demanda Contratada")
-- measured_demand_kw: demanda medida/faturada em kW
-- demand_exceeded_brl: ultrapassagem de demanda em R$ (0 se não houver)
-- power_factor: fator de potência decimal (ex: 0.92). Se não encontrar use 0`
+- cost_total_brl: valor exato do campo "TOTAL A PAGAR" no rodapé
+- kwh_total: total de kWh consumidos (soma Ponta + Fora Ponta + Reservado se houver)
+- kwh_peak: kWh consumidos no horário de PONTA (unidade KWH, linhas com "Ponta" excluindo "Fora Ponta")
+- cost_peak_brl: R$ de energia elétrica consumida na PONTA (só linhas KWH de ponta, excluir demanda KW)
+- kwh_offpeak: kWh consumidos FORA DE PONTA (unidade KWH, linhas "Fora Ponta")
+- cost_offpeak_brl: R$ de energia consumida FORA DE PONTA (só linhas KWH fora ponta, excluir demanda KW)
+- kwh_reserved: kWh no horário RESERVADO — 0 se não existir
+- cost_reserved_brl: R$ do horário RESERVADO — 0 se não existir
+- reactive_kvarh: TOTAL de kVArh de energia reativa (somar ponta + fora ponta se separados)
+- cost_reactive_brl: TOTAL R$ cobrado de energia reativa (somar ponta + fora ponta)
+- contracted_demand_kw: demanda contratada em kW (campo "Grandezas Contratadas" ou "Demanda Contratada")
+- measured_demand_kw: demanda medida/faturada em kW (linha "TUSD em kW" ou "Demanda Medida")
+- demand_exceeded_brl: ultrapassagem de demanda em R$ — 0 se não houver
+- power_factor: fator de potência decimal (0 a 1) — 0 se não encontrar`
 
     const geminiResp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
