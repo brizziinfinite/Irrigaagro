@@ -137,7 +137,7 @@ async function downloadMedia(messageId: string, remoteJid?: string, fromMe?: boo
     }
     const data = await response.json()
     const base64 = data.base64 || data.data
-    const mimeType = data.mimetype || data.mimeType || 'audio/ogg'
+    const mimeType = data.mimetype || data.mimeType || 'application/octet-stream'
     console.log('downloadMedia: keys=', Object.keys(data), 'base64 len=', base64?.length ?? 0, 'mime=', mimeType)
     if (!base64) {
       console.error('downloadMedia: base64 vazio! data=', JSON.stringify(data).slice(0, 200))

@@ -45,6 +45,16 @@ Retorne APENAS o JSON, sem explicações, sem markdown.
   "power_factor": número ou null
 }`
 
+    // Detectar PDF pelos magic bytes (%PDF) caso mimeType venha errado
+    const isPdf = image_mime_type?.includes('pdf') ||
+      atob(image_base64.slice(0, 8)).startsWith('%PDF')
+    const effectiveMime = isPdf ? 'application/pdf'
+      : (image_mime_type && !['application/octet-stream', 'audio/ogg'].includes(image_mime_type))
+        ? image_mime_type
+        : 'image/jpeg'
+
+    console.log('process-energy-bill: mime_orig=', image_mime_type, 'effective=', effectiveMime, 'base64_len=', image_base64.length)
+
     const geminiResp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -54,7 +64,7 @@ Retorne APENAS o JSON, sem explicações, sem markdown.
           contents: [{
             parts: [
               { text: prompt },
-              { inline_data: { mime_type: image_mime_type || 'image/jpeg', data: image_base64 } }
+              { inline_data: { mime_type: effectiveMime, data: image_base64 } }
             ]
           }],
           generationConfig: { temperature: 0, maxOutputTokens: 1024 }
