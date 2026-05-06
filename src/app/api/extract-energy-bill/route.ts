@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 
+export const maxDuration = 60 // Vercel Pro: até 300s; Hobby ignora (10s padrão)
+export const dynamic = 'force-dynamic'
+
 // ─── Zod-like validation (sem dependência extra) ──────────────
 
 interface ExtractedBill {
@@ -275,84 +278,64 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer()
     const base64 = Buffer.from(arrayBuffer).toString('base64')
 
-    // ── Tentar Gemini, fallback OpenAI ──
-    let bill: ExtractedBill
-    let llmUsed = 'gemini'
-    let geminiError: string | null = null
+    // ── Delegar extração à Edge Function Supabase (sem limite de 10s) ──
+    const supabaseUrlEnv = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const serviceRoleKeyEnv = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-    try {
-      bill = await callGemini(base64, mimeType)
-    } catch (err) {
-      geminiError = err instanceof Error ? err.message : String(err)
-      console.warn('[extract-energy-bill] Gemini falhou, tentando OpenAI:', geminiError)
-      try {
-        bill = await callOpenAI(base64, mimeType)
-        llmUsed = 'openai'
-      } catch (err2) {
-        const openaiError = err2 instanceof Error ? err2.message : String(err2)
-        return NextResponse.json(
-          { error: 'Ambas as LLMs falharam', gemini: geminiError, openai: openaiError },
-          { status: 502 }
-        )
-      }
+    const edgeRes = await fetch(`${supabaseUrlEnv}/functions/v1/process-energy-bill`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKeyEnv}`,
+      },
+      body: JSON.stringify({
+        image_base64: base64,
+        image_mime_type: mimeType,
+        farm_id: farmId,
+      }),
+    })
+
+    if (!edgeRes.ok) {
+      const errText = await edgeRes.text()
+      return NextResponse.json({ error: `Edge Function erro ${edgeRes.status}: ${errText.slice(0, 200)}` }, { status: 502 })
     }
+
+    const edgeData = await edgeRes.json() as { success: boolean; bill?: Record<string, unknown>; error?: string; duplicate?: boolean; confirmation_message?: string }
+
+    if (edgeData.duplicate) {
+      return NextResponse.json({ error: edgeData.confirmation_message ?? 'Fatura duplicada' }, { status: 409 })
+    }
+    if (!edgeData.success || !edgeData.bill) {
+      return NextResponse.json({ error: edgeData.error ?? 'Extração falhou' }, { status: 422 })
+    }
+
+    const rawBill = edgeData.bill
+    let bill: ExtractedBill
+    try {
+      bill = validateBill(rawBill)
+    } catch (err) {
+      return NextResponse.json({ error: err instanceof Error ? err.message : 'Campos críticos ausentes' }, { status: 422 })
+    }
+    const llmUsed = 'gemini'
 
     // ── KPIs ──
     const kpis = calcKPIs(bill)
 
-    // ── Custo/mm/ha ──
+    // ── Custo/mm/ha — atualizar registro já salvo pela edge ──
     let costPerMmHa: number | null = null
     if (irrigatedMmHa && irrigatedMmHa > 0 && bill.cost_total_brl) {
       costPerMmHa = bill.cost_total_brl / irrigatedMmHa
-    }
-
-    // ── Salvar no Supabase via service_role ──
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-    const supabase = createClient(supabaseUrl, serviceRoleKey)
-
-    const { data: saved, error: dbError } = await supabase
-      .from('energy_bills')
-      .upsert({
-        farm_id:              farmId,
-        reference_month:      bill.reference_month!,
-        kwh_total:            bill.kwh_total,
-        cost_total_brl:       bill.cost_total_brl,
-        kwh_reserved:         bill.kwh_reserved,
-        cost_reserved_brl:    bill.cost_reserved_brl,
-        kwh_peak:             bill.kwh_peak,
-        cost_peak_brl:        bill.cost_peak_brl,
-        kwh_offpeak:          bill.kwh_offpeak,
-        cost_offpeak_brl:     bill.cost_offpeak_brl,
-        reactive_kvarh:       bill.reactive_kvarh,
-        cost_reactive_brl:    bill.cost_reactive_brl,
-        contracted_demand_kw: bill.contracted_demand_kw,
-        measured_demand_kw:   bill.measured_demand_kw,
-        demand_exceeded_brl:  bill.demand_exceeded_brl,
-        power_factor:         bill.power_factor,
-        cost_per_mm_ha:       costPerMmHa,
-        source:               'upload',
-        raw_text:             `llm:${llmUsed}`,
-      }, { onConflict: 'farm_id,reference_month' })
-      .select()
-      .single()
-
-    if (dbError) {
-      console.error('[extract-energy-bill] DB error:', dbError)
-      // Retornar dados extraídos mesmo sem salvar
-      return NextResponse.json({
-        success: false,
-        bill,
-        kpis,
-        costPerMmHa,
-        llmUsed,
-        dbError: dbError.message,
-      }, { status: 207 })
+      const supabase = createClient(supabaseUrlEnv, serviceRoleKeyEnv)
+      await supabase
+        .from('energy_bills')
+        .update({ cost_per_mm_ha: costPerMmHa, source: 'upload' })
+        .eq('farm_id', farmId)
+        .eq('reference_month', bill.reference_month!)
     }
 
     return NextResponse.json({
       success: true,
-      bill: saved,
+      bill: { ...rawBill, cost_per_mm_ha: costPerMmHa },
       kpis: { ...kpis, costPerMmHa },
       llmUsed,
     })
