@@ -1,5 +1,6 @@
 'use client'
 
+import PivotSpinner from '@/components/ui/PivotSpinner'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { persistedFetch } from '@/lib/persistedFetch'
@@ -1093,7 +1094,7 @@ export default function ManejoPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-        <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
+        <PivotSpinner size={52} label="Carregando manejo…" />
       </div>
     )
   }

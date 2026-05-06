@@ -1,5 +1,6 @@
 'use client'
 
+import PivotSpinner from '@/components/ui/PivotSpinner'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { Farm, OperationMode, Pivot, SpeedTableRow, WeatherSource } from '@/types/database'
@@ -1386,7 +1387,7 @@ export default function PivosPage() {
 
         {authLoading || loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
+            <PivotSpinner size={52} label="Carregando pivôs…" />
           </div>
         ) : farms.length === 0 ? (
           <div style={{ background: 'rgba(15, 25, 35, 0.6)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>

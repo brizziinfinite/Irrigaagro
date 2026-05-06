@@ -135,6 +135,103 @@ function ResultBadge({ result, size = 'md' }: { result: DiagnosisResult; size?: 
   )
 }
 
+// ─── Dropdown customizado (mobile-safe) ───────────────────────────────────────
+
+function DropdownSelect({
+  label, value, placeholder, options, onChange, emptyMsg, style,
+}: {
+  label: string
+  value: string
+  placeholder: string
+  options: Array<{ value: string; label: string }>
+  onChange: (v: string) => void
+  emptyMsg?: string
+  style?: React.CSSProperties
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = options.find(o => o.value === value)
+
+  // Fecha ao clicar fora
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', ...style }}>
+      <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500, display: 'block', marginBottom: 6 }}>
+        {label}
+      </span>
+      {options.length === 0 && emptyMsg ? (
+        <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#778899', fontSize: 13 }}>
+          {emptyMsg}
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={() => setOpen(o => !o)}
+            style={{
+              width: '100%', padding: '10px 36px 10px 12px',
+              borderRadius: 8, border: `1px solid ${open ? '#0093D0' : 'rgba(255,255,255,0.1)'}`,
+              background: '#0d1520', color: selected ? '#e2e8f0' : '#778899',
+              fontSize: 14, cursor: 'pointer', textAlign: 'left',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <span>{selected ? selected.label : placeholder}</span>
+            <ChevronDown size={14} color="#778899" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+          </button>
+          {open && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
+              background: '#0d1520', border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 8, overflow: 'hidden',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              maxHeight: 240, overflowY: 'auto',
+            }}>
+              {!value && (
+                <button
+                  onClick={() => { onChange(''); setOpen(false) }}
+                  style={{
+                    width: '100%', padding: '10px 14px', border: 'none',
+                    background: 'transparent', color: '#8899aa',
+                    fontSize: 13, cursor: 'pointer', textAlign: 'left',
+                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  }}
+                >
+                  {placeholder}
+                </button>
+              )}
+              {options.map((o, i) => (
+                <button
+                  key={o.value}
+                  onClick={() => { onChange(o.value); setOpen(false) }}
+                  style={{
+                    width: '100%', padding: '10px 14px', border: 'none',
+                    background: value === o.value ? 'rgba(0,147,208,0.15)' : 'transparent',
+                    color: value === o.value ? '#38bdf8' : '#e2e8f0',
+                    fontSize: 14, fontWeight: value === o.value ? 600 : 400,
+                    cursor: 'pointer', textAlign: 'left',
+                    borderBottom: i < options.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}
+                >
+                  <span>{o.label}</span>
+                  {value === o.value && <CheckCircle2 size={14} color="#0093D0" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function DiagnosticoSoloPage() {
@@ -242,7 +339,7 @@ export default function DiagnosticoSoloPage() {
     if (step === 1) return !!selectedPivotId
     if (step === 2) return scores['0-20'] > 0
     if (step === 3) return scores['20-40'] > 0
-    if (step === 4) return scores['40-60'] > 0
+    if (step === 4) return scores['0-20'] > 0 && scores['20-40'] > 0 && scores['40-60'] > 0
     return true
   })()
 
@@ -467,54 +564,26 @@ export default function DiagnosticoSoloPage() {
           </h2>
 
           {/* Pivô */}
-          <label style={{ display: 'block', marginBottom: 16 }}>
-            <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500, display: 'block', marginBottom: 6 }}>
-              Pivô *
-            </span>
-            <div style={{ position: 'relative' }}>
-              <select
-                value={selectedPivotId}
-                onChange={e => { setSelectedPivotId(e.target.value); setSelectedSeasonId('') }}
-                style={{
-                  width: '100%', padding: '10px 36px 10px 12px',
-                  background: '#0d1520', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 8, color: selectedPivotId ? '#e2e8f0' : '#778899',
-                  fontSize: 14, appearance: 'none', cursor: 'pointer',
-                }}
-              >
-                <option value="">Selecione um pivô…</option>
-                {pivots.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-              <ChevronDown size={14} color="#778899" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-            </div>
-          </label>
+          <DropdownSelect
+            label="Pivô *"
+            value={selectedPivotId}
+            placeholder="Selecione um pivô…"
+            options={pivots.map(p => ({ value: p.id, label: p.name }))}
+            onChange={v => { setSelectedPivotId(v); setSelectedSeasonId('') }}
+            emptyMsg="Nenhum pivô cadastrado"
+            style={{ marginBottom: 16 }}
+          />
 
           {/* Safra (opcional) */}
           {seasons.length > 0 && (
-            <label style={{ display: 'block', marginBottom: 16 }}>
-              <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500, display: 'block', marginBottom: 6 }}>
-                Safra (opcional)
-              </span>
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={selectedSeasonId}
-                  onChange={e => setSelectedSeasonId(e.target.value)}
-                  style={{
-                    width: '100%', padding: '10px 36px 10px 12px',
-                    background: '#0d1520', border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 8, color: '#e2e8f0', fontSize: 14, appearance: 'none', cursor: 'pointer',
-                  }}
-                >
-                  <option value="">Sem safra</option>
-                  {seasons.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-                <ChevronDown size={14} color="#778899" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              </div>
-            </label>
+            <DropdownSelect
+              label="Safra (opcional)"
+              value={selectedSeasonId}
+              placeholder="Sem safra"
+              options={seasons.map(s => ({ value: s.id, label: s.name }))}
+              onChange={v => setSelectedSeasonId(v)}
+              style={{ marginBottom: 16 }}
+            />
           )}
 
           {/* Textura */}
@@ -590,6 +659,11 @@ export default function DiagnosticoSoloPage() {
       )}
 
       {/* ── Step 5: Resultado ────────────────────────────────────────── */}
+      {step === 5 && !diagnosis && (
+        <div style={{ padding: 32, textAlign: 'center', color: '#778899', fontSize: 14 }}>
+          <p>Scores incompletos. <button onClick={() => setStep(2)} style={{ color: '#0093D0', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>Voltar ao início</button></p>
+        </div>
+      )}
       {step === 5 && diagnosis && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 

@@ -20,6 +20,7 @@ import {
   CalendarDays, Droplets, FlaskConical, TrendingDown, AlertTriangle, RefreshCw,
   ArrowRight, CheckCircle2, TriangleAlert,
 } from 'lucide-react'
+import PivotSpinner from '@/components/ui/PivotSpinner'
 
 // ─── Helpers ─────────────────────────────────────────────────
 function addDays(date: Date, days: number): Date {
@@ -918,7 +919,7 @@ export default function SafrasPage() {
 
         {authLoading || loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
+            <PivotSpinner size={56} label="Carregando safras…" />
           </div>
         ) : farms.length === 0 ? (
           <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>

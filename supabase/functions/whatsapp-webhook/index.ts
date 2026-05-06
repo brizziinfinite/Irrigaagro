@@ -98,8 +98,11 @@ async function processEnergyBill(opts: {
   })
 
   const ocrResult = await ocrResponse.json()
+  console.log('processEnergyBill: ocrResponse status=', ocrResponse.status, 'success=', ocrResult.success, 'duplicate=', ocrResult.duplicate, 'error=', ocrResult.error?.slice?.(0, 300) ?? ocrResult.error)
   const responseText = ocrResult.success
     ? ocrResult.confirmation_message
+    : ocrResult.duplicate
+    ? (ocrResult.confirmation_message ?? '⚠️ Fatura duplicada')
     : `❌ Não consegui ler a fatura.\n\n💡 Dicas:\n- Boa iluminação\n- Enquadre toda a fatura\n- Evite sombras\n\nTente enviar novamente.`
 
   await sendWhatsApp(phone, responseText)
@@ -138,7 +141,7 @@ async function downloadMedia(messageId: string, remoteJid?: string, fromMe?: boo
     const data = await response.json()
     const base64 = data.base64 || data.data
     const mimeType = data.mimetype || data.mimeType || 'application/octet-stream'
-    console.log('downloadMedia: keys=', Object.keys(data), 'base64 len=', base64?.length ?? 0, 'mime=', mimeType)
+    console.log('downloadMedia: keys=', Object.keys(data), 'base64 len=', base64?.length ?? 0, 'mime=', mimeType, 'first100=', typeof base64 === 'string' ? base64.slice(0, 100) : 'N/A')
     if (!base64) {
       console.error('downloadMedia: base64 vazio! data=', JSON.stringify(data).slice(0, 200))
       return null

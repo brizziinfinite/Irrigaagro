@@ -1,5 +1,6 @@
 'use client'
 
+import PivotSpinner from '@/components/ui/PivotSpinner'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import type { Crop } from '@/types/database'
 import { useAuth } from '@/hooks/useAuth'
@@ -619,7 +620,7 @@ export default function CulturasPage() {
 
         {authLoading || loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
+            <PivotSpinner size={52} label="Carregando culturas…" />
           </div>
         ) : (
           <>

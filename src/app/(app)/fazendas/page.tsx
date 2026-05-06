@@ -1,5 +1,6 @@
 'use client'
 
+import PivotSpinner from '@/components/ui/PivotSpinner'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import type { Farm } from '@/types/database'
@@ -484,7 +485,7 @@ export default function FazendasPage() {
         {/* Conteúdo */}
         {authLoading || loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 80, paddingBottom: 80 }}>
-            <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
+            <PivotSpinner size={52} label="Carregando fazendas…" />
           </div>
         ) : farms.length === 0 ? (
           <div style={{
