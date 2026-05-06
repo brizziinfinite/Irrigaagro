@@ -145,7 +145,6 @@ serve(async (req) => {
         cost_offpeak_brl:     extracted.cost_offpeak_brl,
         reactive_kvarh:       extracted.reactive_kvarh,
         cost_reactive_brl:    extracted.cost_reactive_brl,
-        reactive_percent:     extracted.reactive_percent,
         contracted_demand_kw: extracted.contracted_demand_kw,
         measured_demand_kw:   extracted.measured_demand_kw,
         demand_exceeded_brl:  extracted.demand_exceeded_brl,
