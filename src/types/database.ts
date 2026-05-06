@@ -260,6 +260,7 @@ export interface Pivot {
   f_factor: number | null
   irrigation_target_percent: number | null
   soil_texture: string | null
+  polygon_geojson: Record<string, unknown> | null
 }
 
 export interface PivotInsert {
@@ -292,6 +293,7 @@ export interface PivotInsert {
   f_factor?: number | null
   irrigation_target_percent?: number | null
   soil_texture?: string | null
+  polygon_geojson?: Record<string, unknown> | null
 }
 
 export type PivotUpdate = Partial<PivotInsert>

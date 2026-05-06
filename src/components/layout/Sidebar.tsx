@@ -16,6 +16,7 @@ import {
   ChevronRight,
   MessageSquare,
   Shield,
+  Satellite,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { createClient } from '@/lib/supabase/client';
@@ -45,6 +46,7 @@ const OPERACIONAL = [
   { icon: CalendarDays,    label: 'Programação',      path: '/lancamentos'       },
   { icon: Stethoscope,     label: 'Diagnóstico Solo', path: '/diagnostico-solo'  },
   { icon: CloudRain,       label: 'Precipitações',    path: '/precipitacoes'     },
+  { icon: Satellite,       label: 'NDVI Satélite',    path: '/ndvi'              },
   { icon: MapPin,          label: 'Fazendas',         path: '/fazendas'          },
   { icon: PivotIcon,       label: 'Pivôs',            path: '/pivos'             },
   { icon: Sprout,          label: 'Safras',           path: '/safras'            },
