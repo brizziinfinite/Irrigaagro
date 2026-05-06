@@ -301,8 +301,8 @@ serve(async (req) => {
       data.message?.extendedTextMessage?.text ||
       ''
 
-    const hasImage: boolean = !!(data.message?.imageMessage)
-    const imageCaption: string = data.message?.imageMessage?.caption || ''
+    const hasImage: boolean = !!(data.message?.imageMessage || data.message?.documentMessage)
+    const imageCaption: string = data.message?.imageMessage?.caption || data.message?.documentMessage?.caption || ''
     // Áudio só é processado como áudio se não houver texto (texto tem prioridade)
     const hasAudio: boolean = !textMessage && !!(data.message?.audioMessage || data.message?.pttMessage)
 
