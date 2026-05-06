@@ -67,7 +67,7 @@ Retorne APENAS o JSON, sem explicações, sem markdown.
               { inline_data: { mime_type: effectiveMime, data: image_base64 } }
             ]
           }],
-          generationConfig: { temperature: 0, maxOutputTokens: 1024 }
+          generationConfig: { temperature: 0, maxOutputTokens: 2048 }
         })
       }
     )
