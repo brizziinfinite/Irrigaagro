@@ -23,28 +23,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Chamar Gemini para extrair dados da fatura
-    const prompt = `Analise esta fatura de energia elétrica e extraia os dados em JSON.
-Retorne APENAS o JSON, sem explicações, sem markdown.
-{
-  "reference_month": "YYYY-MM",
-  "kwh_total": número ou null,
-  "cost_total_brl": número ou null,
-  "kwh_reserved": número ou null,
-  "cost_reserved_brl": número ou null,
-  "kwh_peak": número ou null,
-  "cost_peak_brl": número ou null,
-  "kwh_offpeak": número ou null,
-  "cost_offpeak_brl": número ou null,
-  "reactive_kvarh": número ou null,
-  "cost_reactive_brl": número ou null,
-  "reactive_percent": número ou null,
-  "contracted_demand_kw": número ou null,
-  "measured_demand_kw": número ou null,
-  "demand_exceeded_brl": número ou null,
-  "power_factor": número ou null
-}`
-
     // Detectar PDF pelos magic bytes (%PDF) caso mimeType venha errado
     const isPdf = image_mime_type?.includes('pdf') ||
       atob(image_base64.slice(0, 8)).startsWith('%PDF')
@@ -54,6 +32,8 @@ Retorne APENAS o JSON, sem explicações, sem markdown.
         : 'image/jpeg'
 
     console.log('process-energy-bill: mime_orig=', image_mime_type, 'effective=', effectiveMime, 'base64_len=', image_base64.length)
+
+    const prompt = 'Analise esta fatura de energia elétrica brasileira. Extraia os campos e retorne JSON.'
 
     const geminiResp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -67,7 +47,32 @@ Retorne APENAS o JSON, sem explicações, sem markdown.
               { inline_data: { mime_type: effectiveMime, data: image_base64 } }
             ]
           }],
-          generationConfig: { temperature: 0, maxOutputTokens: 2048 }
+          generationConfig: {
+            temperature: 0,
+            maxOutputTokens: 8192,
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'object',
+              properties: {
+                reference_month:      { type: 'string' },
+                kwh_total:            { type: 'number' },
+                cost_total_brl:       { type: 'number' },
+                kwh_reserved:         { type: 'number' },
+                cost_reserved_brl:    { type: 'number' },
+                kwh_peak:             { type: 'number' },
+                cost_peak_brl:        { type: 'number' },
+                kwh_offpeak:          { type: 'number' },
+                cost_offpeak_brl:     { type: 'number' },
+                reactive_kvarh:       { type: 'number' },
+                cost_reactive_brl:    { type: 'number' },
+                reactive_percent:     { type: 'number' },
+                contracted_demand_kw: { type: 'number' },
+                measured_demand_kw:   { type: 'number' },
+                demand_exceeded_brl:  { type: 'number' },
+                power_factor:         { type: 'number' }
+              }
+            }
+          }
         })
       }
     )
