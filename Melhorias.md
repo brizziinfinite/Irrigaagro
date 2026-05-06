@@ -247,8 +247,28 @@ Aplicado em 16 arquivos (todas as páginas + componentes do dashboard). Regras f
 ---
 
 ## ⚡ Performance — Desktop e Mobile
-**Status:** ✅ Implementado em 2026-04-28
+**Status:** ✅ Implementado em 2026-04-28 · ✅ Lighthouse 97/100 em 2026-05-05
 
+### Resultados Lighthouse (2026-05-05 — produção `irrigaagro.com.br`)
+| Métrica | Antes | Depois |
+|---|---|---|
+| Performance | 46 | **97** |
+| Accessibility | 93 | **100** |
+| Best Practices | 75 | **100** |
+| SEO | — | **91** |
+| TBT | 6.400ms | **50ms** |
+| FCP | ~3s | **0.9s** |
+| LCP | ~7s | **2.4s** |
+
+### Correções aplicadas em 2026-05-05
+- **Cloudflare DNS Only**: registros A e CNAME `www` alterados de "Com proxy" → "Somente DNS" — eliminou `cdn-cgi/challenge-platform/scripts/jsd/main.js` (responsável por 6.400ms de TBT)
+- **Font size mínimo 12px**: `IrrigaAgroLogo` tagline `Math.max(12, ...)` + labels login page 11→12px
+- **aria-label** no botão show/hide senha (Accessibility 93→100)
+- **favicon.ico** em `public/` (corrige 404 no Best Practices)
+- **browserslist** modernos no `package.json` — remove polyfills `Array.at/flat/flatMap` (~14KB)
+- **InstallBanner** iOS PWA wired no `AppShell`
+
+### Correções anteriores (2026-04-28)
 - `proxy.ts`: cookie `co_status` (TTL 5min) elimina query ao Supabase por navegação — ganho 200-600ms por página
 - `AdminClient.tsx`: invalida cookie ao ativar/suspender empresa
 - `next.config.ts`: `compress: true` + `optimizePackageImports` para lucide-react, date-fns, recharts
@@ -266,7 +286,7 @@ Aplicado em 16 arquivos (todas as páginas + componentes do dashboard). Regras f
 ---
 
 ## 📱 PWA — Ícone e manifest
-**Status:** ✅ Implementado em 2026-05-05 · pendente validação em aparelho
+**Status:** ✅ Implementado em 2026-05-05
 
 Ícone PWA corrigido: substituído por logo oficial do IrrigaAgro (gota + barras de gráfico).
 Gerados `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` e `apple-touch-icon.png`.
@@ -299,7 +319,9 @@ Gerados `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` e `apple-touch-i
 - [x] `display: standalone` (sem barra de URL)
 - [x] Theme color `#0093D0` na status bar do Android
 - [x] `favicon.ico` público (sem 404) — corrigido 2026-05-05
-- [x] Acessibilidade ≥ 90 (Lighthouse 12: 93) — font-size ≥12px, aria-labels, contraste
+- [x] Acessibilidade ≥ 90 (Lighthouse 12: **100**) — font-size ≥12px, aria-labels, contraste — corrigido 2026-05-05
+- [x] Performance ≥ 90 (Lighthouse 12: **97**) — DNS Only + browserslist + favicon — corrigido 2026-05-05
+- [x] Best Practices **100** — favicon.ico sem 404, sem cdn-cgi — corrigido 2026-05-05
 
 ---
 
@@ -310,6 +332,44 @@ Gerados `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` e `apple-touch-i
 - Adicionado tipo `"pergunta"` no prompt do Gemini (antes perguntas por voz caíam em `"diagnostico"`)
 - Gemini 2.5 Flash processa áudio + transcreve + classifica em 1 chamada
 - OpenAI Whisper mantido como fallback
+
+---
+
+## 🐛 Bugs corrigidos em 2026-05-05 (segunda parte da sessão)
+
+### Fazendas — layout mobile quebrado
+**Status:** ✅ Corrigido em 2026-05-05
+
+Cards quebravam word-by-word em telas estreitas. Causa: `flexWrap` no container externo fazia botões de ação competirem com o texto.
+
+- Reestruturado: ícone fixo à esquerda (44×44px), bloco de info com `flex:1 minWidth:0`
+- Nome da fazenda + botões editar/excluir na mesma linha (`flex-start + gap`)
+- CTA "Manejo" movido para baixo do bloco de info
+- Sem `flexWrap` no container externo — layout nunca quebra
+
+### Safras — FC% errado (mostrava 100% ou valor desatualizado)
+**Status:** ✅ Corrigido em 2026-05-05
+
+Página safras mostrava 79% (D-1 do banco) enquanto dashboard mostrava valor projetado correto.
+
+- Causa: `getLastManagementBySeason` seleciona apenas 5 campos (sem `ctda`) → `projectAdcToDate` interpretava como "sem histórico" → retornava `initial_adc_percent = 100`
+- Fix: substituído por `listDailyManagementBySeason` → `history[0]` tem `ctda` completo
+- `SeasonFull` enriquecida com `_pivot` e `_farm` para passar ao `projectAdcToDate`
+- Threshold usa `season._pivot?.alert_threshold_percent ?? 70`
+
+### Diagnóstico de Pivô — precipitação de 2019 e "Origem desconhecida"
+**Status:** ✅ Corrigido em 2026-05-05
+
+- **Chuva 2019**: `listRainfallByPivotIds` sem filtro de data + ordem ascending → `[0]` era o registro mais antigo. Fix: passa `date, date` como `dateFrom/dateTo` + ordem `descending`
+- **"Origem desconhecida"**: `etoSource` estava hardcoded `null`. Fix: computed de `climateSnapshot` — `'Estação climática'` ou `'Dados meteorológicos'`
+- **Termos técnicos ocultos**: `getEtoSourceLabel` agora passa strings legíveis sem exibir "Plugfield", "FAO-56" ou "Open-Meteo" ao usuário
+
+### Push alerts — SQL com colunas inexistentes
+**Status:** ✅ Corrigido em 2026-05-05
+
+- `seasons_1.company_id` não existe em `seasons` → query falhava silenciosamente
+- `daily_management.pivot_id` não existe (tem `season_id`) → seleção errada
+- Fix: derivar `company_id` via `pivots!inner(name, farms!inner(company_id))`; usar `season_id` no select
 
 ---
 

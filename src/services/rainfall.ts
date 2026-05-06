@@ -44,7 +44,7 @@ export async function listRainfallByPivotIds(
   let q = rainfallTable(client)
     .select('*')
     .in('pivot_id', pivotIds)
-    .order('date', { ascending: true })
+    .order('date', { ascending: false })
 
   if (dateFrom) q = q.gte('date', dateFrom)
   if (dateTo)   q = q.lte('date', dateTo)

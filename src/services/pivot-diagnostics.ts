@@ -232,7 +232,7 @@ export async function getPivotDiagnostic(
   const [externalData, seasonHistory, rainfallRecords] = await Promise.all([
     getManagementExternalData(farm.id, pivot.id, date, pivot, client),
     activeSeason ? listDailyManagementBySeason(activeSeason.id, client) : Promise.resolve([]),
-    listRainfallByPivotIds([pivot.id], client),
+    listRainfallByPivotIds([pivot.id], client, date, date),
   ])
 
   const lastManagement = seasonHistory[0] ?? null
@@ -280,7 +280,9 @@ export async function getPivotDiagnostic(
     climateRoute,
     climateRouteLabel: getClimateRouteLabel(climateRoute),
     etoValue: lastManagement?.eto_mm ?? null,
-    etoSource: null,
+    etoSource: climateSnapshot
+      ? (externalData.weather ? 'Estação climática' : 'Dados meteorológicos')
+      : lastManagement?.eto_mm != null ? 'Último manejo' : null,
     etoConfidence: null,
     rainfallValue,
     rainfallDate: latestRainfall?.date ?? (climateSnapshot ? date : null),

@@ -51,12 +51,13 @@ function getNowLabel(): string {
 }
 
 function getEtoSourceLabel(source: string | null): string {
+  if (!source) return 'Origem desconhecida'
   switch (source) {
     case 'weather_corrected':   return 'Estação — corrigida FAO-56'
     case 'weather_raw':         return 'Estação — leitura bruta'
     case 'calculated_penman_monteith': return 'NASA POWER — Penman-Monteith'
     case 'manual':              return 'Entrada manual'
-    default:                    return 'Origem desconhecida'
+    default:                    return source  // passa a string diretamente (ex: "Plugfield FAO-56")
   }
 }
 

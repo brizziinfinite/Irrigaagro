@@ -539,7 +539,7 @@ export default function FazendasPage() {
                   style={{
                     background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)',
                     borderRadius: 14, padding: '16px 20px',
-                    display: 'flex', alignItems: 'center', gap: 14,
+                    display: 'flex', alignItems: 'flex-start', gap: 14,
                     transition: 'border-color 0.2s, box-shadow 0.2s',
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,147,208,0.2)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)' }}
@@ -554,11 +554,36 @@ export default function FazendasPage() {
                     <MapPin size={18} style={{ color: '#0093D0' }} />
                   </div>
 
-                  {/* Info */}
+                  {/* Info + Ações — tudo junto, ocupa o espaço restante */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>
-                      {farm.name}
-                    </p>
+                    {/* Linha do nome + botões ícone alinhados à direita */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <p style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: 0, flex: 1, minWidth: 0 }}>
+                        {farm.name}
+                      </p>
+                      {/* Botões editar/excluir — no topo direito */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                        <button
+                          onClick={() => { setEditingFarm(farm); setModalOpen(true) }}
+                          title="Editar"
+                          style={{ padding: 6, minHeight: 32, minWidth: 32, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(farm.id)}
+                          disabled={deletingId === farm.id}
+                          title="Excluir"
+                          style={{ padding: 6, minHeight: 32, minWidth: 32, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
+                        >
+                          {deletingId === farm.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                        </button>
+                      </div>
+                    </div>
 
                     {/* Localização + altitude */}
                     <p style={{ fontSize: 12, color: '#94a3b8', margin: '3px 0 0', lineHeight: 1.625 }}>
@@ -587,47 +612,27 @@ export default function FazendasPage() {
                         Última irrigação: {lastStr}
                       </p>
                     )}
+
+                    {/* CTA Manejo — largura total em mobile */}
+                    <div style={{ marginTop: 10 }}>
+                      <Link
+                        href="/manejo"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                          padding: '6px 14px', minHeight: 36, borderRadius: 8, fontSize: 12, fontWeight: 500,
+                          color: '#0093D0', background: 'rgba(0,147,208,0.08)',
+                          border: '1px solid rgba(0,147,208,0.18)', textDecoration: 'none',
+                          transition: 'all 0.15s', whiteSpace: 'nowrap',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,147,208,0.15)'; e.currentTarget.style.color = '#33b5e5' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,147,208,0.08)'; e.currentTarget.style.color = '#0093D0' }}
+                      >
+                        <Droplets size={12} />
+                        Manejo
+                      </Link>
+                    </div>
                   </div>
 
-                  {/* CTA + Ações */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    <Link
-                      href="/manejo"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 5,
-                        padding: '6px 12px', minHeight: 44, borderRadius: 8, fontSize: 12, fontWeight: 500,
-                        color: '#0093D0', background: 'rgba(0,147,208,0.08)',
-                        border: '1px solid rgba(0,147,208,0.18)', textDecoration: 'none',
-                        transition: 'all 0.15s', whiteSpace: 'nowrap',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,147,208,0.15)'; e.currentTarget.style.color = '#33b5e5' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,147,208,0.08)'; e.currentTarget.style.color = '#0093D0' }}
-                    >
-                      <Droplets size={12} />
-                      Manejo
-                    </Link>
-
-                    <button
-                      onClick={() => { setEditingFarm(farm); setModalOpen(true) }}
-                      title="Editar"
-                      style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
-                    >
-                      <Pencil size={14} />
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(farm.id)}
-                      disabled={deletingId === farm.id}
-                      title="Excluir"
-                      style={{ padding: 8, minHeight: 44, minWidth: 44, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
-                    >
-                      {deletingId === farm.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                    </button>
-                  </div>
                 </div>
               )
             })}

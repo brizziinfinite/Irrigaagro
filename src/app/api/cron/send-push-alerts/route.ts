@@ -30,10 +30,9 @@ export async function GET(req: NextRequest) {
     .from('daily_management')
     .select(`
       id,
-      pivot_id,
+      season_id,
       field_capacity_percent,
       seasons!inner(
-        company_id,
         pivots!inner(name, farms!inner(company_id))
       )
     `)
@@ -50,8 +49,8 @@ export async function GET(req: NextRequest) {
   // Agrupa pivôs urgentes por company_id
   const pivotsByCompany = new Map<string, string[]>()
   for (const m of urgentManagements) {
-    const season = m.seasons as unknown as { company_id: string; pivots: { name: string } }
-    const companyId = season.company_id
+    const season = m.seasons as unknown as { pivots: { name: string; farms: { company_id: string } } }
+    const companyId = season.pivots.farms.company_id
     const pivotName = season.pivots.name
     if (!pivotsByCompany.has(companyId)) pivotsByCompany.set(companyId, [])
     pivotsByCompany.get(companyId)!.push(pivotName)

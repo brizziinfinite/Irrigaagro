@@ -12,7 +12,8 @@ import {
   listSeasonsByFarmIds,
   updateSeason,
 } from '@/services/seasons'
-import { getLastManagementBySeason } from '@/services/management'
+import { listDailyManagementBySeason } from '@/services/management'
+import { projectAdcToDate } from '@/lib/calculations/management-balance'
 import type { DailyManagement } from '@/types/database'
 import {
   Sprout, Plus, Pencil, Trash2, X, Loader2, ChevronDown,
@@ -174,6 +175,9 @@ interface SeasonFull extends Season {
   pivots: { name: string } | null
   crops: Crop | null
   farms: { name: string }
+  // enriquecido em runtime após load
+  _pivot?: Pivot | null
+  _farm?: Farm | null
 }
 
 interface SeasonModalProps {
@@ -513,16 +517,51 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
   onRecalculate: () => void; recalculating: boolean
 }) {
   const [lastRecord, setLastRecord] = useState<Pick<DailyManagement, 'date' | 'field_capacity_percent' | 'etc_mm' | 'eto_mm' | 'needs_irrigation'> | null>(null)
+  const [projectedPct, setProjectedPct] = useState<number | null>(null)
   const [loadingRecord, setLoadingRecord] = useState(season.is_active)
 
   useEffect(() => {
-    if (!season.is_active) return
+    if (!season.is_active || !season.crops || !season.planting_date) return
     let cancelled = false
-    getLastManagementBySeason(season.id)
-      .then(r => { if (!cancelled) { setLastRecord(r); setLoadingRecord(false) } })
-      .catch(() => { if (!cancelled) setLoadingRecord(false) })
+
+    const today = (() => {
+      const n = new Date()
+      const brt = new Date(n.getTime() - 3 * 60 * 60 * 1000)
+      return brt.toISOString().slice(0, 10)
+    })()
+
+    listDailyManagementBySeason(season.id)
+      .then(async (history) => {
+        if (cancelled) return
+        const last = history[0] ?? null
+        // lastRecord só precisa dos campos exibidos — field_capacity_percent, etc_mm, eto_mm, needs_irrigation, date
+        setLastRecord(last)
+
+        // Projeção para hoje — mesma lógica do dashboard (last tem ctda completo)
+        if (season._farm) {
+          try {
+            const { pct } = await projectAdcToDate({
+              lastManagement: last,
+              targetDate: today,
+              crop: season.crops!,
+              season,
+              farm: season._farm,
+              pivot: season._pivot ?? null,
+              history,
+            })
+            if (!cancelled) setProjectedPct(pct)
+          } catch {
+            if (!cancelled) setProjectedPct(last?.field_capacity_percent ?? null)
+          }
+        } else {
+          if (!cancelled) setProjectedPct(last?.field_capacity_percent ?? null)
+        }
+
+        if (!cancelled) setLoadingRecord(false)
+      }).catch(() => { if (!cancelled) setLoadingRecord(false) })
+
     return () => { cancelled = true }
-  }, [season.id, season.is_active])
+  }, [season.id, season.is_active, season._farm, season._pivot, season.crops, season.planting_date])
 
   const totalDays = season.crops
     ? (season.crops.stage1_days ?? 0) + (season.crops.stage2_days ?? 0) + (season.crops.stage3_days ?? 0) + (season.crops.stage4_days ?? 0)
@@ -535,8 +574,8 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
     ? calcCTA(season.field_capacity, season.wilting_point, season.bulk_density, peakRoot)
     : null
 
-  const threshold = 70 // padrão — idealmente viria do pivô
-  const pct = lastRecord?.field_capacity_percent ?? null
+  const threshold = season._pivot?.alert_threshold_percent ?? 70
+  const pct = projectedPct ?? lastRecord?.field_capacity_percent ?? null
   const statusColor = pct === null ? '#778899'
     : pct >= threshold * 1.15 ? '#22c55e'
     : pct >= threshold ? '#f59e0b'
@@ -784,8 +823,15 @@ export default function SafrasPage() {
         listCropsByCompany(company.id),
       ])
 
+      const farmMap = new Map(farmsData.map(f => [f.id, f]))
+      const pivotMap = new Map(pivotsData.map(p => [p.id, p]))
+      const enriched = (seasonsData as SeasonFull[]).map(s => ({
+        ...s,
+        _pivot: s.pivot_id ? (pivotMap.get(s.pivot_id) ?? null) : null,
+        _farm: s.farm_id ? (farmMap.get(s.farm_id) ?? null) : null,
+      }))
       setFarms(farmsData)
-      setSeasons(seasonsData as SeasonFull[])
+      setSeasons(enriched)
       setPivots(pivotsData)
       setCrops(cropsData)
     } catch (err) {
