@@ -17,8 +17,10 @@ export interface NdviRegistro {
 }
 
 export interface NdviTalhaoResponse {
-  pivot_id: string
+  pivot_id?: string
+  talhao_id?: string
   pivot_name: string
+  entity_name?: string
   historico: NdviRegistro[]
   alertas: string[]
   error?: string

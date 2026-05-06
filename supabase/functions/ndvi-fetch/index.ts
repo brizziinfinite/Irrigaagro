@@ -81,32 +81,56 @@ serve(async (req) => {
       })
     }
 
-    const { pivot_id, forcar_refresh = false } = await req.json()
-    if (!pivot_id) {
-      return new Response(JSON.stringify({ error: 'pivot_id required' }), {
+    const { pivot_id, talhao_id, forcar_refresh = false } = await req.json()
+    if (!pivot_id && !talhao_id) {
+      return new Response(JSON.stringify({ error: 'pivot_id ou talhao_id obrigatório' }), {
         status: 400, headers: { ...CORS, 'Content-Type': 'application/json' },
       })
     }
 
-    // Fetch pivot data + access check
-    const { data: pivot, error: pivotErr } = await supabaseAdmin
-      .from('pivots')
-      .select('id, name, polygon_geojson, latitude, longitude, farms!inner(company_id)')
-      .eq('id', pivot_id)
-      .single()
+    // ── Resolve entidade (pivô ou talhão) ─────────────────────
+    let entityName = ''
+    let polygonGeoJSON: unknown = null
+    let companyId = ''
+    const cacheField = pivot_id ? 'pivot_id' : 'talhao_id'
+    const cacheValue = pivot_id ?? talhao_id
+    const storagePrefix = pivot_id ? `pivot/${pivot_id}` : `talhao/${talhao_id}`
 
-    if (pivotErr || !pivot) {
-      return new Response(JSON.stringify({ error: 'Pivot not found' }), {
-        status: 404, headers: { ...CORS, 'Content-Type': 'application/json' },
-      })
+    if (pivot_id) {
+      const { data: pivot, error: pivotErr } = await supabaseAdmin
+        .from('pivots')
+        .select('id, name, polygon_geojson, farms!inner(company_id)')
+        .eq('id', pivot_id)
+        .single()
+      if (pivotErr || !pivot) {
+        return new Response(JSON.stringify({ error: 'Pivot not found' }), {
+          status: 404, headers: { ...CORS, 'Content-Type': 'application/json' },
+        })
+      }
+      entityName = pivot.name
+      polygonGeoJSON = pivot.polygon_geojson
+      companyId = (pivot.farms as { company_id: string }).company_id
+    } else {
+      const { data: talhao, error: talhaoErr } = await supabaseAdmin
+        .from('talhoes')
+        .select('id, name, polygon_geojson, company_id')
+        .eq('id', talhao_id)
+        .single()
+      if (talhaoErr || !talhao) {
+        return new Response(JSON.stringify({ error: 'Talhão not found' }), {
+          status: 404, headers: { ...CORS, 'Content-Type': 'application/json' },
+        })
+      }
+      entityName = talhao.name
+      polygonGeoJSON = talhao.polygon_geojson
+      companyId = talhao.company_id
     }
 
     // Check user belongs to same company
-    const farmData = pivot.farms as { company_id: string }
     const { data: member } = await supabaseAdmin
       .from('company_members')
       .select('id')
-      .eq('company_id', farmData.company_id)
+      .eq('company_id', companyId)
       .eq('user_id', user.id)
       .single()
 
@@ -121,7 +145,7 @@ serve(async (req) => {
       const { data: recente } = await supabaseAdmin
         .from('ndvi_cache')
         .select('*')
-        .eq('pivot_id', pivot_id)
+        .eq(cacheField, cacheValue)
         .order('data_imagem', { ascending: false })
         .limit(1)
         .single()
@@ -131,15 +155,13 @@ serve(async (req) => {
           (Date.now() - new Date(recente.data_imagem).getTime()) / 86400000
         )
         if (diasAtras < CACHE_DIAS) {
-          // Return from cache
           const { data: historico } = await supabaseAdmin
             .from('ndvi_cache')
             .select('*')
-            .eq('pivot_id', pivot_id)
+            .eq(cacheField, cacheValue)
             .order('data_imagem', { ascending: true })
-
           return new Response(
-            JSON.stringify({ pivot_id, pivot_name: pivot.name, historico: historico ?? [], alertas: [] }),
+            JSON.stringify({ pivot_id, talhao_id, entity_name: entityName, historico: historico ?? [], alertas: [] }),
             { headers: { ...CORS, 'Content-Type': 'application/json' } }
           )
         }
@@ -158,11 +180,11 @@ serve(async (req) => {
     }
 
     // Check polygon
-    if (!pivot.polygon_geojson) {
+    if (!polygonGeoJSON) {
       return new Response(
         JSON.stringify({
           error: 'NO_POLYGON',
-          message: 'Pivô sem polígono cadastrado. Desenhe o polígono no cadastro do pivô.',
+          message: 'Sem polígono cadastrado. Desenhe o polígono para habilitar NDVI.',
         }),
         { status: 422, headers: { ...CORS, 'Content-Type': 'application/json' } }
       )
@@ -174,8 +196,6 @@ serve(async (req) => {
     const dataInicio = new Date(agora.getTime() - DIAS_HISTORICO * 86400000)
       .toISOString()
       .split('T')[0]
-
-    const polygonGeoJSON = pivot.polygon_geojson
 
     // Statistics API
     const statsPayload = {
@@ -208,7 +228,7 @@ serve(async (req) => {
 
     if (intervals.length === 0) {
       return new Response(
-        JSON.stringify({ pivot_id, pivot_name: pivot.name, historico: [], alertas: ['Sem imagens disponíveis no período'] }),
+        JSON.stringify({ pivot_id, talhao_id, entity_name: entityName, historico: [], alertas: ['Sem imagens disponíveis no período'] }),
         { headers: { ...CORS, 'Content-Type': 'application/json' } }
       )
     }
@@ -240,7 +260,7 @@ serve(async (req) => {
 
     if (registros.length === 0) {
       return new Response(
-        JSON.stringify({ pivot_id, pivot_name: pivot.name, historico: [], alertas: ['Nenhum pixel limpo encontrado (possível cobertura de nuvens)'] }),
+        JSON.stringify({ pivot_id, talhao_id, entity_name: entityName, historico: [], alertas: ['Nenhum pixel limpo encontrado (possível cobertura de nuvens)'] }),
         { headers: { ...CORS, 'Content-Type': 'application/json' } }
       )
     }
@@ -281,7 +301,7 @@ serve(async (req) => {
 
       if (imgRes.ok) {
         const imgBuffer = await imgRes.arrayBuffer()
-        const nomeArquivo = `${pivot_id}/${dataMaisRecente}.png`
+        const nomeArquivo = `${storagePrefix}/${dataMaisRecente}.png`
 
         await supabaseAdmin.storage
           .from('campo-ndvi')
@@ -298,9 +318,10 @@ serve(async (req) => {
     }
 
     // Upsert cache
+    const onConflict = pivot_id ? 'pivot_id,data_imagem' : 'talhao_id,data_imagem'
     await supabaseAdmin.from('ndvi_cache').upsert(
       registros.map((r) => ({
-        pivot_id,
+        ...(pivot_id ? { pivot_id } : { talhao_id }),
         data_imagem: r.data,
         ndvi_medio: r.ndvi_medio,
         ndvi_min: r.ndvi_min,
@@ -309,7 +330,7 @@ serve(async (req) => {
         imagem_url: r.data === dataMaisRecente ? imagemUrl : null,
         fonte: 'sentinel2',
       })),
-      { onConflict: 'pivot_id,data_imagem' }
+      { onConflict }
     )
 
     // Alertas
@@ -328,11 +349,11 @@ serve(async (req) => {
     const { data: historico } = await supabaseAdmin
       .from('ndvi_cache')
       .select('*')
-      .eq('pivot_id', pivot_id)
+      .eq(cacheField, cacheValue)
       .order('data_imagem', { ascending: true })
 
     return new Response(
-      JSON.stringify({ pivot_id, pivot_name: pivot.name, historico: historico ?? [], alertas }),
+      JSON.stringify({ pivot_id, talhao_id, entity_name: entityName, historico: historico ?? [], alertas }),
       { headers: { ...CORS, 'Content-Type': 'application/json' } }
     )
   } catch (err) {

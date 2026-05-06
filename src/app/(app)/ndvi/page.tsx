@@ -1,9 +1,17 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { useAuth } from '@/hooks/useAuth'
 import { listFarmsByCompany } from '@/services/farms'
 import { listPivotsByFarmIds } from '@/services/pivots'
+import {
+  listTalhoesByCompany,
+  createTalhao,
+  updateTalhao,
+  deleteTalhao,
+  type Talhao,
+} from '@/services/talhoes'
 import {
   useNdviMultiplos,
   useNdviComparativo,
@@ -16,51 +24,26 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import type { Pivot } from '@/types/database'
 import {
-  Satellite,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  AlertTriangle,
-  Info,
-  ChevronRight,
-  BarChart3,
-  Layers,
+  Satellite, RefreshCw, TrendingUp, TrendingDown, Minus,
+  AlertTriangle, Info, ChevronRight, BarChart3, Layers,
+  Plus, Pencil, Trash2, X, Save, MapPin,
 } from 'lucide-react'
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ReferenceLine,
-  ResponsiveContainer,
-  CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, Tooltip,
+  ReferenceLine, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 import PivotSpinner from '@/components/ui/PivotSpinner'
 
+const TalhaoMapDrawDynamic = dynamic(
+  () => import('./TalhaoMapDraw').then(m => ({ default: m.TalhaoMapDraw })),
+  { ssr: false, loading: () => <div style={{ height: 360, background: '#0d1520', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 13 }}>Carregando mapa…</div> }
+)
+
 // ─── Cores ────────────────────────────────────────────────────────────────────
 const C = {
-  bg: '#0b1320',
-  card: '#0f1923',
-  surface: '#0d1520',
-  border: 'rgba(255,255,255,0.06)',
-  borderHover: 'rgba(255,255,255,0.12)',
-  text: '#e2e8f0',
-  sec: '#8899aa',
-  muted: '#556677',
-  brand: '#0093D0',
-  green: '#22c55e',
-  red: '#ef4444',
-  amber: '#f59e0b',
-}
-
-// ─── Diagnóstico IA determinístico ────────────────────────────────────────────
-interface Diagnostico {
-  titulo: string
-  descricao: string
-  recomendacao: string
-  cor: 'red' | 'amber' | 'yellow' | 'green' | 'emerald'
+  bg: '#0b1320', card: '#0f1923', border: 'rgba(255,255,255,0.06)',
+  borderHover: 'rgba(255,255,255,0.12)', text: '#e2e8f0', sec: '#8899aa',
+  muted: '#556677', brand: '#0093D0', green: '#22c55e', red: '#ef4444', amber: '#f59e0b',
 }
 
 const COR_MAP = {
@@ -71,64 +54,23 @@ const COR_MAP = {
   emerald: { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.2)',  titulo: '#34d399', desc: '#6ee7b7', rec: '#6ee7b7' },
 }
 
-function gerarDiagnostico(
-  ndvi: number | null,
-  tendencia: 'subindo' | 'caindo' | 'estavel' | null,
-  variacaoPct: number | null,
-): Diagnostico | null {
+type DiagCor = keyof typeof COR_MAP
+
+function gerarDiagnostico(ndvi: number | null, tendencia: 'subindo' | 'caindo' | 'estavel' | null, variacaoPct: number | null) {
   if (ndvi == null) return null
   const caindo = tendencia === 'caindo'
   const subindo = tendencia === 'subindo'
-
-  if (ndvi < 0.2) return {
-    cor: 'red',
-    titulo: 'Vegetação severamente comprometida',
-    descricao: 'NDVI extremamente baixo indica solo exposto, cultura morta ou falha severa no stand.',
-    recomendacao: 'Verificar estado da cultura in loco imediatamente. Avaliar replantio.',
-  }
-  if (ndvi < 0.35) return {
-    cor: 'red',
-    titulo: 'Vegetação em situação crítica',
-    descricao: caindo
-      ? `Queda de ${variacaoPct != null ? Math.abs(variacaoPct).toFixed(1) + '%' : ''} detectada. Estresse hídrico severo.`
-      : 'Biomassa muito baixa para o estádio fenológico esperado.',
-    recomendacao: 'Verificar irrigação, pragas e doenças. Considerar amostragem de solo.',
-  }
-  if (ndvi < 0.5) return {
-    cor: caindo ? 'amber' : 'yellow',
-    titulo: caindo ? 'Vegetação em alerta — queda detectada' : 'Vegetação em desenvolvimento moderado',
-    descricao: caindo
-      ? `Declínio de ${variacaoPct != null ? Math.abs(variacaoPct).toFixed(1) + '%' : ''} na última leitura.`
-      : 'Vigor vegetativo abaixo do potencial. Possível deficiência.',
-    recomendacao: 'Revisar irrigação e fertirrigação. Monitorar próxima passagem.',
-  }
-  if (ndvi < 0.65) return {
-    cor: 'yellow',
-    titulo: subindo ? 'Vegetação em recuperação' : 'Vegetação moderada — dentro do esperado',
-    descricao: subindo
-      ? `Melhora de ${variacaoPct != null ? variacaoPct.toFixed(1) + '%' : ''} no período. Resposta positiva ao manejo.`
-      : 'Biomassa dentro do esperado para a fase vegetativa.',
-    recomendacao: 'Manter manejo atual. Observar uniformidade na área.',
-  }
-  if (ndvi < 0.8) return {
-    cor: 'green',
-    titulo: 'Vegetação saudável e vigorosa',
-    descricao: 'Alta atividade fotossintética. Cultura bem estabelecida com bom potencial produtivo.',
-    recomendacao: 'Manter irrigação e nutrição. Monitorar cobertura.',
-  }
-  return {
-    cor: 'emerald',
-    titulo: 'Vegetação em condição máxima',
-    descricao: 'NDVI excelente. Biomassa máxima — condição ideal para máxima produtividade.',
-    recomendacao: 'Manter o manejo. Nenhuma intervenção necessária.',
-  }
+  if (ndvi < 0.2) return { cor: 'red' as DiagCor, titulo: 'Vegetação severamente comprometida', descricao: 'NDVI extremamente baixo. Solo exposto, cultura morta ou falha severa.', recomendacao: 'Verificar in loco imediatamente. Avaliar replantio.' }
+  if (ndvi < 0.35) return { cor: 'red' as DiagCor, titulo: 'Vegetação em situação crítica', descricao: caindo ? `Queda de ${variacaoPct != null ? Math.abs(variacaoPct).toFixed(1) + '%' : ''} detectada. Estresse severo.` : 'Biomassa muito baixa.', recomendacao: 'Verificar irrigação, pragas e doenças.' }
+  if (ndvi < 0.5) return { cor: (caindo ? 'amber' : 'yellow') as DiagCor, titulo: caindo ? 'Vegetação em alerta' : 'Desenvolvimento moderado', descricao: caindo ? `Declínio de ${variacaoPct != null ? Math.abs(variacaoPct).toFixed(1) + '%' : ''}.` : 'Vigor abaixo do potencial.', recomendacao: 'Revisar irrigação e fertirrigação.' }
+  if (ndvi < 0.65) return { cor: 'yellow' as DiagCor, titulo: subindo ? 'Vegetação em recuperação' : 'Vegetação moderada', descricao: subindo ? `Melhora de ${variacaoPct != null ? variacaoPct.toFixed(1) + '%' : ''}.` : 'Dentro do esperado.', recomendacao: 'Manter manejo. Observar uniformidade.' }
+  if (ndvi < 0.8) return { cor: 'green' as DiagCor, titulo: 'Vegetação saudável e vigorosa', descricao: 'Alta atividade fotossintética. Bom potencial produtivo.', recomendacao: 'Manter irrigação e nutrição.' }
+  return { cor: 'emerald' as DiagCor, titulo: 'Vegetação em condição máxima', descricao: 'NDVI excelente. Biomassa máxima.', recomendacao: 'Nenhuma intervenção necessária.' }
 }
 
-// ─── Formatações ──────────────────────────────────────────────────────────────
 function fmtData(iso: string) {
   return new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
-
 function diasAtras(iso: string) {
   const diff = Math.floor((Date.now() - new Date(iso + 'T12:00:00Z').getTime()) / 86400000)
   if (diff === 0) return 'hoje'
@@ -136,10 +78,8 @@ function diasAtras(iso: string) {
   return `${diff}d atrás`
 }
 
-// ─── Card de KPI no ranking ────────────────────────────────────────────────────
-function NdviKpiCard({
-  nome, ndvi, data, tendencia, variacaoPct, selecionado, onClick,
-}: {
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
+function NdviKpiCard({ nome, ndvi, data, tendencia, variacaoPct, selecionado, onClick }: {
   nome: string; ndvi: number | null; data: string | null
   tendencia: 'subindo' | 'caindo' | 'estavel' | null; variacaoPct: number | null
   selecionado: boolean; onClick: () => void
@@ -147,22 +87,16 @@ function NdviKpiCard({
   const cls = classificarNdvi(ndvi)
   const TendIcon = tendencia === 'subindo' ? TrendingUp : tendencia === 'caindo' ? TrendingDown : Minus
   const tendCor = tendencia === 'subindo' ? C.green : tendencia === 'caindo' ? C.red : C.muted
-
   return (
     <button onClick={onClick} style={{
       display: 'flex', flexDirection: 'column', gap: 6,
       background: selecionado ? 'rgba(0,147,208,0.1)' : C.card,
       border: `1px solid ${selecionado ? C.brand : C.border}`,
-      borderRadius: 12, padding: '12px 14px', cursor: 'pointer',
-      textAlign: 'left', width: '100%', transition: 'all 0.15s ease',
+      borderRadius: 12, padding: '12px 14px', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.15s ease',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: C.text, flex: 1, textAlign: 'left' }}>{nome}</span>
-        <span style={{
-          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-          background: cls.corFundo + '22', color: cls.cor, border: `1px solid ${cls.cor}44`,
-          letterSpacing: '0.04em', textTransform: 'uppercase' as const,
-        }}>{cls.label}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.text, flex: 1 }}>{nome}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: cls.corFundo + '22', color: cls.cor, border: `1px solid ${cls.cor}44`, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>{cls.label}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{ fontSize: 28, fontWeight: 700, color: ndvi != null ? cls.cor : C.muted, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
@@ -171,11 +105,7 @@ function NdviKpiCard({
         {tendencia && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
             <TendIcon size={13} color={tendCor} />
-            {variacaoPct != null && (
-              <span style={{ fontSize: 11, fontWeight: 700, color: tendCor, fontVariantNumeric: 'tabular-nums' }}>
-                {variacaoPct > 0 ? '+' : ''}{variacaoPct.toFixed(1)}%
-              </span>
-            )}
+            {variacaoPct != null && <span style={{ fontSize: 11, fontWeight: 700, color: tendCor, fontVariantNumeric: 'tabular-nums' }}>{variacaoPct > 0 ? '+' : ''}{variacaoPct.toFixed(1)}%</span>}
           </div>
         )}
       </div>
@@ -184,68 +114,40 @@ function NdviKpiCard({
   )
 }
 
-// ─── Card comparativo ─────────────────────────────────────────────────────────
+// ─── Comparativo Card ─────────────────────────────────────────────────────────
 function ComparativoCard({ nome, comp, onClick }: { nome: string; comp: NdviComparativoItem; onClick: () => void }) {
   const cls = classificarNdvi(comp.atual?.ndvi_medio ?? null)
   const TendIcon = comp.tendencia === 'subindo' ? TrendingUp : comp.tendencia === 'caindo' ? TrendingDown : Minus
   const tendCor = comp.tendencia === 'subindo' ? C.green : comp.tendencia === 'caindo' ? C.red : C.muted
   const tendBg = comp.tendencia === 'subindo' ? 'rgba(34,197,94,0.1)' : comp.tendencia === 'caindo' ? 'rgba(239,68,68,0.1)' : 'rgba(85,102,119,0.1)'
-
   return (
-    <button onClick={onClick} style={{
-      background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px',
-      cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.15s ease',
-      display: 'flex', flexDirection: 'column', gap: 10,
-    }}>
+    <button onClick={onClick} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.15s ease', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{nome}</span>
         <ChevronRight size={14} color={C.muted} />
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 32, fontWeight: 700, color: cls.cor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-          {comp.atual?.ndvi_medio != null ? comp.atual.ndvi_medio.toFixed(2) : '—'}
-        </span>
-        <span style={{
-          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
-          background: cls.corFundo + '22', color: cls.cor, border: `1px solid ${cls.cor}44`,
-          letterSpacing: '0.04em', textTransform: 'uppercase' as const,
-        }}>{cls.label}</span>
+        <span style={{ fontSize: 32, fontWeight: 700, color: cls.cor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{comp.atual?.ndvi_medio != null ? comp.atual.ndvi_medio.toFixed(2) : '—'}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: cls.corFundo + '22', color: cls.cor, border: `1px solid ${cls.cor}44`, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>{cls.label}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {comp.tendencia && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: tendBg, padding: '4px 10px', borderRadius: 8 }}>
             <TendIcon size={12} color={tendCor} />
-            {comp.variacaoPct != null && (
-              <span style={{ fontSize: 11, fontWeight: 700, color: tendCor, fontVariantNumeric: 'tabular-nums' }}>
-                {comp.variacaoPct > 0 ? '+' : ''}{comp.variacaoPct.toFixed(1)}%
-              </span>
-            )}
+            {comp.variacaoPct != null && <span style={{ fontSize: 11, fontWeight: 700, color: tendCor, fontVariantNumeric: 'tabular-nums' }}>{comp.variacaoPct > 0 ? '+' : ''}{comp.variacaoPct.toFixed(1)}%</span>}
           </div>
         )}
-        {comp.anterior?.ndvi_medio != null && (
-          <span style={{ fontSize: 11, color: C.muted }}>Anterior: {comp.anterior.ndvi_medio.toFixed(2)}</span>
-        )}
+        {comp.anterior?.ndvi_medio != null && <span style={{ fontSize: 11, color: C.muted }}>Anterior: {comp.anterior.ndvi_medio.toFixed(2)}</span>}
       </div>
-      {comp.atual?.data_imagem && (
-        <span style={{ fontSize: 10, color: C.muted }}>{diasAtras(comp.atual.data_imagem)} · {fmtData(comp.atual.data_imagem)}</span>
-      )}
+      {comp.atual?.data_imagem && <span style={{ fontSize: 10, color: C.muted }}>{diasAtras(comp.atual.data_imagem)} · {fmtData(comp.atual.data_imagem)}</span>}
     </button>
   )
 }
 
-// ─── Legenda NDVI ─────────────────────────────────────────────────────────────
 function LegendaNdvi() {
-  const itens = [
-    { cor: '#888', label: '< 0' },
-    { cor: '#dc2626', label: '0–0.2 Crítico' },
-    { cor: '#c74f00', label: '0.2–0.35 Estressado' },
-    { cor: '#c7c700', label: '0.35–0.5 Moderado' },
-    { cor: '#00c800', label: '0.5–0.7 Bom' },
-    { cor: '#007a00', label: '> 0.7 Excelente' },
-  ]
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px', marginTop: 8 }}>
-      {itens.map(({ cor, label }) => (
+      {[['#888','< 0'], ['#dc2626','0–0.2 Crítico'], ['#c74f00','0.2–0.35 Estressado'], ['#c7c700','0.35–0.5 Moderado'], ['#00c800','0.5–0.7 Bom'], ['#007a00','> 0.7 Excelente']].map(([cor, label]) => (
         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 12, height: 12, borderRadius: 3, background: cor, flexShrink: 0 }} />
           <span style={{ fontSize: 10, color: C.sec }}>{label}</span>
@@ -255,111 +157,375 @@ function LegendaNdvi() {
   )
 }
 
-// ─── Tooltip ──────────────────────────────────────────────────────────────────
-function NdviTooltip({ active, payload, label }: {
-  active?: boolean; payload?: Array<{ value: number }>; label?: string
-}) {
+function NdviTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
   if (!active || !payload?.length) return null
   const v = payload[0].value
   const cls = classificarNdvi(v)
   return (
-    <div style={{
-      background: '#0d1520', border: `1px solid ${C.borderHover}`, borderRadius: 10,
-      padding: '8px 12px', boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
-    }}>
+    <div style={{ background: '#0d1520', border: `1px solid ${C.borderHover}`, borderRadius: 10, padding: '8px 12px', boxShadow: '0 4px 20px rgba(0,0,0,0.6)' }}>
       <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 700, color: cls.cor, fontVariantNumeric: 'tabular-nums' }}>
-        {v.toFixed(3)}
-      </div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: cls.cor, fontVariantNumeric: 'tabular-nums' }}>{v.toFixed(3)}</div>
       <div style={{ fontSize: 10, color: cls.cor, marginTop: 2 }}>{cls.label}</div>
     </div>
   )
 }
 
-// ─── Página ───────────────────────────────────────────────────────────────────
+// ─── Detalhe NDVI de um item (pivô ou talhão) ─────────────────────────────────
+function NdviDetalhe({
+  name, detalhe, loadingDetalhe, hasPolygon, compSel, onRefresh, refreshing,
+}: {
+  name: string
+  detalhe: NdviTalhaoResponse | null
+  loadingDetalhe: boolean
+  hasPolygon: boolean
+  compSel: NdviComparativoItem | null
+  onRefresh: () => void
+  refreshing: boolean
+}) {
+  const ultimoNdvi: NdviRegistro | null = detalhe?.historico
+    ? ([...detalhe.historico].reverse().find(h => h.ndvi_medio != null) ?? null) : null
+  const diag = gerarDiagnostico(ultimoNdvi?.ndvi_medio ?? null, compSel?.tendencia ?? null, compSel?.variacaoPct ?? null)
+  const dadosGrafico = (detalhe?.historico ?? []).filter(h => h.ndvi_medio != null)
+    .map(h => ({ data: fmtData(h.data_imagem), ndvi: Number(h.ndvi_medio!.toFixed(4)) }))
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{name}</div>
+          {ultimoNdvi?.data_imagem && <div style={{ fontSize: 11, color: C.muted }}>Última leitura: {fmtData(ultimoNdvi.data_imagem)} · {diasAtras(ultimoNdvi.data_imagem)}</div>}
+        </div>
+        <button onClick={onRefresh} disabled={refreshing || loadingDetalhe} style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.brand, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600, opacity: refreshing ? 0.6 : 1, minHeight: 36 }}>
+          <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : undefined }} />
+          {refreshing ? 'Buscando...' : 'Atualizar via Satélite'}
+        </button>
+      </div>
+
+      {detalhe?.error === 'SENTINEL_NOT_CONFIGURED' && (
+        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 10 }}>
+          <AlertTriangle size={16} color={C.amber} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>Sentinel Hub não configurado</div>
+            <div style={{ fontSize: 12, color: '#fcd34d', marginTop: 2 }}>Configure <code>PLANET_API_KEY</code> nos Secrets da Edge Function.</div>
+          </div>
+        </div>
+      )}
+
+      {diag && (() => {
+        const c = COR_MAP[diag.cor]
+        return (
+          <div style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, marginBottom: 6 }}>Diagnóstico IA</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: c.titulo, marginBottom: 4 }}>{diag.titulo}</div>
+            <div style={{ fontSize: 12, color: c.desc, lineHeight: 1.5, marginBottom: 8 }}>{diag.descricao}</div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: c.rec, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Recomendação: </span>
+            <span style={{ fontSize: 11, color: c.rec }}>{diag.recomendacao}</span>
+          </div>
+        )
+      })()}
+
+      {!hasPolygon && (
+        <div style={{ background: 'rgba(0,147,208,0.06)', border: `1px solid ${C.border}`, borderRadius: 12, padding: '20px 16px', textAlign: 'center' }}>
+          <MapPin size={28} color={C.muted} style={{ marginBottom: 8 }} />
+          <div style={{ fontSize: 13, color: C.sec }}>Polígono não cadastrado</div>
+        </div>
+      )}
+
+      {ultimoNdvi?.imagem_url && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Imagem NDVI · {ultimoNdvi.data_imagem && fmtData(ultimoNdvi.data_imagem)}</div>
+          </div>
+          <img src={ultimoNdvi.imagem_url} alt="NDVI" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover' }} />
+          <div style={{ padding: '8px 14px 12px' }}><LegendaNdvi /></div>
+        </div>
+      )}
+
+      {dadosGrafico.length > 0 && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px' }}>
+          <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Histórico NDVI</div>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={dadosGrafico} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="ndviGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4ade80" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis dataKey="data" tick={{ fill: C.muted, fontSize: 10 }} />
+              <YAxis domain={[0, 1]} tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<NdviTooltip />} />
+              <ReferenceLine y={0.7} stroke="#15803d" strokeDasharray="4 2" label={{ value: 'Excelente', fill: '#15803d', fontSize: 9 }} />
+              <ReferenceLine y={0.5} stroke="#ca8a04" strokeDasharray="4 2" label={{ value: 'Moderado', fill: '#ca8a04', fontSize: 9 }} />
+              <ReferenceLine y={0.2} stroke="#dc2626" strokeDasharray="4 2" label={{ value: 'Crítico', fill: '#dc2626', fontSize: 9 }} />
+              <Area type="monotone" dataKey="ndvi" stroke="#4ade80" strokeWidth={2} fill="url(#ndviGrad)" dot={{ r: 4, fill: '#4ade80' }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {detalhe && detalhe.historico.length > 0 && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Leituras recentes</div>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  {['Data', 'NDVI Médio', 'Mín', 'Máx', 'Classificação'].map(h => (
+                    <th key={h} style={{ padding: '8px 12px', color: C.muted, fontWeight: 600, textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[...detalhe.historico].reverse().slice(0, 8).map((r: NdviRegistro) => {
+                  const cls = classificarNdvi(r.ndvi_medio)
+                  return (
+                    <tr key={r.id} style={{ borderTop: `1px solid ${C.border}` }}>
+                      <td style={{ padding: '8px 12px', color: C.sec }}>{r.data_imagem && fmtData(r.data_imagem)}</td>
+                      <td style={{ padding: '8px 12px', color: cls.cor, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{r.ndvi_medio != null ? r.ndvi_medio.toFixed(3) : '—'}</td>
+                      <td style={{ padding: '8px 12px', color: C.sec, fontVariantNumeric: 'tabular-nums' }}>{r.ndvi_min != null ? r.ndvi_min.toFixed(3) : '—'}</td>
+                      <td style={{ padding: '8px 12px', color: C.sec, fontVariantNumeric: 'tabular-nums' }}>{r.ndvi_max != null ? r.ndvi_max.toFixed(3) : '—'}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: cls.corFundo + '22', color: cls.cor, border: `1px solid ${cls.cor}44`, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{cls.label}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {loadingDetalhe && <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><PivotSpinner size={40} label="Buscando dados..." /></div>}
+
+      {!loadingDetalhe && detalhe?.historico?.length === 0 && !detalhe?.error && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 24px', textAlign: 'center' }}>
+          <Satellite size={32} color={C.muted} style={{ marginBottom: 10 }} />
+          <div style={{ fontSize: 14, color: C.sec, marginBottom: 6 }}>Nenhum dado NDVI ainda</div>
+          <div style={{ fontSize: 12, color: C.muted }}>Clique em <strong style={{ color: C.brand }}>Atualizar via Satélite</strong> para buscar imagens do Sentinel-2.</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Modal de criação/edição de talhão ────────────────────────────────────────
+function TalhaoModal({
+  talhao, farms, companyId, onClose, onSaved,
+}: {
+  talhao?: Talhao | null
+  farms: Array<{ id: string; name: string }>
+  companyId: string
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [name, setName] = useState(talhao?.name ?? '')
+  const [farmId, setFarmId] = useState(talhao?.farm_id ?? '')
+  const [areaHa, setAreaHa] = useState(talhao?.area_ha?.toString() ?? '')
+  const [color, setColor] = useState(talhao?.color ?? '#22c55e')
+  const [notes, setNotes] = useState(talhao?.notes ?? '')
+  const [polygon, setPolygon] = useState<Record<string, unknown> | null>(talhao?.polygon_geojson ?? null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSave() {
+    if (!name.trim()) { setError('Nome obrigatório.'); return }
+    setSaving(true)
+    try {
+      const data = {
+        company_id: companyId,
+        name: name.trim(),
+        farm_id: farmId || null,
+        area_ha: areaHa ? Number(areaHa) : null,
+        color,
+        notes: notes || null,
+        polygon_geojson: polygon,
+      }
+      if (talhao) {
+        await updateTalhao(talhao.id, data)
+      } else {
+        await createTalhao(data)
+      }
+      onSaved()
+      onClose()
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Farm center for map
+  const farmLat = -22.88
+  const farmLng = -50.36
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, width: '100%', maxWidth: 680, maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{talhao ? 'Editar Talhão' : 'Novo Talhão'}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.sec, display: 'flex', minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+        </div>
+
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {error && <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#f87171' }}>{error}</div>}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Nome *</label>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Talhão Norte" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Área (ha)</label>
+              <input value={areaHa} onChange={e => setAreaHa(e.target.value)} type="number" placeholder="Ex: 45.5" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Fazenda</label>
+              <select value={farmId} onChange={e => setFarmId(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
+                <option value="">Nenhuma</option>
+                {farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Cor</label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input type="color" value={color} onChange={e => setColor(e.target.value)} style={{ width: 40, height: 36, borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', cursor: 'pointer', padding: 2 }} />
+                {['#22c55e','#0093D0','#f59e0b','#ef4444','#8b5cf6','#06b6d4'].map(c => (
+                  <button key={c} onClick={() => setColor(c)} style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: color === c ? '2px solid #fff' : '2px solid transparent', cursor: 'pointer' }} />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Observações</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Informações adicionais..." style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Mapa de desenho */}
+          <div>
+            <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>
+              Polígono {polygon ? <span style={{ color: C.green }}>✓ desenhado</span> : <span style={{ color: C.amber }}>(obrigatório para NDVI)</span>}
+            </label>
+            <TalhaoMapDrawDynamic
+              existingPolygon={polygon}
+              onPolygonChange={setPolygon}
+              height={320}
+              centerLat={farmLat}
+              centerLng={farmLng}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.sec, cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
+            <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: C.brand, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, opacity: saving ? 0.6 : 1 }}>
+              <Save size={14} />{saving ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Página principal ─────────────────────────────────────────────────────────
+type Aba = 'pivotos' | 'talhoes' | 'comparativo'
+
 export default function NdviPage() {
   const { company } = useAuth()
+  const [farms, setFarms] = useState<Array<{ id: string; name: string }>>([])
   const [pivots, setPivots] = useState<Pivot[]>([])
+  const [talhoes, setTalhoes] = useState<Talhao[]>([])
   const [loading, setLoading] = useState(true)
-  const [modo, setModo] = useState<'ranking' | 'comparativo'>('ranking')
-  const [pivotSelecionado, setPivotSelecionado] = useState<string | null>(null)
-  const [detalhe, setDetalhe] = useState<NdviTalhaoResponse | null>(null)
-  const [loadingDetalhe, setLoadingDetalhe] = useState(false)
+  const [aba, setAba] = useState<Aba>('pivotos')
+
+  // Pivô selecionado
+  const [pivotSel, setPivotSel] = useState<string | null>(null)
+  const [pivotDetalhe, setPivotDetalhe] = useState<NdviTalhaoResponse | null>(null)
+  const [loadingPivotDetalhe, setLoadingPivotDetalhe] = useState(false)
+
+  // Talhão selecionado
+  const [talhaoSel, setTalhaoSel] = useState<string | null>(null)
+  const [talhaoDetalhe, setTalhaoDetalhe] = useState<NdviTalhaoResponse | null>(null)
+  const [loadingTalhaoDetalhe, setLoadingTalhaoDetalhe] = useState(false)
+
+  // Modal talhão
+  const [modalTalhao, setModalTalhao] = useState<Talhao | null | 'new'>(null)
+
   const { mutate: refreshNdvi, pending: refreshing } = useRefreshNdvi()
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!company?.id) return
     setLoading(true)
-    listFarmsByCompany(company.id).then((farms) => {
-      listPivotsByFarmIds(farms.map((f) => f.id)).then((ps) => {
-        setPivots(ps as Pivot[])
-        if (ps.length > 0) setPivotSelecionado(ps[0].id)
-        setLoading(false)
-      })
-    })
+    const farmsData = await listFarmsByCompany(company.id)
+    setFarms(farmsData)
+    const [pivotsData, talhoesData] = await Promise.all([
+      listPivotsByFarmIds(farmsData.map(f => f.id)),
+      listTalhoesByCompany(company.id),
+    ])
+    setPivots(pivotsData as Pivot[])
+    setTalhoes(talhoesData)
+    if (pivotsData.length > 0 && !pivotSel) setPivotSel(pivotsData[0].id)
+    if (talhoesData.length > 0 && !talhaoSel) setTalhaoSel(talhoesData[0].id)
+    setLoading(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company?.id])
 
-  const pivotIds = useMemo(() => pivots.map((p) => p.id), [pivots])
-  const ndviMultiplos = useNdviMultiplos(pivotIds)
-  const ndviComparativo = useNdviComparativo(pivotIds)
+  useEffect(() => { loadData() }, [loadData])
 
-  // Carrega detalhe direto do banco quando pivô muda
-  const loadDetalhe = useCallback(async (pid: string) => {
-    setLoadingDetalhe(true)
+  // IDs para hooks
+  const pivotIds = useMemo(() => pivots.map(p => p.id), [pivots])
+  const talhaoIds = useMemo(() => talhoes.map(t => t.id), [talhoes])
+  const allIds = useMemo(() => [...pivotIds, ...talhaoIds], [pivotIds, talhaoIds])
+
+  const ndviMultiplosPivots = useNdviMultiplos(pivotIds)
+  const ndviMultiplosTalhoes = useNdviMultiplos(talhaoIds)
+  const ndviComparativoPivots = useNdviComparativo(pivotIds)
+  const ndviComparativoTalhoes = useNdviComparativo(talhaoIds)
+
+  // Carrega detalhe pivô
+  const loadPivotDetalhe = useCallback(async (pid: string) => {
+    setLoadingPivotDetalhe(true)
     const supabase = createClient()
-    const { data: rows } = await supabase
-      .from('ndvi_cache')
-      .select('*')
-      .eq('pivot_id', pid)
-      .order('data_imagem', { ascending: true })
-    setDetalhe({
-      pivot_id: pid,
-      pivot_name: pivots.find((p) => p.id === pid)?.name ?? '',
-      historico: (rows ?? []) as NdviRegistro[],
-      alertas: [],
-    })
-    setLoadingDetalhe(false)
+    const { data } = await supabase.from('ndvi_cache').select('*').eq('pivot_id', pid).order('data_imagem', { ascending: true })
+    setPivotDetalhe({ pivot_id: pid, pivot_name: '', entity_name: pivots.find(p => p.id === pid)?.name ?? '', historico: (data ?? []) as NdviRegistro[], alertas: [] })
+    setLoadingPivotDetalhe(false)
   }, [pivots])
 
-  useEffect(() => {
-    if (pivotSelecionado) loadDetalhe(pivotSelecionado)
-  }, [pivotSelecionado, loadDetalhe])
+  // Carrega detalhe talhão
+  const loadTalhaoDetalhe = useCallback(async (tid: string) => {
+    setLoadingTalhaoDetalhe(true)
+    const supabase = createClient()
+    const { data } = await supabase.from('ndvi_cache').select('*').eq('talhao_id', tid).order('data_imagem', { ascending: true })
+    setTalhaoDetalhe({ talhao_id: tid, pivot_id: undefined, pivot_name: '', entity_name: talhoes.find(t => t.id === tid)?.name ?? '', historico: (data ?? []) as NdviRegistro[], alertas: [] })
+    setLoadingTalhaoDetalhe(false)
+  }, [talhoes])
 
-  // Ranking
-  const ranking = useMemo(() => pivots.map((p) => {
-    const rec = ndviMultiplos.find((n) => n.pivot_id === p.id)
-    const comp = ndviComparativo.find((c) => c.pivot_id === p.id)
-    return {
-      pivot: p,
-      ndvi: rec?.ndvi_medio ?? null,
-      data: rec?.data_imagem ?? null,
-      tendencia: comp?.tendencia ?? null,
-      variacaoPct: comp?.variacaoPct ?? null,
-    }
-  }).sort((a, b) => (a.ndvi ?? -1) - (b.ndvi ?? -1)), [pivots, ndviMultiplos, ndviComparativo])
+  useEffect(() => { if (pivotSel) loadPivotDetalhe(pivotSel) }, [pivotSel, loadPivotDetalhe])
+  useEffect(() => { if (talhaoSel) loadTalhaoDetalhe(talhaoSel) }, [talhaoSel, loadTalhaoDetalhe])
 
-  // KPIs
-  const comDado = ranking.filter((r) => r.ndvi != null)
-  const ndviMedio = comDado.length
-    ? comDado.reduce((s, r) => s + r.ndvi!, 0) / comDado.length
-    : null
-  const semPolygon = pivots.filter((p) => !p.polygon_geojson).length
+  // Rankings
+  const rankingPivots = useMemo(() => pivots.map(p => {
+    const rec = ndviMultiplosPivots.find(n => n.pivot_id === p.id)
+    const comp = ndviComparativoPivots.find(c => c.pivot_id === p.id)
+    return { id: p.id, nome: p.name, ndvi: rec?.ndvi_medio ?? null, data: rec?.data_imagem ?? null, tendencia: comp?.tendencia ?? null, variacaoPct: comp?.variacaoPct ?? null, hasPolygon: !!p.polygon_geojson }
+  }).sort((a, b) => (a.ndvi ?? -1) - (b.ndvi ?? -1)), [pivots, ndviMultiplosPivots, ndviComparativoPivots])
 
-  // Detalhe do pivô selecionado
-  const compSel = ndviComparativo.find((c) => c.pivot_id === pivotSelecionado) ?? null
-  const ultimoNdvi: NdviRegistro | null = detalhe?.historico
-    ? ([...detalhe.historico].reverse().find((h) => h.ndvi_medio != null) ?? null)
-    : null
-  const diag = gerarDiagnostico(
-    ultimoNdvi?.ndvi_medio ?? null,
-    compSel?.tendencia ?? null,
-    compSel?.variacaoPct ?? null,
-  )
+  const rankingTalhoes = useMemo(() => talhoes.map(t => {
+    const rec = ndviMultiplosTalhoes.find(n => n.pivot_id === t.id)
+    const comp = ndviComparativoTalhoes.find(c => c.pivot_id === t.id)
+    return { id: t.id, nome: t.name, ndvi: rec?.ndvi_medio ?? null, data: rec?.data_imagem ?? null, tendencia: comp?.tendencia ?? null, variacaoPct: comp?.variacaoPct ?? null, hasPolygon: !!t.polygon_geojson, color: t.color }
+  }).sort((a, b) => (a.ndvi ?? -1) - (b.ndvi ?? -1)), [talhoes, ndviMultiplosTalhoes, ndviComparativoTalhoes])
 
-  const dadosGrafico = (detalhe?.historico ?? [])
-    .filter((h) => h.ndvi_medio != null)
-    .map((h) => ({ data: fmtData(h.data_imagem), ndvi: Number(h.ndvi_medio!.toFixed(4)) }))
+  // KPIs globais
+  const comDadoPivots = rankingPivots.filter(r => r.ndvi != null)
+  const comDadoTalhoes = rankingTalhoes.filter(r => r.ndvi != null)
+  const todosComDado = [...comDadoPivots, ...comDadoTalhoes]
+  const ndviMedio = todosComDado.length ? todosComDado.reduce((s, r) => s + r.ndvi!, 0) / todosComDado.length : null
 
   if (loading) {
     return (
@@ -375,42 +541,41 @@ export default function NdviPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 12,
-            background: 'linear-gradient(135deg, #0093D0, #6366f1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, #0093D0, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Satellite size={20} color="#fff" />
           </div>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: C.text, margin: 0 }}>NDVI Satélite</h1>
-            <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Sentinel-2 · monitoramento de vegetação</p>
+            <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>Sentinel-2 · pivôs e talhões</p>
           </div>
         </div>
 
+        {/* Abas */}
         <div style={{ display: 'flex', background: C.card, borderRadius: 10, padding: 3, border: `1px solid ${C.border}` }}>
-          {(['ranking', 'comparativo'] as const).map((m) => (
-            <button key={m} onClick={() => setModo(m)} style={{
-              padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: modo === m ? C.brand : 'transparent',
-              color: modo === m ? '#fff' : C.sec,
-              fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
-              transition: 'all 0.15s ease',
+          {([
+            { id: 'pivotos', label: 'Pivôs', icon: <BarChart3 size={13} />, count: pivots.length },
+            { id: 'talhoes', label: 'Talhões', icon: <Layers size={13} />, count: talhoes.length },
+            { id: 'comparativo', label: 'Comparativo', icon: <ChevronRight size={13} />, count: null },
+          ] as const).map(({ id, label, icon, count }) => (
+            <button key={id} onClick={() => setAba(id)} style={{
+              padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              background: aba === id ? C.brand : 'transparent', color: aba === id ? '#fff' : C.sec,
+              fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s ease',
             }}>
-              {m === 'ranking' ? <BarChart3 size={13} /> : <Layers size={13} />}
-              {m === 'ranking' ? 'Ranking' : 'Comparativo'}
+              {icon}{label}
+              {count !== null && <span style={{ fontSize: 10, background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '1px 5px' }}>{count}</span>}
             </button>
           ))}
         </div>
       </div>
 
       {/* KPI cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
         {([
-          { label: 'Pivôs monitorados', value: `${comDado.length}/${pivots.length}`, sub: 'com dados NDVI', cor: C.brand },
+          { label: 'Total monitorado', value: `${todosComDado.length}/${pivots.length + talhoes.length}`, sub: 'com dados NDVI', cor: C.brand },
           { label: 'NDVI médio', value: ndviMedio != null ? ndviMedio.toFixed(2) : '—', sub: classificarNdvi(ndviMedio).label, cor: classificarNdvi(ndviMedio).cor },
-          { label: 'Dados recentes', value: String(comDado.filter((r) => { const d = Math.floor((Date.now() - new Date((r.data ?? '') + 'T12:00:00Z').getTime()) / 86400000); return d < 30 }).length), sub: '< 30 dias', cor: C.green },
-          { label: 'Sem polígono', value: String(semPolygon), sub: 'pivôs sem área', cor: semPolygon > 0 ? C.amber : C.muted },
+          { label: 'Pivôs', value: String(pivots.length), sub: `${comDadoPivots.length} com dados`, cor: C.brand },
+          { label: 'Talhões', value: String(talhoes.length), sub: `${comDadoTalhoes.length} com dados`, cor: '#8b5cf6' },
         ] as const).map(({ label, value, sub, cor }) => (
           <div key={label} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px' }}>
             <div style={{ fontSize: 10, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
@@ -420,234 +585,143 @@ export default function NdviPage() {
         ))}
       </div>
 
-      {/* Alertas de config */}
-      {semPolygon > 0 && (
-        <div style={{ background: 'rgba(0,147,208,0.08)', border: '1px solid rgba(0,147,208,0.2)', borderRadius: 12, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          <Info size={16} color={C.brand} style={{ flexShrink: 0, marginTop: 1 }} />
-          <div style={{ fontSize: 12, color: '#7dd3fc' }}>
-            {semPolygon} pivô{semPolygon > 1 ? 's' : ''} sem polígono cadastrado. Adicione o polígono no cadastro do pivô para habilitar NDVI por satélite.
+      {/* ── Aba Pivôs ────────────────────────────────────────────── */}
+      {aba === 'pivotos' && (
+        pivots.length === 0 ? (
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
+            <Satellite size={40} color={C.muted} style={{ marginBottom: 12 }} />
+            <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>Nenhum pivô cadastrado</div>
           </div>
-        </div>
-      )}
-
-      {pivots.length === 0 && (
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
-          <Satellite size={40} color={C.muted} style={{ marginBottom: 12 }} />
-          <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>Nenhum pivô cadastrado</div>
-        </div>
-      )}
-
-      {/* Modo Comparativo */}
-      {modo === 'comparativo' && pivots.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-          {ndviComparativo.map((comp) => {
-            const pivot = pivots.find((p) => p.id === comp.pivot_id)
-            if (!pivot) return null
-            return (
-              <ComparativoCard key={comp.pivot_id} nome={pivot.name} comp={comp}
-                onClick={() => { setPivotSelecionado(comp.pivot_id); setModo('ranking') }} />
-            )
-          })}
-          {pivots.filter((p) => !ndviComparativo.find((c) => c.pivot_id === p.id)).map((p) => (
-            <div key={p.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{p.name}</span>
-              <span style={{ fontSize: 12, color: C.muted }}>Sem dados — clique em Atualizar</span>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px,1fr) minmax(0,2fr)', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Menor → Maior NDVI</div>
+              {rankingPivots.map(({ id, nome, ndvi, data, tendencia, variacaoPct }) => (
+                <NdviKpiCard key={id} nome={nome} ndvi={ndvi} data={data} tendencia={tendencia} variacaoPct={variacaoPct} selecionado={pivotSel === id} onClick={() => setPivotSel(id)} />
+              ))}
             </div>
-          ))}
-        </div>
+            <div>
+              {pivotSel && (
+                <NdviDetalhe
+                  name={pivots.find(p => p.id === pivotSel)?.name ?? ''}
+                  detalhe={pivotDetalhe}
+                  loadingDetalhe={loadingPivotDetalhe}
+                  hasPolygon={!!pivots.find(p => p.id === pivotSel)?.polygon_geojson}
+                  compSel={ndviComparativoPivots.find(c => c.pivot_id === pivotSel) ?? null}
+                  onRefresh={() => refreshNdvi(pivotSel!, (res) => { setPivotDetalhe(res) })}
+                  refreshing={refreshing}
+                />
+              )}
+            </div>
+          </div>
+        )
       )}
 
-      {/* Modo Ranking */}
-      {modo === 'ranking' && pivots.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px,1fr) minmax(0,2fr)', gap: 16 }}>
-
-          {/* Lista */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
-              Menor → Maior NDVI
-            </div>
-            {ranking.map(({ pivot, ndvi, data, tendencia, variacaoPct }) => (
-              <NdviKpiCard key={pivot.id} nome={pivot.name} ndvi={ndvi} data={data}
-                tendencia={tendencia} variacaoPct={variacaoPct}
-                selecionado={pivotSelecionado === pivot.id}
-                onClick={() => setPivotSelecionado(pivot.id)} />
-            ))}
+      {/* ── Aba Talhões ──────────────────────────────────────────── */}
+      {aba === 'talhoes' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ fontSize: 13, color: C.sec }}>{talhoes.length} talhão{talhoes.length !== 1 ? 'es' : ''} cadastrado{talhoes.length !== 1 ? 's' : ''}</div>
+            <button
+              onClick={() => setModalTalhao('new')}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.brand, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600, minHeight: 36 }}
+            >
+              <Plus size={14} /> Novo Talhão
+            </button>
           </div>
 
-          {/* Detalhe */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {pivotSelecionado && (
-              <>
-                {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>
-                      {pivots.find((p) => p.id === pivotSelecionado)?.name}
+          {talhoes.length === 0 ? (
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
+              <Layers size={40} color={C.muted} style={{ marginBottom: 12 }} />
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 6 }}>Nenhum talhão cadastrado</div>
+              <div style={{ fontSize: 12, color: C.muted }}>Crie talhões para monitorar qualquer área por satélite — sequeiro, pastagem, APP, etc.</div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px,1fr) minmax(0,2fr)', gap: 16 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Menor → Maior NDVI</div>
+                {rankingTalhoes.map(({ id, nome, ndvi, data, tendencia, variacaoPct, color }) => (
+                  <div key={id} style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: color, borderRadius: '3px 0 0 3px' }} />
+                    <div style={{ paddingLeft: 6 }}>
+                      <NdviKpiCard nome={nome} ndvi={ndvi} data={data} tendencia={tendencia} variacaoPct={variacaoPct} selecionado={talhaoSel === id} onClick={() => setTalhaoSel(id)} />
                     </div>
-                    {ultimoNdvi?.data_imagem && (
-                      <div style={{ fontSize: 11, color: C.muted }}>
-                        Última leitura: {fmtData(ultimoNdvi.data_imagem)} · {diasAtras(ultimoNdvi.data_imagem)}
-                      </div>
-                    )}
+                    <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 4 }}>
+                      <button onClick={e => { e.stopPropagation(); setModalTalhao(talhoes.find(t => t.id === id) ?? null) }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: 4, display: 'flex' }}><Pencil size={12} /></button>
+                      <button onClick={async e => { e.stopPropagation(); if (confirm('Excluir talhão?')) { await deleteTalhao(id); loadData() } }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.red, padding: 4, display: 'flex' }}><Trash2 size={12} /></button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => refreshNdvi(pivotSelecionado!, (res) => {
-                      setDetalhe(res)
-                    })}
-                    disabled={refreshing || loadingDetalhe}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      background: C.brand, color: '#fff', border: 'none', borderRadius: 8,
-                      padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                      opacity: refreshing ? 0.6 : 1, minHeight: 36,
+                ))}
+              </div>
+              <div>
+                {talhaoSel && (
+                  <NdviDetalhe
+                    name={talhoes.find(t => t.id === talhaoSel)?.name ?? ''}
+                    detalhe={talhaoDetalhe}
+                    loadingDetalhe={loadingTalhaoDetalhe}
+                    hasPolygon={!!talhoes.find(t => t.id === talhaoSel)?.polygon_geojson}
+                    compSel={ndviComparativoTalhoes.find(c => c.pivot_id === talhaoSel) ?? null}
+                    onRefresh={() => {
+                      const supabase = createClient()
+                      supabase.functions.invoke('ndvi-fetch', { body: { talhao_id: talhaoSel, forcar_refresh: true } })
+                        .then(({ data }) => { if (data) setTalhaoDetalhe(data) })
                     }}
-                  >
-                    <RefreshCw size={13} style={{ animation: refreshing ? 'spin 1s linear infinite' : undefined }} />
-                    {refreshing ? 'Buscando...' : 'Atualizar via Satélite'}
-                  </button>
-                </div>
-
-                {/* Alerta sem credenciais */}
-                {detalhe?.error === 'SENTINEL_NOT_CONFIGURED' && (
-                  <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <AlertTriangle size={16} color={C.amber} style={{ flexShrink: 0, marginTop: 1 }} />
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>Sentinel Hub não configurado</div>
-                      <div style={{ fontSize: 12, color: '#fcd34d', marginTop: 2 }}>
-                        Configure <code>SENTINEL_CLIENT_ID</code> e <code>SENTINEL_CLIENT_SECRET</code> nos Secrets da Edge Function no painel Supabase.
-                      </div>
-                    </div>
-                  </div>
+                    refreshing={false}
+                  />
                 )}
-
-                {/* Diagnóstico IA */}
-                {diag && (() => {
-                  const c = COR_MAP[diag.cor]
-                  return (
-                    <div style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 12, padding: '14px 16px' }}>
-                      <div style={{ fontSize: 10, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, marginBottom: 6 }}>Diagnóstico IA</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: c.titulo, marginBottom: 4 }}>{diag.titulo}</div>
-                      <div style={{ fontSize: 12, color: c.desc, lineHeight: 1.5, marginBottom: 8 }}>{diag.descricao}</div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: c.rec, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Recomendação: </span>
-                      <span style={{ fontSize: 11, color: c.rec }}>{diag.recomendacao}</span>
-                    </div>
-                  )
-                })()}
-
-                {/* Imagem PNG */}
-                {(() => {
-                  const pivot = pivots.find((p) => p.id === pivotSelecionado)
-                  if (!pivot?.polygon_geojson) {
-                    return (
-                      <div style={{ background: 'rgba(0,147,208,0.06)', border: `1px solid ${C.border}`, borderRadius: 12, padding: '20px 16px', textAlign: 'center' }}>
-                        <Satellite size={28} color={C.muted} style={{ marginBottom: 8 }} />
-                        <div style={{ fontSize: 13, color: C.sec }}>Polígono não cadastrado</div>
-                        <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>Adicione o polígono do pivô para visualizar imagens NDVI por satélite.</div>
-                      </div>
-                    )
-                  }
-                  if (ultimoNdvi?.imagem_url) {
-                    return (
-                      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
-                        <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}` }}>
-                          <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                            Imagem NDVI · {ultimoNdvi.data_imagem && fmtData(ultimoNdvi.data_imagem)}
-                          </div>
-                        </div>
-                        <img src={ultimoNdvi.imagem_url} alt="NDVI" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover' }} />
-                        <div style={{ padding: '8px 14px 12px' }}><LegendaNdvi /></div>
-                      </div>
-                    )
-                  }
-                  return null
-                })()}
-
-                {/* Gráfico */}
-                {dadosGrafico.length > 0 && (
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px' }}>
-                    <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Histórico NDVI</div>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <AreaChart data={dadosGrafico} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="ndviGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#4ade80" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                        <XAxis dataKey="data" tick={{ fill: C.muted, fontSize: 10 }} />
-                        <YAxis domain={[0, 1]} tick={{ fill: C.muted, fontSize: 10 }} />
-                        <Tooltip content={<NdviTooltip />} />
-                        <ReferenceLine y={0.7} stroke="#15803d" strokeDasharray="4 2" label={{ value: 'Excelente', fill: '#15803d', fontSize: 9 }} />
-                        <ReferenceLine y={0.5} stroke="#ca8a04" strokeDasharray="4 2" label={{ value: 'Moderado', fill: '#ca8a04', fontSize: 9 }} />
-                        <ReferenceLine y={0.2} stroke="#dc2626" strokeDasharray="4 2" label={{ value: 'Crítico', fill: '#dc2626', fontSize: 9 }} />
-                        <Area type="monotone" dataKey="ndvi" stroke="#4ade80" strokeWidth={2} fill="url(#ndviGrad)" dot={{ r: 4, fill: '#4ade80' }} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-
-                {/* Tabela */}
-                {detalhe && detalhe.historico.length > 0 && (
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
-                    <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}` }}>
-                      <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Leituras recentes</div>
-                    </div>
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                        <thead>
-                          <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                            {['Data', 'NDVI Médio', 'Mín', 'Máx', 'Classificação'].map((h) => (
-                              <th key={h} style={{ padding: '8px 12px', color: C.muted, fontWeight: 600, textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[...detalhe.historico].reverse().slice(0, 8).map((r: NdviRegistro) => {
-                            const cls = classificarNdvi(r.ndvi_medio)
-                            return (
-                              <tr key={r.id} style={{ borderTop: `1px solid ${C.border}` }}>
-                                <td style={{ padding: '8px 12px', color: C.sec }}>{r.data_imagem && fmtData(r.data_imagem)}</td>
-                                <td style={{ padding: '8px 12px', color: cls.cor, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-                                  {r.ndvi_medio != null ? r.ndvi_medio.toFixed(3) : '—'}
-                                </td>
-                                <td style={{ padding: '8px 12px', color: C.sec, fontVariantNumeric: 'tabular-nums' }}>{r.ndvi_min != null ? r.ndvi_min.toFixed(3) : '—'}</td>
-                                <td style={{ padding: '8px 12px', color: C.sec, fontVariantNumeric: 'tabular-nums' }}>{r.ndvi_max != null ? r.ndvi_max.toFixed(3) : '—'}</td>
-                                <td style={{ padding: '8px 12px' }}>
-                                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: cls.corFundo + '22', color: cls.cor, border: `1px solid ${cls.cor}44`, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                    {cls.label}
-                                  </span>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Loading detalhe */}
-                {loadingDetalhe && (
-                  <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
-                    <PivotSpinner size={40} label="Buscando dados..." />
-                  </div>
-                )}
-
-                {/* Estado vazio */}
-                {!loadingDetalhe && detalhe?.historico?.length === 0 && !detalhe?.error && (
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '32px 24px', textAlign: 'center' }}>
-                    <Satellite size={32} color={C.muted} style={{ marginBottom: 10 }} />
-                    <div style={{ fontSize: 14, color: C.sec, marginBottom: 6 }}>Nenhum dado NDVI ainda</div>
-                    <div style={{ fontSize: 12, color: C.muted }}>
-                      Clique em <strong style={{ color: C.brand }}>Atualizar via Satélite</strong> para buscar imagens do Sentinel-2.
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* ── Aba Comparativo ──────────────────────────────────────── */}
+      {aba === 'comparativo' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {pivots.length > 0 && (
+            <div>
+              <div style={{ fontSize: 12, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Pivôs</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 12 }}>
+                {ndviComparativoPivots.map(comp => {
+                  const pivot = pivots.find(p => p.id === comp.pivot_id)
+                  if (!pivot) return null
+                  return <ComparativoCard key={comp.pivot_id} nome={pivot.name} comp={comp} onClick={() => { setPivotSel(comp.pivot_id); setAba('pivotos') }} />
+                })}
+              </div>
+            </div>
+          )}
+          {talhoes.length > 0 && (
+            <div>
+              <div style={{ fontSize: 12, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Talhões</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px,1fr))', gap: 12 }}>
+                {ndviComparativoTalhoes.map(comp => {
+                  const talhao = talhoes.find(t => t.id === comp.pivot_id)
+                  if (!talhao) return null
+                  return <ComparativoCard key={comp.pivot_id} nome={talhao.name} comp={comp} onClick={() => { setTalhaoSel(comp.pivot_id); setAba('talhoes') }} />
+                })}
+              </div>
+            </div>
+          )}
+          {pivots.length === 0 && talhoes.length === 0 && (
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
+              <Satellite size={40} color={C.muted} style={{ marginBottom: 12 }} />
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>Nenhum dado para comparar</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal talhão */}
+      {modalTalhao !== null && (
+        <TalhaoModal
+          talhao={modalTalhao === 'new' ? null : modalTalhao}
+          farms={farms}
+          companyId={company?.id ?? ''}
+          onClose={() => setModalTalhao(null)}
+          onSaved={loadData}
+        />
       )}
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
