@@ -73,6 +73,16 @@ function todayISO(): string {
   return `${y}-${m}-${d}`
 }
 
+function yesterdayISO(): string {
+  const now = new Date()
+  now.setDate(now.getDate() - 1)
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+
 function fmtNum(n: number | null | undefined, decimals = 1): string {
   if (n === null || n === undefined) return '—'
   return n.toFixed(decimals)
@@ -130,9 +140,9 @@ function resolvePreviousAdc(
 
 // ─── Input simples ───────────────────────────────────────────
 
-function InputField({ label, value, onChange, unit, placeholder, type = 'number' }: {
+function InputField({ label, value, onChange, unit, placeholder, type = 'number', max }: {
   label: string; value: string; onChange: (v: string) => void
-  unit?: string; placeholder?: string; type?: string
+  unit?: string; placeholder?: string; type?: string; max?: string
 }) {
   return (
     <div>
@@ -141,7 +151,7 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
         <input
           type={type} step={type === 'number' ? 'any' : undefined}
           value={value} onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder={placeholder} max={max}
           style={{
             width: '100%', padding: unit ? '11px 44px 11px 14px' : '11px 14px',
             borderRadius: 8, fontSize: 15,
@@ -757,7 +767,7 @@ export default function ManejoPage() {
   const [avgEto, setAvgEto]                 = useState<number | null>(null)
   const [simulatedIrrigation, setSimulatedIrrigation] = useState<number[]>([0, 0, 0, 0, 0, 0, 0])
 
-  const [date, setDate]           = useState(todayISO())
+  const [date, setDate]           = useState(yesterdayISO())
   const [tmax, setTmax]           = useState('')
   const [tmin, setTmin]           = useState('')
 
@@ -845,7 +855,11 @@ export default function ManejoPage() {
     async function fetchClimate() {
       setWeatherLoading(true)
       try {
-        const snapshot = await getManagementExternalData(season.farms.id, season.pivots?.id ?? null, date, season.pivots)
+        // ETo é sempre D-1: cron grava dados do dia anterior
+        const d = new Date(`${date}T12:00:00`)
+        d.setDate(d.getDate() - 1)
+        const weatherDate = d.toISOString().slice(0, 10)
+        const snapshot = await getManagementExternalData(season.farms.id, season.pivots?.id ?? null, date, season.pivots, undefined, weatherDate)
         if (cancelled) return
         setExternalData(snapshot)
         const cs = snapshot.weather ?? snapshot.geolocationWeather
@@ -952,7 +966,7 @@ export default function ManejoPage() {
 
   function cancelEdit() {
     setEditingRecord(null)
-    setDate(todayISO())
+    setDate(yesterdayISO())
     setTmax(''); setTmin(''); setHumidity(''); setWind(''); setRadiation('')
     setRainfall(''); setActualSpeed(''); setActualDepth(''); setDepthAutoFilled(false)
     setIrrigStart(''); setIrrigEnd('')
@@ -1963,7 +1977,7 @@ export default function ManejoPage() {
                   </div>
                 )}
               </div>
-              <InputField label="Data do registro" type="date" value={date} onChange={setDate} />
+              <InputField label="Data do registro" type="date" value={date} onChange={setDate} max={yesterdayISO()} />
             </div>
 
             {/* Campos climáticos */}

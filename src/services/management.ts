@@ -260,11 +260,14 @@ export async function getManagementExternalData(
   pivotId: string | null,
   date: string,
   pivot?: Pivot | null,
-  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
+  weatherDateOverride?: string  // se fornecido, busca clima nessa data em vez de `date`
 ): Promise<ManagementExternalData> {
+  const weatherDate = weatherDateOverride ?? date
+
   const [rainfall, farmWeatherSnapshot] = await Promise.all([
     getRainfallRecordByPivotDate(pivotId, date, client),
-    getWeatherDataByFarmDate(farmId, date, client),
+    getWeatherDataByFarmDate(farmId, weatherDate, client),
   ])
 
   let station = farmWeatherSnapshot?.weather_stations ?? null
@@ -276,7 +279,7 @@ export async function getManagementExternalData(
   if (preferredStationId) {
     const [preferredStation, preferredWeather] = await Promise.all([
       getWeatherStationById(preferredStationId, client),
-      getWeatherDataByStationDate(preferredStationId, date, client),
+      getWeatherDataByStationDate(preferredStationId, weatherDate, client),
     ])
 
     if (preferredStation && preferredWeather) {
@@ -290,7 +293,7 @@ export async function getManagementExternalData(
 
   if (!weather && pivot?.latitude != null && pivot?.longitude != null) {
     try {
-      geolocationWeather = await getWeatherByPivotGeolocation(pivot.latitude, pivot.longitude, date)
+      geolocationWeather = await getWeatherByPivotGeolocation(pivot.latitude, pivot.longitude, weatherDate)  // usa weatherDate (D-1 no client)
       if (geolocationWeather) {
         climateSource = 'pivot_geolocation'
       }

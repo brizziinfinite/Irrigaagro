@@ -5,7 +5,7 @@ const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 
 serve(async (req) => {
   try {
-    const { image_base64, image_mime_type, contact_id, farm_id, company_id } = await req.json()
+    const { image_base64, image_mime_type, contact_id, farm_id, company_id, pivot_id, irrigated_area_ha } = await req.json()
 
     if (!image_base64) {
       return new Response(JSON.stringify({ success: false, error: 'image_base64 obrigatório' }), {
@@ -171,11 +171,20 @@ CAMPOS A EXTRAIR:
       }
     }
 
+    // Calcular cost_per_mm_ha se tiver área e kwh_total
+    // cost_per_mm_ha = custo total / (kWh/ha·mm × área·ha × lâmina·mm)
+    // Simplificação: R$/mm·ha = cost_total_brl / (kwh_total × eficiência típica) — mas sem curva de pivô
+    // Abordagem direta: salvar área e deixar usuário calcular em relatórios
+    // OU: cost_per_mm_ha = cost_total_brl / irrigated_area_ha / kwh_per_mm_ha (não temos kwh/mm·ha)
+    // Por ora: salvar pivot_id e area_ha para uso futuro no relatório
+    const areaHa: number | null = irrigated_area_ha ?? null
+
     // Salvar
     const { data: bill, error: billError } = await supabase
       .from('energy_bills')
       .upsert({
         farm_id,
+        pivot_id:             pivot_id ?? null,
         reference_month:      extracted.reference_month,
         kwh_total:            extracted.kwh_total,
         cost_total_brl:       extracted.cost_total_brl,

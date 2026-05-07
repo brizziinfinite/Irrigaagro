@@ -80,8 +80,10 @@ async function processEnergyBill(opts: {
   contact: { id: string; company_id: string }
   media: { base64: string; mimeType: string }
   farmId: string
+  pivotId?: string | null
+  irrigatedAreaHa?: number | null
 }) {
-  const { supabase, phone, contact, media, farmId } = opts
+  const { supabase, phone, contact, media, farmId, pivotId, irrigatedAreaHa } = opts
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
   const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -94,6 +96,8 @@ async function processEnergyBill(opts: {
       contact_id: contact.id,
       farm_id: farmId,
       company_id: contact.company_id,
+      pivot_id: pivotId ?? null,
+      irrigated_area_ha: irrigatedAreaHa ?? null,
     }),
   })
 
@@ -113,6 +117,57 @@ async function processEnergyBill(opts: {
     content: responseText,
     status: 'sent',
   })
+}
+
+// Busca pivôs da fazenda e pergunta qual se aplicará à conta de energia
+async function askPivotSelection(opts: {
+  supabase: ReturnType<typeof createClient>
+  phone: string
+  contact: { id: string; company_id: string }
+  media: { base64: string; mimeType: string }
+  farmId: string
+}) {
+  const { supabase, phone, contact, media, farmId } = opts
+
+  const { data: pivotsData } = await supabase
+    .from('pivots')
+    .select('id, name, area_ha')
+    .eq('farm_id', farmId)
+    .order('name')
+    .limit(20)
+
+  const pivots = (pivotsData ?? []) as Array<{ id: string; name: string; area_ha: number | null }>
+
+  // Sem pivôs cadastrados → processa sem pivô
+  if (pivots.length === 0) {
+    await sendWhatsApp(phone, '⏳ Processando sua fatura de energia... Aguarde alguns segundos.')
+    await processEnergyBill({ supabase, phone, contact, media, farmId })
+    return
+  }
+
+  // Salva sessão aguardando seleção de pivô
+  await supabase.from('whatsapp_sessions').upsert({
+    phone_number: phone,
+    company_id: contact.company_id,
+    current_flow: 'energy_bill_pivot',
+    flow_step: 'awaiting_pivot_selection',
+    context: {
+      image_base64: media.base64,
+      image_mime_type: media.mimeType,
+      farm_id: farmId,
+      pivots,  // [{ id, name, area_ha }]
+    },
+    last_interaction: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 min
+  }, { onConflict: 'phone_number' })
+
+  const pivotList = pivots.map((p, i) => `*${i + 1}.* ${p.name}`).join('\n')
+  const allOption = `*${pivots.length + 1}.* Todos juntos`
+
+  await sendWhatsApp(
+    phone,
+    `⚡ *Para qual pivô é essa conta de energia?*\n\n${pivotList}\n${allOption}\n\nResponda com o número.`
+  )
 }
 
 async function downloadMedia(messageId: string, remoteJid?: string, fromMe?: boolean): Promise<{ base64: string; mimeType: string } | null> {
@@ -721,10 +776,10 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
         return new Response('ok', { status: 200 })
       }
 
-      // Uma fazenda → processa direto
+      // Determina farmId — 1 fazenda direto, múltiplas → pergunta primeiro
       if (farms.length === 1) {
-        await sendWhatsApp(phone, '⏳ Processando sua fatura de energia... Aguarde alguns segundos.')
-        await processEnergyBill({ supabase, phone, contact, media, farmId: farms[0].id })
+        // Uma fazenda → perguntar pivô
+        await askPivotSelection({ supabase, phone, contact, media, farmId: farms[0].id })
         return new Response('ok', { status: 200 })
       }
 
@@ -782,17 +837,59 @@ INSTRUÇÕES: Use dados reais acima. Seja direto e objetivo. Máx 300 caracteres
 
       const selectedFarm = farms[num - 1]
 
-      // Limpar sessão
+      // Limpar sessão de fazenda — próxima será de pivô
       await supabase.from('whatsapp_sessions').delete().eq('phone_number', phone)
 
-      await sendWhatsApp(phone, `⏳ Processando fatura para *${selectedFarm.name}*...`)
-
-      const media = {
+      const mediaFromSession = {
         base64: session.context.image_base64 as string,
         mimeType: session.context.image_mime_type as string,
       }
 
-      await processEnergyBill({ supabase, phone, contact, media, farmId: selectedFarm.id })
+      await askPivotSelection({ supabase, phone, contact, media: mediaFromSession, farmId: selectedFarm.id })
+      return new Response('ok', { status: 200 })
+    }
+
+    // ── Sessão: seleção de pivô para fatura de energia ────────────────────────
+    if (session && !sessionExpired && session.current_flow === 'energy_bill_pivot' && session.flow_step === 'awaiting_pivot_selection') {
+      const numStr = msg.trim()
+      const num = parseInt(numStr, 10)
+      const pivots = (session.context?.pivots ?? []) as Array<{ id: string; name: string; area_ha: number | null }>
+      const farmId = session.context?.farm_id as string
+      const totalOptions = pivots.length + 1 // última opção = "Todos juntos"
+
+      if (isNaN(num) || num < 1 || num > totalOptions) {
+        const pivotList = pivots.map((p, i) => `*${i + 1}.* ${p.name}`).join('\n')
+        const allOption = `*${pivots.length + 1}.* Todos juntos`
+        await sendWhatsApp(phone, `❌ Responda com um número de 1 a ${totalOptions}.\n\n${pivotList}\n${allOption}`)
+        return new Response('ok', { status: 200 })
+      }
+
+      const isAll = num === totalOptions
+      const selectedPivot = isAll ? null : pivots[num - 1]
+
+      // Calcular área irrigada: pivô específico ou soma de todos
+      const irrigatedAreaHa = isAll
+        ? pivots.reduce((sum, p) => sum + (p.area_ha ?? 0), 0) || null
+        : (selectedPivot?.area_ha ?? null)
+
+      // Limpar sessão
+      await supabase.from('whatsapp_sessions').delete().eq('phone_number', phone)
+
+      const label = isAll ? 'todos os pivôs' : `*${selectedPivot!.name}*`
+      await sendWhatsApp(phone, `⏳ Processando fatura para ${label}...`)
+
+      const mediaFromSession = {
+        base64: session.context.image_base64 as string,
+        mimeType: session.context.image_mime_type as string,
+      }
+
+      await processEnergyBill({
+        supabase, phone, contact,
+        media: mediaFromSession,
+        farmId,
+        pivotId: selectedPivot?.id ?? null,
+        irrigatedAreaHa,
+      })
       return new Response('ok', { status: 200 })
     }
 

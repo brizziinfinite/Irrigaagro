@@ -197,11 +197,21 @@ export function computeResolvedManagementBalance(
   const stageInfoPrev = dasPrev > 0 ? getStageInfoForDas(crop, dasPrev) : stageInfo
   const ctaPrev = calcCTA(fieldCapacity, wiltingPoint, bulkDensity, stageInfoPrev.rootDepthCm)
 
-  const tempMax = parseOptionalNumber(tmax)
-  const tempMin = parseOptionalNumber(tmin)
-  const humidityValue = parseOptionalNumber(humidity)
-  const windValue = parseOptionalNumber(wind)
-  const radiationValue = parseOptionalNumber(radiation)
+  // Dados climáticos: banco (D-1 via externalData.weather) tem prioridade absoluta.
+  // Campos do formulário (tmax/tmin/...) servem apenas como fallback manual quando
+  // não há dado no banco — nunca sobrescrevem o banco.
+  const dbWeather = externalData?.weather ?? externalData?.geolocationWeather ?? null
+
+  const tempMax = dbWeather?.temp_max != null ? Number(dbWeather.temp_max)
+    : parseOptionalNumber(tmax)
+  const tempMin = dbWeather?.temp_min != null ? Number(dbWeather.temp_min)
+    : parseOptionalNumber(tmin)
+  const humidityValue = dbWeather?.humidity_percent != null ? Number(dbWeather.humidity_percent)
+    : parseOptionalNumber(humidity)
+  const windValue = dbWeather?.wind_speed_ms != null ? Number(dbWeather.wind_speed_ms)
+    : parseOptionalNumber(wind)
+  const radiationValue = dbWeather?.solar_radiation_wm2 != null ? Number(dbWeather.solar_radiation_wm2)
+    : parseOptionalNumber(radiation)
 
   if (tempMax == null || tempMin == null) return null
 
@@ -210,7 +220,7 @@ export function computeResolvedManagementBalance(
   if (tempMin < -30 || tempMin > 55) return null
   if (tempMax < tempMin) return null // sensor invertido
 
-  // Clamp valores secundários a ranges plausíveis (fallback para default se absurdo)
+  // Clamp valores secundários a ranges plausíveis
   const humidityClamped = humidityValue != null && humidityValue >= 5 && humidityValue <= 100
     ? humidityValue : 60
   const windClamped = windValue != null && windValue >= 0 && windValue <= 25
@@ -231,11 +241,22 @@ export function computeResolvedManagementBalance(
 
   const correctionFactor = parseFloat(process.env.NEXT_PUBLIC_ETO_CORRECTION_FACTOR ?? '1')
 
+  // ETo é sempre D-1 do banco (cron). Nunca recalcular ao vivo com dados do formulário.
+  // Se não há dado no banco para D-1, usa média dos últimos 3 registros do histórico como estimativa.
+  const historyEtoAvg = (() => {
+    const recent = history
+      .filter(r => r.eto_mm != null && r.eto_mm > 0)
+      .slice(0, 3)
+      .map(r => r.eto_mm!)
+    if (recent.length === 0) return null
+    return recent.reduce((a, b) => a + b, 0) / recent.length
+  })()
+
   const etoResolution = resolveETo({
     weatherCorrectedMm: externalData?.weather?.eto_corrected_mm ?? null,
     weatherRawMm: externalData?.weather?.eto_mm ?? null,
-    calculationInput: weatherInput,
-    manualEtoMm: null,
+    calculationInput: null, // nunca recalcular ao vivo — ETo vem sempre do banco (D-1)
+    manualEtoMm: historyEtoAvg,
     etoCorrectionFactor: correctionFactor > 0 && correctionFactor < 1 ? correctionFactor : null,
   })
 
