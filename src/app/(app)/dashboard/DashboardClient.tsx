@@ -187,6 +187,80 @@ export function DashboardClient({
     }
   }
 
+  // ─── Projeção de irrigação (fonte única de verdade para DecisionCard + Recomendações) ───
+  interface PivotRec {
+    pivotId: string
+    pivotName: string
+    pct: number | null
+    needsIrrigationToday: boolean
+    laminaToday: number | null
+    speedToday: number | null
+    daysAway: number | null
+    laminaProjected: number | null
+    speedProjected: number | null
+  }
+
+  const pivotRecs: PivotRec[] = []
+
+  for (const pivot of pivots) {
+    if (!activePivotIds.has(pivot.id)) continue
+    const mgmt = lastManagementByPivot[pivot.id]
+    const pct = mgmt?.field_capacity_percent ?? null
+
+    if (mgmt?.needs_irrigation) {
+      pivotRecs.push({
+        pivotId: pivot.id,
+        pivotName: pivot.name,
+        pct,
+        needsIrrigationToday: true,
+        laminaToday: mgmt.recommended_depth_mm ?? null,
+        speedToday: mgmt.recommended_speed_percent ?? null,
+        daysAway: null,
+        laminaProjected: null,
+        speedProjected: null,
+      })
+      continue
+    }
+
+    // Projeção simples sem forecast (usa ETc salvo no banco)
+    if (mgmt?.cta && mgmt?.ctda != null && mgmt?.etc_mm) {
+      const cta = mgmt.cta
+      const etcMm = mgmt.etc_mm
+      const threshold = pivot.alert_threshold_percent ?? 70
+      const target = pivot.irrigation_target_percent ?? 100
+      const thresholdMm = (threshold / 100) * cta
+      const targetMm = (target / 100) * cta
+      const speedFloor = pivot.min_speed_percent ?? 10
+      let adc = mgmt.ctda
+
+      for (let i = 1; i <= 7; i++) {
+        adc = Math.max(0, adc - etcMm)
+        if (adc <= thresholdMm) {
+          const speed = findRecommendedSpeed(pivot, Math.max(0, targetMm - adc))
+            ?? (Math.ceil(speedFloor / 10) * 10)
+          pivotRecs.push({
+            pivotId: pivot.id,
+            pivotName: pivot.name,
+            pct,
+            needsIrrigationToday: false,
+            laminaToday: null,
+            speedToday: null,
+            daysAway: i,
+            laminaProjected: Math.max(0, targetMm - adc),
+            speedProjected: speed,
+          })
+          break
+        }
+      }
+    }
+  }
+
+  pivotRecs.sort((a, b) => {
+    if (a.needsIrrigationToday && !b.needsIrrigationToday) return -1
+    if (!a.needsIrrigationToday && b.needsIrrigationToday) return 1
+    return (a.daysAway ?? 99) - (b.daysAway ?? 99)
+  })
+
   const totalPivots  = summary.totalPivots
   const activePivots = summary.activePivots
 
@@ -206,10 +280,9 @@ export function DashboardClient({
 
       {/* ② Bloco principal de decisão — protagonista */}
       <DecisionCard
-        pivots={pivots}
-        activeSeasons={activeSeasons}
-        lastManagementByPivot={lastManagementByPivot}
-        summary={summary}
+        pivotRecs={pivotRecs}
+        activePivots={summary.activePivots}
+        handledToday={summary.handledToday}
       />
 
       {/* ③ KPIs resumidos */}
@@ -234,83 +307,9 @@ export function DashboardClient({
         )
       })()}
 
-      {/* ④ Recomendações Operacionais — sempre visível */}
+      {/* ④ Recomendações Operacionais — usa pivotRecs já calculado */}
       {(() => {
-        // Calcula projeção para cada pivô ativo usando dados do banco (sem fetch externo)
-        interface PivotRec {
-          pivotId: string
-          pivotName: string
-          pct: number | null
-          needsIrrigationToday: boolean
-          laminaToday: number | null
-          speedToday: number | null
-          daysAway: number | null
-          laminaProjected: number | null
-          speedProjected: number | null
-        }
-
-        const recs: PivotRec[] = []
-
-        for (const pivot of pivots) {
-          if (!activePivotIds.has(pivot.id)) continue
-          const mgmt = lastManagementByPivot[pivot.id]
-          const pct = mgmt?.field_capacity_percent ?? null
-
-          if (mgmt?.needs_irrigation) {
-            recs.push({
-              pivotId: pivot.id,
-              pivotName: pivot.name,
-              pct,
-              needsIrrigationToday: true,
-              laminaToday: mgmt.recommended_depth_mm ?? null,
-              speedToday: mgmt.recommended_speed_percent ?? null,
-              daysAway: null,
-              laminaProjected: null,
-              speedProjected: null,
-            })
-            continue
-          }
-
-          // Projeção simples sem forecast (usa ETc salvo no banco)
-          if (mgmt?.cta && mgmt?.ctda != null && mgmt?.etc_mm) {
-            const cta = mgmt.cta
-            const etcMm = mgmt.etc_mm
-            const threshold = pivot.alert_threshold_percent ?? 70
-            const target = pivot.irrigation_target_percent ?? 100
-            const thresholdMm = (threshold / 100) * cta
-            const targetMm = (target / 100) * cta
-            const speedFloor = pivot.min_speed_percent ?? 10
-            let adc = mgmt.ctda
-
-            for (let i = 1; i <= 7; i++) {
-              adc = Math.max(0, adc - etcMm)
-              if (adc <= thresholdMm) {
-                const deficit = Math.max(targetMm - adc, thresholdMm * 0.1)
-                const speed = findRecommendedSpeed(pivot, Math.max(0, targetMm - adc))
-                  ?? (Math.ceil(speedFloor / 10) * 10)
-                recs.push({
-                  pivotId: pivot.id,
-                  pivotName: pivot.name,
-                  pct,
-                  needsIrrigationToday: false,
-                  laminaToday: null,
-                  speedToday: null,
-                  daysAway: i,
-                  laminaProjected: Math.max(0, targetMm - adc),
-                  speedProjected: speed,
-                })
-                break
-              }
-            }
-          }
-        }
-
-        // Ordena: irrigar hoje primeiro, depois por dias
-        recs.sort((a, b) => {
-          if (a.needsIrrigationToday && !b.needsIrrigationToday) return -1
-          if (!a.needsIrrigationToday && b.needsIrrigationToday) return 1
-          return (a.daysAway ?? 99) - (b.daysAway ?? 99)
-        })
+        const recs = pivotRecs
 
         const urgentCount = recs.filter(r => r.needsIrrigationToday).length
         const soonCount = recs.filter(r => !r.needsIrrigationToday && (r.daysAway ?? 99) <= 2).length
