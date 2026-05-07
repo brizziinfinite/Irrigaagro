@@ -1294,6 +1294,18 @@ export default function RelatoriosPage() {
     () => new Set(['kpis'])
   )
 
+  // Abrir seção energia automaticamente quando dados chegarem
+  useEffect(() => {
+    if (energyBills.length > 0) {
+      setOpenSections(prev => {
+        if (prev.has('energia')) return prev
+        const next = new Set(prev)
+        next.add('energia')
+        return next
+      })
+    }
+  }, [energyBills.length])
+
   const toggleSection = useCallback((id: string) => {
     setOpenSections(prev => {
       const next = new Set(prev)
