@@ -276,8 +276,8 @@ export default function DiagnosticoSoloPage() {
 
     async function load() {
       const [{ data: farmsData }, { data: pivotsData }, { data: histData }] = await Promise.all([
-        supabase.from('farms').select('*').eq('company_id', companyId!),
-        supabase.from('pivots').select('*, farms!inner(company_id)').eq('farms.company_id', companyId!),
+        supabase.from('farms').select('*').eq('company_id', companyId!).limit(100),
+        supabase.from('pivots').select('*, farms!inner(company_id)').eq('farms.company_id', companyId!).limit(200),
         supabase
           .from('soil_manual_diagnosis')
           .select('*, pivots(name)')
@@ -303,6 +303,7 @@ export default function DiagnosticoSoloPage() {
       .eq('pivot_id', selectedPivotId)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
+      .limit(10)
       .then(({ data }) => {
         setSeasons(data ?? [])
         if (data && data.length === 1) setSelectedSeasonId(data[0].id)

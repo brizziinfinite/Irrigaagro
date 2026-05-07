@@ -12,6 +12,7 @@ export async function listCropsByCompany(
     .select('*')
     .or(`company_id.is.null,company_id.eq.${companyId}`)
     .order('name')
+    .limit(200)
 
   if (error) {
     throw new Error(`Falha ao listar culturas: ${error.message}`)

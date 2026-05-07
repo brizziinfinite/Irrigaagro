@@ -1763,7 +1763,7 @@ export default function LancamentosPage() {
       const metaList: PivotMeta[] = await Promise.all(contexts.map(async ctx => {
         const [history, speedRows, sectors] = await Promise.all([
           listDailyManagementBySeason(ctx.season.id),
-          (supabase as any).from('pivot_speed_table').select('*').eq('pivot_id', ctx.pivot?.id ?? ''),
+          (supabase as any).from('pivot_speed_table').select('*').eq('pivot_id', ctx.pivot?.id ?? '').limit(100),
           ctx.pivot ? listSectorsByPivotId(ctx.pivot.id) : Promise.resolve([]),
         ])
         const speedTable: PivotSpeedEntry[] = speedRows.data ?? []

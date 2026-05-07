@@ -22,6 +22,7 @@ export async function listContactsByCompany(
     .select('*')
     .eq('company_id', companyId)
     .order('contact_name')
+    .limit(100)
 
   if (error) throw new Error(`Falha ao listar contatos: ${error.message}`)
   return (data ?? []) as WhatsAppContact[]

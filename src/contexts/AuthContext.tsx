@@ -96,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('company_id', companyId)
         .order('name')
+        .limit(100)
       if (fetchError) throw fetchError
       const farmList = (data ?? []) as Farm[]
       setFarms(farmList)
@@ -132,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from('companies')
         .select('*')
         .in('id', companyIds)
+        .limit(100)
 
       if (companiesError) throw companiesError
 

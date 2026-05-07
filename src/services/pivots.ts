@@ -36,6 +36,7 @@ export async function listPivotsByFarmIds(
     .from('pivot_sectors')
     .select('pivot_id')
     .in('pivot_id', ids)
+    .limit(500)
 
   const countMap: Record<string, number> = {}
   for (const row of (sectorRows ?? [])) {

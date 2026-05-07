@@ -140,12 +140,14 @@ export async function listActiveManagementSeasonContexts(
 
 export async function listDailyManagementBySeason(
   seasonId: string,
-  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
+  limit = 120
 ): Promise<DailyManagement[]> {
   const { data, error } = await dailyManagementTable(client)
     .select('*')
     .eq('season_id', seasonId)
     .order('date', { ascending: false })
+    .limit(limit)
 
   if (error) {
     throw managementServiceError('listar histórico de', error)

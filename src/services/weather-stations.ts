@@ -40,6 +40,7 @@ export async function listWeatherStationsByFarmIds(
     .select('*')
     .in('farm_id', farmIds)
     .order('name')
+    .limit(50)
 
   if (error) {
     throw weatherStationsServiceError('listar', error)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useAuth } from '@/hooks/useAuth'
 import { persistedFetch } from '@/lib/persistedFetch'
 import { useOnlineGuard } from '@/hooks/useOnlineGuard'
@@ -15,7 +16,17 @@ import {
   Calendar,
 } from 'lucide-react'
 import Link from 'next/link'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts'
+const RainfallBarChart = dynamic(
+  () => import('./RainfallBarChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ height: 160, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 12 }}>
+        Carregando gráfico…
+      </div>
+    ),
+  }
+)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -394,68 +405,6 @@ function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareP
           </div>
         ))}
       </div>
-    </div>
-  )
-}
-
-// ─── Bar chart ────────────────────────────────────────────────────────────────
-
-function RainfallBarChart({ records, year, month }: { records: RainfallRecord[]; year: number; month: number }) {
-  const data = useMemo(() => {
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const byDate = buildRainfallMap(records)
-    const map: Record<number, number> = {}
-    for (const [date, mm] of Object.entries(byDate)) {
-      const d = new Date(date + 'T00:00:00')
-      if (d.getFullYear() === year && d.getMonth() === month) {
-        map[d.getDate()] = mm
-      }
-    }
-    return Array.from({ length: daysInMonth }, (_, i) => ({
-      day: String(i + 1),
-      mm: map[i + 1] ?? 0
-    }))
-  }, [records, year, month])
-
-  const avgMm = useMemo(() => data.reduce((s, d) => s + d.mm, 0) / data.length, [data])
-
-  return (
-    <div style={{ position: 'relative', width: '100%', height: 160 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
-          <defs>
-            <linearGradient id="barGradRain" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#06b6d4" />
-              <stop offset="50%" stopColor="#0284c7" />
-              <stop offset="100%" stopColor="#0284c7" stopOpacity={0.6} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.03)" vertical={false} />
-          <XAxis 
-            dataKey="day" 
-            tick={{ fill: '#778899', fontSize: 10 }} 
-            axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} 
-            tickLine={false} 
-            interval={0}
-            tickFormatter={(v, i) => i === 0 || i === data.length - 1 || (i + 1) % 5 === 0 ? v : ''}
-          />
-          <YAxis 
-            tick={{ fill: '#778899', fontSize: 10 }} 
-            axisLine={false} 
-            tickLine={false} 
-            tickFormatter={v => v > 0 ? v : ''}
-          />
-          <Tooltip
-            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
-            contentStyle={{ backgroundColor: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12, padding: '8px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
-            formatter={(value: any) => [`${Number(value).toFixed(1)} mm`, 'Precipitação']}
-            labelFormatter={(label) => `Dia ${label}`}
-            labelStyle={{ color: '#8899aa', marginBottom: 4 }}
-          />
-          {avgMm > 0 && <ReferenceLine y={avgMm} stroke="#f59e0b" strokeDasharray="3 3" strokeWidth={1} />}
-          <Bar dataKey="mm" fill="url(#barGradRain)" radius={[4, 4, 0, 0]} maxBarSize={16} />
-        </BarChart>
-      </ResponsiveContainer>
     </div>
   )
 }

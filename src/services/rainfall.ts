@@ -35,7 +35,8 @@ export async function listRainfallByPivotIds(
   pivotIds: string[],
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
   dateFrom?: string,
-  dateTo?: string
+  dateTo?: string,
+  limit = 500
 ): Promise<RainfallRecord[]> {
   if (pivotIds.length === 0) {
     return []
@@ -45,6 +46,7 @@ export async function listRainfallByPivotIds(
     .select('*')
     .in('pivot_id', pivotIds)
     .order('date', { ascending: false })
+    .limit(limit)
 
   if (dateFrom) q = q.gte('date', dateFrom)
   if (dateTo)   q = q.lte('date', dateTo)
@@ -61,12 +63,14 @@ export async function listRainfallByPivotIds(
 export async function listRainfallByPivotIdAndSector(
   pivotId: string,
   sectorId: string | null,
-  client: TypedSupabaseClient = createClient() as TypedSupabaseClient
+  client: TypedSupabaseClient = createClient() as TypedSupabaseClient,
+  limit = 365
 ): Promise<RainfallRecord[]> {
   let q = rainfallTable(client)
     .select('*')
     .eq('pivot_id', pivotId)
     .order('date', { ascending: false })
+    .limit(limit)
 
   if (sectorId === null) {
     q = q.is('sector_id', null)

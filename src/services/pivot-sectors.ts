@@ -16,6 +16,7 @@ export async function listSectorsByPivotId(
     .select('*')
     .eq('pivot_id', pivotId)
     .order('sort_order', { ascending: true })
+    .limit(50)
 
   if (error) throw sectorError('listar', error)
   return (data ?? []) as PivotSector[]

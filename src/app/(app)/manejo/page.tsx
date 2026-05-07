@@ -1,6 +1,7 @@
 'use client'
 
 import PivotSpinner from '@/components/ui/PivotSpinner'
+import dynamic from 'next/dynamic'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { persistedFetch } from '@/lib/persistedFetch'
@@ -37,7 +38,18 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Area, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceArea, Cell, AreaChart, BarChart } from 'recharts'
-import WaterBalanceChart from './WaterBalanceChart'
+
+const WaterBalanceChart = dynamic(
+  () => import('./WaterBalanceChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ height: 240, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 12 }}>
+        Carregando gráfico…
+      </div>
+    ),
+  }
+)
 import { UltimaAtualizacao } from '@/components/UltimaAtualizacao'
 
 // ─── Status semáforo ─────────────────────────────────────────

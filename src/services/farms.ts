@@ -12,6 +12,7 @@ export async function listFarmsByCompany(
     .select('*')
     .eq('company_id', companyId)
     .order('name')
+    .limit(100)
 
   if (error) {
     throw new Error(`Falha ao listar fazendas: ${error.message}`)

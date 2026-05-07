@@ -27,6 +27,7 @@ export async function listUserCompanies(
     .select('*')
     .in('id', companyIds)
     .order('name')
+    .limit(100)
 
   if (companiesError) {
     throw new Error(`Falha ao buscar empresas: ${companiesError.message}`)

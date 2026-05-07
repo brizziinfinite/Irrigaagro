@@ -19,8 +19,17 @@ import {
   CheckCircle2, X, CalendarClock
 } from 'lucide-react'
 import { findRecommendedSpeed, getFFactorForDas } from '@/lib/water-balance'
-import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Area, ReferenceLine, ReferenceDot } from 'recharts'
-import WaterBalanceChart from '@/app/(app)/manejo/WaterBalanceChart'
+const WaterBalanceChart = dynamic(
+  () => import('@/app/(app)/manejo/WaterBalanceChart'),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ height: 200, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 12 }}>
+        Carregando gráfico…
+      </div>
+    ),
+  }
+)
 
 const PivotMap = dynamic(
   () => import('./PivotMap').then(m => ({ default: m.PivotMap })),

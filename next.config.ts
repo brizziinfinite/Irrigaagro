@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import BundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = BundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
 
 const nextConfig: NextConfig = {
   // Compressão gzip/brotli das respostas — reduz bundle ~70% no wire
@@ -11,4 +16,4 @@ const nextConfig: NextConfig = {
 
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

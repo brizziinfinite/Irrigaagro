@@ -10,8 +10,6 @@
     "email": "email dev --dir src/emails --port 3001"
   },
   "dependencies": {
-    "@react-email/components": "^1.0.12",
-    "@react-email/ui": "^6.0.0",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.2",
     "@types/leaflet": "^1.9.21",
@@ -23,7 +21,6 @@
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-email": "^6.0.0",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.8.0",
     "tailwind-merge": "^3.5.0",
@@ -36,6 +33,10 @@
     "edge >= 96"
   ],
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.5",
+    "@react-email/components": "^1.0.12",
+    "@react-email/ui": "^6.0.0",
+    "react-email": "^6.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

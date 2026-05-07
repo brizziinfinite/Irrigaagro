@@ -1166,6 +1166,7 @@ export default function RelatoriosPage() {
       .from('farms')
       .select('id')
       .eq('company_id', company.id)
+      .limit(100)
 
     const farmIds = (farms ?? []).map((f: { id: string }) => f.id)
     if (farmIds.length === 0) {
@@ -1179,6 +1180,7 @@ export default function RelatoriosPage() {
       .select('*, crops(*), pivots(*), farms(id, name)')
       .in('farm_id', farmIds)
       .order('created_at', { ascending: false })
+      .limit(100)
 
     const list = (data as SeasonFull[]) ?? []
     setSeasons(list)
@@ -1197,6 +1199,7 @@ export default function RelatoriosPage() {
       .select('id, name')
       .eq('company_id', company.id)
       .order('name')
+      .limit(100)
       .then(({ data }) => {
         const list = (data ?? []) as { id: string; name: string }[]
         setFarmList(list)
@@ -1219,7 +1222,8 @@ export default function RelatoriosPage() {
         .from('seasons')
         .select('id, name, area_ha, pivot_id, is_active, crops(name)')
         .eq('farm_id', farmId)
-        .eq('is_active', true),
+        .eq('is_active', true)
+        .limit(50),
     ])
     setEnergyBills((billsRes.data as EnergyBill[]) ?? [])
     setEnergySeasons((seasonsRes.data as unknown as typeof energySeasons) ?? [])
@@ -1266,6 +1270,7 @@ export default function RelatoriosPage() {
       .select('*')
       .eq('season_id', seasonId)
       .order('date', { ascending: true })
+      .limit(366)
 
     setRecords((data as DailyManagement[]) ?? [])
     setLoadingRecords(false)

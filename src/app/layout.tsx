@@ -40,6 +40,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={dmSerif.className}>
       <head>
+        {/* Preconnect para reduzir latência no primeiro request */}
+        <link rel="preconnect" href="https://wvwjbzpnujmyvzvadctp.supabase.co" />
+        <link rel="dns-prefetch" href="https://wvwjbzpnujmyvzvadctp.supabase.co" />
+        <link rel="preconnect" href="https://services.arcgisonline.com" />
+        <link rel="dns-prefetch" href="https://server.arcgisonline.com" />
+        <meta name="color-scheme" content="dark" />
         {/* Service Worker registration */}
         <script
           dangerouslySetInnerHTML={{
