@@ -4,7 +4,7 @@
 //   - cache-first: assets estáticos (_next/static, icons, manifest)
 //   - network-first: HTML/navegação (sempre tenta rede; cache visitado como fallback)
 
-const CACHE_NAME = 'irrigaagro-v2'
+const CACHE_NAME = 'irrigaagro-v3'
 const OFFLINE_URL = '/offline.html'
 const STATIC_ASSETS = [
   '/offline.html',
@@ -99,7 +99,6 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() =>
           caches.match(request)
-            .then((cached) => cached || caches.match('/dashboard'))
             .then((cached) => cached || caches.match(OFFLINE_URL))
             .then((fallback) => fallback || new Response('Offline', { status: 503 }))
         )
