@@ -373,6 +373,48 @@ Página safras mostrava 79% (D-1 do banco) enquanto dashboard mostrava valor pro
 
 ---
 
+## 🛰️ NDVI Satélite — Monitoramento por Sentinel-2
+**Status:** ✅ Implementado em 2026-05-06 · branch `feat/ndvi`
+
+Página `/ndvi` com monitoramento de NDVI via Sentinel-2 (Planet Labs Insights Platform) para pivôs e talhões.
+
+### Infraestrutura
+- [x] Migration: tabela `ndvi_cache` (`pivot_id` ou `talhao_id`, `data_imagem`, `ndvi_medio/min/max`, `cobertura_nuvens_pct`, `imagem_url`, `fonte`)
+- [x] Migration: tabela `talhoes` (`company_id`, `farm_id`, `name`, `area_ha`, `color`, `polygon_geojson`, `notes`)
+- [x] Storage bucket `campo-ndvi` (público, PNG, max 10MB)
+- [x] `polygon_geojson` adicionado à tabela `pivots` — gerado automaticamente ao salvar pivô (círculo 64 pontos)
+- [x] Secret `PLANET_API_KEY` configurado nos Supabase Secrets
+- [x] Edge function `ndvi-fetch` deployada — suporte a `pivot_id` e `talhao_id`
+  - Auth: `Authorization: api-key <KEY>` (Planet Labs, não OAuth)
+  - Statistics API → NDVI valores; Process API → PNG colorido salvo no Storage
+  - Cache 10 dias; histórico 120 dias; intervalo 30 dias (`P30D`)
+  - Retorna `sem_credenciais`, `ultima_atualizacao`, `dias_desde_ultima`
+  - `sem_credenciais=true`: retorna cache existente em vez de erro 422
+
+### Frontend
+- [x] `src/hooks/useNdvi.ts` — 4 exports: `useNdviMultiplos`, `useNdviComparativo`, `useNdvi`, `useRefreshNdvi`, `classificarNdvi`
+  - `useRefreshNdvi` aceita `{ pivot_id? } | { talhao_id? }`, expõe `error`
+- [x] `src/services/talhoes.ts` — CRUD completo (`listTalhoesByCompany`, `createTalhao`, `updateTalhao`, `deleteTalhao`)
+- [x] `src/app/(app)/ndvi/TalhaoMapDraw.tsx` — Leaflet + Geoman (polígono + retângulo), `existingPolygon`, `onPolygonChange`
+- [x] `src/app/(app)/ndvi/page.tsx` — página completa
+  - 3 abas: Pivôs / Talhões / Comparativo
+  - Ranking pior→melhor NDVI com tendência (↑↓—) e variação %
+  - CRUD de talhões com mapa de desenho de polígono
+  - `NdviDetalhe` reutilizado para pivôs e talhões
+  - Diagnóstico determinístico: 7 casos, `caindoForte`, `altaNuvens`, NDVI numérico real
+  - Badge NDVI sobreposto na imagem satellite (valor + label colorido)
+  - Legenda inline de 5 blocos coloridos `baixo → alto NDVI`
+  - Coluna "Nuvens %" na tabela de leituras (âmbar quando >60%)
+  - Estado vazio com botão inline "Atualizar agora"
+  - Estado de erro com botão "Tentar novamente"
+  - Datas via `date-fns/ptBR` (`d MMM yyyy`)
+  - Header mostra `ultima_atualizacao` + `dias_desde_ultima`
+  - Aviso `sem_credenciais` com `Info` icon
+- [x] `src/types/database.ts` — `polygon_geojson` em `Pivot` e `PivotInsert`
+- [x] `src/components/layout/Sidebar.tsx` — item "NDVI Satélite" com ícone Satellite no OPERACIONAL
+
+---
+
 ## 🌍 Fertilidade e nutrição
 **Status:** Ideia futura
 

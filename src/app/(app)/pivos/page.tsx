@@ -35,6 +35,19 @@ const PivotMiniMapDynamic = dynamic(
   }
 )
 
+// ─── Polígono circular para NDVI ─────────────────────────────
+function buildCirclePolygon(lat: number, lng: number, radiusM: number, points = 64) {
+  const R = 6378137 // raio Terra em metros
+  const coords: [number, number][] = []
+  for (let i = 0; i <= points; i++) {
+    const angle = (i / points) * 2 * Math.PI
+    const dLat = (radiusM * Math.cos(angle)) / R
+    const dLng = (radiusM * Math.sin(angle)) / (R * Math.cos((lat * Math.PI) / 180))
+    coords.push([lng + (dLng * 180) / Math.PI, lat + (dLat * 180) / Math.PI])
+  }
+  return { type: 'Polygon', coordinates: [coords] }
+}
+
 // ─── Cálculos ────────────────────────────────────────────────
 function calcArea(lengthM: number): number {
   return Math.PI * lengthM * lengthM / 10000 // ha
@@ -313,6 +326,9 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
       cuc_percent: cuc ? Number(cuc) : null,
       latitude: parsedCoords?.lat ?? null,
       longitude: parsedCoords?.lng ?? null,
+      polygon_geojson: parsedCoords && lengthM
+        ? buildCirclePolygon(parsedCoords.lat, parsedCoords.lng, Number(lengthM))
+        : null,
       alert_threshold_percent: alertThreshold ? Number(alertThreshold) : 70,
       irrigation_target_percent: irrigationTarget ? Number(irrigationTarget) : 80,
       weather_source: weatherSource,
