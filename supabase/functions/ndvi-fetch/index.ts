@@ -1,62 +1,194 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+/**
+ * Edge Function: ndvi-fetch
+ *
+ * Busca NDVI de um pivô ou talhão via Copernicus Data Space Statistics API.
+ *
+ * Secrets necessários:
+ *   SENTINEL_CLIENT_ID     — OAuth client ID do Copernicus Data Space
+ *   SENTINEL_CLIENT_SECRET — OAuth client secret do Copernicus Data Space
+ */
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// ── Planet / Sentinel Hub ─────────────────────────────────────────────────────
-// Auth: API Key direto (sem OAuth) — header: "Authorization: api-key <KEY>"
-const SH_BASE = 'https://services.sentinel-hub.com'
+const SENTINEL_TOKEN_URL = 'https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token'
+const SENTINEL_STATS_URL = 'https://sh.dataspace.copernicus.eu/api/v1/statistics'
+const SENTINEL_PROCESS_URL = 'https://sh.dataspace.copernicus.eu/api/v1/process'
 
 const CACHE_DIAS = 10
 const DIAS_HISTORICO = 120
-const PERIODO = 'P30D'
-const MAX_NUVENS = 80
-const IMG_SIZE = 512
 
-const EVALSCRIPT_STATS = `//VERSION=3
+const EVALSCRIPT = `
+//VERSION=3
 function setup() {
   return {
     input: [{ bands: ["B04", "B08", "SCL", "dataMask"] }],
     output: [
       { id: "ndvi", bands: 1, sampleType: "FLOAT32" },
-      { id: "dataMask", bands: 1, sampleType: "UINT8" }
+      { id: "dataMask", bands: 1 }
     ]
   };
 }
 function evaluatePixel(s) {
-  const ndvi = (s.B08 - s.B04) / (s.B08 + s.B04 + 1e-10);
-  const clear = s.dataMask === 1 && ![3,8,9,10].includes(s.SCL[0]);
-  return {
-    ndvi: [clear ? ndvi : NaN],
-    dataMask: [clear ? 1 : 0]
-  };
-}`
-
-const EVALSCRIPT_IMG = `//VERSION=3
-function setup() {
-  return { input: [{ bands: ["B04","B08","SCL","dataMask"] }], output: { bands: 4 } };
+  const isCloud = s.SCL >= 8 && s.SCL <= 10;
+  const isShadow = s.SCL === 3;
+  const isValid = s.dataMask === 1 && !isCloud && !isShadow;
+  if (!isValid) return { ndvi: [0], dataMask: [0] };
+  const ndvi = (s.B08 - s.B04) / (s.B08 + s.B04 + 0.0001);
+  return { ndvi: [ndvi], dataMask: [1] };
 }
-function colorFromNdvi(ndvi) {
-  if (ndvi < 0.0)  return [0.10, 0.10, 0.10];
-  if (ndvi < 0.2)  return [0.86, 0.12, 0.08];
-  if (ndvi < 0.35) return [0.78, 0.31, 0.00];
-  if (ndvi < 0.5)  return [0.78, 0.78, 0.00];
-  if (ndvi < 0.7)  return [0.00, 0.78, 0.00];
-  return               [0.00, 0.59, 0.00];
+`
+
+const EVALSCRIPT_IMG = `
+//VERSION=3
+function setup() {
+  return {
+    input: [{ bands: ["B04", "B08"] }],
+    output: { bands: 3, sampleType: "UINT8" }
+  };
 }
 function evaluatePixel(s) {
-  const ndvi = (s.B08 - s.B04) / (s.B08 + s.B04 + 1e-10);
-  const isClear = s.dataMask === 1 && ![3,8,9,10].includes(s.SCL[0]);
-  if (!isClear) return [0, 0, 0, 0];
-  const [r, g, b] = colorFromNdvi(ndvi);
-  return [r, g, b, 1];
-}`
+  var ndvi = (s.B08 - s.B04) / (s.B08 + s.B04 + 0.0001);
+  var r, g, b;
+  if (ndvi < 0.0)       { r=50;  g=50;  b=50;  }
+  else if (ndvi < 0.2)  { var t=ndvi/0.2;          r=220; g=Math.round(30+50*t);   b=20; }
+  else if (ndvi < 0.35) { var t=(ndvi-0.2)/0.15;   r=220; g=Math.round(80+100*t);  b=0;  }
+  else if (ndvi < 0.5)  { var t=(ndvi-0.35)/0.15;  r=Math.round(220-140*t); g=200; b=0;  }
+  else if (ndvi < 0.65) { var t=(ndvi-0.5)/0.15;   r=Math.round(80-80*t);  g=200; b=0;  }
+  else if (ndvi < 0.8)  { var t=(ndvi-0.65)/0.15;  r=0; g=Math.round(200-40*t);   b=0;  }
+  else                  { var t=(ndvi-0.8)/0.2;     r=0; g=Math.round(160-60*t);   b=0;  }
+  return [r, g, b];
+}
+`
 
-function shHeaders(apiKey: string) {
-  return { Authorization: `api-key ${apiKey}`, 'Content-Type': 'application/json' }
+async function getSentinelToken(clientId: string, clientSecret: string): Promise<string> {
+  const res = await fetch(SENTINEL_TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+    }).toString(),
+  })
+  if (!res.ok) throw new Error(`Sentinel auth failed: ${await res.text()}`)
+  const data = await res.json()
+  return data.access_token as string
+}
+
+async function fetchNdviStats(
+  token: string,
+  geojson: unknown,
+  dataInicio: string,
+  dataFim: string,
+): Promise<Array<{ data: string; ndvi_medio: number; ndvi_min: number; ndvi_max: number; cobertura_nuvens_pct: number }>> {
+  const body = {
+    input: {
+      bounds: {
+        geometry: geojson,
+        properties: { crs: 'http://www.opengis.net/def/crs/EPSG/0/4326' },
+      },
+      data: [{ type: 'sentinel-2-l2a', dataFilter: { maxCloudCoverage: 80 } }],
+    },
+    aggregation: {
+      timeRange: { from: `${dataInicio}T00:00:00Z`, to: `${dataFim}T23:59:59Z` },
+      aggregationInterval: { of: 'P30D' },
+      evalscript: EVALSCRIPT,
+      resx: 10,
+      resy: 10,
+    },
+    calculations: { default: {} },
+  }
+
+  const res = await fetch(SENTINEL_STATS_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    console.error('Statistics API error:', await res.text())
+    return []
+  }
+
+  const resp = await res.json()
+  const results = []
+
+  for (const item of (resp.data ?? [])) {
+    const stats = item?.outputs?.ndvi?.bands?.B0?.stats
+    if (!stats || stats.sampleCount === 0) continue
+    const ndvi_medio = stats.mean ?? null
+    if (ndvi_medio === null) continue
+
+    const dataRepresentativa = (item.interval?.to ?? item.interval?.from ?? dataFim).slice(0, 10)
+    const totalPixels = (stats.sampleCount ?? 0) + (stats.noDataCount ?? 0)
+    const cobertura = totalPixels > 0
+      ? Math.round(((stats.noDataCount ?? 0) / totalPixels) * 100)
+      : 0
+
+    results.push({
+      data: dataRepresentativa,
+      ndvi_medio: Math.round(ndvi_medio * 1000) / 1000,
+      ndvi_min: Math.round((stats.min ?? 0) * 1000) / 1000,
+      ndvi_max: Math.round((stats.max ?? 0) * 1000) / 1000,
+      cobertura_nuvens_pct: cobertura,
+    })
+  }
+
+  return results
+}
+
+async function fetchNdviImagem(
+  token: string,
+  geojson: unknown,
+  dataInicio: string,
+  dataFim: string,
+): Promise<Uint8Array | null> {
+  const body = {
+    input: {
+      bounds: {
+        geometry: geojson,
+        properties: { crs: 'http://www.opengis.net/def/crs/EPSG/0/4326' },
+      },
+      data: [{
+        type: 'sentinel-2-l2a',
+        dataFilter: {
+          timeRange: { from: `${dataInicio}T00:00:00Z`, to: `${dataFim}T23:59:59Z` },
+          maxCloudCoverage: 80,
+        },
+      }],
+    },
+    output: {
+      width: 512,
+      height: 512,
+      responses: [{ identifier: 'default', format: { type: 'image/png' } }],
+    },
+    evalscript: EVALSCRIPT_IMG,
+  }
+
+  const res = await fetch(SENTINEL_PROCESS_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    console.error('Process API error:', await res.text())
+    return null
+  }
+
+  return new Uint8Array(await res.arrayBuffer())
+}
+
+function subtrairDias(dias: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - dias)
+  return d.toISOString().slice(0, 10)
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -66,7 +198,8 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const planetApiKey = Deno.env.get('PLANET_API_KEY') ?? Deno.env.get('SENTINEL_CLIENT_ID')
+    const sentinelClientId = Deno.env.get('SENTINEL_CLIENT_ID')
+    const sentinelClientSecret = Deno.env.get('SENTINEL_CLIENT_SECRET')
 
     // Validate caller
     const authHeader = req.headers.get('authorization') ?? ''
@@ -88,7 +221,7 @@ serve(async (req) => {
       })
     }
 
-    // ── Resolve entidade (pivô ou talhão) ─────────────────────
+    // Resolve entidade
     let entityName = ''
     let polygonGeoJSON: unknown = null
     let companyId = ''
@@ -140,263 +273,139 @@ serve(async (req) => {
       })
     }
 
-    // Check cache freshness
-    if (!forcar_refresh) {
-      const { data: recente } = await supabaseAdmin
-        .from('ndvi_cache')
-        .select('*')
-        .eq(cacheField, cacheValue)
-        .order('data_imagem', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (recente) {
-        const diasAtras = Math.floor(
-          (Date.now() - new Date(recente.data_imagem).getTime()) / 86400000
-        )
-        if (diasAtras < CACHE_DIAS) {
-          const { data: historico } = await supabaseAdmin
-            .from('ndvi_cache')
-            .select('*')
-            .eq(cacheField, cacheValue)
-            .order('data_imagem', { ascending: true })
-          const ultimaDataCache = historico?.length ? historico[historico.length - 1]?.data_imagem : null
-          const diasDesdeUltimaCache = ultimaDataCache
-            ? Math.floor((Date.now() - new Date(ultimaDataCache).getTime()) / 86400000)
-            : null
-          return new Response(
-            JSON.stringify({
-              pivot_id, talhao_id, entity_name: entityName,
-              historico: historico ?? [], alertas: [],
-              ultima_atualizacao: ultimaDataCache,
-              dias_desde_ultima: diasDesdeUltimaCache,
-            }),
-            { headers: { ...CORS, 'Content-Type': 'application/json' } }
-          )
-        }
-      }
-    }
-
-    // Check if Planet API Key configured
-    if (!planetApiKey) {
-      // Return sem_credenciais=true with whatever cache exists
-      const { data: cacheExistente } = await supabaseAdmin
-        .from('ndvi_cache')
-        .select('*')
-        .eq(cacheField, cacheValue)
-        .order('data_imagem', { ascending: true })
-      const ultimaData = cacheExistente?.length
-        ? cacheExistente[cacheExistente.length - 1]?.data_imagem
-        : null
-      const diasDesdeUltima = ultimaData
-        ? Math.floor((Date.now() - new Date(ultimaData).getTime()) / 86400000)
-        : null
-      return new Response(
-        JSON.stringify({
-          pivot_id, talhao_id, entity_name: entityName,
-          historico: cacheExistente ?? [],
-          alertas: [],
-          sem_credenciais: true,
-          ultima_atualizacao: ultimaData,
-          dias_desde_ultima: diasDesdeUltima,
-          error: 'SENTINEL_NOT_CONFIGURED',
-          message: 'Configure PLANET_API_KEY nas Edge Function Secrets',
-        }),
-        { headers: { ...CORS, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Check polygon
-    if (!polygonGeoJSON) {
-      return new Response(
-        JSON.stringify({
-          error: 'NO_POLYGON',
-          message: 'Sem polígono cadastrado. Desenhe o polígono para habilitar NDVI.',
-        }),
-        { status: 422, headers: { ...CORS, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Date range
-    const agora = new Date()
-    const dataFim = agora.toISOString().split('T')[0]
-    const dataInicio = new Date(agora.getTime() - DIAS_HISTORICO * 86400000)
-      .toISOString()
-      .split('T')[0]
-
-    // Statistics API
-    const statsPayload = {
-      input: {
-        bounds: { geometry: polygonGeoJSON },
-        data: [{ type: 'sentinel-2-l2a', dataFilter: { maxCloudCoverage: MAX_NUVENS } }],
-      },
-      aggregation: {
-        timeRange: { from: `${dataInicio}T00:00:00Z`, to: `${dataFim}T23:59:59Z` },
-        aggregationInterval: { of: PERIODO },
-        evalscript: EVALSCRIPT_STATS,
-        resx: 10,
-        resy: 10,
-      },
-    }
-
-    const statsRes = await fetch('https://services.sentinel-hub.com/api/v1/statistics', {
-      method: 'POST',
-      headers: { Authorization: `api-key ${planetApiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(statsPayload),
-    })
-
-    if (!statsRes.ok) {
-      const errText = await statsRes.text()
-      throw new Error(`Statistics API error ${statsRes.status}: ${errText}`)
-    }
-
-    const statsData = await statsRes.json()
-    const intervals = statsData?.data ?? []
-
-    if (intervals.length === 0) {
-      return new Response(
-        JSON.stringify({ pivot_id, talhao_id, entity_name: entityName, historico: [], alertas: ['Sem imagens disponíveis no período'] }),
-        { headers: { ...CORS, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Parse intervals
-    interface NdviRegistro {
-      data: string
-      ndvi_medio: number | null
-      ndvi_min: number | null
-      ndvi_max: number | null
-      nuvens_pct: number | null
-    }
-
-    const registros: NdviRegistro[] = intervals.map((interval: Record<string, unknown>) => {
-      const to = (interval.interval as { to: string }).to.split('T')[0]
-      const outputs = (interval.outputs as Record<string, unknown>) ?? {}
-      const ndviOutput = (outputs.ndvi as Record<string, unknown>) ?? {}
-      const bands = (ndviOutput.bands as Record<string, unknown>) ?? {}
-      const b0 = (bands.B0 as Record<string, unknown>) ?? {}
-      const stats = (b0.stats as Record<string, unknown>) ?? {}
-      return {
-        data: to,
-        ndvi_medio: (stats.mean as number | null) ?? null,
-        ndvi_min: (stats.min as number | null) ?? null,
-        ndvi_max: (stats.max as number | null) ?? null,
-        nuvens_pct: null,
-      }
-    }).filter((r: NdviRegistro) => r.ndvi_medio !== null && !isNaN(r.ndvi_medio as number))
-
-    if (registros.length === 0) {
-      return new Response(
-        JSON.stringify({ pivot_id, talhao_id, entity_name: entityName, historico: [], alertas: ['Nenhum pixel limpo encontrado (possível cobertura de nuvens)'] }),
-        { headers: { ...CORS, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Most recent date for PNG
-    const dataMaisRecente = registros[registros.length - 1].data
-
-    // Process API — colored PNG
-    let imagemUrl: string | null = null
-    try {
-      const processPayload = {
-        input: {
-          bounds: { geometry: polygonGeoJSON },
-          data: [{
-            type: 'sentinel-2-l2a',
-            dataFilter: {
-              timeRange: {
-                from: `${dataMaisRecente}T00:00:00Z`,
-                to: `${dataMaisRecente}T23:59:59Z`,
-              },
-              maxCloudCoverage: MAX_NUVENS,
-            },
-          }],
-        },
-        output: {
-          width: IMG_SIZE,
-          height: IMG_SIZE,
-          responses: [{ identifier: 'default', format: { type: 'image/png' } }],
-        },
-        evalscript: EVALSCRIPT_IMG,
-      }
-
-      const imgRes = await fetch('https://services.sentinel-hub.com/api/v1/process', {
-        method: 'POST',
-        headers: { Authorization: `api-key ${planetApiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(processPayload),
-      })
-
-      if (imgRes.ok) {
-        const imgBuffer = await imgRes.arrayBuffer()
-        const nomeArquivo = `${storagePrefix}/${dataMaisRecente}.png`
-
-        await supabaseAdmin.storage
-          .from('campo-ndvi')
-          .upload(nomeArquivo, imgBuffer, { contentType: 'image/png', upsert: true })
-
-        const { data: urlData } = supabaseAdmin.storage
-          .from('campo-ndvi')
-          .getPublicUrl(nomeArquivo)
-
-        imagemUrl = urlData.publicUrl
-      }
-    } catch (imgErr) {
-      console.error('PNG generation failed (non-fatal):', imgErr)
-    }
-
-    // Upsert cache
-    const onConflict = pivot_id ? 'pivot_id,data_imagem' : 'talhao_id,data_imagem'
-    await supabaseAdmin.from('ndvi_cache').upsert(
-      registros.map((r) => ({
-        ...(pivot_id ? { pivot_id } : { talhao_id }),
-        data_imagem: r.data,
-        ndvi_medio: r.ndvi_medio,
-        ndvi_min: r.ndvi_min,
-        ndvi_max: r.ndvi_max,
-        cobertura_nuvens_pct: r.nuvens_pct,
-        imagem_url: r.data === dataMaisRecente ? imagemUrl : null,
-        fonte: 'sentinel2',
-      })),
-      { onConflict }
-    )
-
-    // Alertas
-    const alertas: string[] = []
-    if (registros.length >= 2) {
-      const anterior = registros[registros.length - 2]
-      const atual = registros[registros.length - 1]
-      if (atual.ndvi_medio != null && anterior.ndvi_medio != null && anterior.ndvi_medio > 0) {
-        const queda = (anterior.ndvi_medio - atual.ndvi_medio) / anterior.ndvi_medio
-        if (queda >= 0.2) alertas.push(`Queda crítica de NDVI: ${Math.round(queda * 100)}%`)
-        else if (queda >= 0.1) alertas.push(`Queda moderada de NDVI: ${Math.round(queda * 100)}%`)
-      }
-    }
-
-    // Return full historico from DB
-    const { data: historico } = await supabaseAdmin
+    // Buscar cache existente
+    const dataLimite = subtrairDias(DIAS_HISTORICO)
+    const { data: historico = [] } = await supabaseAdmin
       .from('ndvi_cache')
       .select('*')
       .eq(cacheField, cacheValue)
+      .gte('data_imagem', dataLimite)
       .order('data_imagem', { ascending: true })
 
-    const ultimaDataFinal = (historico ?? []).length ? historico![historico!.length - 1]?.data_imagem : null
+    const ultimaImagem = historico.length > 0 ? historico[historico.length - 1] : null
+    const ultimaData = ultimaImagem?.data_imagem
+    const diasDesdeUltima = ultimaData
+      ? Math.floor((Date.now() - new Date(ultimaData).getTime()) / 86400000)
+      : 999
+
+    const precisaAtualizar = forcar_refresh || diasDesdeUltima >= CACHE_DIAS
+
+    // Sem credenciais — retornar cache
+    if (!sentinelClientId || !sentinelClientSecret) {
+      return new Response(JSON.stringify({
+        pivot_id, talhao_id, entity_name: entityName,
+        historico, alertas: [],
+        sem_credenciais: true,
+        ultima_atualizacao: ultimaData ?? null,
+        dias_desde_ultima: diasDesdeUltima === 999 ? null : diasDesdeUltima,
+        error: 'SENTINEL_NOT_CONFIGURED',
+        message: 'Configure SENTINEL_CLIENT_ID e SENTINEL_CLIENT_SECRET (Copernicus Data Space)',
+      }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
+    }
+
+    // Sem polígono
+    if (!polygonGeoJSON) {
+      return new Response(JSON.stringify({
+        error: 'NO_POLYGON',
+        message: 'Sem polígono cadastrado. Desenhe o polígono para habilitar NDVI.',
+      }), { status: 422, headers: { ...CORS, 'Content-Type': 'application/json' } })
+    }
+
+    let sentinelErro: string | null = null
+
+    if (precisaAtualizar) {
+      try {
+        const token = await getSentinelToken(sentinelClientId, sentinelClientSecret)
+        const dataFim = subtrairDias(0)
+        const dataInicio = subtrairDias(DIAS_HISTORICO)
+
+        const resultados = await fetchNdviStats(token, polygonGeoJSON, dataInicio, dataFim)
+
+        for (const r of resultados) {
+          const registro = {
+            ...(pivot_id ? { pivot_id } : { talhao_id }),
+            data_imagem: r.data,
+            ndvi_medio: r.ndvi_medio,
+            ndvi_min: r.ndvi_min,
+            ndvi_max: r.ndvi_max,
+            cobertura_nuvens_pct: r.cobertura_nuvens_pct,
+            fonte: 'sentinel2',
+          }
+          await supabaseAdmin.from('ndvi_cache').upsert(registro, { onConflict: `${cacheField},data_imagem` })
+
+          const idx = historico.findIndex((h: { data_imagem: string }) => h.data_imagem === r.data)
+          if (idx >= 0) historico[idx] = { ...historico[idx], ...registro }
+          else historico.push({ id: 'novo', created_at: new Date().toISOString(), ...registro })
+        }
+
+        // Gerar imagem PNG do período mais recente
+        const ultimoResultado = resultados.at(-1)
+        if (ultimoResultado) {
+          try {
+            const pngBytes = await fetchNdviImagem(token, polygonGeoJSON, subtrairDias(DIAS_HISTORICO), subtrairDias(0))
+            if (pngBytes) {
+              const storagePath = `${storagePrefix}/${ultimoResultado.data}.png`
+              const { error: uploadErr } = await supabaseAdmin.storage
+                .from('campo-ndvi')
+                .upload(storagePath, pngBytes, { contentType: 'image/png', upsert: true })
+
+              if (!uploadErr) {
+                const { data: urlData } = supabaseAdmin.storage.from('campo-ndvi').getPublicUrl(storagePath)
+                if (urlData?.publicUrl) {
+                  await supabaseAdmin.from('ndvi_cache')
+                    .update({ imagem_url: urlData.publicUrl })
+                    .eq(cacheField, cacheValue)
+                    .eq('data_imagem', ultimoResultado.data)
+
+                  const idx = historico.findIndex((h: { data_imagem: string }) => h.data_imagem === ultimoResultado.data)
+                  if (idx >= 0) historico[idx] = { ...historico[idx], imagem_url: urlData.publicUrl }
+                }
+              }
+            }
+          } catch (imgErr) {
+            console.error('PNG error (non-fatal):', imgErr)
+          }
+        }
+
+        historico.sort((a: { data_imagem: string }, b: { data_imagem: string }) => a.data_imagem.localeCompare(b.data_imagem))
+      } catch (err) {
+        console.error('Sentinel Hub error:', err)
+        sentinelErro = err instanceof Error ? err.message : String(err)
+      }
+    }
+
+    // Alertas
+    const alertas: string[] = []
+    if (historico.length >= 2) {
+      const last = historico[historico.length - 1]
+      const prev = historico[historico.length - 2]
+      if (last?.ndvi_medio != null && prev?.ndvi_medio != null && prev.ndvi_medio > 0) {
+        const queda = ((prev.ndvi_medio - last.ndvi_medio) / prev.ndvi_medio) * 100
+        if (queda >= 20) alertas.push(`Queda crítica de NDVI: ${queda.toFixed(1)}% em relação ao mês anterior`)
+        else if (queda >= 10) alertas.push(`Queda de NDVI detectada: ${queda.toFixed(1)}% — monitorar`)
+      }
+    }
+
+    const historicoOrdenado = [...historico].sort((a: { data_imagem: string }, b: { data_imagem: string }) => b.data_imagem.localeCompare(a.data_imagem))
+    const ultimaDataFinal = historicoOrdenado[0]?.data_imagem ?? null
     const diasDesdeUltimaFinal = ultimaDataFinal
       ? Math.floor((Date.now() - new Date(ultimaDataFinal).getTime()) / 86400000)
       : null
 
-    return new Response(
-      JSON.stringify({
-        pivot_id, talhao_id, entity_name: entityName,
-        historico: historico ?? [], alertas,
-        ultima_atualizacao: ultimaDataFinal,
-        dias_desde_ultima: diasDesdeUltimaFinal,
-      }),
-      { headers: { ...CORS, 'Content-Type': 'application/json' } }
-    )
+    return new Response(JSON.stringify({
+      pivot_id, talhao_id, entity_name: entityName,
+      historico, alertas,
+      ultima_atualizacao: ultimaDataFinal,
+      dias_desde_ultima: diasDesdeUltimaFinal,
+      cache_fresco: !precisaAtualizar,
+      sem_credenciais: false,
+      sentinel_erro: sentinelErro,
+    }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
+
   } catch (err) {
     console.error('ndvi-fetch error:', err)
     return new Response(
-      JSON.stringify({ error: String(err) }),
+      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
       { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } }
     )
   }

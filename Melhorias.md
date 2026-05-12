@@ -415,6 +415,28 @@ Página `/ndvi` com monitoramento de NDVI via Sentinel-2 (Planet Labs Insights P
 
 ---
 
+## 🛰️ NDVI — Ativar credenciais Copernicus (próxima sessão)
+**Status:** ⏳ Pendente — credenciais criadas mas OAuth retorna `unauthorized_client`
+
+### Contexto
+- Merge `feat/ndvi` → `main` feito em 2026-05-11, build limpo, rota `/ndvi` ativa em produção
+- Edge function `ndvi-fetch` reescrita para Copernicus Data Space (mesmo padrão CampoPro)
+- OAuth client criado em `shapps.dataspace.copernicus.eu` com nome "IrrigaAgro"
+- `SENTINEL_CLIENT_ID=sh-4423891e-58ad-48c4-969e-cdffb2dfd73e` configurado no Supabase
+- `SENTINEL_CLIENT_SECRET=UfILnzcJil3TmenT9rIiYPPICLkSODHD` configurado no Supabase
+
+### O que fazer na próxima sessão
+1. Testar token via curl (pode ter ativado após alguns minutos):
+   ```bash
+   curl -s -X POST "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "grant_type=client_credentials&client_id=sh-4423891e-58ad-48c4-969e-cdffb2dfd73e&client_secret=UfILnzcJil3TmenT9rIiYPPICLkSODHD"
+   ```
+2. Se ainda der `unauthorized_client`: recriar o OAuth client no painel `shapps.dataspace.copernicus.eu` → Account Settings → OAuth clients → + Create
+3. Após token funcionar: clicar "Atualizar via Satélite" nos dois pivôs e verificar PNG no Storage `campo-ndvi`
+
+---
+
 ## 🌍 Fertilidade e nutrição
 **Status:** Ideia futura
 
