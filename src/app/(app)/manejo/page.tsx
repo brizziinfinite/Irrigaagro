@@ -44,7 +44,7 @@ const WaterBalanceChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div style={{ height: 240, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 12 }}>
+      <div style={{ height: 240, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: 12 }}>
         Carregando gráfico…
       </div>
     ),
@@ -155,14 +155,14 @@ function InputField({ label, value, onChange, unit, placeholder, type = 'number'
           style={{
             width: '100%', padding: unit ? '11px 44px 11px 14px' : '11px 14px',
             borderRadius: 8, fontSize: 15,
-            background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
-            color: '#e2e8f0', outline: 'none', boxSizing: 'border-box',
+            background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)',
+            color: 'var(--color-text)', outline: 'none', boxSizing: 'border-box',
           }}
           onFocus={e => e.target.style.borderColor = '#0093D0'}
-          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+          onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
         />
         {unit && (
-          <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#667788', pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: 'var(--color-text-muted)', pointerEvents: 'none' }}>
             {unit}
           </span>
         )}
@@ -231,8 +231,8 @@ function SoilDiagram({
 
   return (
     <div style={{
-      background: 'linear-gradient(160deg, #10151C, #18202A)',
-      border: `1px solid rgba(255,255,255,0.04)`,
+      background: 'linear-gradient(160deg, var(--color-surface-card), var(--color-surface-elevated))',
+      border: `1px solid var(--color-surface-border2)`,
       borderRadius: 24,
       padding: '30px',
       display: 'flex',
@@ -249,7 +249,7 @@ function SoilDiagram({
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color }}>{cfg.label}</span>
-          <span style={{ fontSize: 13, color: '#667788' }}>— {fieldCapacityPercent.toFixed(0)}% C.C.</span>
+          <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>— {fieldCapacityPercent.toFixed(0)}% C.C.</span>
         </div>
       </div>
 
@@ -312,19 +312,19 @@ function SoilDiagram({
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: 14, minWidth: 0, overflow: 'hidden' }}>
           <p style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>Cultura</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{cropName ?? 'Não inf.'}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{cropName ?? 'Não inf.'}</span>
             <span style={{ fontSize: 11, color: '#0093D0', fontWeight: 700, flexShrink: 0 }}>D{das}</span>
           </div>
-          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>Raiz: <span style={{ color: '#e2e8f0' }}>{Math.round(rootDepthCm)} cm</span></p>
+          <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>Raiz: <span style={{ color: 'var(--color-text)' }}>{Math.round(rootDepthCm)} cm</span></p>
         </div>
 
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: 14, minWidth: 0, overflow: 'hidden' }}>
           <p style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 4px' }}>Reserva</p>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', fontFamily: 'var(--font-mono)', margin: 0 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', fontFamily: 'var(--font-mono)', margin: 0 }}>
             CAD: {cad.toFixed(1)} <span style={{ fontSize: 10, color: '#94a3b8' }}>mm</span>
           </p>
           <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>
-            CTA: <span style={{ color: '#e2e8f0' }}>{cta.toFixed(1)} mm</span>
+            CTA: <span style={{ color: 'var(--color-text)' }}>{cta.toFixed(1)} mm</span>
           </p>
         </div>
 
@@ -341,11 +341,11 @@ function SoilDiagram({
             <span>Limiar</span>
             {alertThresholdPct && <span style={{ color: '#f59e0b' }}>({alertThresholdPct}%)</span>}
           </p>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', fontFamily: 'var(--font-mono)', margin: 0 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', fontFamily: 'var(--font-mono)', margin: 0 }}>
             Mín: {(cta * ((alertThresholdPct ?? 50)/100)).toFixed(1)} <span style={{ fontSize: 10, color: '#94a3b8' }}>mm</span>
           </p>
           <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 5 }}>
-            Déficit: <span style={{ color: '#e2e8f0' }}>{(cta - (cta * ((alertThresholdPct ?? 50)/100))).toFixed(1)} mm</span>
+            Déficit: <span style={{ color: 'var(--color-text)' }}>{(cta - (cta * ((alertThresholdPct ?? 50)/100))).toFixed(1)} mm</span>
           </p>
         </div>
 
@@ -414,15 +414,15 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
   }
 
   return (
-    <div style={{ background: '#0f1923', border: hasSimulation ? '1px solid rgba(0,147,208,0.25)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--color-surface-card)', border: hasSimulation ? '1px solid rgba(0,147,208,0.25)' : '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <TrendingDown size={14} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>
           {hasSimulation ? 'Projeção — Simulação Ativa' : 'Se não irrigar, o que acontece?'}
         </span>
         {avgEto !== null && (
-          <span style={{ fontSize: 11, color: '#778899', marginLeft: 'auto' }}>
+          <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginLeft: 'auto' }}>
             ETo base: <span style={{ color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{avgEto.toFixed(1)} mm/d</span>
           </span>
         )}
@@ -435,7 +435,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
             Limpar simulação
           </button>
         ) : (
-          <span style={{ fontSize: 11, color: '#64748b', padding: '3px 8px', borderRadius: 20, background: '#0d1520' }}>sem chuva prevista</span>
+          <span style={{ fontSize: 11, color: '#64748b', padding: '3px 8px', borderRadius: 20, background: 'var(--color-surface-sidebar)' }}>sem chuva prevista</span>
         )}
       </div>
 
@@ -482,10 +482,10 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
           const isFuturo = i >= 2
           // Cor do dia: amanhã vermelho se alerta, âmbar se i=1, resto suavizado
           const dayLabelColor = isAmanha
-            ? (isAlert ? cfg.color : '#8899aa')
+            ? (isAlert ? cfg.color : 'var(--color-text-secondary)')
             : isDepoisAmanha
-              ? (isAlert ? '#d97706' : '#778899')
-              : '#778899'
+              ? (isAlert ? '#d97706' : 'var(--color-text-secondary)')
+              : 'var(--color-text-secondary)'
           const dayFontWeight = isAmanha ? 700 : isDepoisAmanha ? 600 : 400
           // Barra: amanhã mais intensa, resto com opacidade menor
           const barOpacity = isAmanha ? 1 : isDepoisAmanha ? 0.7 : 0.45
@@ -495,15 +495,15 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
             : isAmanha && isAlert
               ? (day.status === 'vermelho' ? 'rgba(239,68,68,0.07)' : 'rgba(245,158,11,0.06)')
               : isAmanha
-                ? '#0d1520'
-                : i % 2 ? '#080e14' : 'transparent'
+                ? 'var(--color-surface-sidebar)'
+                : i % 2 ? 'var(--color-surface-bg)' : 'transparent'
           const rowBorder = hasIrrigHere
             ? '1px solid rgba(0,147,208,0.25)'
             : isAmanha && isAlert
               ? `1px solid ${cfg.color}30`
               : '1px solid transparent'
           // Cor status: amanhã cor real, depois âmbar se alerta, resto neutro
-          const statusColor = isAmanha ? cfg.color : isDepoisAmanha && isAlert ? '#d97706' : '#778899'
+          const statusColor = isAmanha ? cfg.color : isDepoisAmanha && isAlert ? '#d97706' : 'var(--color-text-secondary)'
 
           return (
             <div key={day.date}>
@@ -520,8 +520,8 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                 <span style={{ fontSize: 11, color: dayLabelColor, fontWeight: dayFontWeight }}>
                   {i === 0 ? 'Amanhã' : fmtDate(day.date)}
                 </span>
-                <span style={{ fontSize: 10, color: '#778899' }}>D{day.das}</span>
-                <div style={{ position: 'relative', height: isAmanha ? 10 : 8, background: '#080e14', borderRadius: 99, overflow: 'visible' }}>
+                <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>D{day.das}</span>
+                <div style={{ position: 'relative', height: isAmanha ? 10 : 8, background: 'var(--color-surface-bg)', borderRadius: 99, overflow: 'visible' }}>
                   <div style={{ position: 'absolute', left: `${cadPct}%`, top: -2, bottom: -2, width: 2, background: '#f59e0b', opacity: 0.5, borderRadius: 1, zIndex: 2 }} />
                   {showComparison && basePct !== null && (
                     <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${basePct}%`, background: cfg.color, borderRadius: 99, opacity: 0.15 }} />
@@ -531,7 +531,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                 <span style={{ fontSize: isAmanha ? 12 : 11, fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
                   {showComparison && basePct !== null ? (
                     <>
-                      <span style={{ color: '#778899', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
+                      <span style={{ color: 'var(--color-text-secondary)', textDecoration: 'line-through', fontSize: 10 }}>{fmtNum(basePct, 0)}%</span>
                       <span style={{ color: statusColor, fontWeight: isAmanha ? 700 : 500 }}> {fmtNum(day.fieldCapacityPercent, 0)}%</span>
                     </>
                   ) : (
@@ -542,9 +542,9 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                   {hasIrrigHere ? (
                     <span style={{ color: '#0093D0', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 10 }}>+{fmtNum(simulatedIrrigation[i])}</span>
                   ) : day.recommendedDepthMm > 0 ? (
-                    <><span style={{ color: isAmanha ? cfg.color : isDepoisAmanha ? '#d97706' : '#667788', fontFamily: 'var(--font-mono)', fontWeight: isAmanha ? 700 : 500 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: '#778899' }}> mm</span></>
+                    <><span style={{ color: isAmanha ? cfg.color : isDepoisAmanha ? '#d97706' : 'var(--color-text-muted)', fontFamily: 'var(--font-mono)', fontWeight: isAmanha ? 700 : 500 }}>{fmtNum(day.recommendedDepthMm)}</span><span style={{ color: 'var(--color-text-secondary)' }}> mm</span></>
                   ) : (
-                    <span style={{ fontSize: 10, fontWeight: 600, color: isAmanha ? '#22c55e' : '#778899' }}>NI</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: isAmanha ? '#22c55e' : 'var(--color-text-secondary)' }}>NI</span>
                   )}
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
@@ -557,8 +557,8 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                   style={{
                     width: 24, height: 24, borderRadius: 6, border: 'none', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: hasIrrigHere ? 'rgba(0,147,208,0.15)' : 'rgba(255,255,255,0.04)',
-                    color: hasIrrigHere ? '#0093D0' : '#778899',
+                    background: hasIrrigHere ? 'rgba(0,147,208,0.15)' : 'var(--color-surface-border2)',
+                    color: hasIrrigHere ? '#0093D0' : 'var(--color-text-secondary)',
                     fontSize: 14, fontWeight: 700, lineHeight: 1,
                   }}
                   title={hasIrrigHere ? 'Editar irrigação simulada' : 'Simular irrigação neste dia'}
@@ -576,14 +576,14 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                 }}>
                   {hasMechanicalData && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <label style={{ fontSize: 11, color: '#8899aa' }}>Velocidade:</label>
+                      <label style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Velocidade:</label>
                       <select
                         value={selectedSpeed}
                         onChange={e => handleSpeedChange(e.target.value)}
                         style={{
                           padding: '5px 8px', borderRadius: 6, fontSize: 12,
-                          background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
-                          color: '#e2e8f0', cursor: 'pointer',
+                          background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)',
+                          color: 'var(--color-text)', cursor: 'pointer',
                         }}
                       >
                         <option value="">—</option>
@@ -594,7 +594,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <label style={{ fontSize: 11, color: '#8899aa' }}>Lâmina:</label>
+                    <label style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Lâmina:</label>
                     <input
                       type="number" step="0.1" min="0"
                       value={manualDepth}
@@ -602,21 +602,21 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                       placeholder="mm"
                       style={{
                         width: 70, padding: '5px 8px', borderRadius: 6, fontSize: 12,
-                        background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
-                        color: '#e2e8f0', outline: 'none',
+                        background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)',
+                        color: 'var(--color-text)', outline: 'none',
                       }}
                       onFocus={e => e.target.style.borderColor = '#0093D0'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                      onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
                     />
-                    <span style={{ fontSize: 10, color: '#778899' }}>mm</span>
+                    <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>mm</span>
                   </div>
                   <button
                     onClick={() => handleApply(i)}
                     disabled={!manualDepth || parseFloat(manualDepth) <= 0}
                     style={{
                       padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 700,
-                      background: manualDepth && parseFloat(manualDepth) > 0 ? '#0093D0' : '#0d1520',
-                      border: 'none', color: manualDepth && parseFloat(manualDepth) > 0 ? '#fff' : '#667788',
+                      background: manualDepth && parseFloat(manualDepth) > 0 ? '#0093D0' : 'var(--color-surface-sidebar)',
+                      border: 'none', color: manualDepth && parseFloat(manualDepth) > 0 ? '#fff' : 'var(--color-text-muted)',
                       cursor: manualDepth && parseFloat(manualDepth) > 0 ? 'pointer' : 'not-allowed',
                     }}
                   >
@@ -638,7 +638,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
                     onClick={() => setEditingDayIdx(null)}
                     style={{
                       padding: '5px 8px', borderRadius: 6, fontSize: 11,
-                      background: 'none', border: 'none', color: '#778899', cursor: 'pointer',
+                      background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer',
                     }}
                   >
                     <X size={12} />
@@ -651,7 +651,7 @@ function ProjectionForecast({ days, baseDays, avgEto, pivot, simulatedIrrigation
       </div>
       </div>{/* fim overflowX:auto */}
 
-      <div style={{ padding: '8px 20px 10px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ padding: '8px 20px 10px', borderTop: '1px solid var(--color-surface-border2)', display: 'flex', flexDirection: 'column', gap: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 2, height: 10, background: '#f59e0b', opacity: 0.7 }} />
@@ -679,9 +679,9 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
 }) {
   if (records.length === 0) {
     return (
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
-        <Calendar size={22} style={{ color: '#667788', margin: '0 auto 8px' }} />
-        <p style={{ fontSize: 13, color: '#667788' }}>Nenhum registro ainda.</p>
+      <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
+        <Calendar size={22} style={{ color: 'var(--color-text-muted)', margin: '0 auto 8px' }} />
+        <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Nenhum registro ainda.</p>
       </div>
     )
   }
@@ -689,9 +689,9 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
   const COLS = '88px 38px 54px 54px 54px 60px 52px 54px 80px 56px'
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ overflowX: 'auto' }}>
-      <div style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', background: 'var(--color-surface-sidebar)', borderBottom: '1px solid var(--color-surface-border2)' }}>
         {['Data', 'DAS', 'ETo', 'ETc', 'Chuva', 'Lâmina', 'ADc (Umidade)', 'CC%', 'Status', ''].map(h => (
           <span key={h} style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
         ))}
@@ -704,16 +704,16 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
         const StatusIcon = cfg.icon
         const lamina = r.actual_depth_mm ?? null
         return (
-          <div key={r.id} style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', borderBottom: i < records.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: '#8899aa' }}>{fmtDate(r.date)}</span>
-            <span style={{ fontSize: 12, color: '#667788' }}>{r.das ?? '—'}</span>
-            <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
-            <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.etc_mm)}</span>
+          <div key={r.id} style={{ minWidth: 600, display: 'grid', gridTemplateColumns: COLS, gap: 4, padding: '9px 16px', borderBottom: i < records.length - 1 ? '1px solid var(--color-surface-border2)' : 'none', background: i % 2 ? 'var(--color-surface-bg)' : 'transparent', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{fmtDate(r.date)}</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{r.das ?? '—'}</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.eto_mm)}</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.etc_mm)}</span>
             <span style={{ fontSize: 12, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall_mm)}</span>
-            <span style={{ fontSize: 12, color: lamina !== null && lamina > 0 ? '#0093D0' : '#778899', fontFamily: 'var(--font-mono)', fontWeight: lamina !== null && lamina > 0 ? 700 : 400 }}>
+            <span style={{ fontSize: 12, color: lamina !== null && lamina > 0 ? '#0093D0' : 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)', fontWeight: lamina !== null && lamina > 0 ? 700 : 400 }}>
               {lamina !== null && lamina > 0 ? `${fmtNum(lamina)} mm` : '—'}
             </span>
-            <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.ctda)}</span>
+            <span style={{ fontSize: 12, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.ctda)}</span>
             <span style={{ fontSize: 12, color: cfg.color, fontFamily: 'var(--font-mono)' }}>{pct !== null ? `${fmtNum(pct, 0)}%` : '—'}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <StatusIcon size={10} style={{ color: cfg.color }} />
@@ -723,18 +723,18 @@ function HistoryTable({ records, onEdit, onDelete, threshold = 70 }: {
               <button
                 onClick={() => onEdit(r)}
                 title="Editar registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: 'var(--color-text-muted)', lineHeight: 0, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#0093D0')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#667788')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-muted)')}
               >
                 <Edit2 size={14} />
               </button>
               <button
                 onClick={() => onDelete(r)}
                 title="Excluir registro"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: '#667788', lineHeight: 0, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', borderRadius: 5, color: 'var(--color-text-muted)', lineHeight: 0, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#667788')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--color-text-muted)')}
               >
                 <Trash2 size={14} />
               </button>
@@ -1129,7 +1129,7 @@ export default function ManejoPage() {
     return (
       <div style={{ maxWidth: 440, margin: '0 auto', padding: '60px 24px', textAlign: 'center' }}>
         <Sprout size={32} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
-        <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', marginBottom: 8, letterSpacing: '-0.025em' }}>Nenhuma safra ativa</h2>
+        <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', marginBottom: 8, letterSpacing: '-0.025em' }}>Nenhuma safra ativa</h2>
         <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>Cadastre uma safra em <strong style={{ color: '#94a3b8' }}>Safras</strong> para iniciar o manejo.</p>
       </div>
     )
@@ -1194,7 +1194,7 @@ export default function ManejoPage() {
           onClick={e => { if (e.target === e.currentTarget) setShowQuickModal(false) }}
         >
           <div style={{
-            background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border)',
             borderTop: '2px solid #ef4444',
             borderRadius: 18, padding: 'clamp(16px, 4vw, 32px)', width: '100%', maxWidth: 440,
             boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
@@ -1202,7 +1202,7 @@ export default function ManejoPage() {
             {/* Header do modal */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
               <div>
-                <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', margin: 0, letterSpacing: '-0.025em' }}>
+                <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', margin: 0, letterSpacing: '-0.025em' }}>
                   Lançar irrigação
                 </h2>
                 <p style={{ fontSize: 12, color: '#94a3b8', margin: '4px 0 0', lineHeight: 1.625 }}>
@@ -1211,7 +1211,7 @@ export default function ManejoPage() {
               </div>
               <button
                 onClick={() => setShowQuickModal(false)}
-                style={{ background: 'transparent', border: 'none', color: '#667788', cursor: 'pointer', padding: 4, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: 4, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <X size={18} />
               </button>
@@ -1219,13 +1219,13 @@ export default function ManejoPage() {
 
             {/* Pivô + data (só leitura, informativo) */}
             <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: 10, marginBottom: 20 }}>
-              <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ background: 'var(--color-surface-sidebar)', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Pivô</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{selectedSeason?.pivots?.name ?? '—'}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>{selectedSeason?.pivots?.name ?? '—'}</div>
               </div>
-              <div style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ background: 'var(--color-surface-sidebar)', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Data</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
                   {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </div>
               </div>
@@ -1261,15 +1261,15 @@ export default function ManejoPage() {
                   autoFocus
                   style={{
                     width: '100%', padding: '14px 44px 14px 16px', borderRadius: 10,
-                    background: '#0d1520', border: '1px solid rgba(0,147,208,0.3)',
-                    color: '#e2e8f0', fontSize: 16, fontWeight: 700, fontFamily: 'monospace',
+                    background: 'var(--color-surface-sidebar)', border: '1px solid rgba(0,147,208,0.3)',
+                    color: 'var(--color-text)', fontSize: 16, fontWeight: 700, fontFamily: 'monospace',
                     outline: 'none', boxSizing: 'border-box',
                   }}
                   onFocus={e => e.target.style.borderColor = '#0093D0'}
                   onBlur={e => e.target.style.borderColor = 'rgba(0,147,208,0.3)'}
                   onKeyDown={e => { if (e.key === 'Enter') handleQuickLaunch() }}
                 />
-                <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#667788', pointerEvents: 'none', fontWeight: 600 }}>
+                <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--color-text-muted)', pointerEvents: 'none', fontWeight: 600 }}>
                   mm
                 </span>
               </div>
@@ -1287,8 +1287,8 @@ export default function ManejoPage() {
                 placeholder="Ex: chuva durante a noite, parada por vento..."
                 style={{
                   width: '100%', padding: '11px 14px', borderRadius: 10,
-                  background: '#0d1520', border: '1px solid rgba(255,255,255,0.07)',
-                  color: '#8899aa', fontSize: 13,
+                  background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.07)',
+                  color: 'var(--color-text-secondary)', fontSize: 13,
                   outline: 'none', boxSizing: 'border-box',
                 }}
                 onFocus={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
@@ -1316,8 +1316,8 @@ export default function ManejoPage() {
                 style={{
                   flex: 1, padding: '13px 0', borderRadius: 10, fontSize: 13, fontWeight: 600,
                   minHeight: 48,
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#778899', cursor: 'pointer',
+                  background: 'transparent', border: '1px solid var(--color-surface-border)',
+                  color: 'var(--color-text-secondary)', cursor: 'pointer',
                 }}
               >
                 Cancelar
@@ -1401,7 +1401,7 @@ export default function ManejoPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontSize: 18, fontWeight: 600, color: heroMainColor, lineHeight: 1 }}>mm</span>
                     {heroSpeed && (
-                      <span style={{ fontSize: 11, color: '#667788', lineHeight: 1 }}>{heroSpeed}%</span>
+                      <span style={{ fontSize: 11, color: 'var(--color-text-muted)', lineHeight: 1 }}>{heroSpeed}%</span>
                     )}
                   </div>
                 </div>
@@ -1413,7 +1413,7 @@ export default function ManejoPage() {
                   }}>
                     {heroPct !== null ? `${heroPct.toFixed(0)}%` : '—'}
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: '#667788' }}>umidade</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-muted)' }}>umidade</span>
                 </div>
               )}
 
@@ -1435,7 +1435,7 @@ export default function ManejoPage() {
               </p>
 
               {/* Linha 4 — pivô em texto mínimo */}
-              <p style={{ fontSize: 11, color: '#667788', letterSpacing: '0.01em' }}>
+              <p style={{ fontSize: 11, color: 'var(--color-text-muted)', letterSpacing: '0.01em' }}>
                 {selectedSeason?.pivots?.name ?? selectedSeason?.farms?.name ?? ''}
               </p>
             </div>
@@ -1503,17 +1503,17 @@ export default function ManejoPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 padding: '8px 16px', borderRadius: 10, fontSize: 11, fontWeight: 500,
                 minHeight: 44, letterSpacing: '0.03em', whiteSpace: 'nowrap',
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
-                color: '#778899', cursor: 'pointer',
+                background: 'transparent', border: '1px solid var(--color-surface-border2)',
+                color: 'var(--color-text-secondary)', cursor: 'pointer',
                 transition: 'color 0.15s ease, border-color 0.15s ease',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.color = '#778899'
+                e.currentTarget.style.color = 'var(--color-text-secondary)'
                 e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.color = '#778899'
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+                e.currentTarget.style.color = 'var(--color-text-secondary)'
+                e.currentTarget.style.borderColor = 'var(--color-surface-border2)'
               }}
             >
               <Save size={12} />
@@ -1525,11 +1525,11 @@ export default function ManejoPage() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                 padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 400,
-                color: '#667788', textDecoration: 'none',
+                color: 'var(--color-text-muted)', textDecoration: 'none',
                 transition: 'color 0.15s ease',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#667788' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = '#667788' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-muted)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-muted)' }}
             >
               <Calendar size={11} />
               Ver programação avançada
@@ -1545,24 +1545,24 @@ export default function ManejoPage() {
           display: 'flex', alignItems: 'center', gap: 20,
         }}>
           <Loader2 size={20} className="animate-spin" style={{ color: '#0093D0' }} />
-          <span style={{ fontSize: 14, color: '#667788' }}>Calculando balanço hídrico...</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>Calculando balanço hídrico...</span>
         </div>
       )}
 
       {/* ── Seletor de safra ── */}
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <label style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em' }}>Safra</label>
         <div style={{ position: 'relative' }}>
           <select value={selectedSeasonId} onChange={e => setSelectedSeasonId(e.target.value)}
-            style={{ width: '100%', padding: '10px 36px 10px 12px', borderRadius: 9, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+            style={{ width: '100%', padding: '10px 36px 10px 12px', borderRadius: 9, fontSize: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none', appearance: 'none', cursor: 'pointer' }}
             onFocus={e => e.target.style.borderColor = '#0093D0'}
-            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+            onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
           >
             {seasons.map(s => (
               <option key={s.id} value={s.id}>{s.name} — {s.farms.name}{s.pivots ? ` / ${s.pivots.name}` : ''}</option>
             ))}
           </select>
-          <ChevronDown size={13} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', color: '#667788', pointerEvents: 'none' }} />
+          <ChevronDown size={13} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)', pointerEvents: 'none' }} />
         </div>
 
         {/* Badges da safra */}
@@ -1577,11 +1577,11 @@ export default function ManejoPage() {
                   <Sprout size={9} /> {selectedSeason.crops.name}
                 </span>
               )}
-              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#8899aa' }}>DAS {das}</span>
-              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#8899aa' }}>
+              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-secondary)' }}>DAS {das}</span>
+              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-secondary)' }}>
                 Fase {info.stage}
               </span>
-              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#8899aa', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <FlaskConical size={9} /> f = {info.fFactor.toFixed(2)}
               </span>
               {ra !== null && (
@@ -1590,7 +1590,7 @@ export default function ManejoPage() {
                 </span>
               )}
               {selectedSeason.planting_date && (
-                <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#0d1520', color: '#667788', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 3 }}>
                   <Calendar size={9} /> Plantio {fmtDate(selectedSeason.planting_date)}
                 </span>
               )}
@@ -1620,7 +1620,7 @@ export default function ManejoPage() {
           ════════════════════════════════════════════════════════ */}
       {calcResult && (
         <div style={{
-          background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)',
+          background: 'var(--color-surface-card)', border: '1px solid rgba(255,255,255,0.05)',
           borderRadius: 14, padding: '20px 24px',
           display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 20,
         }}>
@@ -1628,7 +1628,7 @@ export default function ManejoPage() {
             {
               label: 'Umidade',
               value: calcResult.fieldCapacityPercent.toFixed(0) + '%',
-              color: heroCfg?.color ?? '#8899aa',
+              color: heroCfg?.color ?? 'var(--color-text-secondary)',
               sub: `Limiar: ${heroThreshold}%`,
             },
             {
@@ -1670,7 +1670,7 @@ export default function ManejoPage() {
         }))
 
         return (
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
             {/* Header */}
             <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1710,16 +1710,16 @@ export default function ManejoPage() {
                       <stop offset="100%" stopColor="#22c55e"/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="name" tick={{ fill: '#778899', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
-                  <YAxis tick={{ fill: '#778899', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 110]} tickFormatter={(v: number) => `${v}%`} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-surface-border2)" />
+                  <XAxis dataKey="name" tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} dy={8} />
+                  <YAxis tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 110]} tickFormatter={(v: number) => `${v}%`} />
                   <ReferenceArea y1={Math.round(targetThresholdLine * 1.15)} y2={110} fill="rgba(34,197,94,0.02)" />
                   <ReferenceArea y1={targetThresholdLine} y2={Math.round(targetThresholdLine * 1.15)} fill="rgba(245,158,11,0.03)" />
                   <ReferenceArea y1={0} y2={targetThresholdLine} fill="rgba(239,68,68,0.03)" />
                   <ReferenceLine y={100} stroke="#22c55e" strokeDasharray="4 4" strokeWidth={1} opacity={0.25} label={{ position: 'insideTopRight', value: 'CC 100%', fill: '#22c55e', fontSize: 9 }} />
                   <ReferenceLine y={targetThresholdLine} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1.5} label={{ position: 'insideBottomLeft', value: `Limiar ${targetThresholdLine}%`, fill: '#f59e0b', fontSize: 9, fontWeight: 700 }} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#10151C', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
+                    contentStyle={{ backgroundColor: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border)', borderRadius: 10, color: 'var(--color-text)', fontSize: 12 }}
                     formatter={(value: unknown) => {
                       const v = Number(value)
                       const zone = v >= targetThresholdLine * 1.15 ? 'Seguro' : v >= targetThresholdLine ? 'Atenção' : 'Crítico'
@@ -1730,8 +1730,8 @@ export default function ManejoPage() {
                     type="monotone" dataKey="moisture" name="Umidade"
                     stroke="url(#strokeMoisture2)" strokeWidth={2.5}
                     fillOpacity={1} fill="url(#colorMoisture2)"
-                    dot={{ r: 4, fill: '#0f1923', strokeWidth: 2 }}
-                    activeDot={{ r: 6, fill: '#0093D0', stroke: '#0f1923', strokeWidth: 2 }}
+                    dot={{ r: 4, fill: 'var(--color-surface-card)', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#0093D0', stroke: 'var(--color-surface-card)', strokeWidth: 2 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -1792,22 +1792,22 @@ export default function ManejoPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
             {/* Agenda de Irrigação */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: 'var(--color-surface-card)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <h3 style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', margin: 0 }}>Agenda de Irrigação</h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12, color: '#778899' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12, color: 'var(--color-text-secondary)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>Status</span>
                   <span style={{ color: st.color, fontWeight: 700, background: `${st.color}15`, padding: '2px 8px', borderRadius: 6, fontSize: 10, letterSpacing: '0.04em' }}>{st.label}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Próximo passo</span>
-                  <span style={{ color: '#8899aa', fontWeight: 600 }}>{previsaoTexto}</span>
+                  <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>{previsaoTexto}</span>
                 </div>
-                <div style={{ height: 1, background: 'rgba(255,255,255,0.04)', margin: '1px 0' }} />
+                <div style={{ height: 1, background: 'var(--color-surface-border2)', margin: '1px 0' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Demanda da cultura</span>
-                  <span style={{ color: capWarning ? '#e05252' : '#8899aa' }}>{etcDiariaStr} mm/dia</span>
+                  <span style={{ color: capWarning ? '#e05252' : 'var(--color-text-secondary)' }}>{etcDiariaStr} mm/dia</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Estágio fenológico</span>
@@ -1818,26 +1818,26 @@ export default function ManejoPage() {
               <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
                 <Link href="/pivos" style={{ textDecoration: 'none', flex: 1 }}>
                   <button style={{
-                    width: '100%', background: 'rgba(255,255,255,0.04)', color: '#8899aa',
-                    border: '1px solid rgba(255,255,255,0.08)', padding: '12px 8px',
+                    width: '100%', background: 'var(--color-surface-border2)', color: 'var(--color-text-secondary)',
+                    border: '1px solid var(--color-surface-border)', padding: '12px 8px',
                     borderRadius: 10, fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
                     cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center',
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-border2)')}
                   >
                     Config. Pivô
                   </button>
                 </Link>
                 <Link href="/precipitacoes" style={{ textDecoration: 'none', flex: 1 }}>
                   <button style={{
-                    width: '100%', background: 'rgba(255,255,255,0.04)', color: '#8899aa',
-                    border: '1px solid rgba(255,255,255,0.08)', padding: '12px 8px',
+                    width: '100%', background: 'var(--color-surface-border2)', color: 'var(--color-text-secondary)',
+                    border: '1px solid var(--color-surface-border)', padding: '12px 8px',
                     borderRadius: 10, fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
                     cursor: 'pointer', letterSpacing: '0.02em', textAlign: 'center',
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface-border2)')}
                   >
                     Reg. Chuvas
                   </button>
@@ -1846,7 +1846,7 @@ export default function ManejoPage() {
             </div>
 
             {/* Consumo de Água 7D */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ background: 'var(--color-surface-card)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 4 }}>
                 <h3 style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', margin: 0 }}>Consumo de Água (7D)</h3>
                 <div style={{ fontSize: 12, color: '#64748b', textAlign: 'right', lineHeight: 1.625 }}>
@@ -1859,13 +1859,13 @@ export default function ManejoPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={waterUsageData} margin={{ top: 8, right: 0, left: -20, bottom: -10 }}>
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#10151C', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, color: '#fff', fontSize: 12 }}
+                      contentStyle={{ backgroundColor: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 8, color: '#fff', fontSize: 12 }}
                       itemStyle={{ color: '#0093D0' }}
                       cursor={{ fill: 'rgba(0, 147, 208, 0.05)' }}
                       formatter={(value: unknown) => [`${Number(value).toFixed(1)} mm`, 'Água aplicada']}
                       labelFormatter={(label: unknown) => `Dia ${label}`}
                     />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fill: '#778899', fontSize: 10}} dy={5} />
+                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{fill: 'var(--color-text-secondary)', fontSize: 10}} dy={5} />
                     <Bar dataKey="usage" radius={[4, 4, 0, 0]} maxBarSize={28}>
                       {waterUsageData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.usage > 0 ? '#0093D0' : '#1a2433'} />
@@ -1884,7 +1884,7 @@ export default function ManejoPage() {
           SEÇÃO 5 — ANÁLISE DO SOLO (Gauge Radial)
           ════════════════════════════════════════════════════════ */}
       {calcResult && selectedSeason ? (
-        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '14px 20px 4px' }}>
+        <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: '14px 20px 4px' }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: 12 }}>
             Análise Detalhada do Solo
           </p>
@@ -1918,9 +1918,9 @@ export default function ManejoPage() {
         </div>
       ) : (
         !loading && (
-          <div style={{ background: '#0f1923', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 14, padding: '32px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <Thermometer size={28} style={{ color: '#778899' }} />
-            <p style={{ fontSize: 13, color: '#778899' }}>Preencha Tmax e Tmin para projetar o solo</p>
+          <div style={{ background: 'var(--color-surface-card)', border: '1px dashed var(--color-surface-border2)', borderRadius: 14, padding: '32px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <Thermometer size={28} style={{ color: 'var(--color-text-secondary)' }} />
+            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>Preencha Tmax e Tmin para projetar o solo</p>
           </div>
         )
       )}
@@ -1934,9 +1934,9 @@ export default function ManejoPage() {
           style={{
             width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             minHeight: 52,
-            background: showForm ? '#0d1520' : 'linear-gradient(90deg, #0f1923, #121c26)',
-            border: showForm ? '1px solid rgba(0,147,208,0.2)' : '1px solid rgba(255,255,255,0.06)',
-            color: showForm ? '#0093D0' : '#8899aa',
+            background: showForm ? 'var(--color-surface-sidebar)' : 'linear-gradient(90deg, var(--color-surface-card), var(--color-surface-card))',
+            border: showForm ? '1px solid rgba(0,147,208,0.2)' : '1px solid var(--color-surface-border2)',
+            color: showForm ? '#0093D0' : 'var(--color-text-secondary)',
             fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
             transition: 'all 0.2s',
           }}
@@ -1945,20 +1945,20 @@ export default function ManejoPage() {
             {showForm ? <ChevronDown size={18} /> : <Plus size={18} />}
             {showForm ? 'Ocultar Lançamento Manual' : 'Lançar Dados Manuais (Clima / Irrigação)'}
           </div>
-          {!showForm && <div style={{ fontSize: 11, color: '#667788', fontWeight: 500, textTransform: 'none' }}>Opcional se auto-integrado</div>}
+          {!showForm && <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 500, textTransform: 'none' }}>Opcional se auto-integrado</div>}
         </button>
 
         {showForm && (
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: 'clamp(16px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: '0 0 14px 14px', borderTop: 'none', padding: 'clamp(16px, 4vw, 28px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Fonte climática + data */}
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_200px] gap-4 items-start">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.16em' }}>Dados Climáticos</label>
                 {weatherLoading && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)' }}>
                     <Loader2 size={12} className="animate-spin" style={{ color: '#0093D0' }} />
-                    <span style={{ fontSize: 13, color: '#667788' }}>Buscando dados climáticos...</span>
+                    <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Buscando dados climáticos...</span>
                   </div>
                 )}
                 {!weatherLoading && climateInfo && (() => {
@@ -1971,9 +1971,9 @@ export default function ManejoPage() {
                   )
                 })()}
                 {!weatherLoading && !climateInfo && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <Thermometer size={13} style={{ color: '#667788' }} />
-                    <span style={{ fontSize: 13, color: '#667788' }}>Preencha os dados manualmente</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)' }}>
+                    <Thermometer size={13} style={{ color: 'var(--color-text-muted)' }} />
+                    <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Preencha os dados manualmente</span>
                   </div>
                 )}
               </div>
@@ -1991,7 +1991,7 @@ export default function ManejoPage() {
             </div>
 
             {/* ADc anterior */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8, background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <Droplets size={14} style={{ color: '#0093D0', flexShrink: 0 }} />
               <span style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.625 }}>ADc (Umidade) anterior:</span>
               <span style={{ fontSize: 28, fontWeight: 600, color: '#0093D0', fontFamily: 'var(--font-mono)', letterSpacing: '-0.025em' }}>{fmtNum(adcPrev)} mm</span>
@@ -2027,8 +2027,8 @@ export default function ManejoPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                 padding: '17px 0', borderRadius: 12, fontSize: 14, fontWeight: 700,
                 minHeight: 52, textTransform: 'uppercase', letterSpacing: '0.06em',
-                background: calcResult ? 'linear-gradient(135deg, #0093D0, #0277b5)' : '#0d1520',
-                border: 'none', color: calcResult ? '#fff' : '#667788',
+                background: calcResult ? 'linear-gradient(135deg, #0093D0, #0277b5)' : 'var(--color-surface-sidebar)',
+                border: 'none', color: calcResult ? '#fff' : 'var(--color-text-muted)',
                 cursor: calcResult ? 'pointer' : 'not-allowed',
                 opacity: saving ? 0.7 : 1,
                 boxShadow: calcResult ? '0 8px 24px rgba(0, 147, 208, 0.3)' : 'none',
@@ -2078,18 +2078,18 @@ export default function ManejoPage() {
           style={{
             width: '100%', padding: '14px 24px', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             minHeight: 52,
-            background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
-            color: '#8899aa', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
+            background: 'transparent', border: '1px solid var(--color-surface-border2)',
+            color: 'var(--color-text-secondary)', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer',
             transition: 'all 0.2s'
           }}
           onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
-          onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--color-surface-border2)'}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Clock size={16} /> Data Explorer — Histórico & Timeline
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 10, color: '#778899', background: '#0d1520', padding: '2px 8px', borderRadius: 10 }}>
+            <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', background: 'var(--color-surface-sidebar)', padding: '2px 8px', borderRadius: 10 }}>
               {history.length} Registros
             </span>
             {selectedSeasonId && (
@@ -2110,9 +2110,9 @@ export default function ManejoPage() {
                   await loadHistory(selectedSeasonId)
                   btn.style.color = '#22c55e'
                   btn.textContent = '✓'
-                  setTimeout(() => { btn.style.color = '#778899'; btn.textContent = '↻' }, 2000)
+                  setTimeout(() => { btn.style.color = 'var(--color-text-secondary)'; btn.textContent = '↻' }, 2000)
                 }}
-                style={{ fontSize: 14, color: '#778899', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
+                style={{ fontSize: 14, color: 'var(--color-text-secondary)', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}
               >↻</span>
             )}
             {showHistoryTab ? <ChevronDown size={14} /> : <TrendingDown size={14} />}

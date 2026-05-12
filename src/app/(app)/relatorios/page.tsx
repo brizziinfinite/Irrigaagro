@@ -271,18 +271,18 @@ function getEnergyInterpretation(bills: EnergyBill[]): string {
 
 // ─── Sub-componentes ──────────────────────────────────────────
 
-function KpiCard({ label, value, unit, color = '#e2e8f0', icon: Icon, sub, description }: {
+function KpiCard({ label, value, unit, color = 'var(--color-text)', icon: Icon, sub, description }: {
   label: string; value: string; unit?: string; color?: string
   icon?: typeof Droplets; sub?: string; description?: string
 }) {
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px' }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: '16px 18px' }}>
       {Icon && <Icon size={14} style={{ color, marginBottom: 8 }} />}
       <p style={{ fontSize: 28, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1, letterSpacing: '-0.025em' }}>
-        {value} <span style={{ fontSize: 13, fontWeight: 400, color: '#778899' }}>{unit}</span>
+        {value} <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-text-secondary)' }}>{unit}</span>
       </p>
       <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{label}</p>
-      {sub && <p style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>{sub}</p>}
+      {sub && <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>{sub}</p>}
       {description && <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 5, lineHeight: 1.625 }}>{description}</p>}
     </div>
   )
@@ -295,7 +295,7 @@ function StressGauge({ value }: { value: number }) {
   const refMax = 12 // valor máximo recomendado pelos reports
 
   return (
-    <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', flex: 1, minWidth: 200 }}>
+    <div style={{ background: 'var(--color-surface-card)', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', flex: 1, minWidth: 200 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <AlertTriangle size={14} style={{ color }} />
         <span style={{ fontSize: 12, color: '#94a3b8' }}>Índice de Stress Hídrico</span>
@@ -306,12 +306,12 @@ function StressGauge({ value }: { value: number }) {
       <p style={{ fontSize: 10, color, marginTop: 4, fontWeight: 600 }}>{label}</p>
 
       {/* Barra */}
-      <div style={{ marginTop: 10, height: 6, background: '#0d1520', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ marginTop: 10, height: 6, background: 'var(--color-surface-sidebar)', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
         {/* Linha de referência 10-12% */}
         <div style={{ position: 'absolute', left: `${(refMax / 40) * 100}%`, top: 0, bottom: 0, width: 2, background: '#f59e0b', opacity: 0.6 }} />
         <div style={{ width: `${Math.min(100, (value / 40) * 100)}%`, height: '100%', background: color, borderRadius: 99 }} />
       </div>
-      <p style={{ fontSize: 9, color: '#778899', marginTop: 3 }}>Ref: máx. 10–12%</p>
+      <p style={{ fontSize: 9, color: 'var(--color-text-secondary)', marginTop: 3 }}>Ref: máx. 10–12%</p>
     </div>
   )
 }
@@ -322,7 +322,7 @@ function GaugeCard({ title, value, unit, color, desc }: {
   if (value === null) return null
   const percent = Math.min(100, Math.max(0, value))
   return (
-    <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 200 }}>
+    <div style={{ background: 'var(--color-surface-card)', border: `1px solid ${color}30`, borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 200 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>{title}</span>
       </div>
@@ -331,10 +331,10 @@ function GaugeCard({ title, value, unit, color, desc }: {
       </p>
       
       {/* Barra */}
-      <div style={{ marginTop: 22, height: 6, background: '#0d1520', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ marginTop: 22, height: 6, background: 'var(--color-surface-sidebar)', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
         <div style={{ width: `${percent}%`, height: '100%', background: color, borderRadius: 99 }} />
       </div>
-      <p style={{ fontSize: 9, color: '#778899', marginTop: 6, lineHeight: 1.4 }}>{desc}</p>
+      <p style={{ fontSize: 9, color: 'var(--color-text-secondary)', marginTop: 6, lineHeight: 1.4 }}>{desc}</p>
     </div>
   )
 }
@@ -353,7 +353,7 @@ function HealthGauges({ kpis }: { kpis: SeasonKPIs }) {
       />
       <GaugeCard 
         title="Índice Efetivo de Chuva" 
-        value={chuvEfRaw} unit="%" color={chuvEfRaw && chuvEfRaw >= 60 ? '#0093D0' : '#8899aa'} 
+        value={chuvEfRaw} unit="%" color={chuvEfRaw && chuvEfRaw >= 60 ? '#0093D0' : 'var(--color-text-secondary)'} 
         desc="Fração da chuva que pôde ser convertida em transpiração pela cultura." 
       />
     </div>
@@ -367,30 +367,30 @@ function PeriodTable({ last7, last10, last15 }: { last7: SeasonKPIs['last7']; la
     { label: '15 dias', ...last15 },
   ]
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Consumo por Período (Últimos)</span>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--color-surface-border2)' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>Consumo por Período (Últimos)</span>
       </div>
       <div style={{ overflowX: 'auto' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: 0, minWidth: 280 }}>
         {/* Header */}
         {['', 'ETc (mm)', 'Irrig. (mm)', 'Chuva (mm)'].map((h, i) => (
-          <div key={i} style={{ padding: '8px 14px', background: '#0d1520', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+          <div key={i} style={{ padding: '8px 14px', background: 'var(--color-surface-sidebar)', borderBottom: '1px solid var(--color-surface-border2)' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
           </div>
         ))}
         {rows.map((r, i) => (
           <React.Fragment key={r.label}>
-            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>{r.label}</span>
+            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid var(--color-surface-border2)' : 'none', background: i % 2 ? 'var(--color-surface-bg)' : 'transparent' }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' }}>{r.label}</span>
             </div>
-            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid var(--color-surface-border2)' : 'none', background: i % 2 ? 'var(--color-surface-bg)' : 'transparent' }}>
               <span style={{ fontSize: 13, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.consumption)}</span>
             </div>
-            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid var(--color-surface-border2)' : 'none', background: i % 2 ? 'var(--color-surface-bg)' : 'transparent' }}>
               <span style={{ fontSize: 13, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.irrigation)}</span>
             </div>
-            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: i % 2 ? '#080e14' : 'transparent' }}>
+            <div style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid var(--color-surface-border2)' : 'none', background: i % 2 ? 'var(--color-surface-bg)' : 'transparent' }}>
               <span style={{ fontSize: 13, color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>{fmtNum(r.rainfall)}</span>
             </div>
           </React.Fragment>
@@ -406,18 +406,18 @@ function StageTable({ stages }: { stages: StageStats[] }) {
   const stageColors = ['', '#06b6d4', '#0093D0', '#f59e0b', '#ec4899']
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <Leaf size={13} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Histórico por Fase Fenológica</span>
-        <span style={{ fontSize: 10, color: '#778899', marginLeft: 'auto' }}>como Irriger</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>Histórico por Fase Fenológica</span>
+        <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginLeft: 'auto' }}>como Irriger</span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#0d1520' }}>
+            <tr style={{ background: 'var(--color-surface-sidebar)' }}>
               {['Fase', 'Dias', 'Irrigação (mm)', 'Precipitação (mm)', 'ETc (mm)', 'ETp (mm)', 'Stress (%)'].map(h => (
-                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid var(--color-surface-border2)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -425,17 +425,17 @@ function StageTable({ stages }: { stages: StageStats[] }) {
             {stages.map((s, i) => {
               const stressColor = s.stressIndex < 10 ? '#22c55e' : s.stressIndex < 20 ? '#f59e0b' : '#ef4444'
               return (
-                <tr key={s.stage} style={{ background: i % 2 ? '#080e14' : 'transparent', borderBottom: i < stages.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                <tr key={s.stage} style={{ background: i % 2 ? 'var(--color-surface-bg)' : 'transparent', borderBottom: i < stages.length - 1 ? '1px solid var(--color-surface-border2)' : 'none' }}>
                   <td style={{ padding: '10px 14px' }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: stageColors[s.stage] ?? '#e2e8f0' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: stageColors[s.stage] ?? 'var(--color-text)' }}>
                       Fase {s.stage} — {s.label}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{s.days}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>{s.days}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: '#0093D0', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.irrigationMm)}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.rainfallMm)}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.etcMm)}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.etpMm)}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>{fmtNum(s.etpMm)}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: stressColor, fontFamily: 'var(--font-mono)' }}>
                       {fmtNum(s.stressIndex)}%
@@ -482,11 +482,11 @@ function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
   }
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <Calendar size={13} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Consumo Hídrico — Resumo Semanal</span>
-        <span style={{ fontSize: 10, color: '#778899', marginLeft: 'auto' }}>clique na semana para expandir detahles dia a dia</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>Consumo Hídrico — Resumo Semanal</span>
+        <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginLeft: 'auto' }}>clique na semana para expandir detahles dia a dia</span>
       </div>
 
       {weeks.map((w, i) => {
@@ -496,33 +496,33 @@ function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
             {/* Cabecalho da semana */}
             <div 
               onClick={() => setExpanded(isExp ? null : w.weekNum)}
-              style={{ padding: '10px 18px', background: isExp ? 'rgba(0,147,208,0.05)' : (i % 2 ? '#080e14' : 'transparent'), borderBottom: i < weeks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
+              style={{ padding: '10px 18px', background: isExp ? 'rgba(0,147,208,0.05)' : (i % 2 ? 'var(--color-surface-bg)' : 'transparent'), borderBottom: i < weeks.length - 1 ? '1px solid var(--color-surface-border2)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                 <div style={{ width: 24, height: 24, borderRadius: 6, background: '#0e1720', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 11, color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.05)' }}>
+                 <div style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--color-surface-sidebar)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 11, color: 'var(--color-text)', border: '1px solid var(--color-surface-border2)' }}>
                     {w.weekNum}
                  </div>
-                 <span style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                   Semana {w.weekNum} <span style={{ color: '#778899', fontWeight: 400, textTransform: 'none' }}>· {fmtDate(w.startDate)} – {fmtDate(w.endDate)}</span>
+                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                   Semana {w.weekNum} <span style={{ color: 'var(--color-text-secondary)', fontWeight: 400, textTransform: 'none' }}>· {fmtDate(w.startDate)} – {fmtDate(w.endDate)}</span>
                  </span>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 11, fontFamily: 'var(--font-mono)', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                 <span style={{ color: '#8899aa' }} title="ETo">ETo: <span style={{ color: '#e2e8f0' }}>{fmtNum(w.eto)}</span></span>
-                 <span style={{ color: '#8899aa' }} title="ETc">ETc: <span style={{ color: '#06b6d4' }}>{fmtNum(w.etc)}</span></span>
-                 <span style={{ color: '#8899aa' }} title="Precipitação">Chuva: <span style={{ color: '#38bdf8' }}>{fmtNum(w.rain)}</span></span>
-                 <span style={{ color: '#8899aa' }} title="Irrigação">Irrig: <span style={{ color: '#0093D0', fontWeight: 700 }}>{fmtNum(w.irrig)}</span></span>
-                 <ChevronDown size={14} style={{ color: '#778899', transform: isExp ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                 <span style={{ color: 'var(--color-text-secondary)' }} title="ETo">ETo: <span style={{ color: 'var(--color-text)' }}>{fmtNum(w.eto)}</span></span>
+                 <span style={{ color: 'var(--color-text-secondary)' }} title="ETc">ETc: <span style={{ color: '#06b6d4' }}>{fmtNum(w.etc)}</span></span>
+                 <span style={{ color: 'var(--color-text-secondary)' }} title="Precipitação">Chuva: <span style={{ color: '#38bdf8' }}>{fmtNum(w.rain)}</span></span>
+                 <span style={{ color: 'var(--color-text-secondary)' }} title="Irrigação">Irrig: <span style={{ color: '#0093D0', fontWeight: 700 }}>{fmtNum(w.irrig)}</span></span>
+                 <ChevronDown size={14} style={{ color: 'var(--color-text-secondary)', transform: isExp ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
               </div>
             </div>
 
             {/* Expansivo: dias */}
             {isExp && (
-              <div style={{ padding: '0px 18px', background: '#060a0f', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ padding: '0px 18px', background: 'var(--color-surface-bg)', borderBottom: '1px solid var(--color-surface-border2)' }}>
                 {w.records.map((e, idx) => (
-                  <div key={e.date} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px', borderBottom: '1px solid rgba(255,255,255,0.02)', fontSize: 11 }}>
-                    <span style={{ color: '#778899', flex: 1, minWidth: 60 }}>{fmtDate(e.date)}</span>
+                  <div key={e.date} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px', borderBottom: '1px solid var(--color-surface-border2)', fontSize: 11 }}>
+                    <span style={{ color: 'var(--color-text-secondary)', flex: 1, minWidth: 60 }}>{fmtDate(e.date)}</span>
                     <div style={{ display: 'flex', gap: 16, flex: 3, justifyContent: 'flex-end', fontFamily: 'var(--font-mono)' }}>
-                      <span style={{ color: '#8899aa', width: 50, textAlign: 'right' }}>{fmtNum(e.eto_mm)}</span>
+                      <span style={{ color: 'var(--color-text-secondary)', width: 50, textAlign: 'right' }}>{fmtNum(e.eto_mm)}</span>
                       <span style={{ color: '#06b6d4', width: 50, textAlign: 'right' }}>{fmtNum(e.etc_mm)}</span>
                       <span style={{ color: '#38bdf8', width: 50, textAlign: 'right' }}>{fmtNum(e.rainfall_mm)}</span>
                       <span style={{ color: '#0093D0', width: 50, textAlign: 'right', fontWeight: e.actual_depth_mm ? 700 : 400 }}>{fmtNum(e.actual_depth_mm)}</span>
@@ -612,18 +612,18 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
   const yTicks = [0, 25, 50, 75, 100, 125].map(v => ({ v, y: yRight(v) }))
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <TrendingDown size={13} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>ADc% (Água Disponível no Solo) ao Longo da Safra</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>ADc% (Água Disponível no Solo) ao Longo da Safra</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
           {[1,2,3,4].map(s => (
-            <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#778899' }}>
+            <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--color-text-secondary)' }}>
               <div style={{ width: 10, height: 10, borderRadius: 2, background: stageColors[s]?.replace('0.06', '0.5') ?? '#333' }} />
               Fase {s}
             </span>
           ))}
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#778899' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--color-text-secondary)' }}>
             <div style={{ width: 2, height: 10, background: '#f59e0b', opacity: 0.6 }} />CAD
           </span>
         </div>
@@ -643,7 +643,7 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
 
           {/* Grade */}
           {yTicks.map(({ v, y }) => (
-            <line key={v} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+            <line key={v} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="var(--color-surface-border2)" strokeWidth="1" />
           ))}
 
           {/* Linha CAD dinâmica (um segmento por registro) */}
@@ -703,31 +703,31 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
             if (v === null || v === undefined) return null
             const cad = cadPercents[i]
             const color = v >= 80 ? '#22c55e' : v >= cad ? '#f59e0b' : '#ef4444'
-            return <circle key={i} cx={xPos(i)} cy={yRight(v)} r="3" fill={color} stroke="#0f1923" strokeWidth="1.5" />
+            return <circle key={i} cx={xPos(i)} cy={yRight(v)} r="3" fill={color} stroke="var(--color-surface-card)" strokeWidth="1.5" />
           })}
 
           {/* Eixo Y */}
           {yTicks.map(({ v, y }) => (
-            <text key={v} x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize="9" fill="#778899">{v}%</text>
+            <text key={v} x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize="9" fill="var(--color-text-secondary)">{v}%</text>
           ))}
 
           {/* Eixo X */}
           {xTicks.map(({ i, label }) => (
-            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#778899">{label}</text>
+            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="var(--color-text-secondary)">{label}</text>
           ))}
 
-          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="var(--color-surface-border2)" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="var(--color-surface-border2)" strokeWidth="1" />
         </svg>
       </div>
-      <div style={{ padding: '8px 18px 10px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#778899' }}>
+      <div style={{ padding: '8px 18px 10px', borderTop: '1px solid var(--color-surface-border2)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--color-text-secondary)' }}>
           <div style={{ width: 8, height: 12, background: 'rgba(0,147,208,0.5)', borderRadius: 1 }} /> Irrigação aplicada
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#778899' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--color-text-secondary)' }}>
           <div style={{ width: 8, height: 12, background: 'rgb(56 189 248 / 0.4)', borderRadius: 1 }} /> Chuva
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#778899' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--color-text-secondary)' }}>
           <div style={{ width: 16, height: 3, background: '#0093D0', borderRadius: 99 }} /> ADc (%) Umidade Atual
         </span>
       </div>
@@ -755,7 +755,7 @@ function HeroSummary({ kpis, season, lastRecordDate }: { kpis: SeasonKPIs; seaso
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #0f1923 0%, #0d1520 100%)',
+      background: 'linear-gradient(135deg, var(--color-surface-card) 0%, var(--color-surface-sidebar) 100%)',
       border: `1px solid ${scoreColor}30`,
       borderRadius: 16,
       padding: '20px 24px',
@@ -766,7 +766,7 @@ function HeroSummary({ kpis, season, lastRecordDate }: { kpis: SeasonKPIs; seaso
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
             <svg viewBox="0 0 64 64" width="64" height="64">
-              <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+              <circle cx="32" cy="32" r="28" fill="none" stroke="var(--color-surface-border2)" strokeWidth="6" />
               <circle cx="32" cy="32" r="28" fill="none" stroke={scoreColor} strokeWidth="6"
                 strokeDasharray={`${(score / 100) * 175.9} 175.9`}
                 strokeLinecap="round"
@@ -782,7 +782,7 @@ function HeroSummary({ kpis, season, lastRecordDate }: { kpis: SeasonKPIs; seaso
               borderRadius: 20, background: status.bg, color: status.color,
               border: `1px solid ${status.color}40`, marginBottom: 4,
             }}>{status.label}</span>
-            <p style={{ fontSize: 11, color: '#8899aa', lineHeight: 1.4, maxWidth: 160 }}>score composto: stress (40%) + eficiência (30%) + CC% (30%)</p>
+            <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', lineHeight: 1.4, maxWidth: 160 }}>score composto: stress (40%) + eficiência (30%) + CC% (30%)</p>
           </div>
         </div>
 
@@ -836,15 +836,15 @@ function HeroSummary({ kpis, season, lastRecordDate }: { kpis: SeasonKPIs; seaso
       )}
 
       {/* Rodapé: sumário + última atualização */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 8, marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-        <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 8, marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--color-surface-border2)' }}>
+        <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
           {kpis.totalDays} dias monitorados
           {kpis.irrigationEvents > 0 && ` · ${kpis.irrigationEvents} irrigações`}
           {kpis.totalRainfallMm > 0 && ` · ${fmtNum(kpis.totalRainfallMm)} mm de chuva`}
           {season.crops && ` · ${season.crops.name}`}
         </p>
         {lastRecordDate && (
-          <span style={{ fontSize: 12, color: '#8899aa' }}>
+          <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
             Última atualização: {fmtDate(lastRecordDate)}
           </span>
         )}
@@ -866,7 +866,7 @@ function AccordionSection({ id, title, icon: Icon, isOpen, onToggle, children, b
 }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
       <button
         onClick={() => onToggle(id)}
         onMouseEnter={() => setHovered(true)}
@@ -883,7 +883,7 @@ function AccordionSection({ id, title, icon: Icon, isOpen, onToggle, children, b
         {badge && (
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(0,147,208,0.12)', color: '#0093D0', fontWeight: 600 }}>{badge}</span>
         )}
-        <ChevronDown size={14} style={{ color: '#778899', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s ease', flexShrink: 0 }} />
+        <ChevronDown size={14} style={{ color: 'var(--color-text-secondary)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s ease', flexShrink: 0 }} />
       </button>
       {/* CSS grid animation */}
       <div style={{
@@ -892,7 +892,7 @@ function AccordionSection({ id, title, icon: Icon, isOpen, onToggle, children, b
         transition: 'grid-template-rows 0.25s ease-out',
       }}>
         <div style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '0 18px 18px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          <div style={{ padding: '0 18px 18px', borderTop: '1px solid var(--color-surface-border2)' }}>
             <div style={{ paddingTop: 16 }}>{children}</div>
           </div>
         </div>
@@ -939,14 +939,14 @@ function EnergyKpiCard({ label, value, unit, status, meta }: {
   label: string; value: string; unit?: string
   status?: SemColor | string; meta?: string
 }) {
-  const color = status ? semColor(status) : '#e2e8f0'
+  const color = status ? semColor(status) : 'var(--color-text)'
   return (
-    <div style={{ background: '#0f1923', border: `1px solid ${color}30`, borderRadius: 14, padding: '14px 16px' }}>
+    <div style={{ background: 'var(--color-surface-card)', border: `1px solid ${color}30`, borderRadius: 14, padding: '14px 16px' }}>
       <p style={{ fontSize: 20, fontWeight: 800, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-        {value} <span style={{ fontSize: 11, fontWeight: 400, color: '#778899' }}>{unit}</span>
+        {value} <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--color-text-secondary)' }}>{unit}</span>
       </p>
       <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>{label}</p>
-      {meta && <p style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>{meta}</p>}
+      {meta && <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>{meta}</p>}
     </div>
   )
 }
@@ -978,18 +978,18 @@ function EnergyBarChart({ bills }: { bills: EnergyBill[] }) {
   }
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <Bolt size={13} style={{ color: '#f59e0b' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Histórico de Energia — Reativa % e Custo/mm/ha</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>Histórico de Energia — Reativa % e Custo/mm/ha</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 14 }}>
-          <span style={{ fontSize: 10, color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 10, height: 10, background: 'rgb(239 68 68 / 0.5)', borderRadius: 2 }} /> Reativa %
           </span>
-          <span style={{ fontSize: 10, color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 16, height: 3, background: '#0093D0', borderRadius: 99 }} /> R$/mm/ha
           </span>
-          <span style={{ fontSize: 10, color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 12, height: 2, background: '#f59e0b', borderRadius: 99, opacity: 0.6 }} /> Meta
           </span>
         </div>
@@ -999,7 +999,7 @@ function EnergyBarChart({ bills }: { bills: EnergyBill[] }) {
           {/* Grade */}
           {[0, 25, 50, 75, 100].map(pct => {
             const y = PAD.top + innerH - (pct / 100) * innerH
-            return <line key={pct} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+            return <line key={pct} x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="var(--color-surface-border2)" strokeWidth="1" />
           })}
 
           {/* Meta reativa 2% */}
@@ -1041,23 +1041,23 @@ function EnergyBarChart({ bills }: { bills: EnergyBill[] }) {
             const v = b.cost_per_mm_ha ?? 0
             if (!b.cost_per_mm_ha) return null
             const dotColor = v <= 1.5 ? '#22c55e' : v <= 2 ? '#f59e0b' : '#ef4444'
-            return <circle key={i} cx={xPos(i)} cy={yLine(v)} r="4" fill={dotColor} stroke="#0f1923" strokeWidth="2" />
+            return <circle key={i} cx={xPos(i)} cy={yLine(v)} r="4" fill={dotColor} stroke="var(--color-surface-card)" strokeWidth="2" />
           })}
 
           {/* Eixo X */}
           {sorted.map((b, i) => (
-            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="#778899">
+            <text key={i} x={xPos(i)} y={H - 6} textAnchor="middle" fontSize="9" fill="var(--color-text-secondary)">
               {monthLabel(b.reference_month)}
             </text>
           ))}
 
           {/* Eixo Y (reativa %) */}
           {[0, 2, 5, 10].map(v => (
-            <text key={v} x={PAD.left - 4} y={yBar(v) + 4} textAnchor="end" fontSize="8" fill="#778899">{v}%</text>
+            <text key={v} x={PAD.left - 4} y={yBar(v) + 4} textAnchor="end" fontSize="8" fill="var(--color-text-secondary)">{v}%</text>
           ))}
 
-          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top + innerH} x2={W - PAD.right} y2={PAD.top + innerH} stroke="var(--color-surface-border2)" strokeWidth="1" />
+          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={PAD.top + innerH} stroke="var(--color-surface-border2)" strokeWidth="1" />
         </svg>
       </div>
     </div>
@@ -1069,17 +1069,17 @@ function EnergyTable({ bills }: { bills: EnergyBill[] }) {
   if (sorted.length === 0) return null
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <Bolt size={13} style={{ color: '#f59e0b' }} />
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Histórico de Contas</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>Histórico de Contas</span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#0d1520' }}>
+            <tr style={{ background: 'var(--color-surface-sidebar)' }}>
               {['Mês', 'kWh', 'Custo Total', 'Reativa %', 'HR %', 'Custo/mm/ha', 'Ponta (R$)', 'Status'].map(h => (
-                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={h} style={{ padding: '9px 14px', fontSize: 10, fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', borderBottom: '1px solid var(--color-surface-border2)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -1097,10 +1097,10 @@ function EnergyTable({ bills }: { bills: EnergyBill[] }) {
                 : [reactiveStatus, reservedStatus, costStatus].some(s => s === 'yellow') ? 'yellow' : 'green'
 
               return (
-                <tr key={b.id} style={{ background: i % 2 ? '#080e14' : 'transparent', borderBottom: i < sorted.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                  <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#8899aa' }}>{b.reference_month}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{b.kwh_total ? fmtNum(b.kwh_total, 0) : '—'}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{b.cost_total_brl ? `R$ ${fmtNum(b.cost_total_brl, 2)}` : '—'}</td>
+                <tr key={b.id} style={{ background: i % 2 ? 'var(--color-surface-bg)' : 'transparent', borderBottom: i < sorted.length - 1 ? '1px solid var(--color-surface-border2)' : 'none' }}>
+                  <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)' }}>{b.reference_month}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>{b.kwh_total ? fmtNum(b.kwh_total, 0) : '—'}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{b.cost_total_brl ? `R$ ${fmtNum(b.cost_total_brl, 2)}` : '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: semColor(reactiveStatus), fontFamily: 'var(--font-mono)' }}>
                       {reactivePct !== null ? `${fmtNum(reactivePct)}%` : '—'}
@@ -1116,7 +1116,7 @@ function EnergyTable({ bills }: { bills: EnergyBill[] }) {
                       {costMmHa !== null ? `R$ ${fmtNum(costMmHa, 2)}` : '—'}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
                     {b.cost_peak_brl ? `R$ ${fmtNum(b.cost_peak_brl, 2)}` : '—'}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
@@ -1329,8 +1329,8 @@ export default function RelatoriosPage() {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '48px 24px', textAlign: 'center' }}>
         <Sprout size={32} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra cadastrada</h2>
-        <p style={{ fontSize: 13, color: '#778899' }}>Cadastre uma safra para gerar relatórios.</p>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', marginBottom: 8 }}>Nenhuma safra cadastrada</h2>
+        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>Cadastre uma safra para gerar relatórios.</p>
       </div>
     )
   }
@@ -1341,7 +1341,7 @@ export default function RelatoriosPage() {
       {/* Título + botão CSV */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>Relatórios de Safra</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.025em' }}>Relatórios de Safra</h1>
           {selectedSeason ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6, alignItems: 'center' }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: '#0093D0' }}>{selectedSeason.name}</span>
@@ -1377,13 +1377,13 @@ export default function RelatoriosPage() {
       </div>
 
       {/* Seletor de safra */}
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 20px' }}>
-        <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Safra</label>
+      <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: '16px 20px' }}>
+        <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 6 }}>Safra</label>
         <div style={{ position: 'relative', maxWidth: 480 }}>
           <select
             value={selectedSeasonId}
             onChange={e => setSelectedSeasonId(e.target.value)}
-            style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+            style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none', appearance: 'none', cursor: 'pointer' }}
           >
             {seasons.map(s => (
               <option key={s.id} value={s.id}>
@@ -1392,7 +1392,7 @@ export default function RelatoriosPage() {
               </option>
             ))}
           </select>
-          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
+          <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)', pointerEvents: 'none' }} />
         </div>
 
         {selectedSeason && (
@@ -1403,11 +1403,11 @@ export default function RelatoriosPage() {
               </span>
             )}
             {selectedSeason.planting_date && (
-              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <Calendar size={10} /> Plantio: {fmtDateLong(selectedSeason.planting_date)}
               </span>
             )}
-            <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#0d1520', color: '#778899', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <BarChart2 size={10} /> {kpis.totalDays} dias com registros
             </span>
           </div>
@@ -1416,7 +1416,7 @@ export default function RelatoriosPage() {
 
       {/* Loading de registros */}
       {loadingRecords && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 13 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-text-secondary)', fontSize: 13 }}>
           <Loader2 size={14} className="animate-spin" style={{ color: '#0093D0' }} />
           Carregando dados da safra...
         </div>
@@ -1424,10 +1424,10 @@ export default function RelatoriosPage() {
 
       {/* Sem dados */}
       {!loadingRecords && records.length === 0 && (
-        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
-          <BarChart2 size={28} style={{ color: '#778899', margin: '0 auto 12px' }} />
-          <p style={{ fontSize: 14, color: '#778899' }}>Nenhum registro de manejo diário para esta safra.</p>
-          <p style={{ fontSize: 12, color: '#778899', marginTop: 4 }}>Registre dados no Manejo Diário para gerar relatórios.</p>
+        <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: '40px 24px', textAlign: 'center' }}>
+          <BarChart2 size={28} style={{ color: 'var(--color-text-secondary)', margin: '0 auto 12px' }} />
+          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Nenhum registro de manejo diário para esta safra.</p>
+          <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 4 }}>Registre dados no Manejo Diário para gerar relatórios.</p>
         </div>
       )}
 
@@ -1457,7 +1457,7 @@ export default function RelatoriosPage() {
               <KpiCard label="ETc Acumulada" value={fmtNum(kpis.totalEtcMm)} unit="mm" color="#06b6d4" icon={Droplets}
                 sub={`ETo: ${fmtNum(kpis.totalEtoMm)} mm`}
                 description="Evapotranspiração real da cultura — demanda hídrica total." />
-              <KpiCard label="Eventos de Irrigação" value={String(kpis.irrigationEvents)} color="#8899aa" icon={Zap}
+              <KpiCard label="Eventos de Irrigação" value={String(kpis.irrigationEvents)} color="var(--color-text-secondary)" icon={Zap}
                 description="Número de dias com lâmina aplicada registrada." />
               <KpiCard label="CC% Mínimo" value={fmtNum(kpis.minFieldCapacity, 0)} unit="%" color="#f59e0b" icon={TrendingDown}
                 sub={`média: ${fmtNum(kpis.avgFieldCapacity, 0)}%`}
@@ -1490,8 +1490,8 @@ export default function RelatoriosPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <PeriodTable last7={kpis.last7} last10={kpis.last10} last15={kpis.last15} />
-              <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Eficiência Hídrica</span>
+              <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>Eficiência Hídrica</span>
                 {[
                   {
                     label: 'ETc / (Irrig + Chuva)',
@@ -1515,16 +1515,16 @@ export default function RelatoriosPage() {
                   },
                 ].map(item => {
                   const v = item.value
-                  const color = v === null ? '#778899' : item.good(v) ? '#22c55e' : '#f59e0b'
+                  const color = v === null ? 'var(--color-text-secondary)' : item.good(v) ? '#22c55e' : '#f59e0b'
                   return (
-                    <div key={item.label} style={{ background: '#0f1923', borderRadius: 10, padding: '10px 14px' }}>
+                    <div key={item.label} style={{ background: 'var(--color-surface-card)', borderRadius: 10, padding: '10px 14px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ fontSize: 11, color: '#8899aa' }}>{item.label}</span>
+                        <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{item.label}</span>
                         <span style={{ fontSize: 18, fontWeight: 800, color, fontFamily: 'var(--font-mono)' }}>
                           {v !== null ? fmtNum(v, 0) + '%' : '—'}
                         </span>
                       </div>
-                      <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>{item.desc}</p>
+                      <p style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>{item.desc}</p>
                     </div>
                   )
                 })}
@@ -1569,25 +1569,25 @@ export default function RelatoriosPage() {
         {/* Seletor de Fazenda */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Propriedade</label>
+            <label style={{ display: 'block', fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 5 }}>Propriedade</label>
             <div style={{ position: 'relative' }}>
               <select
                 value={selectedFarmId}
                 onChange={e => setSelectedFarmId(e.target.value)}
-                style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+                style={{ width: '100%', padding: '9px 32px 9px 12px', borderRadius: 10, fontSize: 13, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none', appearance: 'none', cursor: 'pointer' }}
               >
                 {farmList.map(f => (
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
               </select>
-              <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
+              <ChevronDown size={13} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)', pointerEvents: 'none' }} />
             </div>
           </div>
         </div>
 
         {/* Loading */}
         {loadingBills && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#778899', fontSize: 12, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-text-secondary)', fontSize: 12, marginBottom: 12 }}>
             <Loader2 size={13} className="animate-spin" style={{ color: '#0093D0' }} />
             Carregando contas...
           </div>
@@ -1602,7 +1602,7 @@ export default function RelatoriosPage() {
           const costStatus = costMmHa === null ? 'unknown' : costMmHa <= 1.5 ? 'green' : costMmHa <= 2 ? 'yellow' : 'red'
           return (
             <div style={{ marginBottom: 14 }}>
-              <p style={{ fontSize: 10, color: '#778899', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <p style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Último mês: {latest.reference_month}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
@@ -1694,18 +1694,18 @@ export default function RelatoriosPage() {
 
           return (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8, background: '#0f1923', borderRadius: '14px 14px 0 0', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--color-surface-card)', borderRadius: '14px 14px 0 0', border: '1px solid var(--color-surface-border2)' }}>
                 <Bolt size={13} style={{ color: '#22c55e' }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>Rateio de Energia por Cultura</span>
-                <span style={{ fontSize: 11, color: '#778899', marginLeft: 4 }}>— {latest.reference_month}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>Rateio de Energia por Cultura</span>
+                <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginLeft: 4 }}>— {latest.reference_month}</span>
               </div>
-              <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderTop: 'none', borderRadius: '0 0 14px 14px', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderTop: 'none', borderRadius: '0 0 14px 14px', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {interestingPivots.map(([pivotKey, ss]) => {
                   const totalArea = ss.reduce((sum, s) => sum + (s.area_ha ?? 0), 0)
                   const hasAreas = totalArea > 0
                   return (
                     <div key={pivotKey}>
-                      <p style={{ fontSize: 11, color: '#778899', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+                      <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
                         {pivotKey === '__sem_pivo__' ? 'Sem pivô específico' : `Pivô`}
                         {hasAreas && <span style={{ color: '#94a3b8', fontWeight: 400, marginLeft: 4 }}>({fmtNum(totalArea, 1)} ha total)</span>}
                       </p>
@@ -1715,21 +1715,21 @@ export default function RelatoriosPage() {
                           const custo = costTotal * pct
                           const barW = Math.round(pct * 100)
                           return (
-                            <div key={s.id} style={{ background: '#0d1520', borderRadius: 10, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div key={s.id} style={{ background: 'var(--color-surface-sidebar)', borderRadius: 10, padding: '10px 14px', border: '1px solid var(--color-surface-border2)' }}>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
                                 <div>
-                                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{s.name}</span>
+                                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>{s.name}</span>
                                   {s.crops?.name && <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 6 }}>— {s.crops.name}</span>}
                                 </div>
                                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                   <span style={{ fontSize: 14, fontWeight: 700, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>
                                     R$ {fmtNum(custo, 2)}
                                   </span>
-                                  <span style={{ fontSize: 11, color: '#778899', marginLeft: 6 }}>({fmtNum(pct * 100, 1)}%)</span>
+                                  <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginLeft: 6 }}>({fmtNum(pct * 100, 1)}%)</span>
                                 </div>
                               </div>
                               {/* Barra proporcional */}
-                              <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+                              <div style={{ height: 4, background: 'var(--color-surface-border2)', borderRadius: 99, overflow: 'hidden' }}>
                                 <div style={{ height: '100%', width: `${barW}%`, background: '#22c55e', borderRadius: 99 }} />
                               </div>
                               {s.area_ha && (
@@ -1745,7 +1745,7 @@ export default function RelatoriosPage() {
                     </div>
                   )
                 })}
-                <p style={{ fontSize: 11, color: '#64748b', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 10, marginTop: 4 }}>
+                <p style={{ fontSize: 11, color: '#64748b', borderTop: '1px solid var(--color-surface-border2)', paddingTop: 10, marginTop: 4 }}>
                   Custo total da conta: <strong style={{ color: '#94a3b8' }}>R$ {fmtNum(costTotal, 2)}</strong> · Rateio proporcional à área de cada cultura no pivô. Configure a área em Safras.
                 </p>
               </div>
@@ -1755,34 +1755,34 @@ export default function RelatoriosPage() {
 
         {/* Sem dados */}
         {!loadingBills && energyBills.length === 0 && (
-          <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px', textAlign: 'center', marginBottom: 16 }}>
-            <Bolt size={22} style={{ color: '#778899', margin: '0 auto 8px' }} />
-            <p style={{ fontSize: 13, color: '#778899' }}>Nenhuma conta de energia para este pivô.</p>
-            <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>Faça upload de uma conta abaixo para começar a análise.</p>
+          <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: '24px', textAlign: 'center', marginBottom: 16 }}>
+            <Bolt size={22} style={{ color: 'var(--color-text-secondary)', margin: '0 auto 8px' }} />
+            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>Nenhuma conta de energia para este pivô.</p>
+            <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 4 }}>Faça upload de uma conta abaixo para começar a análise.</p>
           </div>
         )}
 
         {/* Upload — sempre ao final */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div style={{ borderTop: '1px solid var(--color-surface-border2)', paddingTop: 16 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Adicionar nova conta de energia
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Lâmina irrigada */}
             <div style={{ width: 200 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Lâmina irrigada no mês (mm/ha)</label>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 5 }}>Lâmina irrigada no mês (mm/ha)</label>
               <input
                 type="number"
                 value={irrigatedMmHa}
                 onChange={e => setIrrigatedMmHa(e.target.value)}
                 placeholder="ex: 45"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 10, fontSize: 13, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 10, fontSize: 13, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none' }}
               />
             </div>
 
             {/* Dropzone */}
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: '#8899aa', marginBottom: 5 }}>Arquivo da conta (PDF, JPG, PNG)</label>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--color-text-secondary)', marginBottom: 5 }}>Arquivo da conta (PDF, JPG, PNG)</label>
               <div
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={e => e.preventDefault()}
@@ -1792,17 +1792,17 @@ export default function RelatoriosPage() {
                   if (f) setUploadFile(f)
                 }}
                 style={{
-                  border: `2px dashed ${uploadFile ? '#0093D0' : 'rgba(255,255,255,0.06)'}`,
+                  border: `2px dashed ${uploadFile ? '#0093D0' : 'var(--color-surface-border2)'}`,
                   borderRadius: 12, padding: '20px 16px', textAlign: 'center',
                   cursor: 'pointer', transition: 'border-color 0.2s',
                   background: uploadFile ? 'rgba(0,147,208,0.05)' : 'transparent',
                 }}
               >
-                <Upload size={18} style={{ color: uploadFile ? '#0093D0' : '#778899', margin: '0 auto 6px' }} />
-                <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : '#778899' }}>
+                <Upload size={18} style={{ color: uploadFile ? '#0093D0' : 'var(--color-text-secondary)', margin: '0 auto 6px' }} />
+                <p style={{ fontSize: 12, color: uploadFile ? '#0093D0' : 'var(--color-text-secondary)' }}>
                   {uploadFile ? uploadFile.name : 'Clique ou arraste o arquivo aqui'}
                 </p>
-                {!uploadFile && <p style={{ fontSize: 10, color: '#778899', marginTop: 2 }}>PDF, JPG ou PNG</p>}
+                {!uploadFile && <p style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 2 }}>PDF, JPG ou PNG</p>}
               </div>
               <input
                 ref={fileInputRef}
@@ -1824,9 +1824,9 @@ export default function RelatoriosPage() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                  background: (!uploadFile || !selectedFarmId || uploading) ? '#0d1520' : '#0093D0',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  color: (!uploadFile || !selectedFarmId || uploading) ? '#778899' : '#fff',
+                  background: (!uploadFile || !selectedFarmId || uploading) ? 'var(--color-surface-sidebar)' : '#0093D0',
+                  border: '1px solid var(--color-surface-border)',
+                  color: (!uploadFile || !selectedFarmId || uploading) ? 'var(--color-text-secondary)' : '#fff',
                   cursor: (!uploadFile || !selectedFarmId || uploading) ? 'not-allowed' : 'pointer',
                   minHeight: 44,
                 }}

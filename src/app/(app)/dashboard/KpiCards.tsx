@@ -57,7 +57,7 @@ export function KpiCards({ summary }: KpiCardsProps) {
       {cards.map(({ label, value, unit, subtitle, color, Icon }) => (
         <div key={label} style={{
           background: 'linear-gradient(145deg, rgba(18,24,32,0.95), rgba(13,18,26,0.98))',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--color-surface-border2)',
           borderTop: `1px solid ${color}25`,
           borderRadius: 16,
           padding: '16px 16px 14px',

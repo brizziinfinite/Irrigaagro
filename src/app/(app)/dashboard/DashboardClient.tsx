@@ -24,7 +24,7 @@ const WaterBalanceChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div style={{ height: 200, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 12 }}>
+      <div style={{ height: 200, borderRadius: 8, background: 'var(--color-surface-border2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: 12 }}>
         Carregando gráfico…
       </div>
     ),
@@ -35,9 +35,9 @@ const PivotMap = dynamic(
   () => import('./PivotMap').then(m => ({ default: m.PivotMap })),
   { ssr: false, loading: () => (
     <div style={{
-      height: 340, borderRadius: 16, background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', color: '#778899', fontSize: 13,
+      height: 340, borderRadius: 16, background: 'var(--color-surface-card)',
+      border: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: 13,
     }}>
       Carregando mapa…
     </div>
@@ -55,7 +55,7 @@ const STATUS_CONFIG: Record<IrrigationStatus, {
   verde:     { label: 'Confortável', color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',  border: 'rgb(34 197 94 / 0.25)',  icon: CheckCircle2,  desc: 'Solo bem abastecido — ≥75%' },
   amarelo:   { label: 'Atenção',     color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)', border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle, desc: 'Irrigar nos próximos 2 dias — 60–75%' },
   vermelho:  { label: 'Crítico',     color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',  border: 'rgb(239 68 68 / 0.25)',  icon: AlertCircle,   desc: 'Irrigar hoje — solo abaixo de 60%' },
-  sem_safra: { label: 'Sem safra',   color: '#778899', bg: 'rgb(85 102 119 / 0.12)', border: 'rgb(85 102 119 / 0.25)', icon: Info,          desc: 'Nenhuma safra ativa' },
+  sem_safra: { label: 'Sem safra',   color: 'var(--color-text-muted)', bg: 'rgb(85 102 119 / 0.12)', border: 'rgb(85 102 119 / 0.25)', icon: Info,          desc: 'Nenhuma safra ativa' },
 }
 
 // threshold: limiar configurado no pivô (padrão 70)
@@ -90,18 +90,18 @@ function Onboarding() {
         }}>
           <Droplets size={32} className="text-white" strokeWidth={2} />
         </div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#e2e8f0', marginBottom: 10 }}>Bem-vindo ao IrrigaAgro</h1>
-        <p style={{ fontSize: 15, color: '#8899aa', lineHeight: 1.6 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-text)', marginBottom: 10 }}>Bem-vindo ao IrrigaAgro</h1>
+        <p style={{ fontSize: 15, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
           Siga os passos abaixo para configurar seu sistema de manejo hídrico baseado no método FAO-56.
         </p>
       </div>
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '8px 0', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 20, padding: '8px 0', overflow: 'hidden' }}>
         {steps.map((step, i) => (
           <Link key={step.num} href={step.href} style={{
             display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px',
-            textDecoration: 'none', borderBottom: i < steps.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+            textDecoration: 'none', borderBottom: i < steps.length - 1 ? '1px solid var(--color-surface-border2)' : 'none',
           }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#0d1520'}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-sidebar)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
           >
             <div style={{
@@ -111,10 +111,10 @@ function Onboarding() {
               fontSize: 14, fontWeight: 700, color: '#0093D0',
             }}>{step.num}</div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{step.title}</p>
-              <p style={{ fontSize: 12, color: '#778899', marginTop: 2 }}>{step.desc}</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>{step.title}</p>
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 2 }}>{step.desc}</p>
             </div>
-            <ArrowRight size={16} style={{ color: '#778899', flexShrink: 0 }} />
+            <ArrowRight size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
           </Link>
         ))}
       </div>
@@ -272,8 +272,8 @@ export function DashboardClient({
 
       {/* ① Título */}
       <div style={{ minWidth: 0 }}>
-        <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: '#e2e8f0', letterSpacing: '-0.03em', margin: 0 }}>Central de Controle</h1>
-        <p style={{ fontSize: 13, color: '#778899', marginTop: 5, fontWeight: 500 }}>
+        <h1 className="text-2xl sm:text-3xl" style={{ fontWeight: 900, color: 'var(--color-text)', letterSpacing: '-0.03em', margin: 0 }}>Central de Controle</h1>
+        <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 5, fontWeight: 500 }}>
           {totalPivots} {totalPivots === 1 ? 'pivô' : 'pivôs'} · {activePivots} com safra ativa
         </p>
       </div>
@@ -355,7 +355,7 @@ export function DashboardClient({
               </div>
               {summary.pivotsWithClimateFallback > 0 && (
                 <Link href="/diagnostico-pivo" style={{
-                  fontSize: 11, color: '#667788', textDecoration: 'none',
+                  fontSize: 11, color: 'var(--color-text-muted)', textDecoration: 'none',
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}>
                   <Info size={11} /> {summary.pivotsWithClimateFallback} sem dado climático
@@ -366,7 +366,7 @@ export function DashboardClient({
             {/* Linhas */}
             {!hasAnything ? (
               <div style={{ padding: '20px 22px' }}>
-                <p style={{ fontSize: 12, color: '#667788', fontWeight: 500 }}>Nenhum pivô ativo com dados de balanço.</p>
+                <p style={{ fontSize: 12, color: 'var(--color-text-muted)', fontWeight: 500 }}>Nenhum pivô ativo com dados de balanço.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -384,7 +384,7 @@ export function DashboardClient({
                     <div key={rec.pivotId} style={{
                       display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
                       padding: '13px 20px',
-                      borderBottom: i < recs.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                      borderBottom: i < recs.length - 1 ? '1px solid var(--color-surface-border2)' : 'none',
                       background: isUrgent ? 'rgba(239,68,68,0.05)' : 'transparent',
                     }}>
                       <Icon size={15} style={{ color, flexShrink: 0 }} />
@@ -406,7 +406,7 @@ export function DashboardClient({
                       )}
 
                       {/* Recomendação */}
-                      <span style={{ fontSize: 12, color: isUrgent ? '#c8d4e0' : '#778899', flex: 1, fontWeight: isUrgent ? 600 : 400 }}>
+                      <span style={{ fontSize: 12, color: isUrgent ? '#c8d4e0' : 'var(--color-text-muted)', flex: 1, fontWeight: isUrgent ? 600 : 400 }}>
                         {isUrgent
                           ? 'Irrigar hoje'
                           : rec.daysAway === 1 ? 'Irrigar amanhã'
@@ -433,11 +433,11 @@ export function DashboardClient({
                       )}
 
                       <Link href="/manejo" style={{
-                        fontSize: 11, color: '#667788', textDecoration: 'none',
+                        fontSize: 11, color: 'var(--color-text-muted)', textDecoration: 'none',
                         display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
                         padding: '4px 8px', borderRadius: 6,
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        background: 'var(--color-surface-border2)',
+                        border: '1px solid var(--color-surface-border2)',
                       }}>
                         Ver Manejo <ArrowRight size={11} />
                       </Link>
@@ -455,13 +455,13 @@ export function DashboardClient({
         {/* Mapa do Parque */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#778899' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--color-text-muted)' }}>
               Planta da Fazenda
             </span>
-            <span style={{ fontSize: 11, color: '#778899' }}>·</span>
-            <span style={{ fontSize: 11, color: '#8899aa' }}>Localização dos pivôs</span>
-            <span style={{ fontSize: 11, color: '#778899', marginLeft: 4 }}>·</span>
-            <span style={{ fontSize: 11, fontWeight: 500, color: '#667788' }}>
+            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>·</span>
+            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Localização dos pivôs</span>
+            <span style={{ fontSize: 11, color: 'var(--color-text-muted)', marginLeft: 4 }}>·</span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-text-muted)' }}>
               {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
             </span>
           </div>
@@ -482,11 +482,11 @@ export function DashboardClient({
         {/* Situação por Pivô */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#778899' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--color-text-muted)' }}>
               Situação por Pivô
             </span>
-            <span style={{ fontSize: 11, color: '#778899' }}>·</span>
-            <span style={{ fontSize: 11, color: '#667788' }}>Prioridade operacional</span>
+            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>·</span>
+            <span style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Prioridade operacional</span>
           </div>
           <CriticalPivots
             pivots={pivots}
@@ -549,10 +549,10 @@ export function DashboardClient({
               @keyframes tankWave  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
             `}</style>
             <div
-              style={{ width: '92%', maxWidth: 780, background: '#10151c', borderRadius: 24, padding: '28px 32px 24px', boxShadow: '0 24px 80px rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}
+              style={{ width: '92%', maxWidth: 780, background: 'var(--color-surface-card)', borderRadius: 24, padding: '28px 32px 24px', boxShadow: '0 24px 80px rgba(0,0,0,0.7)', border: '1px solid var(--color-surface-border2)', position: 'relative' }}
               onClick={e => e.stopPropagation()}
             >
-              <button onClick={() => setSelectedPivotPlotId(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: '#778899', cursor: 'pointer', lineHeight: 0 }}>
+              <button onClick={() => setSelectedPivotPlotId(null)} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', lineHeight: 0 }}>
                 <X size={18} />
               </button>
 
@@ -604,9 +604,9 @@ export function DashboardClient({
                   )
                 })()}
                 <div>
-                  <h3 style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{pivot.name}</h3>
-                  <p style={{ fontSize: 11, color: '#667788', margin: 0 }}>Balanço Hídrico — Últimos {trendData.length} dias</p>
-                  {pivot.farms?.name && <p style={{ fontSize: 10, color: '#778899', margin: '3px 0 0' }}>{pivot.farms.name}</p>}
+                  <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-text)', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{pivot.name}</h3>
+                  <p style={{ fontSize: 11, color: 'var(--color-text-muted)', margin: 0 }}>Balanço Hídrico — Últimos {trendData.length} dias</p>
+                  {pivot.farms?.name && <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: '3px 0 0' }}>{pivot.farms.name}</p>}
                 </div>
               </div>
 
@@ -621,7 +621,7 @@ export function DashboardClient({
                   pivotName={pivot.name}
                 />
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 160, color: '#667788', fontSize: 13 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 160, color: 'var(--color-text-muted)', fontSize: 13 }}>
                   Nenhum dado de umidade registrado para este pivô.
                 </div>
               )}

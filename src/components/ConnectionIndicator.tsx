@@ -59,10 +59,10 @@ export function ConnectionIndicator() {
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 9999,
-            background: '#0f1923',
+            background: 'var(--color-surface-card)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 10,
-            color: '#e2e8f0',
+            color: 'var(--color-text)',
             fontSize: 13,
             fontFamily: 'sans-serif',
             padding: '12px 20px',
@@ -93,7 +93,7 @@ export function ConnectionIndicator() {
             onClick={() => setShowUpdateToast(false)}
             style={{
               background: 'transparent',
-              color: '#8899aa',
+              color: 'var(--color-text-secondary)',
               border: 'none',
               cursor: 'pointer',
               fontSize: 16,

@@ -165,20 +165,20 @@ export function PivotMiniMap({
   }, [latitude, longitude, lengthM, sectors, onLocationChange])
 
   return (
-    <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--color-surface-border)' }}>
       <style>{`
         .leaflet-container {
-          background: #080e14 !important;
+          background: var(--color-surface-bg) !important;
           font-family: system-ui, sans-serif !important;
         }
         .leaflet-control-zoom a {
-          background: #0f1923 !important;
-          border-color: rgba(255,255,255,0.06) !important;
-          color: #8899aa !important;
+          background: var(--color-surface-card) !important;
+          border-color: var(--color-surface-border2) !important;
+          color: var(--color-text-secondary) !important;
         }
         .leaflet-control-zoom a:hover {
-          background: #0d1520 !important;
-          color: #e2e8f0 !important;
+          background: var(--color-surface-sidebar) !important;
+          color: var(--color-text) !important;
         }
       `}</style>
       <div ref={mapRef} style={{ height: 240, width: '100%' }} />
@@ -186,9 +186,9 @@ export function PivotMiniMap({
       {(latitude === null || longitude === null) && (
         <div style={{
           position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)',
-          background: 'rgba(8,14,20,0.82)', backdropFilter: 'blur(4px)',
-          border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20,
-          padding: '5px 14px', fontSize: 11, color: '#8899aa',
+          background: 'color-mix(in srgb, var(--color-surface-bg) 82%, transparent)', backdropFilter: 'blur(4px)',
+          border: '1px solid var(--color-surface-border)', borderRadius: 20,
+          padding: '5px 14px', fontSize: 11, color: 'var(--color-text-secondary)',
           pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 1000,
         }}>
           Clique para posicionar o centro do pivô

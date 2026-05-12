@@ -21,7 +21,7 @@ const RainfallBarChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div style={{ height: 160, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 12 }}>
+      <div style={{ height: 160, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: 12 }}>
         Carregando gráfico…
       </div>
     ),
@@ -81,7 +81,7 @@ function parseFlexDate(raw: string): string | null {
 }
 
 function rainfallColor(mm: number): { text: string; bg: string } {
-  if (mm <= 0)    return { text: '#8899aa', bg: 'transparent' }
+  if (mm <= 0)    return { text: 'var(--color-text-secondary)', bg: 'transparent' }
   if (mm < 10)   return { text: '#06b6d4', bg: 'rgb(6 182 212 / 0.08)' }
   if (mm < 30)   return { text: '#3b82f6', bg: 'rgb(59 130 246 / 0.12)' }
   return { text: '#1d4ed8', bg: 'rgb(29 78 216 / 0.18)' }
@@ -121,7 +121,7 @@ function PivotCircleMap({ sectors, activeSectorId, onSelectSector }: PivotMapPro
   return (
     <svg width={160} height={160} viewBox="0 0 160 160" style={{ flexShrink: 0 }}>
       {/* Background circle */}
-      <circle cx={cx} cy={cy} r={r} fill="#0d1520" stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
+      <circle cx={cx} cy={cy} r={r} fill="var(--color-surface-sidebar)" stroke="var(--color-surface-border)" strokeWidth={1} />
 
       {hasSectors ? sectors.map((s, i) => {
         const color = getSectorColor(s, i)
@@ -168,7 +168,7 @@ function PivotCircleMap({ sectors, activeSectorId, onSelectSector }: PivotMapPro
       <text x={cx} y={cy - r + 17} textAnchor="middle" fontSize={8} fill="#f59e0b" fontWeight={700}>N</text>
 
       {/* Center hole */}
-      <circle cx={cx} cy={cy} r={18} fill="#080e14" stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
+      <circle cx={cx} cy={cy} r={18} fill="var(--color-surface-bg)" stroke="var(--color-surface-border2)" strokeWidth={1} />
       <circle cx={cx} cy={cy} r={3} fill="#0093D0" />
     </svg>
   )
@@ -191,8 +191,8 @@ function SectorTabs({ sectors, activeSectorId, onSelect }: SectorTabsProps) {
         onClick={() => onSelect(null)}
         style={{
           padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-          background: activeSectorId === null ? '#0093D0' : '#0d1520',
-          color: activeSectorId === null ? '#fff' : '#8899aa',
+          background: activeSectorId === null ? '#0093D0' : 'var(--color-surface-sidebar)',
+          color: activeSectorId === null ? '#fff' : 'var(--color-text-secondary)',
           transition: 'background 0.15s',
         }}
       >
@@ -206,10 +206,10 @@ function SectorTabs({ sectors, activeSectorId, onSelect }: SectorTabsProps) {
             key={s.id}
             onClick={() => onSelect(isActive ? null : s.id)}
             style={{
-              padding: '5px 14px', borderRadius: 20, border: `1px solid ${isActive ? color : 'rgba(255,255,255,0.08)'}`,
+              padding: '5px 14px', borderRadius: 20, border: `1px solid ${isActive ? color : 'var(--color-surface-border)'}`,
               cursor: 'pointer', fontSize: 12, fontWeight: 600,
-              background: isActive ? `${color}22` : '#0d1520',
-              color: isActive ? color : '#8899aa',
+              background: isActive ? `${color}22` : 'var(--color-surface-sidebar)',
+              color: isActive ? color : 'var(--color-text-secondary)',
               transition: 'all 0.15s',
             }}
           >
@@ -287,8 +287,8 @@ function RainfallChips({
   }, [records, selectedDate, calYear, calMonth])
 
   const inputStyle: React.CSSProperties = {
-    background: '#0d1520', border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 8, color: '#e2e8f0', fontSize: 12, padding: '5px 8px',
+    background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 8, color: 'var(--color-text)', fontSize: 12, padding: '5px 8px',
     outline: 'none', cursor: 'pointer',
   }
 
@@ -302,9 +302,9 @@ function RainfallChips({
         {chips.map(c => (
           <div key={c.label} style={{
             padding: '6px 14px', borderRadius: 20,
-            background: c.value > 0 ? 'rgb(6 182 212 / 0.1)' : '#0d1520',
-            border: `1px solid ${c.value > 0 ? 'rgb(6 182 212 / 0.3)' : 'rgba(255,255,255,0.06)'}`,
-            color: c.value > 0 ? '#06b6d4' : '#778899',
+            background: c.value > 0 ? 'rgb(6 182 212 / 0.1)' : 'var(--color-surface-sidebar)',
+            border: `1px solid ${c.value > 0 ? 'rgb(6 182 212 / 0.3)' : 'var(--color-surface-border2)'}`,
+            color: c.value > 0 ? '#06b6d4' : 'var(--color-text-secondary)',
             fontSize: 12, fontWeight: 600,
           }}>
             {c.label}: {c.value.toFixed(1)} mm
@@ -324,9 +324,9 @@ function RainfallChips({
         {!rangeLoading && rangeTotal !== null && (
           <div style={{
             padding: '6px 14px', borderRadius: 20,
-            background: rangeTotal > 0 ? 'rgb(34 197 94 / 0.1)' : '#0d1520',
-            border: `1px solid ${rangeTotal > 0 ? 'rgb(34 197 94 / 0.3)' : 'rgba(255,255,255,0.06)'}`,
-            color: rangeTotal > 0 ? '#22c55e' : '#778899',
+            background: rangeTotal > 0 ? 'rgb(34 197 94 / 0.1)' : 'var(--color-surface-sidebar)',
+            border: `1px solid ${rangeTotal > 0 ? 'rgb(34 197 94 / 0.3)' : 'var(--color-surface-border2)'}`,
+            color: rangeTotal > 0 ? '#22c55e' : 'var(--color-text-secondary)',
             fontSize: 12, fontWeight: 700,
           }}>
             Total: {rangeTotal.toFixed(1)} mm
@@ -374,7 +374,7 @@ function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareP
   if (sectors.length === 0) return null
 
   return (
-    <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16 }}>
+    <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: 16 }}>
       <div style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1', marginBottom: 12, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
         Comparativo por setor — {MONTH_NAMES[month]}
       </div>
@@ -389,7 +389,7 @@ function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareP
             <div style={{ width: 36, fontSize: 11, fontWeight: 700, color: d.color, textAlign: 'right', flexShrink: 0 }}>
               {d.label}
             </div>
-            <div style={{ flex: 1, height: 14, background: '#0a1016', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 7, display: 'flex', alignItems: 'center' }}>
+            <div style={{ flex: 1, height: 14, background: 'var(--color-surface-bg)', border: '1px solid var(--color-surface-border2)', borderRadius: 7, display: 'flex', alignItems: 'center' }}>
               <div style={{
                 height: '100%', width: `${(d.total / maxVal) * 100}%`,
                 background: d.color,
@@ -399,7 +399,7 @@ function SectorCompareChart({ allRecords, sectors, year, month }: SectorCompareP
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }} />
             </div>
-            <div style={{ width: 52, fontSize: 11, fontWeight: 600, color: '#e2e8f0', textAlign: 'right', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
+            <div style={{ width: 52, fontSize: 11, fontWeight: 600, color: 'var(--color-text)', textAlign: 'right', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
               {d.total.toFixed(1)} mm
             </div>
           </div>
@@ -557,19 +557,19 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div style={{
-        width: '100%', maxWidth: 360, background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
+        width: '100%', maxWidth: 360, background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)',
         borderRadius: 16, padding: 'clamp(16px, 4vw, 24px)', display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ color: '#e2e8f0', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em' }}>
+            <h3 style={{ color: 'var(--color-text)', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em' }}>
               Precipitação — {displayDate}
             </h3>
             {sectorName && (
               <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 2, lineHeight: 1.625 }}>Setor {sectorName}</p>
             )}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#778899', padding: 8, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 8, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
             <X size={16} />
           </button>
         </div>
@@ -578,19 +578,19 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
           const sourceCfg: Record<string, { label: string; color: string; border: string }> = {
             manual:   { label: 'Manual',    color: '#22c55e', border: 'rgb(34 197 94 / 0.25)' },
             import:   { label: 'Importado', color: '#f59e0b', border: 'rgb(245 158 11 / 0.25)' },
-            station:  { label: 'Estação',   color: '#8899aa', border: 'rgba(255,255,255,0.12)' },
+            station:  { label: 'Estação',   color: 'var(--color-text-secondary)', border: 'rgba(255,255,255,0.12)' },
             plugfield:{ label: 'Plugfield', color: '#22d3ee', border: 'rgb(34 211 238 / 0.25)' },
           }
           const cfg = sourceCfg[existing.source] ?? sourceCfg.station
           return (
             <div style={{
               fontSize: 11, padding: '3px 10px', borderRadius: 20,
-              background: '#0d1520', border: `1px solid ${cfg.border}`, color: cfg.color,
+              background: 'var(--color-surface-sidebar)', border: `1px solid ${cfg.border}`, color: cfg.color,
               alignSelf: 'flex-start',
             }}>
               {cfg.label}
               {existing.source === 'plugfield' && (
-                <span style={{ color: '#778899', marginLeft: 4 }}>— editar muda para Manual</span>
+                <span style={{ color: 'var(--color-text-secondary)', marginLeft: 4 }}>— editar muda para Manual</span>
               )}
             </div>
           )
@@ -620,8 +620,8 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
             onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
             style={{
               width: '100%', padding: '10px 12px', borderRadius: 8,
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
-              color: '#e2e8f0', fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em',
+              background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)',
+              color: 'var(--color-text)', fontSize: 28, fontWeight: 600, letterSpacing: '-0.025em',
               outline: 'none', boxSizing: 'border-box',
               textAlign: 'center',
             }}
@@ -640,8 +640,8 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
                       borderRadius: 8, cursor: 'pointer', textAlign: 'left',
-                      border: `1px solid ${checked ? 'rgba(0,147,208,0.4)' : 'rgba(255,255,255,0.06)'}`,
-                      background: checked ? 'rgba(0,147,208,0.08)' : '#0d1520',
+                      border: `1px solid ${checked ? 'rgba(0,147,208,0.4)' : 'var(--color-surface-border2)'}`,
+                      background: checked ? 'rgba(0,147,208,0.08)' : 'var(--color-surface-sidebar)',
                     }}
                   >
                     <div style={{
@@ -652,7 +652,7 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
                     }}>
                       {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3 5.5L8 1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                     </div>
-                    <span style={{ fontSize: 13, color: checked ? '#e2e8f0' : '#8899aa' }}>{p.name}</span>
+                    <span style={{ fontSize: 13, color: checked ? 'var(--color-text)' : 'var(--color-text-secondary)' }}>{p.name}</span>
                   </button>
                 )
               })}
@@ -679,8 +679,8 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
               title={existing.source === 'plugfield' ? 'O cron vai recriar este registro automaticamente no proximo dia' : undefined}
               style={{
                 padding: '10px 14px', borderRadius: 8,
-                background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
-                color: existing.source === 'plugfield' ? '#f59e0b' : '#8899aa', cursor: 'pointer', fontSize: 13,
+                background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)',
+                color: existing.source === 'plugfield' ? '#f59e0b' : 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13,
               }}
             >
               Limpar
@@ -691,8 +691,8 @@ function EditModal({ date, pivotId, sectorId, sectorName, existing, allPivots, o
             disabled={syncing}
             style={{
               padding: '10px 14px', borderRadius: 8,
-              background: 'transparent', border: '1px solid rgba(255,255,255,0.06)',
-              color: '#778899', cursor: syncing ? 'not-allowed' : 'pointer', fontSize: 13,
+              background: 'transparent', border: '1px solid var(--color-surface-border2)',
+              color: 'var(--color-text-secondary)', cursor: syncing ? 'not-allowed' : 'pointer', fontSize: 13,
               opacity: syncing ? 0.4 : 1,
             }}
           >
@@ -900,12 +900,12 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
     >
       <div style={{
         width: 520, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto',
-        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)',
         borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ color: '#e2e8f0', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em' }}>Importar Google Sheets</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#778899', padding: 8, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+          <h3 style={{ color: 'var(--color-text)', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em' }}>Importar Google Sheets</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 8, minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
             <X size={16} />
           </button>
         </div>
@@ -921,27 +921,27 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
             placeholder="https://docs.google.com/spreadsheets/d/..."
             value={url}
             onChange={e => handleUrlChange(e.target.value)}
-            style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }}
+            style={{ padding: '9px 12px', borderRadius: 8, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', color: 'var(--color-text)', fontSize: 13, outline: 'none' }}
           />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <label style={{ fontSize: 13, color: '#94a3b8' }}>Aba</label>
-            {loadingTabs && <span style={{ fontSize: 11, color: '#778899' }}>detectando abas…</span>}
+            {loadingTabs && <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>detectando abas…</span>}
             {tabs.length > 0 && <span style={{ fontSize: 11, color: '#0093D0' }}>{tabs.length} aba{tabs.length > 1 ? 's' : ''}</span>}
           </div>
           {tabs.length > 0 ? (
             <select value={gid} onChange={e => { setGid(e.target.value); setPreview(null); setHeaders([]) }}
-              style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
+              style={{ padding: '9px 12px', borderRadius: 8, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', color: 'var(--color-text)', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
               {tabs.map(t => <option key={t.gid} value={t.gid}>{t.name}</option>)}
             </select>
           ) : (
             <input type="number" placeholder="0" value={gid} onChange={e => setGid(e.target.value)}
-              style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }} />
+              style={{ padding: '9px 12px', borderRadius: 8, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', color: 'var(--color-text)', fontSize: 13, outline: 'none' }} />
           )}
           <p style={{ fontSize: 12, color: '#94a3b8', margin: '2px 0 0', lineHeight: 1.625 }}>
-            Número GID da aba — visível na URL da planilha após <code style={{ color: '#8899aa' }}>#gid=</code>. Para a 1ª aba use 0.
+            Número GID da aba — visível na URL da planilha após <code style={{ color: 'var(--color-text-secondary)' }}>#gid=</code>. Para a 1ª aba use 0.
           </p>
         </div>
 
@@ -949,7 +949,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
           <label style={{ fontSize: 13, color: '#94a3b8' }}>Importar para os pivôs</label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {allPivots.map(p => (
-              <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#e2e8f0' }}>
+              <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--color-text)' }}>
                 <input type="checkbox" checked={selectedPivotIds.includes(p.id)}
                   onChange={e => setSelectedPivotIds(prev => e.target.checked ? [...prev, p.id] : prev.filter(id => id !== p.id))}
                   style={{ accentColor: '#0093D0', width: 14, height: 14 }} />
@@ -963,7 +963,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <label style={{ fontSize: 13, color: '#94a3b8' }}>Coluna da Data</label>
             <select value={dateCol} onChange={e => setDateCol(e.target.value)}
-              style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }}>
+              style={{ padding: '9px 12px', borderRadius: 8, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', color: 'var(--color-text)', fontSize: 13, outline: 'none' }}>
               {headers.length > 0
                 ? headers.map((h, i) => <option key={i} value={i}>{h || `Coluna ${i}`}</option>)
                 : [0,1,2,3,4].map(i => <option key={i} value={i}>Coluna {i}</option>)}
@@ -972,7 +972,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <label style={{ fontSize: 13, color: '#94a3b8' }}>Coluna de mm</label>
             <select value={mmCol} onChange={e => setMmCol(e.target.value)}
-              style={{ padding: '9px 12px', borderRadius: 8, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontSize: 13, outline: 'none' }}>
+              style={{ padding: '9px 12px', borderRadius: 8, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', color: 'var(--color-text)', fontSize: 13, outline: 'none' }}>
               {headers.length > 0
                 ? headers.map((h, i) => <option key={i} value={i}>{h || `Coluna ${i}`}</option>)
                 : [0,1,2,3,4].map(i => <option key={i} value={i}>Coluna {i}</option>)}
@@ -987,7 +987,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
         )}
 
         <button onClick={handleFetch} disabled={loading || !url}
-          style={{ padding: '10px', borderRadius: 8, cursor: 'pointer', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', color: '#e2e8f0', fontWeight: 600, fontSize: 13, opacity: loading || !url ? 0.5 : 1, minHeight: 44 }}>
+          style={{ padding: '10px', borderRadius: 8, cursor: 'pointer', background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', color: 'var(--color-text)', fontWeight: 600, fontSize: 13, opacity: loading || !url ? 0.5 : 1, minHeight: 44 }}>
           {loading ? 'Buscando…' : 'Pré-visualizar'}
         </button>
 
@@ -998,7 +998,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
                 <thead>
                   <tr>
                     {headers.map((h, i) => (
-                      <th key={i} style={{ padding: '6px 10px', background: '#0d1520', color: '#8899aa', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <th key={i} style={{ padding: '6px 10px', background: 'var(--color-surface-sidebar)', color: 'var(--color-text-secondary)', textAlign: 'left', borderBottom: '1px solid var(--color-surface-border2)' }}>
                         {h || `Col ${i}`}
                       </th>
                     ))}
@@ -1008,7 +1008,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
                   {preview.map((row, ri) => (
                     <tr key={ri}>
                       {row.map((cell, ci) => (
-                        <td key={ci} style={{ padding: '5px 10px', color: '#e2e8f0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{cell}</td>
+                        <td key={ci} style={{ padding: '5px 10px', color: 'var(--color-text)', borderBottom: '1px solid var(--color-surface-border2)' }}>{cell}</td>
                       ))}
                     </tr>
                   ))}
@@ -1018,10 +1018,10 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
 
             {importing && (
               <div>
-                <div style={{ height: 6, borderRadius: 3, background: '#0d1520', overflow: 'hidden' }}>
+                <div style={{ height: 6, borderRadius: 3, background: 'var(--color-surface-sidebar)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#003d5c,#3b82f6)', borderRadius: 3, transition: 'width 0.2s' }} />
                 </div>
-                <p style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>{progress}%</p>
+                <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 4 }}>{progress}%</p>
               </div>
             )}
 
@@ -1108,7 +1108,7 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
               style={{
                 minHeight: 64, borderRadius: 8, padding: '6px 8px',
                 background: isSelected ? 'rgb(0 147 208 / 0.10)' : col.bg,
-                border: `1px solid ${isToday ? '#0093D0' : isSelected ? 'rgb(0 147 208 / 0.35)' : 'rgba(255,255,255,0.06)'}`,
+                border: `1px solid ${isToday ? '#0093D0' : isSelected ? 'rgb(0 147 208 / 0.35)' : 'var(--color-surface-border2)'}`,
                 cursor: cell.inMonth ? 'pointer' : 'default',
                 opacity: cell.inMonth ? 1 : 0.25,
                 display: 'flex', flexDirection: 'column', gap: 2,
@@ -1116,7 +1116,7 @@ function MonthCalendar({ year, month, records, selectedDate, onSelectDate }: Cal
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 11, fontWeight: isToday ? 700 : 500, color: isToday ? '#0093D0' : '#8899aa' }}>
+                <span style={{ fontSize: 11, fontWeight: isToday ? 700 : 500, color: isToday ? '#0093D0' : 'var(--color-text-secondary)' }}>
                   {cell.day}
                 </span>
                 {mm > 0 && <CloudRain size={10} color={col.text} />}
@@ -1185,11 +1185,11 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
   if (loading) {
     return (
       <div style={{
-        background: 'linear-gradient(135deg, #0a1628 0%, #0d1e2e 100%)',
-        border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 32,
+        background: 'linear-gradient(135deg, var(--color-surface-bg) 0%, var(--color-surface-sidebar) 100%)',
+        border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: 32,
         display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200,
       }}>
-        <span style={{ color: '#778899', fontSize: 13 }}>Carregando histórico…</span>
+        <span style={{ color: 'var(--color-text-secondary)', fontSize: 13 }}>Carregando histórico…</span>
       </div>
     )
   }
@@ -1198,8 +1198,8 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
 
   // Color for a cell value
   function cellColor(v: number | null): { bg: string; text: string; border: string } {
-    if (v === null) return { bg: 'transparent', text: '#667788', border: 'transparent' }
-    if (v === 0) return { bg: 'rgba(255,255,255,0.02)', text: '#334155', border: 'rgba(255,255,255,0.04)' }
+    if (v === null) return { bg: 'transparent', text: 'var(--color-text-muted)', border: 'transparent' }
+    if (v === 0) return { bg: 'rgba(255,255,255,0.02)', text: 'var(--color-text-muted)', border: 'var(--color-surface-border2)' }
     if (v < 50) return { bg: 'rgba(6,182,212,0.08)', text: '#22d3ee', border: 'rgba(6,182,212,0.15)' }
     if (v < 100) return { bg: 'rgba(6,182,212,0.14)', text: '#06b6d4', border: 'rgba(6,182,212,0.25)' }
     if (v < 150) return { bg: 'rgba(59,130,246,0.14)', text: '#60a5fa', border: 'rgba(59,130,246,0.25)' }
@@ -1212,7 +1212,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
 
   return (
     <div style={{
-      background: 'linear-gradient(160deg, #070e1a 0%, #0b1622 60%, #060d18 100%)',
+      background: 'linear-gradient(160deg, var(--color-surface-bg) 0%, var(--color-surface-sidebar) 60%, var(--color-surface-bg) 100%)',
       border: '1px solid rgba(255,255,255,0.07)',
       borderRadius: 20, padding: 28, display: 'flex', flexDirection: 'column', gap: 28,
       position: 'relative', overflow: 'hidden',
@@ -1245,7 +1245,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
               </svg>
             </div>
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', lineHeight: 1, letterSpacing: '-0.025em' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', lineHeight: 1, letterSpacing: '-0.025em' }}>
                 Histórico Anual
               </h2>
               <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.625 }}>{pivotName} · {years[0]}–{years[years.length - 1]}</p>
@@ -1278,23 +1278,23 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
           <table style={{ borderCollapse: 'separate', borderSpacing: '3px', minWidth: 420, width: '100%' }}>
             <thead>
               <tr>
-                <th style={{ width: 48, textAlign: 'left', padding: '4px 8px', fontSize: 11, fontWeight: 700, color: '#334155', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ano</th>
+                <th style={{ width: 48, textAlign: 'left', padding: '4px 8px', fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ano</th>
                 {MONTH_SHORT.map((m, mi) => (
                   <th key={m} style={{
                     padding: '4px 4px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-                    color: hoveredMonth === mi ? '#f472b6' : '#778899',
+                    color: hoveredMonth === mi ? '#f472b6' : 'var(--color-text-secondary)',
                     transition: 'color 0.15s', textAlign: 'center', cursor: 'default',
                   }}>
                     {m}
                   </th>
                 ))}
-                <th style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, color: '#334155', textAlign: 'right', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Total</th>
+                <th style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, color: 'var(--color-text-muted)', textAlign: 'right', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Total</th>
               </tr>
             </thead>
             <tbody>
               {matrix.map((row, ri) => (
                 <tr key={row.year}>
-                  <td style={{ padding: '2px 8px', fontSize: 12, fontWeight: 700, color: '#8899aa', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '2px 8px', fontSize: 12, fontWeight: 700, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
                     {row.year}
                   </td>
                   {row.months.map((v, mi) => {
@@ -1311,14 +1311,14 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                           background: hoveredMonth === mi && v !== null && v > 0
                             ? 'rgba(236,72,153,0.15)'
                             : hoveredMonth === mi && v !== null
-                            ? 'rgba(255,255,255,0.04)'
+                            ? 'var(--color-surface-border2)'
                             : c.bg,
                           border: `1px solid ${hoveredMonth === mi && v !== null && v > 0 ? 'rgba(236,72,153,0.35)' : c.border}`,
                           textAlign: 'center', transition: 'all 0.15s', minWidth: 30,
                         }}>
                           <span style={{
                             fontSize: 10, fontWeight: hoveredMonth === mi && v !== null && v > 0 ? 700 : 600,
-                            color: hoveredMonth === mi && v !== null && v > 0 ? '#f472b6' : v === null ? '#1a2535' : c.text,
+                            color: hoveredMonth === mi && v !== null && v > 0 ? '#f472b6' : v === null ? 'var(--color-text-muted)' : c.text,
                             fontVariantNumeric: 'tabular-nums',
                             transition: 'color 0.15s',
                           }}>
@@ -1329,10 +1329,10 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                     )
                   })}
                   <td style={{ padding: '2px 8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: yearTotals[ri] > 0 ? '#e2e8f0' : '#334155', fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: yearTotals[ri] > 0 ? 'var(--color-text)' : 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums' }}>
                       {Math.round(yearTotals[ri])}
                     </span>
-                    <span style={{ fontSize: 9, color: '#778899', marginLeft: 2 }}>mm</span>
+                    <span style={{ fontSize: 9, color: 'var(--color-text-secondary)', marginLeft: 2 }}>mm</span>
                   </td>
                 </tr>
               ))}
@@ -1359,7 +1359,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                         border: hoveredMonth === mi && avg > 0 ? '1px solid rgba(236,72,153,0.35)' : avg > 0 ? `1px solid rgba(245,158,11,0.2)` : '1px solid transparent',
                         textAlign: 'center', transition: 'all 0.15s',
                       }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: hoveredMonth === mi && avg > 0 ? '#f472b6' : avg > 0 ? '#f59e0b' : '#334155', fontVariantNumeric: 'tabular-nums', transition: 'color 0.15s' }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: hoveredMonth === mi && avg > 0 ? '#f472b6' : avg > 0 ? '#f59e0b' : 'var(--color-text-muted)', fontVariantNumeric: 'tabular-nums', transition: 'color 0.15s' }}>
                           {avg > 0 ? Math.round(avg) : '—'}
                         </span>
                       </div>
@@ -1370,7 +1370,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', fontVariantNumeric: 'tabular-nums' }}>
                     {Math.round(avgByMonth.reduce((a, b) => a + b, 0))}
                   </span>
-                  <span style={{ fontSize: 9, color: '#778899', marginLeft: 2 }}>mm/ano</span>
+                  <span style={{ fontSize: 9, color: 'var(--color-text-secondary)', marginLeft: 2 }}>mm/ano</span>
                 </td>
               </tr>
             </tbody>
@@ -1395,10 +1395,10 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                 <div key={frac} style={{
                   position: 'absolute', left: 32, right: 0,
                   top: `${(1 - frac) * 100}%`, height: 1,
-                  background: frac === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
+                  background: frac === 0 ? 'var(--color-surface-border)' : 'var(--color-surface-border2)',
                 }}>
                   <span style={{
-                    position: 'absolute', left: -30, fontSize: 9, color: '#778899',
+                    position: 'absolute', left: -30, fontSize: 9, color: 'var(--color-text-secondary)',
                     fontVariantNumeric: 'tabular-nums', fontWeight: 600, minWidth: 26, textAlign: 'right',
                   }}>
                     {val}
@@ -1428,7 +1428,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                     {isHov && avg > 0 && (
                       <div style={{
                         position: 'absolute', bottom: barH + 10, left: '50%', transform: 'translateX(-50%)',
-                        background: '#0a1628', border: '1px solid rgba(0,147,208,0.3)', borderRadius: 8,
+                        background: 'var(--color-surface-bg)', border: '1px solid rgba(0,147,208,0.3)', borderRadius: 8,
                         padding: '5px 8px', zIndex: 10, whiteSpace: 'nowrap',
                         boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
                       }}>
@@ -1443,7 +1443,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                       <div style={{
                         position: 'absolute', bottom: barH + 3,
                         fontSize: 8, fontWeight: 700,
-                        color: isHov ? '#f472b6' : '#8899aa',
+                        color: isHov ? '#f472b6' : 'var(--color-text-secondary)',
                         fontVariantNumeric: 'tabular-nums',
                         transition: 'color 0.15s', pointerEvents: 'none',
                       }}>
@@ -1481,7 +1481,7 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
                 <div key={m} style={{ flex: 1, textAlign: 'center' }}>
                   <span style={{
                     fontSize: 8, fontWeight: 600,
-                    color: hoveredMonth === mi ? '#f472b6' : '#8899aa',
+                    color: hoveredMonth === mi ? '#f472b6' : 'var(--color-text-secondary)',
                     transition: 'color 0.15s',
                   }}>
                     {m}
@@ -1770,7 +1770,7 @@ export default function PrecipitacoesPage() {
             <CloudRain size={18} color="#fff" />
           </div>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>Precipitações</h1>
+            <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.025em' }}>Precipitações</h1>
             {selectedPivot && (
               <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625 }}>{selectedPivot.farm_name} · {selectedPivot.name}</p>
             )}
@@ -1800,8 +1800,8 @@ export default function PrecipitacoesPage() {
             disabled={loadingPivots || pivots.length === 0}
             style={{
               padding: '8px 12px', borderRadius: 8,
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
-              color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer',
+              background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)',
+              color: 'var(--color-text)', fontSize: 13, outline: 'none', cursor: 'pointer',
             }}
           >
             {pivots.map(p => <option key={p.id} value={p.id}>{p.farm_name} · {p.name}</option>)}
@@ -1813,8 +1813,8 @@ export default function PrecipitacoesPage() {
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 8,
-              background: isCompare ? 'rgba(0,147,208,0.1)' : '#0d1520', border: isCompare ? '1px solid rgba(0,147,208,0.3)' : '1px solid rgba(255,255,255,0.06)',
-              color: isCompare ? '#0093D0' : '#8899aa', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+              background: isCompare ? 'rgba(0,147,208,0.1)' : 'var(--color-surface-sidebar)', border: isCompare ? '1px solid rgba(0,147,208,0.3)' : '1px solid var(--color-surface-border2)',
+              color: isCompare ? '#0093D0' : 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, fontWeight: 500,
             }}
           >
             Comparar
@@ -1825,8 +1825,8 @@ export default function PrecipitacoesPage() {
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 8,
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)',
-              color: '#8899aa', cursor: 'pointer', fontSize: 13, fontWeight: 500,
+              background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)',
+              color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: 13, fontWeight: 500,
             }}
           >
             <Upload size={14} />
@@ -1848,7 +1848,7 @@ export default function PrecipitacoesPage() {
       )}
 
       {!loadingPivots && pivots.length === 0 && (
-        <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, color: '#778899', fontSize: 14 }}>
+        <div style={{ padding: '40px 24px', textAlign: 'center', background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, color: 'var(--color-text-secondary)', fontSize: 14 }}>
           <Calendar size={32} color="rgba(255,255,255,0.06)" style={{ margin: '0 auto 12px' }} />
           Nenhum pivô cadastrado. Cadastre um pivô para registrar precipitações.
         </div>
@@ -1860,7 +1860,7 @@ export default function PrecipitacoesPage() {
           {/* Sector panel: map + tabs */}
           {sectors.length > 0 && (
             <div style={{
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16,
+              background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: 16,
               display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap',
             }}>
               <PivotCircleMap
@@ -1897,15 +1897,15 @@ export default function PrecipitacoesPage() {
           />
 
           {/* Month navigation + calendar */}
-          <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 16px' }}>
+          <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: '12px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <button onClick={prevMonth}
-                style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}>
+                style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
                 <ChevronLeft size={16} />
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>
+                <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.025em' }}>
                   {MONTH_NAMES[month]} {year}
                 </h2>
                 {loadingRecords && <span style={{ fontSize: 12, color: '#94a3b8' }}>carregando…</span>}
@@ -1913,11 +1913,11 @@ export default function PrecipitacoesPage() {
 
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={goToday}
-                  style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: '#8899aa', fontSize: 12 }}>
+                  style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: 'var(--color-text-secondary)', fontSize: 12 }}>
                   Hoje
                 </button>
                 <button onClick={nextMonth}
-                  style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}>
+                  style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -1936,7 +1936,7 @@ export default function PrecipitacoesPage() {
           </div>
 
           {/* Bar chart */}
-          <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16 }}>
+          <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1' }}>
                 Distribuição diária — {MONTH_NAMES[month]}
@@ -1962,16 +1962,16 @@ export default function PrecipitacoesPage() {
         </div>
 
         {isCompare && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingLeft: isCompare ? 24 : 0, borderLeft: isCompare ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-             <div style={{ background: '#0d1520', border: '1px dashed rgba(0,147,208,0.3)', borderRadius: 12, padding: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingLeft: isCompare ? 24 : 0, borderLeft: isCompare ? '1px solid var(--color-surface-border2)' : 'none' }}>
+             <div style={{ background: 'var(--color-surface-sidebar)', border: '1px dashed rgba(0,147,208,0.3)', borderRadius: 12, padding: 16 }}>
                <span style={{ fontSize: 12, fontWeight: 600, color: '#0093D0', display: 'block', marginBottom: 12 }}>PARÂMETROS DE COMPARAÇÃO</span>
                <select
                  value={comparePivotId}
                  onChange={e => setComparePivotId(e.target.value)}
                  style={{
                    padding: '8px 12px', borderRadius: 8, width: '100%',
-                   background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
-                   color: '#e2e8f0', fontSize: 13, outline: 'none', cursor: 'pointer',
+                   background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)',
+                   color: 'var(--color-text)', fontSize: 13, outline: 'none', cursor: 'pointer',
                  }}
                >
                  {pivots.map(p => <option key={p.id} value={p.id}>{p.farm_name} · {p.name}</option>)}
@@ -1979,7 +1979,7 @@ export default function PrecipitacoesPage() {
              </div>
 
              {compareSectors.length > 0 && (
-               <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16, display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+               <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: 16, display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                  <PivotCircleMap sectors={compareSectors} activeSectorId={compareActiveSectorId} onSelectSector={setCompareActiveSectorId} />
                  <div style={{ flex: 1, minWidth: 150, display: 'flex', flexDirection: 'column', gap: 10 }}>
                    <p style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.16em', color: '#cbd5e1' }}>Setor de Precipitação</p>
@@ -1997,21 +1997,21 @@ export default function PrecipitacoesPage() {
                sectorLabel={compareActiveSectorId ? `Setor ${compareSectors.find(s=>s.id === compareActiveSectorId)?.name}` : undefined}
              />
 
-             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 16px' }}>
+             <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: '12px 16px' }}>
                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                 <button onClick={() => { if(compareMonth===0){setCompareMonth(11);setCompareYear(y=>y-1)}else setCompareMonth(m=>m-1) }} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}><ChevronLeft size={16} /></button>
+                 <button onClick={() => { if(compareMonth===0){setCompareMonth(11);setCompareYear(y=>y-1)}else setCompareMonth(m=>m-1) }} style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: 'var(--color-text-secondary)' }}><ChevronLeft size={16} /></button>
                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                   <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>{MONTH_NAMES[compareMonth]} {compareYear}</h2>
+                   <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.025em' }}>{MONTH_NAMES[compareMonth]} {compareYear}</h2>
                  </div>
                  <div style={{ display: 'flex', gap: 6 }}>
-                   <button onClick={() => { const d=new Date(); setCompareYear(d.getFullYear()); setCompareMonth(d.getMonth()) }} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: '#8899aa', fontSize: 12 }}>Hoje</button>
-                   <button onClick={() => { if(compareMonth===11){setCompareMonth(0);setCompareYear(y=>y+1)}else setCompareMonth(m=>m+1) }} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: '#8899aa' }}><ChevronRight size={16} /></button>
+                   <button onClick={() => { const d=new Date(); setCompareYear(d.getFullYear()); setCompareMonth(d.getMonth()) }} style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: 'var(--color-text-secondary)', fontSize: 12 }}>Hoje</button>
+                   <button onClick={() => { if(compareMonth===11){setCompareMonth(0);setCompareYear(y=>y+1)}else setCompareMonth(m=>m+1) }} style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: 'var(--color-text-secondary)' }}><ChevronRight size={16} /></button>
                  </div>
                </div>
                <MonthCalendar year={compareYear} month={compareMonth} records={compareMonthRecords} selectedDate={selectedDate} onSelectDate={(d) => { /* readonly */ }} />
              </div>
 
-             <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 16 }}>
+             <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: 16 }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                  <span style={{ fontSize: 12, fontWeight: 600, color: '#cbd5e1' }}>Distribuição diária</span>
                </div>

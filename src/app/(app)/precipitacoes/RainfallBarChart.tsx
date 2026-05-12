@@ -49,24 +49,24 @@ export default function RainfallBarChart({ records, year, month }: Props) {
           <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.03)" vertical={false} />
           <XAxis
             dataKey="day"
-            tick={{ fill: '#778899', fontSize: 10 }}
-            axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+            tick={{ fill: 'var(--color-text-secondary)', fontSize: 10 }}
+            axisLine={{ stroke: 'var(--color-surface-border2)' }}
             tickLine={false}
             interval={0}
             tickFormatter={(v, i) => i === 0 || i === data.length - 1 || (i + 1) % 5 === 0 ? v : ''}
           />
           <YAxis
-            tick={{ fill: '#778899', fontSize: 10 }}
+            tick={{ fill: 'var(--color-text-secondary)', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
             tickFormatter={v => v > 0 ? v : ''}
           />
           <Tooltip
             cursor={{ fill: 'rgba(255,255,255,0.03)' }}
-            contentStyle={{ backgroundColor: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12, padding: '8px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+            contentStyle={{ backgroundColor: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', borderRadius: 10, color: 'var(--color-text)', fontSize: 12, padding: '8px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
             formatter={(value: unknown) => [`${Number(value).toFixed(1)} mm`, 'Precipitação']}
             labelFormatter={(label) => `Dia ${label}`}
-            labelStyle={{ color: '#8899aa', marginBottom: 4 }}
+            labelStyle={{ color: 'var(--color-text-secondary)', marginBottom: 4 }}
           />
           {avgMm > 0 && <ReferenceLine y={avgMm} stroke="#f59e0b" strokeDasharray="3 3" strokeWidth={1} />}
           <Bar dataKey="mm" fill="url(#barGradRain)" radius={[4, 4, 0, 0]} maxBarSize={16} />

@@ -38,7 +38,7 @@ import PivotSpinner from '@/components/ui/PivotSpinner'
 
 const TalhaoMapDrawDynamic = dynamic(
   () => import('./TalhaoMapDraw').then(m => ({ default: m.TalhaoMapDraw })),
-  { ssr: false, loading: () => <div style={{ height: 360, background: '#0d1520', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 13 }}>Carregando mapa…</div> }
+  { ssr: false, loading: () => <div style={{ height: 360, background: 'var(--color-surface-sidebar)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: 13 }}>Carregando mapa…</div> }
 )
 
 // ─── Cálculo de área GeoJSON ──────────────────────────────────────────────────
@@ -78,9 +78,9 @@ function calcGeojsonAreaHa(geojson: Record<string, unknown> | null): number {
 
 // ─── Cores ────────────────────────────────────────────────────────────────────
 const C = {
-  bg: '#0b1320', card: '#0f1923', border: 'rgba(255,255,255,0.06)',
-  borderHover: 'rgba(255,255,255,0.12)', text: '#e2e8f0', sec: '#8899aa',
-  muted: '#556677', brand: '#0093D0', green: '#22c55e', red: '#ef4444', amber: '#f59e0b',
+  bg: 'var(--color-surface-bg)', card: 'var(--color-surface-card)', border: 'var(--color-surface-border2)',
+  borderHover: 'rgba(255,255,255,0.12)', text: 'var(--color-text)', sec: 'var(--color-text-secondary)',
+  muted: 'var(--color-text-muted)', brand: '#0093D0', green: '#22c55e', red: '#ef4444', amber: '#f59e0b',
 }
 
 const COR_MAP = {
@@ -270,7 +270,7 @@ function NdviTooltip({ active, payload, label }: { active?: boolean; payload?: A
   const v = payload[0].value
   const cls = classificarNdvi(v)
   return (
-    <div style={{ background: '#0d1520', border: `1px solid ${C.borderHover}`, borderRadius: 10, padding: '8px 12px', boxShadow: '0 4px 20px rgba(0,0,0,0.6)' }}>
+    <div style={{ background: 'var(--color-surface-sidebar)', border: `1px solid ${C.borderHover}`, borderRadius: 10, padding: '8px 12px', boxShadow: '0 4px 20px rgba(0,0,0,0.6)' }}>
       <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 18, fontWeight: 700, color: cls.cor, fontVariantNumeric: 'tabular-nums' }}>{v.toFixed(3)}</div>
       <div style={{ fontSize: 10, color: cls.cor, marginTop: 2 }}>{cls.label}</div>
@@ -586,7 +586,7 @@ function TalhaoModal({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Nome *</label>
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Talhão Norte" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Talhão Norte" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'var(--color-surface-sidebar)', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div>
               <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>
@@ -603,12 +603,12 @@ function TalhaoModal({
                 onChange={e => { setAreaManual(true); setAreaHa(e.target.value) }}
                 type="number"
                 placeholder="Ex: 45.5"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${areaManual ? 'rgba(245,158,11,0.4)' : C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${areaManual ? 'rgba(245,158,11,0.4)' : C.border}`, background: 'var(--color-surface-sidebar)', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
             <div>
               <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Fazenda</label>
-              <select value={farmId} onChange={e => setFarmId(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
+              <select value={farmId} onChange={e => setFarmId(e.target.value)} style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'var(--color-surface-sidebar)', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}>
                 <option value="">Nenhuma</option>
                 {farms.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
               </select>
@@ -626,7 +626,7 @@ function TalhaoModal({
 
           <div>
             <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Observações</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Informações adicionais..." style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Informações adicionais..." style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'var(--color-surface-sidebar)', color: C.text, fontSize: 13, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }} />
           </div>
 
           {/* Mapa de desenho */}

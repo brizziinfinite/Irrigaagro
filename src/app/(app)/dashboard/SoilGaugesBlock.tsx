@@ -106,7 +106,7 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
                     </svg>
                   )}
                   <span style={{
-                    fontSize: 11, color: '#8899aa', fontWeight: 600,
+                    fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 600,
                     textAlign: 'center', maxWidth: 110,
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>

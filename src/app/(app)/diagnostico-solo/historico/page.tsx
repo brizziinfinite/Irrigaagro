@@ -106,11 +106,11 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
   const colors: Record<number, string> = {
     1: '#ef4444', 2: '#f97316', 3: '#38bdf8', 4: '#22c55e', 5: '#a78bfa',
   }
-  const color = colors[score] ?? '#778899'
+  const color = colors[score] ?? 'var(--color-text-secondary)'
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 10, color: '#778899', width: 48, flexShrink: 0 }}>{label}</span>
-      <div style={{ flex: 1, height: 5, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+      <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', width: 48, flexShrink: 0 }}>{label}</span>
+      <div style={{ flex: 1, height: 5, borderRadius: 99, background: 'var(--color-surface-border2)', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${(score / 5) * 100}%`, background: color, borderRadius: 99 }} />
       </div>
       <span style={{ fontSize: 11, color, fontWeight: 700, width: 14, textAlign: 'right' }}>{score}</span>
@@ -126,10 +126,10 @@ function ChartTooltip({ active, payload, label }: {
   if (!active || !payload?.length) return null
   return (
     <div style={{
-      background: '#0f1923', border: '1px solid rgba(255,255,255,0.1)',
+      background: 'var(--color-surface-card)', border: '1px solid rgba(255,255,255,0.1)',
       borderRadius: 10, padding: '10px 14px', fontSize: 12,
     }}>
-      <div style={{ color: '#8899aa', marginBottom: 6, fontWeight: 600 }}>{label}</div>
+      <div style={{ color: 'var(--color-text-secondary)', marginBottom: 6, fontWeight: 600 }}>{label}</div>
       {payload.map(p => (
         <div key={p.name} style={{ color: p.color, display: 'flex', gap: 8, marginBottom: 3 }}>
           <span>{p.name}:</span>
@@ -322,15 +322,15 @@ export default function DiagnosticoHistoricoPage() {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
-        <Link href="/diagnostico-solo" style={{ color: '#8899aa', display: 'flex', alignItems: 'center' }}>
+        <Link href="/diagnostico-solo" style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center' }}>
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <History size={20} color="#0093D0" />
             Histórico de Diagnósticos
           </h1>
-          <p style={{ color: '#8899aa', fontSize: 13, marginTop: 2 }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 13, marginTop: 2 }}>
             Evolução da umidade do solo — diagnóstico manual vs. balanço hídrico calculado
           </p>
         </div>
@@ -343,8 +343,8 @@ export default function DiagnosticoHistoricoPage() {
           onChange={e => setSelectedPivotId(e.target.value)}
           style={{
             width: '100%', padding: '10px 36px 10px 12px',
-            background: '#0f1923', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 8, color: selectedPivotId ? '#e2e8f0' : '#778899',
+            background: 'var(--color-surface-card)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 8, color: selectedPivotId ? 'var(--color-text)' : 'var(--color-text-secondary)',
             fontSize: 14, appearance: 'none', cursor: 'pointer',
           }}
         >
@@ -353,11 +353,11 @@ export default function DiagnosticoHistoricoPage() {
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
-        <ChevronDown size={14} color="#778899" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+        <ChevronDown size={14} color="var(--color-text-secondary)" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
       </div>
 
       {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 48, color: '#778899' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 48, color: 'var(--color-text-secondary)' }}>
           <Loader2 size={22} className="animate-spin" />
         </div>
       )}
@@ -365,8 +365,8 @@ export default function DiagnosticoHistoricoPage() {
       {!loading && selectedPivotId && records.length === 0 && (
         <div style={{
           padding: 32, textAlign: 'center',
-          background: '#0f1923', borderRadius: 12,
-          border: '1px solid rgba(255,255,255,0.06)', color: '#778899', fontSize: 13,
+          background: 'var(--color-surface-card)', borderRadius: 12,
+          border: '1px solid var(--color-surface-border2)', color: 'var(--color-text-secondary)', fontSize: 13,
         }}>
           <Droplets size={28} style={{ margin: '0 auto 10px', opacity: 0.3 }} />
           Nenhum diagnóstico registrado nos últimos 90 dias para este pivô.
@@ -382,8 +382,8 @@ export default function DiagnosticoHistoricoPage() {
               gap: 12, marginBottom: 24,
             }}>
               {/* Último diagnóstico */}
-              <div style={{ background: '#0f1923', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, color: '#778899', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ background: 'var(--color-surface-card)', borderRadius: 12, border: '1px solid var(--color-surface-border2)', padding: '16px 18px' }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <Clock size={11} /> ÚLTIMO DIAGNÓSTICO
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'monospace', color: RESULT_META[kpis.last.result].color }}>
@@ -392,20 +392,20 @@ export default function DiagnosticoHistoricoPage() {
                 <div style={{ marginTop: 4 }}>
                   <ResultBadge result={kpis.last.result} size="sm" />
                 </div>
-                <div style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 4 }}>
                   {fmtDateTime(kpis.last.diagnosed_at)}
                 </div>
               </div>
 
               {/* Total diagnósticos */}
-              <div style={{ background: '#0f1923', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, color: '#778899', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ background: 'var(--color-surface-card)', borderRadius: 12, border: '1px solid var(--color-surface-border2)', padding: '16px 18px' }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <History size={11} /> TOTAL (90 DIAS)
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'monospace', color: '#0093D0' }}>
                   {kpis.total}
                 </div>
-                <div style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 4 }}>
                   {Object.entries(kpis.byResult).map(([r, n]) => (
                     <span key={r} style={{ marginRight: 6 }}>
                       {RESULT_META[r as DiagnosisResult]?.icon} {n}
@@ -415,8 +415,8 @@ export default function DiagnosticoHistoricoPage() {
               </div>
 
               {/* Divergência média */}
-              <div style={{ background: '#0f1923', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, color: '#778899', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ background: 'var(--color-surface-card)', borderRadius: 12, border: '1px solid var(--color-surface-border2)', padding: '16px 18px' }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <AlertTriangle size={11} /> DIVERGÊNCIA MÉDIA
                 </div>
                 {kpis.avgDiff != null ? (
@@ -427,26 +427,26 @@ export default function DiagnosticoHistoricoPage() {
                     }}>
                       {kpis.avgDiff.toFixed(0)}pp
                     </div>
-                    <div style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 4 }}>
                       {kpis.avgDiff > 20 ? 'Alta — considere calibrar o modelo'
                         : kpis.avgDiff > 10 ? 'Moderada — monitorar'
                         : 'Baixa — modelo alinhado'}
                     </div>
                   </>
                 ) : (
-                  <div style={{ fontSize: 13, color: '#778899', marginTop: 8 }}>Sem balanço p/ comparar</div>
+                  <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginTop: 8 }}>Sem balanço p/ comparar</div>
                 )}
               </div>
 
               {/* Cobertura de fotos */}
-              <div style={{ background: '#0f1923', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', padding: '16px 18px' }}>
-                <div style={{ fontSize: 11, color: '#778899', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ background: 'var(--color-surface-card)', borderRadius: 12, border: '1px solid var(--color-surface-border2)', padding: '16px 18px' }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <Camera size={11} /> FOTOS
                 </div>
                 <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'monospace', color: '#a78bfa' }}>
                   {records.filter(r => r.photo_url).length}/{kpis.total}
                 </div>
-                <div style={{ fontSize: 11, color: '#778899', marginTop: 4 }}>diagnósticos com foto</div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 4 }}>diagnósticos com foto</div>
               </div>
             </div>
           )}
@@ -454,37 +454,37 @@ export default function DiagnosticoHistoricoPage() {
           {/* Gráfico: Diagnóstico vs Balanço Hídrico */}
           {chartData.length > 0 && (
             <div style={{
-              background: '#0f1923', borderRadius: 14,
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: 'var(--color-surface-card)', borderRadius: 14,
+              border: '1px solid var(--color-surface-border2)',
               padding: '20px 16px 12px', marginBottom: 24,
             }}>
-              <h2 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginBottom: 4, paddingLeft: 4 }}>
+              <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 4, paddingLeft: 4 }}>
                 Evolução da Umidade do Solo
               </h2>
-              <p style={{ fontSize: 12, color: '#778899', marginBottom: 16, paddingLeft: 4 }}>
+              <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 16, paddingLeft: 4 }}>
                 Linha: balanço hídrico calculado · Pontos: diagnóstico manual
               </p>
               <ResponsiveContainer width="100%" height={240}>
                 <ComposedChart data={chartData} margin={{ top: 4, right: 12, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-surface-border2)" />
                   <XAxis
                     dataKey="label"
-                    tick={{ fill: '#778899', fontSize: 10 }}
+                    tick={{ fill: 'var(--color-text-secondary)', fontSize: 10 }}
                     tickLine={false}
-                    axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+                    axisLine={{ stroke: 'var(--color-surface-border2)' }}
                     interval="preserveStartEnd"
                   />
                   <YAxis
                     domain={[0, 105]}
-                    tick={{ fill: '#778899', fontSize: 10 }}
+                    tick={{ fill: 'var(--color-text-secondary)', fontSize: 10 }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={v => `${v}%`}
                   />
                   <Tooltip content={<ChartTooltip />} />
                   <Legend
-                    wrapperStyle={{ fontSize: 11, color: '#8899aa', paddingTop: 8 }}
-                    formatter={(v) => <span style={{ color: '#8899aa' }}>{v}</span>}
+                    wrapperStyle={{ fontSize: 11, color: 'var(--color-text-secondary)', paddingTop: 8 }}
+                    formatter={(v) => <span style={{ color: 'var(--color-text-secondary)' }}>{v}</span>}
                   />
 
                   {/* Zona de alerta (abaixo de 70%) */}
@@ -510,7 +510,7 @@ export default function DiagnosticoHistoricoPage() {
                     type="monotone"
                     stroke="#22c55e"
                     strokeWidth={0}
-                    dot={{ r: 6, fill: '#22c55e', stroke: '#0f1923', strokeWidth: 2 }}
+                    dot={{ r: 6, fill: '#22c55e', stroke: 'var(--color-surface-card)', strokeWidth: 2 }}
                     activeDot={{ r: 8 }}
                     connectNulls={false}
                   />
@@ -520,9 +520,9 @@ export default function DiagnosticoHistoricoPage() {
           )}
 
           {/* Lista de registros */}
-          <div style={{ background: '#0f1923', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <h2 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>
+          <div style={{ background: 'var(--color-surface-card)', borderRadius: 14, border: '1px solid var(--color-surface-border2)', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-surface-border2)' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>
                 Registros detalhados
               </h2>
             </div>
@@ -539,12 +539,12 @@ export default function DiagnosticoHistoricoPage() {
                   key={rec.id}
                   style={{
                     padding: '16px 20px',
-                    borderBottom: i < records.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    borderBottom: i < records.length - 1 ? '1px solid var(--color-surface-border2)' : 'none',
                   }}
                 >
                   {/* Linha topo: data + badge + divergência */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500 }}>
+                    <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                       {fmtDateTime(rec.diagnosed_at)}
                     </span>
                     <ResultBadge result={rec.result} size="sm" />
@@ -573,15 +573,15 @@ export default function DiagnosticoHistoricoPage() {
                           alignItems: 'center',
                         }}>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 10, color: '#778899', marginBottom: 2 }}>Diagnóstico</div>
+                            <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginBottom: 2 }}>Diagnóstico</div>
                             <div style={{ fontSize: 15, fontWeight: 700, color: '#22c55e' }}>{rec.estimated_fc_percent}%</div>
                           </div>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 10, color: '#778899', marginBottom: 2 }}>Balanço</div>
+                            <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginBottom: 2 }}>Balanço</div>
                             <div style={{ fontSize: 15, fontWeight: 700, color: '#0093D0' }}>{matchingBal.field_capacity_percent.toFixed(0)}%</div>
                           </div>
                           <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 10, color: '#778899', marginBottom: 2 }}>Diferença</div>
+                            <div style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginBottom: 2 }}>Diferença</div>
                             <DivBadge diff={diff} />
                           </div>
                           {/* Já calibrado nessa sessão */}
@@ -637,7 +637,7 @@ export default function DiagnosticoHistoricoPage() {
                       </button>
                     )}
                     {rec.notes && (
-                      <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5, margin: 0 }}>
+                      <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>
                         {rec.notes}
                       </p>
                     )}
@@ -670,7 +670,7 @@ export default function DiagnosticoHistoricoPage() {
           <div style={{
             position: 'absolute', top: 20, right: 20,
             background: 'rgba(255,255,255,0.12)', borderRadius: 99,
-            padding: '4px 12px', color: '#e2e8f0', fontSize: 12,
+            padding: '4px 12px', color: 'var(--color-text)', fontSize: 12,
           }}>
             clique para fechar
           </div>

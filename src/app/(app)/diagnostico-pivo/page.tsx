@@ -88,7 +88,7 @@ function getTone(key: ToneKey, label?: string): Tone {
     warning:  { defaultLabel: 'Atenção',  color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)',  border: 'rgb(245 158 11 / 0.25)',  defaultIcon: <AlertTriangle size={13} /> },
     critical: { defaultLabel: 'Crítico',  color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',   border: 'rgb(239 68 68 / 0.25)',   defaultIcon: <XCircle size={13} /> },
     info:     { defaultLabel: 'Info',     color: '#06b6d4', bg: 'rgb(6 182 212 / 0.12)',   border: 'rgb(6 182 212 / 0.25)',   defaultIcon: <AlertCircle size={13} /> },
-    nodata:   { defaultLabel: 'Sem dado', color: '#778899', bg: 'rgb(119 136 153 / 0.10)', border: 'rgb(119 136 153 / 0.20)', defaultIcon: <AlertCircle size={13} /> },
+    nodata:   { defaultLabel: 'Sem dado', color: 'var(--color-text-secondary)', bg: 'rgb(119 136 153 / 0.10)', border: 'rgb(119 136 153 / 0.20)', defaultIcon: <AlertCircle size={13} /> },
   }
   const t = TONES[key]
   return { label: label ?? t.defaultLabel, color: t.color, bg: t.bg, border: t.border, icon: t.defaultIcon }
@@ -128,17 +128,17 @@ function Pill({ tone, size = 'md' }: { tone: Tone; size?: 'sm' | 'md' }) {
 function SectionTitle({ children, sub }: { children: ReactNode; sub?: string }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>{children}</p>
-      {sub && <p style={{ fontSize: 12, color: '#8899aa', marginTop: 3 }}>{sub}</p>}
+      <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>{children}</p>
+      {sub && <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 3 }}>{sub}</p>}
     </div>
   )
 }
 
 function InfoRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-      <span style={{ fontSize: 12, color: '#8899aa' }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: highlight ? 700 : 500, color: highlight ? '#e2e8f0' : '#c0ccd8' }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '8px 0', borderBottom: '1px solid var(--color-surface-border2)' }}>
+      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: highlight ? 700 : 500, color: highlight ? 'var(--color-text)' : '#c0ccd8' }}>{value}</span>
     </div>
   )
 }
@@ -158,8 +158,8 @@ interface MetricCardProps {
 function MetricCard({ eyebrow, value, interpretation, icon, tone, sub, accent }: MetricCardProps) {
   return (
     <div style={{
-      background: accent ? `linear-gradient(135deg, ${tone.bg} 0%, #0f1923 60%)` : '#0f1923',
-      border: `1px solid ${accent ? tone.border : 'rgba(255,255,255,0.06)'}`,
+      background: accent ? `linear-gradient(135deg, ${tone.bg} 0%, var(--color-surface-card) 60%)` : 'var(--color-surface-card)',
+      border: `1px solid ${accent ? tone.border : 'var(--color-surface-border2)'}`,
       borderRadius: 16,
       padding: '18px 20px',
       display: 'flex',
@@ -167,7 +167,7 @@ function MetricCard({ eyebrow, value, interpretation, icon, tone, sub, accent }:
       gap: 14,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>{eyebrow}</p>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-secondary)' }}>{eyebrow}</p>
         <div style={{
           width: 32, height: 32, borderRadius: 9,
           background: tone.bg, border: `1px solid ${tone.border}`,
@@ -178,9 +178,9 @@ function MetricCard({ eyebrow, value, interpretation, icon, tone, sub, accent }:
         </div>
       </div>
       <div>
-        <p style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, color: '#e2e8f0', letterSpacing: '-0.02em' }}>{value}</p>
+        <p style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>{value}</p>
         <p style={{ fontSize: 12, color: tone.color, fontWeight: 600, marginTop: 6, lineHeight: 1.4 }}>{interpretation}</p>
-        {sub && <p style={{ fontSize: 11, color: '#8899aa', marginTop: 4, lineHeight: 1.5 }}>{sub}</p>}
+        {sub && <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{sub}</p>}
       </div>
       <div style={{ marginTop: 'auto', paddingTop: 4 }}>
         <Pill tone={tone} size="sm" />
@@ -241,9 +241,9 @@ function ActionButton({ label, sub, onClick, disabled, tone, icon, loading }: Ac
         width: '100%',
         padding: '14px 18px',
         borderRadius: 14,
-        border: `1px solid ${disabled ? 'rgba(255,255,255,0.06)' : tone.border}`,
-        background: disabled ? '#0d1520' : tone.bg,
-        color: disabled ? '#556677' : tone.color,
+        border: `1px solid ${disabled ? 'var(--color-surface-border2)' : tone.border}`,
+        background: disabled ? 'var(--color-surface-sidebar)' : tone.bg,
+        color: disabled ? 'var(--color-text-muted)' : tone.color,
         cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex',
         alignItems: 'center',
@@ -256,17 +256,17 @@ function ActionButton({ label, sub, onClick, disabled, tone, icon, loading }: Ac
     >
       <div style={{
         width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-        background: disabled ? 'rgba(255,255,255,0.04)' : `${tone.color}22`,
+        background: disabled ? 'var(--color-surface-border2)' : `${tone.color}22`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: disabled ? '#556677' : tone.color,
+        color: disabled ? 'var(--color-text-muted)' : tone.color,
       }}>
         {loading ? <span style={{ fontSize: 12 }}>...</span> : (icon ?? <Play size={16} />)}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.2 }}>{loading ? 'Processando...' : label}</p>
-        {sub && <p style={{ fontSize: 12, color: disabled ? '#445566' : '#8899aa', marginTop: 3, lineHeight: 1.4 }}>{sub}</p>}
+        {sub && <p style={{ fontSize: 12, color: disabled ? '#445566' : 'var(--color-text-secondary)', marginTop: 3, lineHeight: 1.4 }}>{sub}</p>}
       </div>
-      {!disabled && <ChevronRight size={16} style={{ flexShrink: 0, color: '#8899aa' }} />}
+      {!disabled && <ChevronRight size={16} style={{ flexShrink: 0, color: 'var(--color-text-secondary)' }} />}
     </button>
   )
 }
@@ -301,8 +301,8 @@ function AlertCard({ text }: { text: string }) {
         {isCritical ? <XCircle size={16} /> : <AlertTriangle size={16} />}
       </div>
       <div>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', lineHeight: 1.4 }}>{title}</p>
-        <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4, lineHeight: 1.5 }}>{action}</p>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.4 }}>{title}</p>
+        <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 4, lineHeight: 1.5 }}>{action}</p>
       </div>
     </div>
   )
@@ -330,34 +330,34 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
   }
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(245,158,11,0.20)', borderRadius: 16, padding: 20 }}>
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid rgba(245,158,11,0.20)', borderRadius: 16, padding: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16, alignItems: 'flex-start' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0' }}>Comparativo ETo — Calibração</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>Comparativo ETo — Calibração</p>
             <span style={{
               fontSize: 9, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase',
               color: '#f59e0b', background: 'rgb(245 158 11 / 0.12)', border: '1px solid rgb(245 158 11 / 0.25)',
               borderRadius: 6, padding: '3px 7px', lineHeight: 1,
             }}>SUPER ADMIN</span>
           </div>
-          <p style={{ fontSize: 12, color: '#8899aa', marginTop: 4 }}>ETo FAO-56 com Rs NASA vs valor bruto Plugfield — últimos 30 dias</p>
+          <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 4 }}>ETo FAO-56 com Rs NASA vs valor bruto Plugfield — últimos 30 dias</p>
         </div>
         {avg !== null && (
           <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#778899' }}>Diferença média</p>
+            <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-text-secondary)' }}>Diferença média</p>
             <p style={{ fontSize: 22, fontWeight: 800, color: avg >= 0 ? '#22c55e' : '#ef4444', marginTop: 4 }}>
               {avg >= 0 ? '+' : ''}{avg.toFixed(2)} mm
             </p>
-            <p style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>{calibRows.length} dias com dados Plugfield</p>
+            <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>{calibRows.length} dias com dados Plugfield</p>
           </div>
         )}
       </div>
       {loading ? (
-        <p style={{ fontSize: 13, color: '#8899aa', padding: '24px 0', textAlign: 'center' }}>Carregando histórico...</p>
+        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', padding: '24px 0', textAlign: 'center' }}>Carregando histórico...</p>
       ) : calibRows.length === 0 ? (
-        <div style={{ borderRadius: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', padding: 16 }}>
-          <p style={{ fontSize: 13, color: '#8899aa' }}>
+        <div style={{ borderRadius: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', padding: 16 }}>
+          <p style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
             Sem dados de calibração. <code style={{ color: '#f59e0b', fontSize: 12 }}>eto_plugfield_mm</code> será preenchido após o próximo ciclo do cron.
           </p>
         </div>
@@ -365,9 +365,9 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <tr style={{ borderBottom: '1px solid var(--color-surface-border)' }}>
                 {['Data', 'Rs fonte', 'ETo FAO-56 (nosso)', 'ETo Plugfield', 'Diferença (mm)', 'Diferença (%)'].map(h => (
-                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#778899', whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -377,15 +377,15 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
                 const diffPct = row.eto_plugfield_mm! !== 0 ? (diff / row.eto_plugfield_mm!) * 100 : 0
                 const color = rowColor(diff)
                 return (
-                  <tr key={row.id} style={{ background: rowBg(diff), borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <td style={{ padding: '8px 12px', color: '#e2e8f0', whiteSpace: 'nowrap' }}>{new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
+                  <tr key={row.id} style={{ background: rowBg(diff), borderBottom: '1px solid var(--color-surface-border2)' }}>
+                    <td style={{ padding: '8px 12px', color: 'var(--color-text)', whiteSpace: 'nowrap' }}>{new Date(row.date + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
                     <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
                       {row.rs_source === 'nasa' ? <span style={{ color: '#0093D0', fontWeight: 600 }}>NASA</span>
-                        : row.rs_source === 'plugfield_fallback' ? <span style={{ color: '#8899aa' }}>Plugfield</span>
-                        : <span style={{ color: '#778899' }}>{row.rs_source ?? '—'}</span>}
+                        : row.rs_source === 'plugfield_fallback' ? <span style={{ color: 'var(--color-text-secondary)' }}>Plugfield</span>
+                        : <span style={{ color: 'var(--color-text-secondary)' }}>{row.rs_source ?? '—'}</span>}
                     </td>
-                    <td style={{ padding: '8px 12px', color: '#e2e8f0', fontVariantNumeric: 'tabular-nums' }}>{row.eto_mm!.toFixed(2)} mm</td>
-                    <td style={{ padding: '8px 12px', color: '#8899aa', fontVariantNumeric: 'tabular-nums' }}>{row.eto_plugfield_mm!.toFixed(2)} mm</td>
+                    <td style={{ padding: '8px 12px', color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{row.eto_mm!.toFixed(2)} mm</td>
+                    <td style={{ padding: '8px 12px', color: 'var(--color-text-secondary)', fontVariantNumeric: 'tabular-nums' }}>{row.eto_plugfield_mm!.toFixed(2)} mm</td>
                     <td style={{ padding: '8px 12px', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>{diff >= 0 ? '+' : ''}{diff.toFixed(2)}</td>
                     <td style={{ padding: '8px 12px', color, fontVariantNumeric: 'tabular-nums' }}>{diff >= 0 ? '+' : ''}{diffPct.toFixed(1)}%</td>
                   </tr>
@@ -394,10 +394,10 @@ function EtoCalibrationPanel({ rows, loading }: { rows: WeatherData[]; loading: 
             </tbody>
             {avg !== null && (
               <tfoot>
-                <tr style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
-                  <td colSpan={4} style={{ padding: '8px 12px', color: '#8899aa', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Média do período</td>
+                <tr style={{ borderTop: '1px solid var(--color-surface-border)', background: 'rgba(255,255,255,0.02)' }}>
+                  <td colSpan={4} style={{ padding: '8px 12px', color: 'var(--color-text-secondary)', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Média do período</td>
                   <td style={{ padding: '8px 12px', fontWeight: 800, color: avg >= 0 ? '#22c55e' : '#ef4444', fontVariantNumeric: 'tabular-nums' }}>{avg >= 0 ? '+' : ''}{avg.toFixed(2)}</td>
-                  <td style={{ padding: '8px 12px', color: '#8899aa' }}>—</td>
+                  <td style={{ padding: '8px 12px', color: 'var(--color-text-secondary)' }}>—</td>
                 </tr>
               </tfoot>
             )}
@@ -551,33 +551,33 @@ export default function PivotDiagnosticsPage() {
 
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f1923 0%, #0d1520 60%, #1b2c1e 100%)',
-        border: `1px solid ${statusTone ? statusTone.border : 'rgba(255,255,255,0.06)'}`,
+        background: 'linear-gradient(135deg, var(--color-surface-card) 0%, var(--color-surface-sidebar) 60%, #1b2c1e 100%)',
+        border: `1px solid ${statusTone ? statusTone.border : 'var(--color-surface-border2)'}`,
         borderRadius: 24,
         padding: '24px 24px 22px',
         marginBottom: 20,
         transition: 'border-color 0.3s',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8899aa' }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-secondary)' }}>
             Diagnóstico operacional
           </p>
           {statusTone && <Pill tone={statusTone} size="sm" />}
           {nowLabel && (
-            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#556677' }}>
+            <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--color-text-muted)' }}>
               <Clock size={12} /> Atualizado às {nowLabel}
             </span>
           )}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ maxWidth: 680 }}>
-            <h1 style={{ fontSize: 30, lineHeight: 1.1, fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontSize: 30, lineHeight: 1.1, fontWeight: 800, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>
               {diagnostic
                 ? `${diagnostic.pivot.name} — ${diagnostic.farm.name}`
                 : 'Centro operacional do pivô'
               }
             </h1>
-            <p style={{ fontSize: 13, lineHeight: 1.6, color: '#8899aa', marginTop: 8 }}>
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--color-text-secondary)', marginTop: 8 }}>
               {diagnostic
                 ? diagnostic.status === 'OK'
                   ? 'Todos os dados estão completos. O pivô está pronto para automação e manejo diário.'
@@ -589,15 +589,15 @@ export default function PivotDiagnosticsPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            <div style={{ minWidth: 120, padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8899aa' }}>Pivôs</p>
-              <p style={{ fontSize: 26, fontWeight: 800, color: '#e2e8f0', marginTop: 4 }}>{summaries.length}</p>
+            <div style={{ minWidth: 120, padding: '12px 16px', borderRadius: 14, background: 'var(--color-surface-border2)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-text-secondary)' }}>Pivôs</p>
+              <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--color-text)', marginTop: 4 }}>{summaries.length}</p>
             </div>
             {diagnostic?.activeSeason && (
-              <div style={{ minWidth: 180, padding: '12px 16px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8899aa' }}>Safra ativa</p>
-                <p style={{ fontSize: 16, fontWeight: 800, color: '#e2e8f0', marginTop: 4, lineHeight: 1.2 }}>{diagnostic.activeSeason.name}</p>
-                {diagnostic.crop && <p style={{ fontSize: 11, color: '#8899aa', marginTop: 3 }}>{diagnostic.crop.name}</p>}
+              <div style={{ minWidth: 180, padding: '12px 16px', borderRadius: 14, background: 'var(--color-surface-border2)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-text-secondary)' }}>Safra ativa</p>
+                <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-text)', marginTop: 4, lineHeight: 1.2 }}>{diagnostic.activeSeason.name}</p>
+                {diagnostic.crop && <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 3 }}>{diagnostic.crop.name}</p>}
               </div>
             )}
           </div>
@@ -618,19 +618,19 @@ export default function PivotDiagnosticsPage() {
 
       {/* ── SELETOR DE PIVÔ ─────────────────────────────────────────────────── */}
       <div style={{
-        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
+        background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16,
         padding: 20, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 16, alignItems: 'end', marginBottom: 20,
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#8899aa', marginBottom: 6 }}>Selecionar pivô</label>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 6 }}>Selecionar pivô</label>
           <select
             value={selectedPivotId}
             onChange={(e) => setSelectedPivotId(e.currentTarget.value)}
             disabled={loading || summaries.length === 0}
             style={{
               width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
-              color: '#e2e8f0', outline: 'none',
+              background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)',
+              color: 'var(--color-text)', outline: 'none',
             }}
           >
             {summaries.length > 0
@@ -643,18 +643,18 @@ export default function PivotDiagnosticsPage() {
 
       {/* ── LOADING / VAZIO ─────────────────────────────────────────────────── */}
       {loading || diagnosticLoading ? (
-        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: '#8899aa' }}>Carregando diagnóstico...</p>
+        <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Carregando diagnóstico...</p>
         </div>
       ) : !diagnostic ? (
-        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: '#8899aa' }}>Selecione um pivô para visualizar o diagnóstico.</p>
+        <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: '64px 24px', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Selecione um pivô para visualizar o diagnóstico.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           {/* ── MÉTRICAS DO DIA ─────────────────────────────────────────────── */}
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
+          <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 18, alignItems: 'flex-start' }}>
               <SectionTitle sub="Leitura rápida para decisão de manejo hoje">
                 Situação atual
@@ -719,8 +719,8 @@ export default function PivotDiagnosticsPage() {
 
             {/* Automação */}
             <div style={{
-              background: '#0f1923',
-              border: `1px solid ${automationTone ? automationTone.border : 'rgba(255,255,255,0.06)'}`,
+              background: 'var(--color-surface-card)',
+              border: `1px solid ${automationTone ? automationTone.border : 'var(--color-surface-border2)'}`,
               borderRadius: 16, padding: 20,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 18, alignItems: 'flex-start' }}>
@@ -734,10 +734,10 @@ export default function PivotDiagnosticsPage() {
               </div>
 
               {/* Status da automação */}
-              <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: 16, marginBottom: 12 }}>
-                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899', marginBottom: 8 }}>Status</p>
-                <p style={{ fontSize: 16, fontWeight: 700, color: automationTone?.color ?? '#e2e8f0' }}>{diagnostic.automationStatus}</p>
-                <p style={{ fontSize: 12, color: '#8899aa', marginTop: 6, lineHeight: 1.6 }}>
+              <div style={{ borderRadius: 14, border: '1px solid var(--color-surface-border2)', background: 'var(--color-surface-sidebar)', padding: 16, marginBottom: 12 }}>
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-secondary)', marginBottom: 8 }}>Status</p>
+                <p style={{ fontSize: 16, fontWeight: 700, color: automationTone?.color ?? 'var(--color-text)' }}>{diagnostic.automationStatus}</p>
+                <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 6, lineHeight: 1.6 }}>
                   {diagnostic.hasManagementToday
                     ? 'Manejo de hoje já foi gerado com sucesso.'
                     : diagnostic.automationReason ?? 'Sem detalhes adicionais.'}
@@ -769,9 +769,9 @@ export default function PivotDiagnosticsPage() {
             </div>
 
             {/* Contexto do pivô */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 }}>
+            <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: 20 }}>
               <SectionTitle sub="Identificação, safra e vínculos principais">Contexto do pivô</SectionTitle>
-              <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', background: '#0d1520', padding: '4px 16px' }}>
+              <div style={{ borderRadius: 14, border: '1px solid var(--color-surface-border2)', background: 'var(--color-surface-sidebar)', padding: '4px 16px' }}>
                 <InfoRow label="Pivô" value={diagnostic.pivot.name} highlight />
                 <InfoRow label="Fazenda" value={diagnostic.farm.name} />
                 <InfoRow
@@ -794,8 +794,8 @@ export default function PivotDiagnosticsPage() {
                   }
                 />
                 <div style={{ padding: '8px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <MapPin size={12} style={{ color: '#778899' }} />
-                  <span style={{ fontSize: 11, color: '#778899' }}>
+                  <MapPin size={12} style={{ color: 'var(--color-text-secondary)' }} />
+                  <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
                     {diagnostic.pivot.latitude != null ? 'Geolocalização disponível' : 'Cadastre coordenadas para fallback NASA'}
                   </span>
                 </div>
@@ -804,7 +804,7 @@ export default function PivotDiagnosticsPage() {
           </div>
 
           {/* ── ALERTAS ──────────────────────────────────────────────────────── */}
-          <div style={{ background: '#0f1923', border: `1px solid ${diagnostic.alerts.length > 0 ? 'rgba(245,158,11,0.20)' : 'rgba(34,197,94,0.20)'}`, borderRadius: 16, padding: 20 }}>
+          <div style={{ background: 'var(--color-surface-card)', border: `1px solid ${diagnostic.alerts.length > 0 ? 'rgba(245,158,11,0.20)' : 'rgba(34,197,94,0.20)'}`, borderRadius: 16, padding: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: diagnostic.alerts.length > 0 ? 16 : 0, alignItems: 'flex-start' }}>
               <SectionTitle sub={diagnostic.alerts.length > 0 ? 'Corrija as lacunas abaixo para restaurar o funcionamento completo' : 'Todos os dados operacionais estão completos'}>
                 {diagnostic.alerts.length > 0
@@ -817,7 +817,7 @@ export default function PivotDiagnosticsPage() {
             {diagnostic.alerts.length === 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0' }}>
                 <CheckCircle2 size={18} style={{ color: '#22c55e', flexShrink: 0 }} />
-                <p style={{ fontSize: 14, color: '#8899aa' }}>Este pivô está 100% operacional para automação e manejo diário.</p>
+                <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Este pivô está 100% operacional para automação e manejo diário.</p>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>

@@ -50,7 +50,7 @@ export function UltimaAtualizacao({ fetchedAt, className }: UltimaAtualizacaoPro
         className={className}
         style={{
           fontSize: 11,
-          color: '#556677',
+          color: 'var(--color-text-muted)',
           display: 'inline-block',
         }}
       >

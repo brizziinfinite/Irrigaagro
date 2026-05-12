@@ -101,10 +101,10 @@ function ScoreOption({
         background: c.dot, flexShrink: 0, marginTop: 4,
       }} />
       <div>
-        <div style={{ fontWeight: 600, fontSize: 13, color: selected ? c.dot : '#e2e8f0', marginBottom: 3 }}>
+        <div style={{ fontWeight: 600, fontSize: 13, color: selected ? c.dot : 'var(--color-text)', marginBottom: 3 }}>
           {score} — {SCORE_LABELS[score]}
         </div>
-        <div style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
           {SCORE_DESCRIPTIONS[texture][score]}
         </div>
       </div>
@@ -163,11 +163,11 @@ function DropdownSelect({
 
   return (
     <div ref={ref} style={{ position: 'relative', ...style }}>
-      <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500, display: 'block', marginBottom: 6 }}>
+      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500, display: 'block', marginBottom: 6 }}>
         {label}
       </span>
       {options.length === 0 && emptyMsg ? (
-        <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#778899', fontSize: 13 }}>
+        <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text-secondary)', fontSize: 13 }}>
           {emptyMsg}
         </div>
       ) : (
@@ -177,18 +177,18 @@ function DropdownSelect({
             style={{
               width: '100%', padding: '10px 36px 10px 12px',
               borderRadius: 8, border: `1px solid ${open ? '#0093D0' : 'rgba(255,255,255,0.1)'}`,
-              background: '#0d1520', color: selected ? '#e2e8f0' : '#778899',
+              background: 'var(--color-surface-sidebar)', color: selected ? 'var(--color-text)' : 'var(--color-text-secondary)',
               fontSize: 14, cursor: 'pointer', textAlign: 'left',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}
           >
             <span>{selected ? selected.label : placeholder}</span>
-            <ChevronDown size={14} color="#778899" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+            <ChevronDown size={14} color="var(--color-text-secondary)" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
           </button>
           {open && (
             <div style={{
               position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.12)',
+              background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.12)',
               borderRadius: 8, overflow: 'hidden',
               boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
               maxHeight: 240, overflowY: 'auto',
@@ -198,9 +198,9 @@ function DropdownSelect({
                   onClick={() => { onChange(''); setOpen(false) }}
                   style={{
                     width: '100%', padding: '10px 14px', border: 'none',
-                    background: 'transparent', color: '#8899aa',
+                    background: 'transparent', color: 'var(--color-text-secondary)',
                     fontSize: 13, cursor: 'pointer', textAlign: 'left',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: '1px solid var(--color-surface-border2)',
                   }}
                 >
                   {placeholder}
@@ -213,10 +213,10 @@ function DropdownSelect({
                   style={{
                     width: '100%', padding: '10px 14px', border: 'none',
                     background: value === o.value ? 'rgba(0,147,208,0.15)' : 'transparent',
-                    color: value === o.value ? '#38bdf8' : '#e2e8f0',
+                    color: value === o.value ? '#38bdf8' : 'var(--color-text)',
                     fontSize: 14, fontWeight: value === o.value ? 600 : 400,
                     cursor: 'pointer', textAlign: 'left',
-                    borderBottom: i < options.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    borderBottom: i < options.length - 1 ? '1px solid var(--color-surface-border2)' : 'none',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}
                 >
@@ -502,13 +502,13 @@ export default function DiagnosticoSoloPage() {
       <div style={{ marginBottom: 28, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
           <h1 style={{
-            fontSize: 24, fontWeight: 700, color: '#e2e8f0',
+            fontSize: 24, fontWeight: 700, color: 'var(--color-text)',
             display: 'flex', alignItems: 'center', gap: 10,
           }}>
             <Droplets size={22} color="#38bdf8" />
             Diagnóstico Manual do Solo
           </h1>
-          <p style={{ color: '#8899aa', fontSize: 13, marginTop: 4 }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: 13, marginTop: 4 }}>
             Método USDA/NRCS — Tato e aparência por profundidade
           </p>
         </div>
@@ -517,9 +517,9 @@ export default function DiagnosticoSoloPage() {
       {/* Step indicator */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 0,
-        marginBottom: 28, background: '#0f1923',
+        marginBottom: 28, background: 'var(--color-surface-card)',
         borderRadius: 12, padding: '10px 16px',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: '1px solid var(--color-surface-border2)',
       }}>
         {STEPS.map((s, i) => {
           const active = step === s.id
@@ -530,22 +530,22 @@ export default function DiagnosticoSoloPage() {
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: done ? '#0093D018' : active ? '#0093D0' : 'rgba(255,255,255,0.06)',
+                  background: done ? '#0093D018' : active ? '#0093D0' : 'var(--color-surface-border2)',
                   border: `2px solid ${done ? '#0093D0' : active ? '#0093D0' : 'transparent'}`,
-                  color: done ? '#0093D0' : active ? '#fff' : '#778899',
+                  color: done ? '#0093D0' : active ? '#fff' : 'var(--color-text-secondary)',
                   fontSize: 11, fontWeight: 700,
                   transition: 'all 0.2s',
                 }}>
                   {done ? <CheckCircle2 size={14} /> : s.id}
                 </div>
-                <span style={{ fontSize: 10, color: active ? '#e2e8f0' : '#778899', fontWeight: active ? 600 : 400, whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 10, color: active ? 'var(--color-text)' : 'var(--color-text-secondary)', fontWeight: active ? 600 : 400, whiteSpace: 'nowrap' }}>
                   {s.label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
                 <div style={{
                   flex: 1, height: 2, margin: '0 4px', marginBottom: 14,
-                  background: done ? '#0093D0' : 'rgba(255,255,255,0.06)',
+                  background: done ? '#0093D0' : 'var(--color-surface-border2)',
                   transition: 'background 0.2s',
                 }} />
               )}
@@ -557,10 +557,10 @@ export default function DiagnosticoSoloPage() {
       {/* ── Step 1: Seleção ──────────────────────────────────────── */}
       {step === 1 && (
         <div style={{
-          background: '#0f1923', borderRadius: 14,
-          border: '1px solid rgba(255,255,255,0.06)', padding: 24,
+          background: 'var(--color-surface-card)', borderRadius: 14,
+          border: '1px solid var(--color-surface-border2)', padding: 24,
         }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', marginBottom: 18 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', marginBottom: 18 }}>
             Selecionar Pivô e Textura do Solo
           </h2>
 
@@ -589,7 +589,7 @@ export default function DiagnosticoSoloPage() {
 
           {/* Textura */}
           <label style={{ display: 'block' }}>
-            <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500, display: 'block', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500, display: 'block', marginBottom: 8 }}>
               Textura do Solo *
             </span>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8 }}>
@@ -602,7 +602,7 @@ export default function DiagnosticoSoloPage() {
                     borderRadius: 8,
                     border: `1.5px solid ${texture === t ? '#0093D0' : 'rgba(255,255,255,0.07)'}`,
                     background: texture === t ? 'rgba(0,147,208,0.12)' : 'rgba(255,255,255,0.02)',
-                    color: texture === t ? '#38bdf8' : '#8899aa',
+                    color: texture === t ? '#38bdf8' : 'var(--color-text-secondary)',
                     fontSize: 12, fontWeight: texture === t ? 600 : 400,
                     cursor: 'pointer', transition: 'all 0.15s',
                   }}
@@ -619,7 +619,7 @@ export default function DiagnosticoSoloPage() {
             background: 'rgba(0,147,208,0.06)', borderRadius: 8,
             border: '1px solid rgba(0,147,208,0.15)',
           }}>
-            <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.6 }}>
+            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
               <strong style={{ color: '#38bdf8' }}>Como usar:</strong> Colete amostras de solo nas
               profundidades 0-20, 20-40 e 40-60 cm. Aperte cada amostra na mão e observe a
               resposta conforme as opções de cada etapa.
@@ -631,17 +631,17 @@ export default function DiagnosticoSoloPage() {
       {/* ── Steps 2-4: Profundidades ───────────────────────────────── */}
       {(step === 2 || step === 3 || step === 4) && (
         <div style={{
-          background: '#0f1923', borderRadius: 14,
-          border: '1px solid rgba(255,255,255,0.06)', padding: 24,
+          background: 'var(--color-surface-card)', borderRadius: 14,
+          border: '1px solid var(--color-surface-border2)', padding: 24,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <Layers size={18} color="#0093D0" />
-            <h2 style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0' }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)' }}>
               Profundidade {currentDepth} cm
             </h2>
           </div>
-          <p style={{ fontSize: 12, color: '#8899aa', marginBottom: 20 }}>
-            Como está o solo coletado a <strong style={{ color: '#e2e8f0' }}>{currentDepth} cm</strong> de profundidade?
+          <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 20 }}>
+            Como está o solo coletado a <strong style={{ color: 'var(--color-text)' }}>{currentDepth} cm</strong> de profundidade?
             Textura: <strong style={{ color: '#38bdf8' }}>{TEXTURE_LABELS[texture]}</strong>
           </p>
 
@@ -661,7 +661,7 @@ export default function DiagnosticoSoloPage() {
 
       {/* ── Step 5: Resultado ────────────────────────────────────────── */}
       {step === 5 && !diagnosis && (
-        <div style={{ padding: 32, textAlign: 'center', color: '#778899', fontSize: 14 }}>
+        <div style={{ padding: 32, textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 14 }}>
           <p>Scores incompletos. <button onClick={() => setStep(2)} style={{ color: '#0093D0', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>Voltar ao início</button></p>
         </div>
       )}
@@ -670,12 +670,12 @@ export default function DiagnosticoSoloPage() {
 
           {/* Card resultado principal */}
           <div style={{
-            background: '#0f1923', borderRadius: 14,
+            background: 'var(--color-surface-card)', borderRadius: 14,
             border: `1.5px solid ${diagnosis.color}40`, padding: 24,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
-                <div style={{ fontSize: 12, color: '#8899aa', marginBottom: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 4 }}>
                   {selectedPivot?.name} {farmName && `— ${farmName}`}
                 </div>
                 <ResultBadge result={diagnosis.result} />
@@ -684,17 +684,17 @@ export default function DiagnosticoSoloPage() {
                 <div style={{ fontSize: 32, fontWeight: 700, fontFamily: 'monospace', color: diagnosis.color }}>
                   {diagnosis.estimated_fc_percent}%
                 </div>
-                <div style={{ fontSize: 11, color: '#778899' }}>da CC estimada</div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>da CC estimada</div>
               </div>
             </div>
 
             {/* Barra visual */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 11, color: '#778899' }}>PM (0%)</span>
-                <span style={{ fontSize: 11, color: '#778899' }}>CC (100%)</span>
+                <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>PM (0%)</span>
+                <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>CC (100%)</span>
               </div>
-              <div style={{ height: 10, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+              <div style={{ height: 10, borderRadius: 99, background: 'var(--color-surface-border2)', overflow: 'hidden' }}>
                 <div style={{
                   height: '100%', borderRadius: 99,
                   width: `${diagnosis.estimated_fc_percent}%`,
@@ -721,7 +721,7 @@ export default function DiagnosticoSoloPage() {
               background: `${diagnosis.color}0d`,
               border: `1px solid ${diagnosis.color}30`,
             }}>
-              <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6 }}>
+              <p style={{ fontSize: 13, color: 'var(--color-text)', lineHeight: 1.6 }}>
                 {diagnosis.recommendation}
               </p>
             </div>
@@ -729,10 +729,10 @@ export default function DiagnosticoSoloPage() {
 
           {/* Resumo por profundidade */}
           <div style={{
-            background: '#0f1923', borderRadius: 14,
-            border: '1px solid rgba(255,255,255,0.06)', padding: 20,
+            background: 'var(--color-surface-card)', borderRadius: 14,
+            border: '1px solid var(--color-surface-border2)', padding: 20,
           }}>
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#8899aa', marginBottom: 14 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 14 }}>
               Resumo por profundidade
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -742,37 +742,37 @@ export default function DiagnosticoSoloPage() {
                 const scoreColors: Record<number, string> = { 1: '#ef4444', 2: '#f97316', 3: '#38bdf8', 4: '#22c55e', 5: '#a78bfa' }
                 return (
                   <div key={depth} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 60, fontSize: 12, color: '#778899', fontWeight: 500 }}>{depth} cm</div>
+                    <div style={{ width: 60, fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500 }}>{depth} cm</div>
                     <div style={{
                       flex: 1, height: 6, borderRadius: 99,
-                      background: 'rgba(255,255,255,0.06)', overflow: 'hidden',
+                      background: 'var(--color-surface-border2)', overflow: 'hidden',
                     }}>
                       <div style={{
                         height: '100%', borderRadius: 99,
                         width: `${(scoreVal / 5) * 100}%`,
-                        background: scoreColors[scoreVal] ?? '#778899',
+                        background: scoreColors[scoreVal] ?? 'var(--color-text-secondary)',
                       }} />
                     </div>
-                    <div style={{ width: 24, textAlign: 'right', fontSize: 13, fontWeight: 700, color: scoreColors[scoreVal] ?? '#778899' }}>
+                    <div style={{ width: 24, textAlign: 'right', fontSize: 13, fontWeight: 700, color: scoreColors[scoreVal] ?? 'var(--color-text-secondary)' }}>
                       {scoreVal}
                     </div>
-                    <div style={{ width: 40, fontSize: 11, color: '#778899' }}>({Math.round(weight * 100)}%)</div>
+                    <div style={{ width: 40, fontSize: 11, color: 'var(--color-text-secondary)' }}>({Math.round(weight * 100)}%)</div>
                   </div>
                 )
               })}
             </div>
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 12, color: '#8899aa' }}>Score ponderado</span>
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--color-surface-border2)', display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>Score ponderado</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: diagnosis.color }}>{diagnosis.weighted_score.toFixed(2)}</span>
             </div>
           </div>
 
           {/* Foto e observações */}
           <div style={{
-            background: '#0f1923', borderRadius: 14,
-            border: '1px solid rgba(255,255,255,0.06)', padding: 20,
+            background: 'var(--color-surface-card)', borderRadius: 14,
+            border: '1px solid var(--color-surface-border2)', padding: 20,
           }}>
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#8899aa', marginBottom: 14 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 14 }}>
               Foto e Observações <span style={{ fontSize: 11, fontWeight: 400 }}>(opcional)</span>
             </h3>
 
@@ -785,7 +785,7 @@ export default function DiagnosticoSoloPage() {
                 borderRadius: 8, marginBottom: 12,
                 border: '1px dashed rgba(255,255,255,0.12)',
                 background: 'rgba(255,255,255,0.02)',
-                color: '#8899aa', fontSize: 13, cursor: 'pointer',
+                color: 'var(--color-text-secondary)', fontSize: 13, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
@@ -817,8 +817,8 @@ export default function DiagnosticoSoloPage() {
               rows={3}
               style={{
                 width: '100%', padding: '10px 12px',
-                background: '#0d1520', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 8, color: '#e2e8f0', fontSize: 13,
+                background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8, color: 'var(--color-text)', fontSize: 13,
                 resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5,
               }}
             />
@@ -837,7 +837,7 @@ export default function DiagnosticoSoloPage() {
                   Análise de Foto — {aiValidation.confidence}% confiança
                 </span>
               </div>
-              <p style={{ fontSize: 12, color: '#8899aa', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
                 {aiValidation.notes}
               </p>
             </div>
@@ -882,7 +882,7 @@ export default function DiagnosticoSoloPage() {
             style={{
               width: '100%', padding: '12px',
               borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)',
-              background: 'transparent', color: '#8899aa', fontSize: 14,
+              background: 'transparent', color: 'var(--color-text-secondary)', fontSize: 14,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
@@ -901,7 +901,7 @@ export default function DiagnosticoSoloPage() {
               style={{
                 flex: 1, padding: '12px',
                 borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)',
-                background: 'transparent', color: '#8899aa', fontSize: 14,
+                background: 'transparent', color: 'var(--color-text-secondary)', fontSize: 14,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}
             >
@@ -914,8 +914,8 @@ export default function DiagnosticoSoloPage() {
             style={{
               flex: 2, padding: '12px',
               borderRadius: 10, border: 'none',
-              background: canProceed ? '#0093D0' : 'rgba(255,255,255,0.06)',
-              color: canProceed ? '#fff' : '#778899', fontSize: 14, fontWeight: 600,
+              background: canProceed ? '#0093D0' : 'var(--color-surface-border2)',
+              color: canProceed ? '#fff' : 'var(--color-text-secondary)', fontSize: 14, fontWeight: 600,
               cursor: canProceed ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
@@ -932,8 +932,8 @@ export default function DiagnosticoSoloPage() {
           onClick={() => setShowHistory(h => !h)}
           style={{
             width: '100%', padding: '12px 16px',
-            borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)',
-            background: '#0f1923', color: '#8899aa', fontSize: 13,
+            borderRadius: 10, border: '1px solid var(--color-surface-border)',
+            background: 'var(--color-surface-card)', color: 'var(--color-text-secondary)', fontSize: 13,
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
           }}
         >
@@ -960,17 +960,17 @@ export default function DiagnosticoSoloPage() {
         </Link>
         {showHistory && (
           <div style={{
-            marginTop: 8, background: '#0f1923',
-            borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)',
+            marginTop: 8, background: 'var(--color-surface-card)',
+            borderRadius: 10, border: '1px solid var(--color-surface-border2)',
             overflow: 'hidden',
           }}>
             {loadingHistory && (
-              <div style={{ padding: 24, textAlign: 'center', color: '#778899' }}>
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                 <Loader2 size={16} className="animate-spin" style={{ margin: '0 auto' }} />
               </div>
             )}
             {!loadingHistory && history.length === 0 && (
-              <div style={{ padding: 24, textAlign: 'center', color: '#778899', fontSize: 13 }}>
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
                 Nenhum diagnóstico registrado ainda.
               </div>
             )}
@@ -982,7 +982,7 @@ export default function DiagnosticoSoloPage() {
                   key={rec.id}
                   style={{
                     padding: '14px 16px',
-                    borderBottom: i < history.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                    borderBottom: i < history.length - 1 ? '1px solid var(--color-surface-border2)' : 'none',
                     display: 'flex', alignItems: 'center', gap: 12,
                   }}
                 >
@@ -991,10 +991,10 @@ export default function DiagnosticoSoloPage() {
                     background: meta.color, flexShrink: 0,
                   }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500 }}>
+                    <div style={{ fontSize: 13, color: 'var(--color-text)', fontWeight: 500 }}>
                       {(rec.pivots as unknown as { name: string })?.name ?? 'Pivô'}
                     </div>
-                    <div style={{ fontSize: 11, color: '#778899', marginTop: 2 }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>
                       {date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                       {' · '}
                       {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
@@ -1002,7 +1002,7 @@ export default function DiagnosticoSoloPage() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <ResultBadge result={rec.result} size="sm" />
-                    <div style={{ fontSize: 11, color: '#778899', marginTop: 3 }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 3 }}>
                       {rec.estimated_fc_percent}% da CC
                     </div>
                   </div>

@@ -23,7 +23,7 @@ function GaugeCircle({ pct, color }: { pct: number; color: string }) {
   return (
     <svg width="110" height="110" viewBox="0 0 110 110">
       {/* Track */}
-      <circle cx="55" cy="55" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+      <circle cx="55" cy="55" r={r} fill="none" stroke="var(--color-surface-border2)" strokeWidth="7" />
       {/* Value arc */}
       <circle
         cx="55" cy="55" r={r}
@@ -37,11 +37,11 @@ function GaugeCircle({ pct, color }: { pct: number; color: string }) {
         style={{ transition: 'stroke-dashoffset 0.8s ease' }}
       />
       {/* Texto central */}
-      <text x="55" y="53" textAnchor="middle" fill="#e2e8f0" fontSize="22" fontWeight="700"
+      <text x="55" y="53" textAnchor="middle" fill="var(--color-text)" fontSize="22" fontWeight="700"
         fontFamily="var(--font-mono)">
         {Math.round(pct)}
       </text>
-      <text x="55" y="68" textAnchor="middle" fill="#778899" fontSize="10">%</text>
+      <text x="55" y="68" textAnchor="middle" fill="var(--color-text-muted)" fontSize="10">%</text>
     </svg>
   )
 }
@@ -51,8 +51,8 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
 
   return (
     <div style={{
-      background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: 'var(--color-surface-card)',
+      border: '1px solid var(--color-surface-border2)',
       borderRadius: 14,
       padding: '16px 18px',
       display: 'flex',
@@ -99,8 +99,8 @@ export function SoilGauges({ pivots, lastManagementByPivot, activePivotIds }: So
                     <GaugeCircle pct={pct} color={color} />
                   ) : (
                     <svg width="110" height="110" viewBox="0 0 110 110">
-                      <circle cx="55" cy="55" r="45" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
-                      <text x="55" y="58" textAnchor="middle" fill="#778899" fontSize="14">—</text>
+                      <circle cx="55" cy="55" r="45" fill="none" stroke="var(--color-surface-border2)" strokeWidth="7" />
+                      <text x="55" y="58" textAnchor="middle" fill="var(--color-text-muted)" fontSize="14">—</text>
                     </svg>
                   )}
                   <span style={{

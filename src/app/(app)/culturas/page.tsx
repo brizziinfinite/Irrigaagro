@@ -23,7 +23,7 @@ function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
 }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: '#8899aa', marginBottom: 5 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 5 }}>{label}</label>
       <div style={{ position: 'relative' }}>
         <input
           type="number" step="any" value={value} onChange={e => onChange(e.target.value)}
@@ -31,18 +31,18 @@ function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
           style={{
             width: '100%', padding: unit ? `${small ? 10 : 10}px ${unit.length > 2 ? 48 : 36}px ${small ? 10 : 10}px 10px` : `${small ? 10 : 10}px 10px`,
             borderRadius: 8, fontSize: small ? 13 : 14,
-            background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none',
+            background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none',
           }}
           onFocus={e => e.target.style.borderColor = '#0093D0'}
-          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+          onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
         />
         {unit && (
-          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#778899', pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--color-text-secondary)', pointerEvents: 'none' }}>
             {unit}
           </span>
         )}
       </div>
-      {hint && <p style={{ fontSize: 10, color: '#778899', marginTop: 3 }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginTop: 3 }}>{hint}</p>}
     </div>
   )
 }
@@ -150,16 +150,16 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
       <div style={{
-        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 'clamp(16px, 4vw, 28px)',
+        background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 20, padding: 'clamp(16px, 4vw, 28px)',
         width: '100%', maxWidth: 560, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)',
         maxHeight: '92vh', overflowY: 'auto',
       }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)' }}>
             {isEdit ? 'Editar Cultura' : isDefault ? `Personalizar: ${crop.name}` : 'Nova Cultura'}
           </h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
             <X size={16} />
           </button>
         </div>
@@ -173,13 +173,13 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Nome */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>Nome da Cultura *</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 6 }}>Nome da Cultura *</label>
             <input
               type="text" value={name} onChange={e => setName(e.target.value)} required
               placeholder="Ex: Soja, Milho Safrinha..."
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none' }}
               onFocus={e => e.target.style.borderColor = '#0093D0'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
             />
           </div>
 
@@ -202,7 +202,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
               </button>
               {showPresets && (
                 <div style={{
-                  marginTop: 6, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+                  marginTop: 6, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)',
                   borderRadius: 10, overflow: 'hidden', maxHeight: 240, overflowY: 'auto',
                 }}>
                   {CROP_PRESETS.map(preset => (
@@ -212,12 +212,12 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
                       onClick={() => applyPreset(preset)}
                       style={{
                         width: '100%', padding: '8px 14px', textAlign: 'left', cursor: 'pointer',
-                        background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                        background: 'transparent', border: 'none', borderBottom: '1px solid var(--color-surface-border2)',
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       }}
                     >
-                      <span style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0' }}>{preset.name}</span>
-                      <span style={{ fontSize: 11, color: '#778899' }}>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>{preset.name}</span>
+                      <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
                         Kc {preset.kc_ini}/{preset.kc_mid}/{preset.kc_final} · {preset.stage1_days + preset.stage2_days + preset.stage3_days + preset.stage4_days}d
                       </span>
                     </button>
@@ -230,12 +230,12 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
           {/* Crescimento de Raiz */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-secondary)' }}>
                 Crescimento de Raiz
               </span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+              <div style={{ flex: 1, height: 1, background: 'var(--color-surface-border2)' }} />
             </div>
-            <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: '14px 16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                 <NumInput
                   label="Prof. inicial" value={rootInitial} onChange={setRootInitial}
@@ -259,10 +259,10 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
           {/* 4 Fases */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#778899' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-secondary)' }}>
                 Fases de Desenvolvimento — FAO-56
               </span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+              <div style={{ flex: 1, height: 1, background: 'var(--color-surface-border2)' }} />
               {totalDays > 0 && (
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#0093D0' }}>Ciclo: {totalDays} dias</span>
               )}
@@ -270,7 +270,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
 
             <div className="flex flex-col gap-3">
               {stageData.map((stage, i) => (
-                <div key={i} style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
+                <div key={i} style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: '14px 16px' }}>
                   {/* Título da fase */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                     <div style={{
@@ -281,8 +281,8 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
                     }}>
                       {i + 1}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#8899aa' }}>{stage.label}</span>
-                    <span style={{ fontSize: 10, color: '#778899', marginLeft: 4 }}>Kc {stage.hint}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)' }}>{stage.label}</span>
+                    <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', marginLeft: 4 }}>Kc {stage.hint}</span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: stage.kcLabel ? '1fr 1fr 1fr' : '1fr 1fr', gap: 10 }}>
@@ -309,7 +309,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
           {/* Botões */}
           <div className="flex gap-3" style={{ flexWrap: 'wrap-reverse' }}>
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid var(--color-surface-border)', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
               Cancelar
             </button>
             <button type="submit" disabled={loading}
@@ -350,9 +350,9 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
   ]
 
   return (
-    <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, transition: 'border-color 0.15s' }}
+    <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, transition: 'border-color 0.15s' }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-surface-border2)' }}
     >
       {/* Linha principal */}
       <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
@@ -364,9 +364,9 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* 1. Nome + badge padrão */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.01em' }}>{crop.name}</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>{crop.name}</p>
             {!isCustom && (
-              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 3, background: '#0d1520', color: '#556677', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 3, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-muted)', border: '1px solid var(--color-surface-border2)' }}>
                 <Lock size={8} /> FAO-56
               </span>
             )}
@@ -383,7 +383,7 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
 
           {/* 3. Kc em leitura natural */}
           {kcParts.length > 0 && (
-            <p style={{ fontSize: 12, color: '#8899aa', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>
               {kcParts.map((part, i) => (
                 <span key={i}>
                   {i > 0 && <span style={{ color: '#334455', margin: '0 5px' }}>•</span>}
@@ -399,32 +399,32 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
         <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
           {hasStages && (
             <button onClick={() => setExpanded(v => !v)} title={expanded ? 'Ocultar fases' : 'Ver fases detalhadas'}
-              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
               <ChevronRight size={14} style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
             </button>
           )}
           {isCustom ? (
             <>
               <button onClick={onEdit} title="Editar cultura"
-                style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
                 onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
                 <Pencil size={13} />
               </button>
               <button onClick={onDelete} disabled={deleting} title="Excluir cultura"
-                style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
                 onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(239,68,68,0.08)'; el.style.color = '#ef4444'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#556677'; el.style.borderColor = 'transparent' }}>
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--color-surface-border2)'; el.style.color = 'var(--color-text-muted)'; el.style.borderColor = 'transparent' }}>
                 {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
               </button>
             </>
           ) : (
             <button onClick={onEdit} title="Editar / personalizar esta cultura"
-              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
               <Pencil size={13} />
             </button>
           )}
@@ -447,7 +447,7 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
 
       {/* Detalhes expandíveis das fases */}
       {expanded && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', padding: '14px 18px' }}>
+        <div style={{ borderTop: '1px solid var(--color-surface-border2)', padding: '14px 18px' }}>
           {/* Crescimento de raiz */}
           {hasRootGrowth && (
             <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
@@ -457,25 +457,25 @@ function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
                 { label: 'Início', value: crop.root_start_das != null ? `DAS ${crop.root_start_das}` : '—' },
                 { label: 'Máx. efetivo', value: '40 cm' },
               ].map(item => (
-                <div key={item.label} style={{ background: '#0d1520', borderRadius: 8, padding: '6px 12px' }}>
-                  <span style={{ fontSize: 9, color: '#778899', display: 'block', marginBottom: 2 }}>{item.label}</span>
+                <div key={item.label} style={{ background: 'var(--color-surface-sidebar)', borderRadius: 8, padding: '6px 12px' }}>
+                  <span style={{ fontSize: 9, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 2 }}>{item.label}</span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', fontFamily: 'var(--font-mono)' }}>{item.value}</span>
                 </div>
               ))}
             </div>
           )}
-          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden', overflowX: 'auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 55px 55px 70px', minWidth: 340, background: '#0d1520', padding: '8px 14px', gap: 8 }}>
+          <div style={{ border: '1px solid var(--color-surface-border2)', borderRadius: 10, overflow: 'hidden', overflowX: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 55px 55px 70px', minWidth: 340, background: 'var(--color-surface-sidebar)', padding: '8px 14px', gap: 8 }}>
               {['Fase', 'Período', 'Dias', 'Fator f', 'Kc'].map(h => (
-                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: '#556677', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</span>
+                <span key={h} style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</span>
               ))}
             </div>
             {stageRows.map((row, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 55px 55px 70px', minWidth: 340, padding: '10px 14px', gap: 8, borderTop: '1px solid rgba(255,255,255,0.04)', background: i % 2 ? '#080e14' : 'transparent' }}>
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 55px 55px 70px', minWidth: 340, padding: '10px 14px', gap: 8, borderTop: '1px solid var(--color-surface-border2)', background: i % 2 ? 'var(--color-surface-bg)' : 'transparent' }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#0093D0' }}>Fase {i + 1}</span>
-                <span style={{ fontSize: 12, color: '#8899aa' }}>{row.label}{row.hint ? <span style={{ color: '#445566', fontSize: 10 }}> ({row.hint})</span> : ''}</span>
-                <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
-                <span style={{ fontSize: 13, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.f ?? '—'}</span>
+                <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{row.label}{row.hint ? <span style={{ color: '#445566', fontSize: 10 }}> ({row.hint})</span> : ''}</span>
+                <span style={{ fontSize: 13, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{row.days ?? '—'}</span>
+                <span style={{ fontSize: 13, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{row.f ?? '—'}</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: row.kc != null ? '#0093D0' : '#445566', fontFamily: 'var(--font-mono)' }}>{row.kc ?? '—'}</span>
               </div>
             ))}
@@ -494,10 +494,10 @@ function SectionHeader({ label, count, custom }: { label: string; count: number;
       <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: custom ? '#22c55e' : '#94a3b8' }}>
         {label}
       </span>
-      <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 20, background: '#0d1520', color: '#556677', border: '1px solid rgba(255,255,255,0.05)', fontWeight: 600 }}>
+      <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-muted)', border: '1px solid var(--color-surface-border2)', fontWeight: 600 }}>
         {count}
       </span>
-      <div style={{ flex: 1, height: 1, background: custom ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.04)' }} />
+      <div style={{ flex: 1, height: 1, background: custom ? 'rgba(34,197,94,0.08)' : 'var(--color-surface-border2)' }} />
     </div>
   )
 }
@@ -579,7 +579,7 @@ export default function CulturasPage() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 style={{ color: '#e2e8f0', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em', margin: 0 }}>Culturas</h1>
+            <h1 style={{ color: 'var(--color-text)', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em', margin: 0 }}>Culturas</h1>
             <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.625, margin: '2px 0 0' }}>
               {totalDefault} padrão FAO-56 · {totalCustom} personalizada{totalCustom !== 1 ? 's' : ''}
             </p>
@@ -601,12 +601,12 @@ export default function CulturasPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar cultura..."
-            style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 10, fontSize: 14, background: '#0f1923', border: '1px solid rgba(255,255,255,0.07)', color: '#e2e8f0', outline: 'none', transition: 'border-color 0.15s' }}
+            style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 10, fontSize: 14, background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', color: 'var(--color-text)', outline: 'none', transition: 'border-color 0.15s' }}
             onFocus={e => e.target.style.borderColor = '#0093D0'}
-            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.07)'}
+            onBlur={e => e.target.style.borderColor = 'var(--color-surface-border2)'}
           />
           {search && (
-            <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#556677', padding: 4 }}>
+            <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 4 }}>
               <X size={13} />
             </button>
           )}
@@ -664,7 +664,7 @@ export default function CulturasPage() {
             {/* Nenhum resultado */}
             {q && customCrops.length === 0 && defaultCrops.length === 0 && (
               <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                <p style={{ fontSize: 14, color: '#556677' }}>Nenhuma cultura encontrada para <strong style={{ color: '#8899aa' }}>{search}</strong>.</p>
+                <p style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>Nenhuma cultura encontrada para <strong style={{ color: 'var(--color-text-secondary)' }}>{search}</strong>.</p>
               </div>
             )}
           </>

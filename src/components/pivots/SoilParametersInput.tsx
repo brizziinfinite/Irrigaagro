@@ -61,9 +61,9 @@ function NumInput({
             padding: unit ? '9px 40px 9px 12px' : '9px 12px',
             borderRadius: 8,
             fontSize: 14,
-            background: '#0d1520',
+            background: 'var(--color-surface-sidebar)',
             border: `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)'}`,
-            color: '#e2e8f0',
+            color: 'var(--color-text)',
             outline: 'none',
             boxSizing: 'border-box',
           }}
@@ -230,7 +230,7 @@ function GranulometricInput({ value, onChange }: Props) {
           </div>
 
           {/* Classe textural */}
-          <p style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', margin: '0 0 2px', letterSpacing: '-0.02em' }}>
+          <p style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text)', margin: '0 0 2px', letterSpacing: '-0.02em' }}>
             {properties.textureClass}
           </p>
           <p style={{ fontSize: 11, color: '#64748b', margin: '0 0 16px' }}>
@@ -246,7 +246,7 @@ function GranulometricInput({ value, onChange }: Props) {
             ].map(m => (
               <div key={m.label}>
                 <p style={{ fontSize: 10, color: '#64748b', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{m.label}</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: '0 0 1px', fontVariantNumeric: 'tabular-nums' }}>{m.value}</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', margin: '0 0 1px', fontVariantNumeric: 'tabular-nums' }}>{m.value}</p>
                 <p style={{ fontSize: 10, color: '#475569', margin: 0 }}>{m.sub}</p>
               </div>
             ))}
@@ -404,7 +404,7 @@ function TextureTableInput({ value, onChange }: Props) {
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: isSelected ? '#0093D0' : '#94a3b8', textTransform: 'uppercase', marginBottom: 4 }}>
                 {tex.label}
               </div>
-              <div style={{ fontSize: 11, color: isSelected ? '#e2e8f0' : '#64748b', lineHeight: 1.4 }}>
+              <div style={{ fontSize: 11, color: isSelected ? 'var(--color-text)' : 'var(--color-text-muted)', lineHeight: 1.4 }}>
                 CC {tex.cc}% · PM {tex.pm}%
               </div>
               <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>

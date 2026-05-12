@@ -58,18 +58,18 @@ function CustomTooltip({ active, payload, label, lineSeg, lineCrit, cc, pm }: an
 
   return (
     <div style={{
-      background: 'rgba(8,14,22,0.97)',
-      border: '1px solid rgba(255,255,255,0.08)',
+      background: 'var(--color-surface-bg)',
+      border: '1px solid var(--color-surface-border)',
       borderRadius: 10,
       padding: '10px 14px',
       boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
       backdropFilter: 'blur(16px)',
       minWidth: 160,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, paddingBottom: 5, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>{label}</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7, paddingBottom: 5, borderBottom: '1px solid var(--color-surface-border2)' }}>
+        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: 'var(--color-text)' }}>{label}</p>
         {dasVal !== null && (
-          <span style={{ fontSize: 10, color: '#667788', background: 'rgba(255,255,255,0.04)', borderRadius: 4, padding: '1px 5px' }}>
+          <span style={{ fontSize: 10, color: 'var(--color-text-muted)', background: 'var(--color-surface-border2)', borderRadius: 4, padding: '1px 5px' }}>
             DAS {dasVal}
           </span>
         )}
@@ -84,15 +84,15 @@ function CustomTooltip({ active, payload, label, lineSeg, lineCrit, cc, pm }: an
           <div key={i}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 3 }}>
               <div style={{ width: 7, height: 7, borderRadius: 2, background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: '#667788', flex: 1 }}>{name}:</span>
-              <span style={{ fontSize: 12, color: isIrrig ? '#22d3ee' : '#e2e8f0', fontWeight: 700, fontFamily: 'monospace' }}>
+              <span style={{ fontSize: 11, color: 'var(--color-text-muted)', flex: 1 }}>{name}:</span>
+              <span style={{ fontSize: 12, color: isIrrig ? '#22d3ee' : 'var(--color-text)', fontWeight: 700, fontFamily: 'monospace' }}>
                 {Number(entry.value).toFixed(isUmid ? 1 : 1)}{isUmid ? '%' : ' mm'}
               </span>
             </div>
             {isUmid && fcPct !== null && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 2 }}>
                 <div style={{ width: 7, height: 7, flexShrink: 0 }} />
-                <span style={{ fontSize: 11, color: '#667788', flex: 1 }}>% da CC:</span>
+                <span style={{ fontSize: 11, color: 'var(--color-text-muted)', flex: 1 }}>% da CC:</span>
                 <span style={{ fontSize: 12, color: color, fontWeight: 700, fontFamily: 'monospace' }}>
                   {fcPct.toFixed(0)}%
                 </span>
@@ -102,7 +102,7 @@ function CustomTooltip({ active, payload, label, lineSeg, lineCrit, cc, pm }: an
         )
       })}
       {zoneLabel && (
-        <div style={{ marginTop: 7, paddingTop: 5, borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 10, color: zoneColor, fontWeight: 600, letterSpacing: '0.02em' }}>
+        <div style={{ marginTop: 7, paddingTop: 5, borderTop: '1px solid var(--color-surface-border2)', fontSize: 10, color: zoneColor, fontWeight: 600, letterSpacing: '0.02em' }}>
           ● {zoneLabel}
         </div>
       )}
@@ -207,16 +207,16 @@ export default function WaterBalanceChart({
 
   return (
     <div style={{
-      background: 'linear-gradient(160deg, #080e16 0%, #0c1520 100%)',
-      border: '1px solid rgba(255,255,255,0.05)',
+      background: 'linear-gradient(160deg, var(--color-surface-bg) 0%, var(--color-surface-sidebar) 100%)',
+      border: '1px solid var(--color-surface-border2)',
       borderRadius: 16,
       overflow: 'hidden',
       boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
     }}>
       {/* Header */}
-      <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         <BarChart2 size={14} style={{ color: '#0093D0' }} />
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#d4dce8', letterSpacing: '0.01em' }}>Balanço Hídrico</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '0.01em' }}>Balanço Hídrico</span>
         {pivotName && (
           <span style={{ fontSize: 11, color: '#0093D0', background: 'rgba(0,147,208,0.10)', border: '1px solid rgba(0,147,208,0.18)', borderRadius: 6, padding: '2px 8px' }}>
             {pivotName}
@@ -247,7 +247,7 @@ export default function WaterBalanceChart({
             { color: 'rgba(180,210,255,0.7)', bar: true,  label: 'Chuva'       },
             ...(hasIrrigation ? [{ color: 'rgba(0,147,208,0.8)', bar: true, label: 'Irrigação' }] : []),
           ].map(({ color, dashed, bar, label }) => (
-            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#667788' }}>
+            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--color-text-muted)' }}>
               {bar
                 ? <div style={{ width: 7, height: 10, background: color, borderRadius: '2px 2px 0 0' }} />
                 : dashed
@@ -278,7 +278,7 @@ export default function WaterBalanceChart({
           </span>
         )}
         {hasVolAxis && (
-          <span style={{ marginLeft: 'auto', fontSize: 10, color: '#778899' }}>
+          <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--color-text-secondary)' }}>
             CC {cc!.toFixed(1)}% · PM {pm!.toFixed(1)}%
           </span>
         )}
@@ -350,7 +350,7 @@ export default function WaterBalanceChart({
               yAxisId="left"
               orientation="left"
               stroke="transparent"
-              tick={{ fill: '#778899', fontSize: 10 }}
+              tick={{ fill: 'var(--color-text-secondary)', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
               width={28}
@@ -360,7 +360,7 @@ export default function WaterBalanceChart({
               orientation="right"
               domain={yDomain}
               stroke="transparent"
-              tick={{ fill: '#778899', fontSize: 10 }}
+              tick={{ fill: 'var(--color-text-secondary)', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
               width={38}
@@ -369,7 +369,7 @@ export default function WaterBalanceChart({
             <XAxis
               dataKey="dateLabel"
               stroke="transparent"
-              tick={{ fill: '#778899', fontSize: 10 }}
+              tick={{ fill: 'var(--color-text-secondary)', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
               dy={6}
@@ -378,7 +378,7 @@ export default function WaterBalanceChart({
             <CartesianGrid strokeDasharray="2 4" vertical={false} stroke="rgba(255,255,255,0.025)" />
             <Tooltip
               content={<CustomTooltip lineSeg={lineSeg} lineCrit={lineCrit} cc={cc} pm={pm} />}
-              cursor={{ stroke: 'rgba(255,255,255,0.06)', strokeWidth: 1, fill: 'rgba(255,255,255,0.015)' }}
+              cursor={{ stroke: 'var(--color-surface-border2)', strokeWidth: 1, fill: 'rgba(255,255,255,0.015)' }}
             />
 
             {/* ── Linhas de referência ── */}
@@ -422,14 +422,14 @@ export default function WaterBalanceChart({
             <Line
               yAxisId="left" type="monotone" dataKey="eto" name="ETo"
               stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.75}
-              dot={{ r: 0 }} activeDot={{ r: 3, stroke: '#080e16', strokeWidth: 2 }}
+              dot={{ r: 0 }} activeDot={{ r: 3, stroke: 'var(--color-surface-bg)', strokeWidth: 2 }}
             />
 
             {/* ETc */}
             <Line
               yAxisId="left" type="monotone" dataKey="etc" name="ETc"
               stroke="#22d3ee" strokeWidth={1.5} opacity={0.75}
-              dot={{ r: 0 }} activeDot={{ r: 3, stroke: '#080e16', strokeWidth: 2 }}
+              dot={{ r: 0 }} activeDot={{ r: 3, stroke: 'var(--color-surface-bg)', strokeWidth: 2 }}
             />
 
             {/* Área "coluna d'água" OK — azul oceano, da PM até a umidade atual */}
@@ -438,7 +438,7 @@ export default function WaterBalanceChart({
                 yAxisId="right" type="monotone" dataKey="umidVolOk" name="Umidade"
                 stroke="#38bdf8" strokeWidth={2.5}
                 fill="url(#wbcWaterOk)"
-                dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#080e16', strokeWidth: 2 }}
+                dot={{ r: 0 }} activeDot={{ r: 4, stroke: 'var(--color-surface-bg)', strokeWidth: 2 }}
                 connectNulls={false}
                 baseValue={linePM ?? yMin}
               />
@@ -447,7 +447,7 @@ export default function WaterBalanceChart({
               <Line
                 yAxisId="right" type="monotone" dataKey="umidVolOk" name="Umidade"
                 stroke="#38bdf8" strokeWidth={2.5}
-                dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#080e16', strokeWidth: 2 }}
+                dot={{ r: 0 }} activeDot={{ r: 4, stroke: 'var(--color-surface-bg)', strokeWidth: 2 }}
                 connectNulls={false}
               />
             )}
@@ -458,7 +458,7 @@ export default function WaterBalanceChart({
                 yAxisId="right" type="monotone" dataKey="umidVolWarn" name="Umidade ↓"
                 stroke="#ef4444" strokeWidth={2.5}
                 fill="url(#wbcWaterWarn)"
-                dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#080e16', strokeWidth: 2 }}
+                dot={{ r: 0 }} activeDot={{ r: 4, stroke: 'var(--color-surface-bg)', strokeWidth: 2 }}
                 connectNulls={false}
                 baseValue={linePM ?? yMin}
               />
@@ -467,7 +467,7 @@ export default function WaterBalanceChart({
               <Line
                 yAxisId="right" type="monotone" dataKey="umidVolWarn" name="Umidade ↓"
                 stroke="#ef4444" strokeWidth={2.5}
-                dot={{ r: 0 }} activeDot={{ r: 4, stroke: '#080e16', strokeWidth: 2 }}
+                dot={{ r: 0 }} activeDot={{ r: 4, stroke: 'var(--color-surface-bg)', strokeWidth: 2 }}
                 connectNulls={false}
               />
             )}

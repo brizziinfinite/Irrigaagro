@@ -53,8 +53,8 @@ export function SmartAlerts({ pivots, lastManagementByPivot, diagnosticsByPivot,
 
   return (
     <div style={{
-      background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: 'var(--color-surface-card)',
+      border: '1px solid var(--color-surface-border2)',
       borderRadius: 14,
       padding: '16px 18px',
       display: 'flex',
