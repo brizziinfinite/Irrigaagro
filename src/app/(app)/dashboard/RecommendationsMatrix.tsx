@@ -239,7 +239,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
             {dropdownOpen && (
               <div style={{
                 position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 200,
-                minWidth: 220, background: '#0d1520',
+                minWidth: 220, background: 'var(--color-surface-sidebar)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 12, overflow: 'hidden',
                 boxShadow: '0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,147,208,0.08)',
@@ -250,7 +250,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                   borderBottom: '1px solid rgba(255,255,255,0.05)',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#556677' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--color-text-muted)' }}>
                     Selecionar pivôs
                   </span>
                   {selectedPivotIds.size > 0 && (
@@ -270,7 +270,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                     width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10,
                     padding: '9px 14px', fontSize: 12, cursor: 'pointer', border: 'none',
                     background: selectedPivotIds.size === 0 ? 'rgba(0,147,208,0.08)' : 'transparent',
-                    color: selectedPivotIds.size === 0 ? '#0093D0' : '#8899aa',
+                    color: selectedPivotIds.size === 0 ? '#0093D0' : 'var(--color-text-secondary)',
                     fontWeight: selectedPivotIds.size === 0 ? 600 : 400,
                     borderBottom: '1px solid rgba(255,255,255,0.04)',
                     transition: 'background 0.1s',
@@ -310,7 +310,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                         width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10,
                         padding: '9px 14px', fontSize: 12, cursor: 'pointer', border: 'none',
                         background: checked ? 'rgba(0,147,208,0.06)' : 'transparent',
-                        color: checked ? '#0093D0' : '#8899aa',
+                        color: checked ? '#0093D0' : 'var(--color-text-secondary)',
                         fontWeight: checked ? 600 : 400,
                         transition: 'background 0.1s',
                       }}
@@ -334,7 +334,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                         {r.pivotName}
                       </span>
                       {r.farmName && (
-                        <span style={{ fontSize: 10, color: '#445566', flexShrink: 0 }}>{r.farmName}</span>
+                        <span style={{ fontSize: 10, color: 'var(--color-text-muted)', flexShrink: 0 }}>{r.farmName}</span>
                       )}
                     </button>
                   )
@@ -397,7 +397,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                 {/* Sticky pivot column header */}
                 <th style={{
                   position: 'sticky', left: 0, zIndex: 2,
-                  background: 'rgba(15, 19, 24, 0.95)', borderBottom: '1px solid rgba(255,255,255,0.03)',
+                  background: 'var(--color-surface-card)', borderBottom: '1px solid rgba(255,255,255,0.03)',
                   borderRight: '1px solid rgba(255,255,255,0.03)',
                   padding: '12px 16px', textAlign: 'left', minWidth: 150,
                   backdropFilter: 'blur(12px)'
@@ -490,7 +490,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                   {/* Pivot name — sticky */}
                   <td style={{
                     position: 'sticky', left: 0, zIndex: 1,
-                    background: 'rgba(13,18,26,0.98)',
+                    background: 'var(--color-surface-bg)',
                     borderRight: '1px solid rgba(255,255,255,0.04)',
                     padding: '13px 18px',
                     backdropFilter: 'blur(12px)',

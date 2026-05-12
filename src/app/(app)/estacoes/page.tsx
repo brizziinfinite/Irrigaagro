@@ -141,7 +141,7 @@ function Field({
 }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#8899aa', marginBottom: 6 }}>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
         {label}
       </label>
       {children}
@@ -158,9 +158,9 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
         padding: '10px 14px',
         borderRadius: 10,
         fontSize: 14,
-        background: '#0d1520',
-        border: '1px solid rgba(255,255,255,0.08)',
-        color: '#e2e8f0',
+        background: 'var(--color-surface-sidebar)',
+        border: '1px solid var(--color-surface-border)',
+        color: 'var(--color-text)',
         outline: 'none',
         ...(props.style ?? {}),
       }}
@@ -177,9 +177,9 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
         padding: '10px 14px',
         borderRadius: 10,
         fontSize: 13,
-        background: '#0d1520',
-        border: '1px solid rgba(255,255,255,0.08)',
-        color: '#e2e8f0',
+        background: 'var(--color-surface-sidebar)',
+        border: '1px solid var(--color-surface-border)',
+        color: 'var(--color-text)',
         outline: 'none',
         resize: 'vertical',
         ...(props.style ?? {}),
@@ -197,9 +197,9 @@ function SelectInput(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
         padding: '10px 14px',
         borderRadius: 10,
         fontSize: 14,
-        background: '#0d1520',
-        border: '1px solid rgba(255,255,255,0.08)',
-        color: '#e2e8f0',
+        background: 'var(--color-surface-sidebar)',
+        border: '1px solid var(--color-surface-border)',
+        color: 'var(--color-text)',
         outline: 'none',
         ...(props.style ?? {}),
       }}
@@ -266,12 +266,12 @@ function StationModal({ station, farms, onClose, onSaved }: StationModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.7)' }}>
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 'clamp(16px, 4vw, 24px)', width: '100%', maxWidth: 520, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)' }}>
+      <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 20, padding: 'clamp(16px, 4vw, 24px)', width: '100%', maxWidth: 520, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)' }}>
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)' }}>
             {isEdit ? 'Editar estação' : 'Nova estação'}
           </h2>
-          <button onClick={onClose} style={{ padding: 8, minWidth: 36, minHeight: 36, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={onClose} style={{ padding: 8, minWidth: 36, minHeight: 36, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} />
           </button>
         </div>
@@ -311,7 +311,7 @@ function StationModal({ station, farms, onClose, onSaved }: StationModalProps) {
           </div>
 
           <div className="flex gap-3 mt-2">
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '10px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid var(--color-surface-border)', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
               Cancelar
             </button>
             <button type="submit" disabled={saving} style={{ flex: 1, padding: '10px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer', opacity: saving ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
@@ -578,7 +578,7 @@ export default function EstacoesPage() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 style={{ color: '#e2e8f0', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em', margin: 0 }}>Estações meteorológicas</h1>
+            <h1 style={{ color: 'var(--color-text)', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em', margin: 0 }}>Estações meteorológicas</h1>
             <p style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.625, margin: '2px 0 0' }}>
               {stations.length} {stations.length === 1 ? 'estação cadastrada' : 'estações cadastradas'}
             </p>
@@ -604,7 +604,7 @@ export default function EstacoesPage() {
         )}
 
         {loading ? (
-          <div style={{ padding: '56px 24px', textAlign: 'center', background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, color: '#8899aa' }}>
+          <div style={{ padding: '56px 24px', textAlign: 'center', background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, color: 'var(--color-text-secondary)' }}>
             <Loader2 size={20} className="animate-spin" style={{ margin: '0 auto 12px', color: '#0093D0' }} />
             Carregando estações...
           </div>
@@ -612,16 +612,16 @@ export default function EstacoesPage() {
           <div className="grid gap-5 xl:grid-cols-[1.05fr_1fr]">
 
             {/* ── Coluna esquerda: lista de estações ── */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 24 }}>
+            <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 20, padding: 24 }}>
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748b', margin: 0 }}>Suas estações</p>
                 <p style={{ fontSize: 13, color: '#64748b', margin: '4px 0 0', lineHeight: 1.5 }}>Clique para selecionar e registrar leituras</p>
               </div>
 
               {stations.length === 0 ? (
-                <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, color: '#8899aa' }}>
+                <div style={{ padding: '40px 24px', textAlign: 'center', background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, color: 'var(--color-text-secondary)' }}>
                   <RadioTower size={28} style={{ margin: '0 auto 12px', color: '#334455' }} />
-                  <p style={{ fontSize: 14, color: '#556677' }}>Nenhuma estação cadastrada.</p>
+                  <p style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>Nenhuma estação cadastrada.</p>
                   <p style={{ fontSize: 12, color: '#445566', marginTop: 4 }}>Crie uma estação para começar a registrar dados climáticos.</p>
                 </div>
               ) : (
@@ -630,29 +630,29 @@ export default function EstacoesPage() {
                     const isActive = selectedStationId === station.id
                     const providerLabel = formatSource(station.api_provider)
                     return (
-                      <div key={station.id} style={{ borderRadius: 14, border: `1px solid ${isActive ? 'rgba(0,147,208,0.35)' : 'rgba(255,255,255,0.06)'}`, background: isActive ? 'rgba(0,147,208,0.06)' : '#0d1520', padding: '14px 16px', transition: 'all 0.15s' }}>
+                      <div key={station.id} style={{ borderRadius: 14, border: `1px solid ${isActive ? 'rgba(0,147,208,0.35)' : 'var(--color-surface-border2)'}`, background: isActive ? 'rgba(0,147,208,0.06)' : 'var(--color-surface-sidebar)', padding: '14px 16px', transition: 'all 0.15s' }}>
                         <div className="flex items-start justify-between gap-3">
                           <button onClick={() => setSelectedStationId(station.id)} style={{ textAlign: 'left', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                               <RadioTower size={15} style={{ color: isActive ? '#0093D0' : '#445566', flexShrink: 0 }} />
-                              <span style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.01em' }}>{station.name}</span>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>{station.name}</span>
                             </div>
-                            <p style={{ fontSize: 12, color: '#8899aa', margin: 0 }}>{getFarmName(station.farm_id)}</p>
-                            <p style={{ fontSize: 11, color: '#556677', marginTop: 3 }}>
+                            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0 }}>{getFarmName(station.farm_id)}</p>
+                            <p style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 3 }}>
                               {providerLabel}{station.device_id ? ` · ID: ${station.device_id}` : ''}
                             </p>
                           </button>
                           <div style={{ display: 'flex', gap: 4 }}>
                             <button onClick={() => { setEditingStation(station); setStationModalOpen(true) }} title="Editar estação"
-                              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'rgba(255,255,255,0.04)', color: '#556677', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
                               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
-                              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
                               <Pencil size={13} />
                             </button>
                             <button onClick={() => handleDeleteStation(station.id)} disabled={deletingStationId === station.id} title="Excluir estação"
-                              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'rgba(255,255,255,0.04)', color: '#556677', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: deletingStationId === station.id ? 0.5 : 1 }}
+                              style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: deletingStationId === station.id ? 0.5 : 1 }}
                               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#ef4444'; el.style.background = 'rgba(239,68,68,0.08)'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
-                              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
                               {deletingStationId === station.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                             </button>
                           </div>
@@ -665,10 +665,10 @@ export default function EstacoesPage() {
             </div>
 
             {/* ── Coluna direita: formulário de lançamento ── */}
-            <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 24 }}>
+            <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 20, padding: 24 }}>
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#64748b', margin: 0 }}>Lançamento climático</p>
-                <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', margin: '4px 0 0', letterSpacing: '-0.01em' }}>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', margin: '4px 0 0', letterSpacing: '-0.01em' }}>
                   {selectedStation ? selectedStation.name : 'Selecione uma estação'}
                 </h2>
 
@@ -792,23 +792,23 @@ export default function EstacoesPage() {
         )}
 
         {/* ── Histórico climático ── */}
-        <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 24 }}>
+        <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 20, padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
             <CloudSun size={15} style={{ color: '#0093D0' }} />
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', margin: 0, letterSpacing: '-0.01em' }}>Histórico climático</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', margin: 0, letterSpacing: '-0.01em' }}>Histórico climático</h2>
             {weatherRows.length > 0 && (
-              <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 20, background: '#0d1520', color: '#556677', border: '1px solid rgba(255,255,255,0.05)', marginLeft: 2 }}>{weatherRows.length} registros</span>
+              <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: 'var(--color-text-muted)', border: '1px solid rgba(255,255,255,0.05)', marginLeft: 2 }}>{weatherRows.length} registros</span>
             )}
           </div>
 
           {weatherLoading ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: '#556677' }}>
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
               <Loader2 size={18} className="animate-spin" style={{ margin: '0 auto 10px', color: '#0093D0' }} />
             </div>
           ) : weatherRows.length === 0 ? (
-            <div style={{ padding: '40px 24px', textAlign: 'center', background: '#0d1520', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, color: '#8899aa' }}>
+            <div style={{ padding: '40px 24px', textAlign: 'center', background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, color: 'var(--color-text-secondary)' }}>
               <CloudSun size={28} style={{ margin: '0 auto 12px', color: '#334455' }} />
-              <p style={{ fontSize: 14, color: '#556677' }}>Nenhum registro encontrado para a estação selecionada.</p>
+              <p style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>Nenhum registro encontrado para a estação selecionada.</p>
             </div>
           ) : (
             <>
@@ -823,16 +823,16 @@ export default function EstacoesPage() {
                 {visibleRows.map((row) => {
                   const etoVal = row.eto_corrected_mm != null ? row.eto_corrected_mm : row.eto_mm
                   return (
-                    <div key={row.id} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 60px 60px 60px 60px 70px 36px', gap: 8, padding: '9px 12px', borderRadius: 10, background: '#0d1520', alignItems: 'center' }}
+                    <div key={row.id} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 60px 60px 60px 60px 70px 36px', gap: 8, padding: '9px 12px', borderRadius: 10, background: 'var(--color-surface-sidebar)', alignItems: 'center' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#111e2e' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#0d1520' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-sidebar)' }}
                     >
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>{formatDate(row.date)}</span>
-                      <span style={{ fontSize: 11, color: '#556677', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={formatSource(row.source)}>{formatSource(row.source)}</span>
-                      <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.temp_max != null ? `${formatNumber(row.temp_max)}°` : '—'}</span>
-                      <span style={{ fontSize: 12, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{row.temp_min != null ? `${formatNumber(row.temp_min)}°` : '—'}</span>
+                      <span style={{ fontSize: 11, color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={formatSource(row.source)}>{formatSource(row.source)}</span>
+                      <span style={{ fontSize: 12, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{row.temp_max != null ? `${formatNumber(row.temp_max)}°` : '—'}</span>
+                      <span style={{ fontSize: 12, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{row.temp_min != null ? `${formatNumber(row.temp_min)}°` : '—'}</span>
                       <span style={{ fontSize: 12, color: row.rainfall_mm ? '#06b6d4' : '#334455', fontFamily: 'var(--font-mono)', fontWeight: row.rainfall_mm ? 700 : 400 }}>{row.rainfall_mm != null ? `${formatNumber(row.rainfall_mm)}` : '—'}</span>
-                      <span style={{ fontSize: 12, color: '#8899aa', fontFamily: 'var(--font-mono)' }}>{row.humidity_percent != null ? `${formatNumber(row.humidity_percent)}%` : '—'}</span>
+                      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>{row.humidity_percent != null ? `${formatNumber(row.humidity_percent)}%` : '—'}</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: etoVal != null ? '#0093D0' : '#334455', fontFamily: 'var(--font-mono)' }}>{etoVal != null ? `${formatNumber(etoVal, 2)}` : '—'}</span>
                       <button onClick={() => handleDeleteWeather(row.id)} disabled={deletingWeatherId === row.id} title="Excluir registro"
                         style={{ padding: 6, minHeight: 28, minWidth: 28, borderRadius: 7, border: '1px solid transparent', background: 'transparent', color: '#334455', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: deletingWeatherId === row.id ? 0.5 : 1 }}
@@ -850,9 +850,9 @@ export default function EstacoesPage() {
                 <div style={{ textAlign: 'center', marginTop: 12 }}>
                   <button
                     onClick={() => setHistoryPage(p => p + 10)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 9, fontSize: 13, fontWeight: 600, color: '#8899aa', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', transition: 'all 0.15s' }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 9, fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', background: 'var(--color-surface-border2)', border: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', transition: 'all 0.15s' }}
                     onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
-                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#8899aa'; el.style.borderColor = 'rgba(255,255,255,0.07)' }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-secondary)'; el.style.borderColor = 'rgba(255,255,255,0.07)' }}
                   >
                     <ChevronDown size={14} />
                     Ver mais ({weatherRows.length - historyPage} restantes)

@@ -96,10 +96,10 @@ export function InstallBanner() {
 
       {/* Texto */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', margin: 0, lineHeight: 1.3 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', margin: 0, lineHeight: 1.3 }}>
           Adicione à Tela de Início
         </p>
-        <p style={{ fontSize: 12, color: '#8899aa', margin: '4px 0 0', lineHeight: 1.4 }}>
+        <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: '4px 0 0', lineHeight: 1.4 }}>
           {isIOS ? (
             <>
               Toque em{' '}
@@ -146,7 +146,7 @@ export function InstallBanner() {
         onClick={dismiss}
         style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          color: '#556677', padding: 4, flexShrink: 0,
+          color: 'var(--color-text-muted)', padding: 4, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           minWidth: 36, minHeight: 36,
         }}

@@ -50,19 +50,19 @@ const LABEL_SEC_STYLE: React.CSSProperties = { ...LABEL_STYLE, color: '#94a3b8' 
 
 const INPUT_BASE: React.CSSProperties = {
   width: '100%', borderRadius: 10, fontSize: 14, fontWeight: 400,
-  background: '#0b0f14', border: '1px solid rgba(255,255,255,0.08)',
-  color: '#e2e8f0', outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+  background: 'var(--color-surface-bg)', border: '1px solid var(--color-surface-border)',
+  color: 'var(--color-text)', outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
   boxSizing: 'border-box', padding: '11px 14px',
 }
 const INPUT_MAIN: React.CSSProperties = {
   ...INPUT_BASE, fontSize: 18, fontWeight: 600, padding: '15px 16px',
-  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12,
+  border: '1px solid var(--color-surface-border)', borderRadius: 12,
 }
 
 const SECTION_TITLE: React.CSSProperties = {
   fontSize: 12, fontWeight: 700, textTransform: 'uppercase',
   letterSpacing: '0.16em', color: '#cbd5e1',
-  padding: '14px 0 10px', borderTop: '1px solid rgba(255,255,255,0.04)',
+  padding: '14px 0 10px', borderTop: '1px solid var(--color-surface-border2)',
   margin: '0 0 0',
 }
 
@@ -151,7 +151,7 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
     e.target.style.boxShadow = '0 0 0 3px rgba(0,147,208,0.12)'
   }
   function inputBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    e.target.style.borderColor = 'rgba(255,255,255,0.08)'
+    e.target.style.borderColor = 'var(--color-surface-border)'
     e.target.style.boxShadow = 'none'
   }
 
@@ -161,16 +161,16 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
       style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(10px)' }}
     >
       <div style={{
-        background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)',
         borderRadius: 20, width: '100%', maxWidth: 520,
         boxShadow: '0 32px 64px -12px rgba(0,0,0,0.8)',
         maxHeight: '92vh', display: 'flex', flexDirection: 'column',
       }}>
         {/* Cabeçalho fixo */}
-        <div style={{ padding: 'clamp(16px, 4vw, 28px) clamp(16px, 4vw, 32px) 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
+        <div style={{ padding: 'clamp(16px, 4vw, 28px) clamp(16px, 4vw, 32px) 20px', borderBottom: '1px solid var(--color-surface-border2)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', margin: 0, letterSpacing: '-0.025em' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', margin: 0, letterSpacing: '-0.025em' }}>
                 {isEdit ? 'Editar Fazenda' : 'Nova Fazenda'}
               </h2>
               <p style={{ fontSize: 12, color: '#64748b', margin: '3px 0 0', lineHeight: 1.625 }}>
@@ -179,9 +179,9 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
             </div>
             <button
               onClick={onClose}
-              style={{ padding: 7, borderRadius: 8, border: 'none', background: 'transparent', color: '#667788', cursor: 'pointer', flexShrink: 0 }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#667788' }}
+              style={{ padding: 7, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--color-text-muted)', cursor: 'pointer', flexShrink: 0 }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--color-text)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
             >
               <X size={16} />
             </button>
@@ -320,17 +320,17 @@ function FarmModal({ farm, companyId, onClose, onSaved }: FarmModalProps) {
         </div>
 
         {/* Rodapé fixo */}
-        <div style={{ padding: '16px clamp(16px, 4vw, 32px) 24px', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ padding: '16px clamp(16px, 4vw, 32px) 24px', borderTop: '1px solid var(--color-surface-border2)', flexShrink: 0, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={onClose}
             style={{
               padding: '0 20px', height: 46, borderRadius: 10, fontSize: 13, fontWeight: 500,
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
-              color: '#667788', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+              background: 'var(--color-surface-border2)', border: '1px solid rgba(255,255,255,0.07)',
+              color: 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
             }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = '#94a3b8' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#667788' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--color-surface-border2)'; e.currentTarget.style.color = 'var(--color-text-muted)' }}
           >
             Cancelar
           </button>
@@ -460,7 +460,7 @@ export default function FazendasPage() {
         {/* Cabeçalho */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', margin: 0, letterSpacing: '-0.025em' }}>Fazendas</h1>
+            <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', margin: 0, letterSpacing: '-0.025em' }}>Fazendas</h1>
             <p style={{ fontSize: 14, color: '#94a3b8', margin: '4px 0 0', lineHeight: 1.625 }}>
               {!loading && `${farms.length} ${farms.length === 1 ? 'fazenda cadastrada' : 'fazendas cadastradas'}`}
             </p>
@@ -489,7 +489,7 @@ export default function FazendasPage() {
           </div>
         ) : farms.length === 0 ? (
           <div style={{
-            background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)',
+            background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)',
             borderRadius: 16, padding: '56px 24px', textAlign: 'center',
           }}>
             <div style={{
@@ -499,7 +499,7 @@ export default function FazendasPage() {
             }}>
               <Building2 size={26} style={{ color: '#0093D0' }} />
             </div>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)', marginBottom: 8 }}>
               Nenhuma fazenda cadastrada
             </h3>
             <p style={{ fontSize: 14, color: '#94a3b8', margin: '0 auto 28px', maxWidth: 320, lineHeight: 1.625 }}>
@@ -538,13 +538,13 @@ export default function FazendasPage() {
                 <div
                   key={farm.id}
                   style={{
-                    background: '#0f1923', border: '1px solid rgba(255,255,255,0.05)',
+                    background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)',
                     borderRadius: 14, padding: '16px 20px',
                     display: 'flex', alignItems: 'flex-start', gap: 14,
                     transition: 'border-color 0.2s, box-shadow 0.2s',
                   }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,147,208,0.2)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.2)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.boxShadow = 'none' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-surface-border2)'; e.currentTarget.style.boxShadow = 'none' }}
                 >
                   {/* Ícone */}
                   <div style={{
@@ -559,7 +559,7 @@ export default function FazendasPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* Linha do nome + botões ícone alinhados à direita */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                      <p style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: 0, flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', margin: 0, flex: 1, minWidth: 0 }}>
                         {farm.name}
                       </p>
                       {/* Botões editar/excluir — no topo direito */}
@@ -567,9 +567,9 @@ export default function FazendasPage() {
                         <button
                           onClick={() => { setEditingFarm(farm); setModalOpen(true) }}
                           title="Editar"
-                          style={{ padding: 6, minHeight: 32, minWidth: 32, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#e2e8f0' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
+                          style={{ padding: 6, minHeight: 32, minWidth: 32, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'transparent', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--color-text)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
                         >
                           <Pencil size={13} />
                         </button>
@@ -577,9 +577,9 @@ export default function FazendasPage() {
                           onClick={() => handleDelete(farm.id)}
                           disabled={deletingId === farm.id}
                           title="Excluir"
-                          style={{ padding: 6, minHeight: 32, minWidth: 32, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'transparent', color: '#8899aa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          style={{ padding: 6, minHeight: 32, minWidth: 32, borderRadius: 6, border: 'none', cursor: 'pointer', background: 'transparent', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#ef4444' }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8899aa' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)' }}
                         >
                           {deletingId === farm.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                         </button>

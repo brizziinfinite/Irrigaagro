@@ -34,7 +34,7 @@ const STATUS_COLORS: Record<IrrigationStatus, { fill: string; stroke: string; la
   verde:     { fill: '#22c55e', stroke: '#16a34a', label: 'Confortável' },
   amarelo:   { fill: '#f59e0b', stroke: '#d97706', label: 'Atenção' },
   vermelho:  { fill: '#ef4444', stroke: '#dc2626', label: 'Crítico' },
-  sem_safra: { fill: '#778899', stroke: 'rgba(255,255,255,0.06)', label: 'Sem safra' },
+  sem_safra: { fill: '#778899', stroke: 'var(--color-surface-border2)', label: 'Sem safra' },
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -263,7 +263,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
   if (pivotsWithCoords.length === 0) {
     return (
       <div style={{
-        background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16,
+        background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16,
         padding: '20px 24px', color: '#778899', fontSize: 13, textAlign: 'center',
       }}>
         Nenhum pivô com coordenadas cadastradas.{' '}
@@ -280,13 +280,13 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
   const farmLabel = farmNames.length === 1 ? farmNames[0] : farmNames.length > 1 ? `${farmNames.length} fazendas` : ''
 
   return (
-    <div style={{ borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', background: '#0f1923', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ borderRadius: 16, border: '1px solid var(--color-surface-border2)', background: 'var(--color-surface-card)', position: 'relative', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '12px 18px',
-        background: '#0d1520',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--color-surface-sidebar)',
+        borderBottom: '1px solid var(--color-surface-border2)',
         borderRadius: '16px 16px 0 0',
       }}>
         <span style={{
@@ -296,7 +296,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
           Mapa dos Pivôs
         </span>
         {farmLabel && (
-          <span style={{ fontSize: 11, color: '#8899aa' }}>— {farmLabel}</span>
+          <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>— {farmLabel}</span>
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 4px #22c55e' }} />
@@ -339,7 +339,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
         }
         .leaflet-control-zoom a {
           background: #0f1923 !important;
-          border-color: rgba(255,255,255,0.06) !important;
+          border-color: var(--color-surface-border2) !important;
           color: #8899aa !important;
         }
         .leaflet-control-zoom a:hover {
@@ -354,7 +354,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
       <div style={{
         position: 'absolute', top: 12, right: 12, zIndex: 1000,
         background: 'rgba(8,14,20,0.88)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: '1px solid var(--color-surface-border2)',
         borderRadius: 10, padding: '8px 12px',
         display: 'flex', flexDirection: 'column', gap: 5,
         backdropFilter: 'blur(4px)',
@@ -365,7 +365,7 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
               width: 8, height: 8, borderRadius: '50%',
               background: val.fill,
             }} />
-            <span style={{ fontSize: 11, color: '#8899aa' }}>{val.label}</span>
+            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{val.label}</span>
           </div>
         ))}
       </div>

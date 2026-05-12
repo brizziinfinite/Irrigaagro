@@ -17,7 +17,7 @@ type PivotStatus = 'critico' | 'atencao' | 'ok'
 const STATUS_STYLE: Record<PivotStatus, { color: string; bg: string; border: string; label: string }> = {
   critico: { color: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)', label: 'URGENTE' },
   atencao: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)', label: 'ATENÇÃO' },
-  ok:      { color: '#22c55e', bg: '#141e2b',                border: 'rgba(255,255,255,0.06)', label: '' },
+  ok:      { color: '#22c55e', bg: 'var(--color-surface-elevated)',                border: 'var(--color-surface-border2)', label: '' },
 }
 
 // Cor da água baseada no nível de umidade — paleta unificada
@@ -207,7 +207,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                   {needsIrrigation && (lamina != null || speed != null) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
                       {lamina != null && lamina > 0 && (
-                        <span style={{ fontSize: 14, color: '#e2e8f0', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                        <span style={{ fontSize: 14, color: 'var(--color-text)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
                           {lamina.toFixed(1)} mm
                         </span>
                       )}
@@ -228,7 +228,7 @@ export function CriticalPivots({ pivots, lastManagementByPivot, activePivotIds, 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
                       <span style={{ fontSize: 12, color: '#64748b' }}>
                         Irrigar em{' '}
-                        <span style={{ color: proj.daysAway <= 2 ? '#f59e0b' : '#8899aa', fontWeight: 700 }}>
+                        <span style={{ color: proj.daysAway <= 2 ? '#f59e0b' : 'var(--color-text-secondary)', fontWeight: 700 }}>
                           {proj.daysAway === 1 ? 'amanhã' : `${proj.daysAway} dias`}
                         </span>
                       </span>

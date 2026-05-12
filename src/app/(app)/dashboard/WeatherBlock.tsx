@@ -18,15 +18,15 @@ export function WeatherBlock({ lastManagementBySeason }: WeatherBlockProps) {
 
   const subCards = [
     { Icon: Droplets,  label: 'Umidade Ar', value: fmtVal(latest?.humidity_percent, 0), unit: '%',   color: '#22d3ee' },
-    { Icon: Wind,      label: 'Vento',      value: fmtVal(latest?.wind_speed_ms),       unit: 'm/s', color: '#8899aa' },
+    { Icon: Wind,      label: 'Vento',      value: fmtVal(latest?.wind_speed_ms),       unit: 'm/s', color: 'var(--color-text-secondary)' },
     { Icon: CloudRain, label: 'Chuva',      value: fmtVal(latest?.rainfall_mm),         unit: 'mm',  color: '#60a5fa' },
     { Icon: Zap,       label: 'ETo',        value: fmtVal(latest?.eto_mm),              unit: 'mm',  color: '#a78bfa' },
   ]
 
   return (
     <div style={{
-      background: '#0f1923',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: 'var(--color-surface-card)',
+      border: '1px solid var(--color-surface-border2)',
       borderRadius: 14,
       padding: '16px 18px',
       display: 'flex',
@@ -52,7 +52,7 @@ export function WeatherBlock({ lastManagementBySeason }: WeatherBlockProps) {
       {/* Temperatura — placeholder se sem dados */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{
-          fontSize: 36, fontWeight: 700, color: latest ? '#f59e0b' : '#778899',
+          fontSize: 36, fontWeight: 700, color: latest ? '#f59e0b' : 'var(--color-text-muted)',
           fontFamily: 'var(--font-mono)', lineHeight: 1,
         }}>
           {latest ? `${fmtVal(latest.temp_max, 0)}°` : '--°'}
@@ -71,8 +71,8 @@ export function WeatherBlock({ lastManagementBySeason }: WeatherBlockProps) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {subCards.map(({ Icon, label, value, unit, color }) => (
           <div key={label} style={{
-            background: '#0d1520',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--color-surface-sidebar)',
+            border: '1px solid var(--color-surface-border2)',
             borderRadius: 10,
             padding: '10px 12px',
             display: 'flex',
@@ -80,7 +80,7 @@ export function WeatherBlock({ lastManagementBySeason }: WeatherBlockProps) {
             gap: 4,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <Icon size={11} style={{ color: latest ? color : '#667788' }} />
+              <Icon size={11} style={{ color: latest ? color : 'var(--color-text-muted)' }} />
               <span style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {label}
               </span>

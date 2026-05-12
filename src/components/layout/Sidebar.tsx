@@ -105,7 +105,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             textDecoration: 'none',
             fontSize: 14.5,
             fontWeight: active ? 600 : 400,
-            color: active ? '#e2e8f0' : '#8899aa',
+            color: active ? 'var(--color-text)' : 'var(--color-text-secondary)',
             background: active ? 'rgba(0,147,208,0.12)' : 'transparent',
             borderLeft: active ? '2px solid #0093D0' : '2px solid transparent',
             transition: 'all 0.15s',
@@ -118,7 +118,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'
           }}
         >
-          <Icon size={18} style={{ color: active ? '#0093D0' : '#667788', flexShrink: 0 }} />
+          <Icon size={18} style={{ color: active ? '#0093D0' : 'var(--color-text-muted)', flexShrink: 0 }} />
           <span style={{ flex: 1 }}>{label}</span>
           {active && <ChevronRight size={13} style={{ color: '#0093D0' }} />}
         </Link>
@@ -132,14 +132,14 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
       <aside
         className="h-full w-[260px] flex flex-col"
         style={{
-          background: '#0d1520',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--color-surface-sidebar)',
+          borderRight: '1px solid var(--color-surface-border2)',
         }}
       >
         {/* Logo/Brand */}
         <div style={{
           padding: '26px 20px 20px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--color-surface-border2)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -153,7 +153,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           {/* OPERACIONAL */}
           <p style={{
             fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.09em', color: '#667788',
+            letterSpacing: '0.09em', color: 'var(--color-text-muted)',
             padding: '0 12px 10px', margin: '0 0 2px',
           }}>
             Operacional
@@ -167,9 +167,9 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           {/* CONFIGURAÇÃO */}
           <p style={{
             fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.09em', color: '#667788',
+            letterSpacing: '0.09em', color: 'var(--color-text-muted)',
             padding: '14px 12px 10px', margin: '0 0 2px',
-            borderTop: '1px solid rgba(255,255,255,0.05)',
+            borderTop: '1px solid var(--color-surface-border2)',
           }}>
             Configuração
           </p>
@@ -184,9 +184,9 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             <>
               <p style={{
                 fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-                letterSpacing: '0.09em', color: '#667788',
+                letterSpacing: '0.09em', color: 'var(--color-text-muted)',
                 padding: '14px 12px 10px', margin: '0 0 2px',
-                borderTop: '1px solid rgba(255,255,255,0.05)',
+                borderTop: '1px solid var(--color-surface-border2)',
               }}>
                 Admin
               </p>
@@ -209,11 +209,11 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             {activeSeasons.length > 1 ? `${activeSeasons.length} safras ativas` : 'Safra ativa'}
           </p>
           {activeSeasons.length > 0 ? (
-            <p style={{ fontSize: 11, color: '#e2e8f0', margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: 11, color: 'var(--color-text)', margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeSeasons.length === 1 ? activeSeasons[0].name : activeSeasons.map(s => s.name).join(' · ')}
             </p>
           ) : (
-            <p style={{ fontSize: 11, color: '#8899aa', margin: 0 }}>
+            <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', margin: 0 }}>
               Verifique em <Link href="/safras" style={{ color: '#22c55e', textDecoration: 'none' }}>Safras</Link>
             </p>
           )}
@@ -222,7 +222,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
         {/* User Profile */}
         <div style={{
           padding: '10px 16px',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: '1px solid var(--color-surface-border2)',
           display: 'flex',
           alignItems: 'center',
           gap: 10,
@@ -237,10 +237,10 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
             </span>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 12, fontWeight: 500, color: '#e2e8f0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.email?.split('@')[0] || 'Usuário'}
             </p>
-            <p style={{ fontSize: 10, color: '#778899', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: 10, color: 'var(--color-text-secondary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.email || ''}
             </p>
           </div>

@@ -91,23 +91,23 @@ function SoilDiagramRich({
   const H = 240
 
   return (
-    <div style={{ background: '#0f1923', border: `1px solid ${cfg.border}`, borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--color-surface-card)', border: `1px solid ${cfg.border}`, borderRadius: 14, overflow: 'hidden' }}>
 
       {/* ── Header: pivô + safra ── */}
-      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--color-surface-border2)' }}>
         {/* Nome + fazenda + cultura */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
           <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 15, fontWeight: 800, color: '#e2e8f0', lineHeight: 1.3 }}>{pivotName}</p>
-            <p style={{ fontSize: 11, color: '#778899', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--color-text)', lineHeight: 1.3 }}>{pivotName}</p>
+            <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {farmName}{cropName && <> · <span style={{ color: '#0093D0' }}>{cropName}</span></>}
             </p>
           </div>
           {recommendedDepthMm > 0 && (
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <p style={{ fontSize: 9, color: '#8899aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Irrigar Hoje</p>
+              <p style={{ fontSize: 9, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Irrigar Hoje</p>
               <p style={{ fontSize: 16, fontWeight: 800, color: cfg.color, fontFamily: 'var(--font-mono)' }}>
-                {fmtNum(recommendedDepthMm)} <span style={{ fontSize: 10, color: '#8899aa' }}>mm</span>
+                {fmtNum(recommendedDepthMm)} <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>mm</span>
               </p>
             </div>
           )}
@@ -117,43 +117,43 @@ function SoilDiagramRich({
         <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
           {areaHa != null && (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-              <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Área</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{areaHa.toFixed(1)}</span>
-              <span style={{ fontSize: 10, color: '#667788' }}>ha</span>
+              <span style={{ fontSize: 9, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Área</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{areaHa.toFixed(1)}</span>
+              <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>ha</span>
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETo</span>
+            <span style={{ fontSize: 9, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETo</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtNum(eto)}</span>
-            <span style={{ fontSize: 10, color: '#667788' }}>mm</span>
+            <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>mm</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETc</span>
+            <span style={{ fontSize: 9, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>ETc</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#06b6d4', fontFamily: 'var(--font-mono)' }}>{fmtNum(etc)}</span>
-            <span style={{ fontSize: 10, color: '#667788' }}>mm</span>
+            <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>mm</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Fase</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{cropStage}ª</span>
-            <span style={{ fontSize: 10, color: '#667788' }}>· DAS {das}</span>
+            <span style={{ fontSize: 9, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Fase</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>{cropStage}ª</span>
+            <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>· DAS {das}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            <span style={{ fontSize: 9, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Data</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{fmtDate(date)}</span>
+            <span style={{ fontSize: 9, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Data</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text)' }}>{fmtDate(date)}</span>
           </div>
         </div>
       </div>
 
       {/* ── Bloco ETc + emoji Pill Premium ── */}
-      <div style={{ margin: '14px 20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.02)' }}>
+      <div style={{ margin: '14px 20px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.02)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: '#8899aa' }}>ETc</p>
-            <span style={{ fontSize: 10, color: '#8899aa', letterSpacing: 2 }}>↑↑↑</span>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-secondary)' }}>ETc</p>
+            <span style={{ fontSize: 10, color: 'var(--color-text-secondary)', letterSpacing: 2 }}>↑↑↑</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <p style={{ fontSize: 18, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{fmtNum(etc)} <span style={{ fontSize: 12, fontWeight: 400, color: '#8899aa' }}>mm</span></p>
-            <span style={{ fontSize: 14, color: '#778899', lineHeight: 1 }}>≋</span>
+            <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-text)', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{fmtNum(etc)} <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-text-secondary)' }}>mm</span></p>
+            <span style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1 }}>≋</span>
           </div>
         </div>
         
@@ -164,22 +164,22 @@ function SoilDiagramRich({
         </div>
         
         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 64, flex: '1 1 auto', alignItems: 'flex-end' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: '#8899aa', paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>{stageLabels[cropStage] ?? `Fase ${cropStage}`}</p>
-          <p style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{das} <span style={{ fontSize: 12, fontWeight: 400, color: '#8899aa' }}>dias</span></p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-secondary)', paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>{stageLabels[cropStage] ?? `Fase ${cropStage}`}</p>
+          <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-text)', fontFamily: 'var(--font-mono)' }}>{das} <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-text-secondary)' }}>dias</span></p>
         </div>
       </div>
 
       {/* ── Diagrama de solo (Wavy Premium) ── */}
-      <div style={{ margin: '0 20px 20px', position: 'relative', borderRadius: 12, overflow: 'hidden', height: H, background: '#0a1016' /* Cyber-Agro Dark Soil */ }}>
+      <div style={{ margin: '0 20px 20px', position: 'relative', borderRadius: 12, overflow: 'hidden', height: H, background: 'var(--color-surface-bg)' /* Cyber-Agro Dark Soil */ }}>
         
         {/* Sonda vertical (Central Pipeline) */}
         <div style={{
           position: 'absolute', left: '50%', top: `${100 - ctaTopPct}%`, bottom: '6%',
-          width: 8, background: 'linear-gradient(to right, #667788, #8899aa, #667788)',
+          width: 8, background: 'linear-gradient(to right, var(--color-text-muted), var(--color-text-secondary), var(--color-text-muted))',
           borderRadius: 2, transform: 'translateX(-50%)', zIndex: 1,
         }}>
           {/* Cap da Sonda (Superficie) */}
-          <div style={{ position: 'absolute', top: -4, left: '50%', transform: 'translateX(-50%)', width: 14, height: 6, borderRadius: 2, background: '#8899aa' }} />
+          <div style={{ position: 'absolute', top: -4, left: '50%', transform: 'translateX(-50%)', width: 14, height: 6, borderRadius: 2, background: 'var(--color-text-secondary)' }} />
         </div>
 
         {/* Camada de Água Disponível com Efeito Wavy */}
@@ -229,7 +229,7 @@ function SoilDiagramRich({
         {deficitMm > 0 && (
           <div style={{ position: 'absolute', bottom: `calc(${ctaTopPct}% - 4px)`, right: 12, transform: 'translateY(100%)', zIndex: 5 }}>
             <div style={{ background: 'rgba(20, 30, 45, 0.85)', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '6px 12px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-              <p style={{ fontSize: 10, color: '#e2e8f0', fontWeight: 600 }}>Déficit Previsto</p>
+              <p style={{ fontSize: 10, color: 'var(--color-text)', fontWeight: 600 }}>Déficit Previsto</p>
               <p style={{ fontSize: 14, fontWeight: 800, color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>{fmtNum(deficitMm)} mm</p>
             </div>
           </div>
@@ -238,7 +238,7 @@ function SoilDiagramRich({
         {/* Badge: Disponível (Ancorado à esquerda, LOGO ABAIXO da onda de água) */}
         <div style={{ position: 'absolute', bottom: `calc(${Math.max(2, adcTopPct)}% - 24px)`, left: 12, transform: 'translateY(0%)', zIndex: 5 }}>
           <div style={{ background: 'rgba(6, 40, 60, 0.85)', backdropFilter: 'blur(4px)', border: '1px solid rgba(6, 182, 212, 0.4)', borderRadius: 8, padding: '6px 12px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-            <p style={{ fontSize: 10, color: '#e2e8f0', fontWeight: 600 }}>Disponível</p>
+            <p style={{ fontSize: 10, color: 'var(--color-text)', fontWeight: 600 }}>Disponível</p>
             <p style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: 'var(--font-mono)' }}>{fmtNum(adcMm)} mm</p>
           </div>
         </div>
@@ -253,12 +253,12 @@ function SoilDiagramRich({
             padding: '10px 20px',
             textAlign: 'center',
             whiteSpace: 'nowrap',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 var(--color-surface-border2)',
           }}>
-            <p style={{ fontSize: 9, fontWeight: 700, color: '#778899', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>Prof. de Manejo</p>
-            <p style={{ fontSize: 22, fontWeight: 900, color: '#e2e8f0', fontFamily: 'var(--font-mono)', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <p style={{ fontSize: 9, fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 4px' }}>Prof. de Manejo</p>
+            <p style={{ fontSize: 22, fontWeight: 900, color: 'var(--color-text)', fontFamily: 'var(--font-mono)', margin: 0, lineHeight: 1, letterSpacing: '-0.02em' }}>
               {fmtNum(rootDepthCm, 0)}
-              <span style={{ fontSize: 12, fontWeight: 400, color: '#8899aa', marginLeft: 4 }}>cm</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-text-secondary)', marginLeft: 4 }}>cm</span>
             </p>
           </div>
         </div>
@@ -290,12 +290,12 @@ function SoilDiagramRich({
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 18, height: 3, background: color, borderRadius: 2 }} />
-            <span style={{ fontSize: 10, color: '#667788' }}>{label}</span>
+            <span style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>{label}</span>
           </div>
         ))}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <Satellite size={9} style={{ color: '#667788' }} />
-          <span style={{ fontSize: 10, color: '#778899' }}>ETo via cálculo local · média</span>
+          <Satellite size={9} style={{ color: 'var(--color-text-muted)' }} />
+          <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>ETo via cálculo local · média</span>
         </div>
       </div>
     </div>
@@ -304,7 +304,7 @@ function SoilDiagramRich({
 
 // ─── Metric chip ──────────────────────────────────────────────
 
-function Chip({ label, value, sub, color = '#e2e8f0' }: {
+function Chip({ label, value, sub, color = 'var(--color-text)' }: {
   label: string
   value: string
   sub?: string
@@ -318,14 +318,14 @@ function Chip({ label, value, sub, color = '#e2e8f0' }: {
       padding: '14px 16px',
       minWidth: 0,
     }}>
-      <p style={{ fontSize: 10, color: '#667788', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+      <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
         {label}
       </p>
       <p style={{ fontSize: 20, fontWeight: 800, margin: '5px 0 0', color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
         {value}
       </p>
       {sub && (
-        <p style={{ fontSize: 10, color: '#667788', margin: '3px 0 0' }}>{sub}</p>
+        <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: '3px 0 0' }}>{sub}</p>
       )}
     </div>
   )
@@ -336,8 +336,8 @@ function Chip({ label, value, sub, color = '#e2e8f0' }: {
 function AccumItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>{label}:</p>
-      <p style={{ fontSize: 13, color: '#8899aa', margin: '2px 0 0' }}>{value}</p>
+      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>{label}:</p>
+      <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>{value}</p>
     </div>
   )
 }
@@ -417,7 +417,7 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
 
   if (chartData.length === 0) {
     return (
-      <p style={{ color: '#667788', fontSize: 13, textAlign: 'center', padding: '32px 0' }}>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 13, textAlign: 'center', padding: '32px 0' }}>
         Nenhum registro de manejo ainda.
       </p>
     )
@@ -428,29 +428,29 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
       {/* Chart */}
       <ResponsiveContainer width="100%" height={340}>
         <ComposedChart data={chartData} margin={{ top: 10, right: 50, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="4 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <CartesianGrid strokeDasharray="4 3" stroke="var(--color-surface-border2)" vertical={false} />
           <XAxis
             dataKey="date"
-            tick={{ fill: '#667788', fontSize: 10 }}
-            axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+            tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
+            axisLine={{ stroke: 'var(--color-surface-border2)' }}
             tickLine={false}
             interval={Math.max(0, Math.floor(chartData.length / 12) - 1)}
           />
           <YAxis
             yAxisId="mm"
-            tick={{ fill: '#667788', fontSize: 10 }}
+            tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
             axisLine={false} tickLine={false}
           />
           <YAxis
             yAxisId="vol" orientation="right"
             domain={[yMin, yMax]}
-            tick={{ fill: '#667788', fontSize: 10 }}
+            tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
             axisLine={false} tickLine={false}
             tickFormatter={(v: number) => `${v.toFixed(1)}%`}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#e2e8f0', fontSize: 12 }}
-            labelStyle={{ color: '#8899aa', marginBottom: 4 }}
+            contentStyle={{ backgroundColor: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', borderRadius: 10, color: 'var(--color-text)', fontSize: 12 }}
+            labelStyle={{ color: 'var(--color-text-secondary)', marginBottom: 4 }}
             cursor={{ fill: 'rgba(255,255,255,0.03)' }}
             formatter={(value, name) => {
               const v = typeof value === 'number' ? value.toFixed(1) : value
@@ -486,7 +486,7 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
 
           <Line yAxisId="vol" type="monotone" dataKey="moisture"    name="Umidade (%)"   stroke="url(#moistureGradient)" strokeWidth={3} dot={false} connectNulls />
           <Line yAxisId="vol" type="monotone" dataKey="stageChange" name="Fase"          stroke="transparent" strokeWidth={0}
-            dot={{ fill: '#f59e0b', r: 6, strokeWidth: 2, stroke: '#0d1520' }}
+            dot={{ fill: '#f59e0b', r: 6, strokeWidth: 2, stroke: 'var(--color-surface-sidebar)' }}
             activeDot={false} connectNulls={false}
           />
         </ComposedChart>
@@ -502,24 +502,24 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 20, height: 2, background: color, borderRadius: 1 }} />
-            <span style={{ fontSize: 10, color: '#778899' }}>{label}</span>
+            <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>{label}</span>
           </div>
         ))}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 10, height: 10, borderRadius: 2, background: '#22d3ee' }} />
-          <span style={{ fontSize: 10, color: '#778899' }}>Irrigação (mm)</span>
+          <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>Irrigação (mm)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 10, height: 10, borderRadius: 2, background: 'rgba(255,255,255,0.85)' }} />
-          <span style={{ fontSize: 10, color: '#778899' }}>Precipitação (mm)</span>
+          <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>Precipitação (mm)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <div style={{ width: 10, height: 10, borderRadius: 2, background: '#f97316' }} />
-          <span style={{ fontSize: 10, color: '#778899' }}>Excesso Irrigação (mm)</span>
+          <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>Excesso Irrigação (mm)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid #0d1520' }} />
-          <span style={{ fontSize: 10, color: '#778899' }}>Fase</span>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', border: '2px solid var(--color-surface-sidebar)' }} />
+          <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>Fase</span>
         </div>
       </div>
 
@@ -527,9 +527,9 @@ function EvolutionChart({ history, pivotName, seasonName, fFactor, CC, PM }: {
       <div style={{
         marginTop: 28,
         paddingTop: 20,
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        borderTop: '1px solid var(--color-surface-border2)',
       }}>
-        <p style={{ fontSize: 15, fontWeight: 800, color: '#e2e8f0', margin: '0 0 16px' }}>
+        <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--color-text)', margin: '0 0 16px' }}>
           Valores Acumulados
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -584,7 +584,7 @@ export function PivotDetailClient({ pivot, farm, context, history, today }: Prop
       <div style={{ marginBottom: 24 }}>
         <Link href="/dashboard" style={{
           display: 'inline-flex', alignItems: 'center', gap: 5,
-          fontSize: 12, color: '#667788', textDecoration: 'none', marginBottom: 10,
+          fontSize: 12, color: 'var(--color-text-muted)', textDecoration: 'none', marginBottom: 10,
         }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polyline points="15 18 9 12 15 6" />
@@ -594,10 +594,10 @@ export function PivotDetailClient({ pivot, farm, context, history, today }: Prop
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 900, color: '#e2e8f0', margin: 0, letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontSize: 24, fontWeight: 900, color: 'var(--color-text)', margin: 0, letterSpacing: '-0.02em' }}>
               {pivot.name}
             </h1>
-            <p style={{ fontSize: 13, color: '#667788', margin: '3px 0 0' }}>
+            <p style={{ fontSize: 13, color: 'var(--color-text-muted)', margin: '3px 0 0' }}>
               {farm?.name ?? ''}{season ? ` · ${season.name}` : ''}
             </p>
           </div>
@@ -619,10 +619,10 @@ export function PivotDetailClient({ pivot, farm, context, history, today }: Prop
 
       {!season ? (
         <div style={{
-          background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)',
           borderRadius: 16, padding: 48, textAlign: 'center',
         }}>
-          <p style={{ color: '#667788', fontSize: 14, marginBottom: 16 }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: 14, marginBottom: 16 }}>
             Nenhuma safra ativa para este pivô.
           </p>
           <Link href="/safras" style={{
@@ -658,18 +658,18 @@ export function PivotDetailClient({ pivot, farm, context, history, today }: Prop
                 alertThresholdPct={pivot.alert_threshold_percent ?? null}
               />
             ) : (
-              <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 48, textAlign: 'center' }}>
-                <p style={{ color: '#667788', fontSize: 14 }}>Configure CC, PM e densidade do solo na safra.</p>
+              <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: 48, textAlign: 'center' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>Configure CC, PM e densidade do solo na safra.</p>
               </div>
             )}
           </div>
 
           {/* ── Row 2: Gráfico evolução (largura total) ── */}
           <div style={{
-            background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)',
             borderRadius: 16, padding: 20,
           }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#667788', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
               Evolução — Histórico Completo
             </span>
             <div style={{ marginTop: 16 }}>

@@ -30,7 +30,7 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <span style={{ fontSize: 24, filter: 'drop-shadow(0 0 10px rgba(0, 229, 255, 0.8))' }}>⚡</span>
           <div>
-            <p style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>Energia & Custos</p>
+            <p style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.025em' }}>Energia & Custos</p>
             <p style={{ fontSize: 14, color: '#94a3b8', marginTop: 4, lineHeight: 1.625 }}>
               Nenhuma conta de energia registrada.
             </p>
@@ -101,7 +101,7 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
       label: 'Gasto Total',
       value: fmtBrl(gastoTotal),
       sub: `${kwhTotal.toLocaleString('pt-BR')} kWh`,
-      color: '#e2e8f0',
+      color: 'var(--color-text)',
     },
     {
       label: 'Fora Ponta',
@@ -198,7 +198,7 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
             Distribuição
           </span>
           {/* Stacked bar */}
-          <div style={{ height: 12, borderRadius: 6, overflow: 'hidden', display: 'flex', background: '#0d1520' }}>
+          <div style={{ height: 12, borderRadius: 6, overflow: 'hidden', display: 'flex', background: 'var(--color-surface-sidebar)' }}>
             <div style={{ width: `${fpPercent}%`, background: '#22c55e', transition: 'width 0.4s' }} />
             <div style={{ width: `${100 - fpPercent}%`, background: '#f59e0b', transition: 'width 0.4s' }} />
           </div>

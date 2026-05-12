@@ -67,7 +67,7 @@ export default function PivotSpinner({
       </svg>
 
       {label && (
-        <span style={{ fontSize: 13, color: '#8899aa', fontWeight: 400 }}>{label}</span>
+        <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', fontWeight: 400 }}>{label}</span>
       )}
     </div>
   )

@@ -233,13 +233,13 @@ export function HistoryBlock({
               {dropdownOpen && (
                 <div style={{
                   position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 200,
-                  minWidth: 220, background: '#0d1520',
+                  minWidth: 220, background: 'var(--color-surface-sidebar)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 12, overflow: 'hidden',
                   boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
                 }}>
                   <div style={{ padding: '9px 14px 7px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#445566' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--color-text-muted)' }}>
                       {compareMode ? 'Comparar pivôs (máx. 4)' : 'Selecionar pivô'}
                     </span>
                   </div>
@@ -255,7 +255,7 @@ export function HistoryBlock({
                           width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10,
                           padding: '9px 14px', fontSize: 12, cursor: 'pointer', border: 'none',
                           background: isSelected ? `${chipColor}12` : 'transparent',
-                          color: isSelected ? chipColor : '#8899aa',
+                          color: isSelected ? chipColor : 'var(--color-text-secondary)',
                           fontWeight: isSelected ? 600 : 400,
                           borderBottom: i < activePivotList.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
                           transition: 'background 0.1s',
@@ -331,13 +331,13 @@ export function HistoryBlock({
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: '#778899', fontSize: 10 }}
-              axisLine={{ stroke: 'rgba(255,255,255,0.06)' }}
+              tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
+              axisLine={{ stroke: 'var(--color-surface-border2)' }}
               tickLine={false}
             />
             <YAxis
               yAxisId="mm"
-              tick={{ fill: '#778899', fontSize: 10 }}
+              tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
               axisLine={false}
               tickLine={false}
             />
@@ -345,7 +345,7 @@ export function HistoryBlock({
               yAxisId="pct"
               orientation="right"
               domain={[0, 110]}
-              tick={{ fill: '#778899', fontSize: 10 }}
+              tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) => `${v}%`}
@@ -365,13 +365,13 @@ export function HistoryBlock({
             {hasData && (
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#0d1520',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  backgroundColor: 'var(--color-surface-sidebar)',
+                  border: '1px solid var(--color-surface-border2)',
                   borderRadius: 10,
-                  color: '#e2e8f0',
+                  color: 'var(--color-text)',
                   fontSize: 12,
                 }}
-                labelStyle={{ color: '#8899aa', marginBottom: 4 }}
+                labelStyle={{ color: 'var(--color-text-secondary)', marginBottom: 4 }}
                 cursor={{ fill: 'rgb(255 255 255 / 0.03)' }}
                 formatter={(value, name) => {
                   if (String(name).startsWith('moisture_')) {

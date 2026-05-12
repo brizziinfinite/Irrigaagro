@@ -198,7 +198,7 @@ export function TalhaoMapDraw({
         {/* Instrução */}
         <div style={{
           background: 'rgba(13,21,32,0.88)', borderRadius: 8, padding: '5px 10px',
-          fontSize: 11, color: '#8899aa',
+          fontSize: 11, color: 'var(--color-text-secondary)',
         }}>
           {isDrawing
             ? '📍 Clique para adicionar pontos · duplo-clique para fechar'

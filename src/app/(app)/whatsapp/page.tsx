@@ -323,7 +323,7 @@ export default function WhatsAppPage() {
   // ─── Render ───────────────────────────────────────────────
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: '#8899aa' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: 'var(--color-text-secondary)' }}>
       <Loader2 size={24} className="animate-spin" style={{ color: '#0093D0' }} />
     </div>
   )
@@ -342,7 +342,7 @@ export default function WhatsAppPage() {
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <MessageSquare size={18} style={{ color: '#22c55e' }} />
             </div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.025em' }}>
               Central WhatsApp
             </h1>
           </div>
@@ -373,7 +373,7 @@ export default function WhatsAppPage() {
             color: '#22d3ee',
           },
         ].map(kpi => (
-          <div key={kpi.label} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
+          <div key={kpi.label} style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
               <span style={{ color: kpi.color }}>{kpi.icon}</span>
               <span style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>{kpi.label}</span>
@@ -412,9 +412,9 @@ export default function WhatsAppPage() {
 
       {/* ── Lista de contatos ── */}
       {contacts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 24px', background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, color: '#778899' }}>
+        <div style={{ textAlign: 'center', padding: '48px 24px', background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, color: 'var(--color-text-secondary)' }}>
           <MessageSquare size={36} style={{ marginBottom: 12, color: '#334455' }} />
-          <p style={{ margin: 0, fontSize: 14, color: '#556677' }}>Nenhum contato cadastrado</p>
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-muted)' }}>Nenhum contato cadastrado</p>
           <p style={{ margin: '4px 0 16px', fontSize: 12, color: '#445566' }}>Clique em "Novo contato" para configurar os alertas.</p>
           <button onClick={openCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0093D0', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             <Plus size={14} /> Novo contato
@@ -441,7 +441,7 @@ export default function WhatsAppPage() {
             const statusBorder = !contact.is_active ? 'rgba(100,116,139,0.2)' : !hasAnySub ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'
 
             return (
-              <div key={contact.id} style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
+              <div key={contact.id} style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
 
                 {/* ── Linha principal do contato ── */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 18px' }}>
@@ -455,7 +455,7 @@ export default function WhatsAppPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {/* Linha 1: nome + status */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 700, fontSize: 15, color: '#e2e8f0', letterSpacing: '-0.01em' }}>
+                      <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
                         {contact.contact_name}
                       </span>
                       <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: statusBg, color: statusColor, border: `1px solid ${statusBorder}` }}>
@@ -465,10 +465,10 @@ export default function WhatsAppPage() {
 
                     {/* Linha 2: telefone + horário */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 14px', marginBottom: 8 }}>
-                      <span style={{ fontSize: 12, color: '#8899aa', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Phone size={11} style={{ color: '#445566' }} /> {displayPhone(contact.phone)}
                       </span>
-                      <span style={{ fontSize: 12, color: '#8899aa', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Clock size={11} style={{ color: '#445566' }} /> Recebe às {String(contact.notification_hour).padStart(2, '0')}h
                       </span>
                     </div>
@@ -491,7 +491,7 @@ export default function WhatsAppPage() {
                         </span>
                       )}
                       {linkedPivotNames.length > 0 && (
-                        <span style={{ fontSize: 10, color: '#556677', padding: '2px 6px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <span style={{ fontSize: 10, color: 'var(--color-text-muted)', padding: '2px 6px', borderRadius: 20, background: 'var(--color-surface-border2)', border: '1px solid var(--color-surface-border2)' }}>
                           {linkedPivotNames.length === 1 ? linkedPivotNames[0] : `${linkedPivotNames.length} pivôs`}
                         </span>
                       )}
@@ -506,7 +506,7 @@ export default function WhatsAppPage() {
                     <button
                       onClick={() => toggleExpand(contact.id)}
                       title="Pivôs e alertas"
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, background: isExpanded ? 'rgba(0,147,208,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${isExpanded ? 'rgba(0,147,208,0.3)' : 'rgba(255,255,255,0.07)'}`, color: isExpanded ? '#0093D0' : '#8899aa', borderRadius: 8, padding: '6px 11px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, background: isExpanded ? 'rgba(0,147,208,0.12)' : 'var(--color-surface-border2)', border: `1px solid ${isExpanded ? 'rgba(0,147,208,0.3)' : 'rgba(255,255,255,0.07)'}`, color: isExpanded ? '#0093D0' : 'var(--color-text-secondary)', borderRadius: 8, padding: '6px 11px', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
                     >
                       {activeSubs.length > 0 && (
                         <span style={{ fontSize: 10, fontWeight: 700, background: '#0093D0', color: '#fff', borderRadius: 10, padding: '0px 5px', lineHeight: '16px' }}>{activeSubs.length}</span>
@@ -515,15 +515,15 @@ export default function WhatsAppPage() {
                       {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                     </button>
                     <button onClick={() => openEdit(contact)} title="Editar contato"
-                      style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'rgba(255,255,255,0.04)', color: '#556677', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
                       onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
-                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
                       <Pencil size={13} />
                     </button>
                     <button onClick={() => handleDelete(contact.id)} title="Excluir contato"
-                      style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'rgba(255,255,255,0.04)', color: '#556677', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+                      style={{ padding: 8, minHeight: 34, minWidth: 34, borderRadius: 8, border: '1px solid transparent', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
                       onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#ef4444'; el.style.background = 'rgba(239,68,68,0.08)'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
-                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -548,10 +548,10 @@ export default function WhatsAppPage() {
                             const sub = (allSubs[contact.id] ?? []).find(s => s.pivot_id === pivot.id)
                             const key = (field: string) => `${contact.id}-${pivot.id}-${field}`
                             return (
-                              <div key={pivot.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px' }}>
+                              <div key={pivot.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 10, padding: '10px 14px' }}>
                                 {/* Nome pivô */}
                                 <div style={{ flex: 1, minWidth: 120 }}>
-                                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{pivot.name}</span>
+                                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>{pivot.name}</span>
                                   {pivot.farms?.name && (
                                     <span style={{ fontSize: 11, color: '#64748b', marginLeft: 6 }}>{pivot.farms.name}</span>
                                   )}
@@ -572,7 +572,7 @@ export default function WhatsAppPage() {
                                       key={field}
                                       disabled={isLoading}
                                       onClick={() => handleToggleSub(contact.id, pivot.id, field, sub as SubscriptionWithPivot | undefined)}
-                                      style={{ display: 'flex', alignItems: 'center', gap: 5, background: active ? `${color}18` : 'rgba(255,255,255,0.04)', border: `1px solid ${active ? `${color}40` : 'rgba(255,255,255,0.07)'}`, color: active ? color : '#556677', borderRadius: 7, padding: '5px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
+                                      style={{ display: 'flex', alignItems: 'center', gap: 5, background: active ? `${color}18` : 'var(--color-surface-border2)', border: `1px solid ${active ? `${color}40` : 'rgba(255,255,255,0.07)'}`, color: active ? color : 'var(--color-text-muted)', borderRadius: 7, padding: '5px 10px', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}
                                     >
                                       {isLoading ? <Loader2 size={10} className="animate-spin" /> : active ? <Bell size={10} /> : <BellOff size={10} />}
                                       {icon}
@@ -611,12 +611,12 @@ export default function WhatsAppPage() {
       {/* ── Modal criar/editar ── */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 'clamp(16px,4vw,28px)', width: '100%', maxWidth: 440, boxShadow: '0 20px 48px -8px rgba(0,0,0,0.6)' }}>
+          <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border)', borderRadius: 16, padding: 'clamp(16px,4vw,28px)', width: '100%', maxWidth: 440, boxShadow: '0 20px 48px -8px rgba(0,0,0,0.6)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.025em' }}>
                 {editingContact ? 'Editar contato' : 'Novo contato'}
               </h2>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: '#778899', cursor: 'pointer', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer', minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
                 <X size={18} />
               </button>
             </div>
@@ -662,7 +662,7 @@ export default function WhatsAppPage() {
                   style={{ width: 40, height: 22, borderRadius: 99, border: 'none', cursor: 'pointer', background: form.is_active ? '#0093D0' : '#1e2d40', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
                   <div style={{ position: 'absolute', top: 3, left: form.is_active ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.4)' }} />
                 </button>
-                <span style={{ fontSize: 13, color: '#e2e8f0' }}>
+                <span style={{ fontSize: 13, color: 'var(--color-text)' }}>
                   {form.is_active ? 'Contato ativo — receberá alertas' : 'Contato pausado — não receberá alertas'}
                 </span>
               </div>
@@ -672,7 +672,7 @@ export default function WhatsAppPage() {
               )}
 
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', borderRadius: 9, padding: '10px 0', fontSize: 13, cursor: 'pointer', minHeight: 44 }}>
+                <button onClick={() => setShowModal(false)} style={{ flex: 1, background: 'var(--color-surface-border2)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text-secondary)', borderRadius: 9, padding: '10px 0', fontSize: 13, cursor: 'pointer', minHeight: 44 }}>
                   Cancelar
                 </button>
                 <button onClick={handleSave} disabled={saving} style={{ flex: 2, background: '#0093D0', border: 'none', color: '#fff', borderRadius: 9, padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44 }}>
@@ -690,7 +690,7 @@ export default function WhatsAppPage() {
 
 const inputStyle: React.CSSProperties = {
   display: 'block', width: '100%', marginTop: 6,
-  background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 9, padding: '10px 12px', fontSize: 13, color: '#e2e8f0',
+  background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)',
+  borderRadius: 9, padding: '10px 12px', fontSize: 13, color: 'var(--color-text)',
   outline: 'none', boxSizing: 'border-box',
 }

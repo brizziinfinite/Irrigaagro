@@ -64,7 +64,7 @@ export default async function DashboardPage() {
         <p style={{ color: '#ef4444', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
           Erro ao carregar o dashboard
         </p>
-        <p style={{ color: '#8899aa', fontSize: 13 }}>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: 13 }}>
           {error instanceof Error ? error.message : 'Tente recarregar a página.'}
         </p>
       </div>

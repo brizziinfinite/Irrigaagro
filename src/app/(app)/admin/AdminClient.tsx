@@ -108,10 +108,10 @@ export function AdminClient({ companies: initial }: Props) {
           <Shield size={20} color="#0093D0" />
         </div>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
             Administração
           </h1>
-          <p style={{ fontSize: 13, color: '#8899aa', margin: 0 }}>
+          <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', margin: 0 }}>
             Gestão de clientes e acessos
           </p>
         </div>
@@ -120,19 +120,19 @@ export function AdminClient({ companies: initial }: Props) {
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Total', value: companies.length, icon: Building2, color: '#8899aa' },
+          { label: 'Total', value: companies.length, icon: Building2, color: 'var(--color-text-secondary)' },
           { label: 'Pendentes', value: pendingCount, icon: Clock, color: '#f59e0b' },
           { label: 'Ativos', value: companies.filter(c => c.status === 'active').length, icon: CheckCircle, color: '#22c55e' },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} style={{
-            background: '#0f1923', borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.06)', padding: '16px 20px',
+            background: 'var(--color-surface-card)', borderRadius: 10,
+            border: '1px solid var(--color-surface-border2)', padding: '16px 20px',
             display: 'flex', alignItems: 'center', gap: 12,
           }}>
             <Icon size={18} color={color} />
             <div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', lineHeight: 1 }}>{value}</div>
-              <div style={{ fontSize: 12, color: '#556677', marginTop: 2 }}>{label}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1 }}>{value}</div>
+              <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 2 }}>{label}</div>
             </div>
           </div>
         ))}
@@ -147,9 +147,9 @@ export function AdminClient({ companies: initial }: Props) {
             style={{
               padding: '6px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500,
               cursor: 'pointer', transition: 'all 0.15s',
-              border: filter === f ? '1px solid #0093D0' : '1px solid rgba(255,255,255,0.08)',
+              border: filter === f ? '1px solid #0093D0' : '1px solid var(--color-surface-border)',
               background: filter === f ? 'rgba(0,147,208,0.15)' : 'transparent',
-              color: filter === f ? '#0093D0' : '#8899aa',
+              color: filter === f ? '#0093D0' : 'var(--color-text-secondary)',
             }}
           >
             {f === 'all' ? 'Todos' : STATUS_CONFIG[f].label}
@@ -180,8 +180,8 @@ export function AdminClient({ companies: initial }: Props) {
         {filtered.length === 0 && (
           <div style={{
             textAlign: 'center', padding: '48px 24px',
-            background: '#0f1923', borderRadius: 12,
-            border: '1px solid rgba(255,255,255,0.06)', color: '#556677', fontSize: 14,
+            background: 'var(--color-surface-card)', borderRadius: 12,
+            border: '1px solid var(--color-surface-border2)', color: 'var(--color-text-muted)', fontSize: 14,
           }}>
             Nenhum cliente encontrado.
           </div>
@@ -198,10 +198,10 @@ export function AdminClient({ companies: initial }: Props) {
             <div
               key={company.id}
               style={{
-                background: '#0f1923', borderRadius: 12,
+                background: 'var(--color-surface-card)', borderRadius: 12,
                 border: isPending
                   ? '1px solid rgba(245,158,11,0.25)'
-                  : '1px solid rgba(255,255,255,0.06)',
+                  : '1px solid var(--color-surface-border2)',
                 padding: '16px 20px',
                 display: 'flex', alignItems: 'center', gap: 16,
               }}
@@ -218,7 +218,7 @@ export function AdminClient({ companies: initial }: Props) {
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>
                     {company.name}
                   </span>
                   <span style={{
@@ -228,7 +228,7 @@ export function AdminClient({ companies: initial }: Props) {
                     {cfg.label}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: '#556677' }}>
+                <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
                   {getOwnerEmail(company)} · Cadastro: {formatDate(company.created_at)}
                 </div>
                 <div style={{ fontSize: 11, color: '#334455', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>

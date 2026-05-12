@@ -131,13 +131,13 @@ function StyledSelect({ label, value, onChange, children, required }: {
       </label>
       <div style={{ position: 'relative' }}>
         <select value={value} onChange={e => onChange(e.target.value)} required={required}
-          style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: value ? '#e2e8f0' : '#778899', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+          style={{ width: '100%', padding: '10px 36px 10px 14px', borderRadius: 10, fontSize: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: value ? 'var(--color-text)' : 'var(--color-text-secondary)', outline: 'none', appearance: 'none', cursor: 'pointer' }}
           onFocus={e => e.target.style.borderColor = '#0093D0'}
-          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+          onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
         >
           {children}
         </select>
-        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
+        <ChevronDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)', pointerEvents: 'none' }} />
       </div>
     </div>
   )
@@ -151,11 +151,11 @@ function NumField({ label, value, onChange, placeholder, unit, hint }: {
       <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>{label}</label>
       <div style={{ position: 'relative' }}>
         <input type="number" step="any" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          style={{ width: '100%', padding: unit ? '10px 44px 10px 14px' : '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+          style={{ width: '100%', padding: unit ? '10px 44px 10px 14px' : '10px 14px', borderRadius: 10, fontSize: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none' }}
           onFocus={e => e.target.style.borderColor = '#0093D0'}
-          onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+          onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
         />
-        {unit && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#778899', pointerEvents: 'none' }}>{unit}</span>}
+        {unit && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: 'var(--color-text-secondary)', pointerEvents: 'none' }}>{unit}</span>}
       </div>
       {hint && <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.625 }}>{hint}</p>}
     </div>
@@ -166,7 +166,7 @@ function SectionLabel({ text }: { text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
       <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>{text}</span>
-      <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+      <div style={{ flex: 1, height: 1, background: 'var(--color-surface-border2)' }} />
     </div>
   )
 }
@@ -293,10 +293,10 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgb(0 0 0 / 0.75)' }}>
-      <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: 'clamp(16px, 4vw, 28px)', width: '100%', maxWidth: 540, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)', maxHeight: '92vh', overflowY: 'auto' }}>
+      <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 20, padding: 'clamp(16px, 4vw, 28px)', width: '100%', maxWidth: 540, boxShadow: '0 20px 48px -8px rgb(0 0 0 / 0.6)', maxHeight: '92vh', overflowY: 'auto' }}>
         <div className="flex items-center justify-between mb-6">
-          <h2 style={{ fontSize: 24, fontWeight: 600, color: '#e2e8f0', letterSpacing: '-0.025em' }}>{isEdit ? 'Editar Safra' : 'Nova Safra'}</h2>
-          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: '#778899', cursor: 'pointer' }}><X size={16} /></button>
+          <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.025em' }}>{isEdit ? 'Editar Safra' : 'Nova Safra'}</h2>
+          <button onClick={onClose} style={{ padding: 6, borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer' }}><X size={16} /></button>
         </div>
 
         {error && (
@@ -312,9 +312,9 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             </label>
             <input type="text" value={name} onChange={e => setName(e.target.value)} required
               placeholder="Ex: Safra 2025/26 Soja"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none' }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none' }}
               onFocus={e => e.target.style.borderColor = '#0093D0'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
             />
             {!isEdit && selectedPivotIds.length > 1 && (
               <p style={{ fontSize: 12, color: '#0093D0', marginTop: 4 }}>
@@ -340,7 +340,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
                 Pivôs <span style={{ color: '#94a3b8', fontWeight: 400 }}>(selecione um ou mais)</span>
               </label>
               {farmPivots.length === 0 ? (
-                <p style={{ fontSize: 14, color: '#94a3b8', padding: '10px 14px', background: '#0d1520', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', lineHeight: 1.625 }}>
+                <p style={{ fontSize: 14, color: '#94a3b8', padding: '10px 14px', background: 'var(--color-surface-sidebar)', borderRadius: 10, border: '1px solid var(--color-surface-border2)', lineHeight: 1.625 }}>
                   Nenhum pivô cadastrado nesta fazenda.
                 </p>
               ) : (
@@ -355,8 +355,8 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
                         style={{
                           display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
                           borderRadius: 10, cursor: 'pointer', textAlign: 'left',
-                          border: `1px solid ${checked ? 'rgba(0,147,208,0.4)' : 'rgba(255,255,255,0.06)'}`,
-                          background: checked ? 'rgba(0,147,208,0.08)' : '#0d1520',
+                          border: `1px solid ${checked ? 'rgba(0,147,208,0.4)' : 'var(--color-surface-border2)'}`,
+                          background: checked ? 'rgba(0,147,208,0.08)' : 'var(--color-surface-sidebar)',
                           transition: 'all 0.15s',
                         }}
                       >
@@ -369,7 +369,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
                           {checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                         </div>
                         <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>{p.name}</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>{p.name}</p>
                           {p.field_capacity && (
                             <p style={{ fontSize: 12, color: '#94a3b8', margin: 0, lineHeight: 1.625 }}>
                               CC {p.field_capacity}% · PM {p.wilting_point}% · Ds {p.bulk_density}
@@ -394,9 +394,9 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
           <div>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Data de Plantio</label>
             <input type="date" value={plantingDate} onChange={e => setPlantingDate(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: plantingDate ? '#e2e8f0' : '#778899', outline: 'none', colorScheme: 'dark' }}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: plantingDate ? 'var(--color-text)' : 'var(--color-text-secondary)', outline: 'none', colorScheme: 'dark' }}
               onFocus={e => e.target.style.borderColor = '#0093D0'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+              onBlur={e => e.target.style.borderColor = 'var(--color-surface-border)'}
             />
             {isEdit && plantingDate && plantingDate !== originalPlantingDate && (
               <p style={{ marginTop: 6, fontSize: 12, color: '#f59e0b' }}>
@@ -411,7 +411,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
           </div>
 
           {selectedCrop && plantingDate && (
-            <div style={{ background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: '14px 16px' }}>
               <p style={{ fontSize: 12, fontWeight: 600, color: '#0093D0', marginBottom: 2 }}>📅 Cronograma — {selectedCrop.name}</p>
               <PhaseTimeline plantingDate={plantingDate} crop={selectedCrop} />
             </div>
@@ -436,7 +436,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Observações</label>
               <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
                 placeholder="Anotações operacionais da safra"
-                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)', color: '#e2e8f0', outline: 'none', resize: 'vertical' }}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border)', color: 'var(--color-text)', outline: 'none', resize: 'vertical' }}
               />
             </div>
           </div>
@@ -445,18 +445,18 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button type="button" onClick={() => setIsActive(v => !v)}
-              style={{ width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', background: isActive ? '#0093D0' : '#0d1520', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              style={{ width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', background: isActive ? '#0093D0' : 'var(--color-surface-sidebar)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: 3, left: isActive ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgb(0 0 0 / 0.4)' }} />
             </button>
             <div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{isActive ? 'Safra Ativa' : 'Safra Inativa'}</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>{isActive ? 'Safra Ativa' : 'Safra Inativa'}</p>
               <p style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.625 }}>{isActive ? 'Aparece no Dashboard e Manejo Diário' : 'Arquivada'}</p>
             </div>
           </div>
 
           <div className="flex gap-3 mt-2 flex-wrap">
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#8899aa', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '12px 0', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 500, background: 'transparent', border: '1px solid var(--color-surface-border)', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
               Cancelar
             </button>
             <button type="submit" disabled={loading}
@@ -577,7 +577,7 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
   const threshold = season._pivot?.alert_threshold_percent ?? 70
   const pct = projectedPct ?? lastRecord?.field_capacity_percent ?? null
-  const statusColor = pct === null ? '#778899'
+  const statusColor = pct === null ? 'var(--color-text-secondary)'
     : pct >= threshold * 1.15 ? '#22c55e'
     : pct >= threshold ? '#f59e0b'
     : '#ef4444'
@@ -604,7 +604,7 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
   const cardBorder = season.is_active
     ? (pct !== null && pct < threshold ? 'rgba(239,68,68,0.3)' : 'rgba(0,147,208,0.2)')
-    : 'rgba(255,255,255,0.05)'
+    : 'var(--color-surface-border2)'
 
   // Formata "última atualização" de forma legível
   function fmtLastUpdate(dateStr: string): string {
@@ -618,7 +618,7 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
   return (
     <div style={{
-      background: season.is_active ? 'linear-gradient(145deg, #0f1923, #0c1520)' : '#0c1318',
+      background: season.is_active ? 'linear-gradient(145deg, var(--color-surface-card), var(--color-surface-sidebar))' : 'var(--color-surface-card)',
       border: `1px solid ${cardBorder}`,
       borderRadius: 18,
       padding: '22px 24px',
@@ -630,11 +630,11 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 16 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Nome */}
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: '0 0 7px', lineHeight: 1.3, letterSpacing: '-0.01em' }}>{season.name}</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', margin: '0 0 7px', lineHeight: 1.3, letterSpacing: '-0.01em' }}>{season.name}</p>
 
           {/* Badge ativa/inativa + status saúde + alerta irrigação */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-            <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgba(34,197,94,0.10)' : '#0d1520', color: season.is_active ? '#22c55e' : '#667788', border: `1px solid ${season.is_active ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.05)'}` }}>
+            <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, fontWeight: 600, background: season.is_active ? 'rgba(34,197,94,0.10)' : 'var(--color-surface-sidebar)', color: season.is_active ? '#22c55e' : 'var(--color-text-muted)', border: `1px solid ${season.is_active ? 'rgba(34,197,94,0.2)' : 'var(--color-surface-border2)'}` }}>
               {season.is_active ? '● Ativa' : 'Inativa'}
             </span>
 
@@ -664,22 +664,22 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
         <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
           {season.is_active && season.planting_date && (
             <button onClick={onRecalculate} disabled={recalculating} title="Recalcular histórico"
-              style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: recalculating ? 'default' : 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+              style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: recalculating ? 'default' : 'pointer', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
               onMouseEnter={e => { if (!recalculating) { const el = e.currentTarget as HTMLElement; el.style.color = '#22c55e'; el.style.background = 'rgba(34,197,94,0.08)'; el.style.borderColor = 'rgba(34,197,94,0.2)' } }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
               <RefreshCw size={13} className={recalculating ? 'animate-spin' : ''} />
             </button>
           )}
           <button onClick={onEdit} title="Editar safra"
-            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
             onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#0093D0'; el.style.background = 'rgba(0,147,208,0.08)'; el.style.borderColor = 'rgba(0,147,208,0.2)' }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#556677'; el.style.background = 'rgba(255,255,255,0.04)'; el.style.borderColor = 'transparent' }}>
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-muted)'; el.style.background = 'var(--color-surface-border2)'; el.style.borderColor = 'transparent' }}>
             <Pencil size={13} />
           </button>
           <button onClick={onDelete} disabled={deleting} title="Excluir safra"
-            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', color: '#556677', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
+            style={{ padding: 8, minHeight: 36, minWidth: 36, borderRadius: 8, border: '1px solid transparent', cursor: 'pointer', background: 'var(--color-surface-border2)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}
             onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(239,68,68,0.08)'; el.style.color = '#ef4444'; el.style.borderColor = 'rgba(239,68,68,0.2)' }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#556677'; el.style.borderColor = 'transparent' }}>
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--color-surface-border2)'; el.style.color = 'var(--color-text-muted)'; el.style.borderColor = 'transparent' }}>
             {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
           </button>
         </div>
@@ -690,8 +690,8 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
           {/* Mini-wave */}
           {loadingRecord ? (
-            <div style={{ width: 64, height: 64, borderRadius: 12, background: '#0d1520', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Loader2 size={16} className="animate-spin" style={{ color: '#778899' }} />
+            <div style={{ width: 64, height: 64, borderRadius: 12, background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Loader2 size={16} className="animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
             </div>
           ) : pct !== null ? (
             <MiniWave pct={pct} threshold={threshold} />
@@ -742,12 +742,12 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
 
       {/* ── Linha 3: localização + cultura + datas ── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', marginBottom: 12, alignItems: 'center' }}>
-        <span style={{ fontSize: 12, color: '#8899aa', fontWeight: 500 }}>
+        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
           {season.farms.name}{season.pivots ? <span style={{ color: '#445566' }}> · </span> : ''}{season.pivots ? season.pivots.name : ''}
         </span>
-        {season.crops && <span style={{ fontSize: 12, color: '#8899aa' }}>🌱 {season.crops.name}</span>}
+        {season.crops && <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>🌱 {season.crops.name}</span>}
         {season.planting_date && (
-          <span style={{ fontSize: 12, color: '#667788', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 12, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
             <CalendarDays size={10} style={{ color: '#445566' }} />
             {new Date(season.planting_date + 'T12:00:00').toLocaleDateString('pt-BR')}
             {harvestDate && <><span style={{ color: '#445566' }}> → </span>{harvestDate}</>}
@@ -755,16 +755,16 @@ function SeasonCard({ season, onEdit, onDelete, deleting, onRecalculate, recalcu
         )}
         {lastRecord?.date && (
           <span style={{ fontSize: 11, color: '#445566', display: 'flex', alignItems: 'center', gap: 3 }}>
-            <span style={{ color: '#2d3a47' }}>·</span> atualizado <strong style={{ color: '#556677', fontWeight: 600 }}>{fmtLastUpdate(lastRecord.date)}</strong>
+            <span style={{ color: '#2d3a47' }}>·</span> atualizado <strong style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>{fmtLastUpdate(lastRecord.date)}</strong>
           </span>
         )}
       </div>
 
       {/* ── Linha 4: chips de solo ── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: season.is_active ? 14 : 0 }}>
-        {season.field_capacity && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b', display: 'flex', alignItems: 'center', gap: 2 }}><Droplets size={9} />CC {season.field_capacity}%</span>}
-        {season.wilting_point && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b' }}>PM {season.wilting_point}%</span>}
-        {season.bulk_density && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: '#0d1520', color: '#64748b' }}>Ds {season.bulk_density}</span>}
+        {season.field_capacity && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'var(--color-surface-sidebar)', color: '#64748b', display: 'flex', alignItems: 'center', gap: 2 }}><Droplets size={9} />CC {season.field_capacity}%</span>}
+        {season.wilting_point && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'var(--color-surface-sidebar)', color: '#64748b' }}>PM {season.wilting_point}%</span>}
+        {season.bulk_density && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'var(--color-surface-sidebar)', color: '#64748b' }}>Ds {season.bulk_density}</span>}
         {cta && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 5, background: 'rgba(0,147,208,0.08)', color: '#0093D0', border: '1px solid rgba(0,147,208,0.18)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}><FlaskConical size={9} />CTA {cta.toFixed(1)} mm</span>}
       </div>
 
@@ -887,8 +887,8 @@ export default function SafrasPage() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#cbd5e1' }}>{label}</span>
-        <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 20, background: '#0d1520', color: '#64748b' }}>{count}</span>
-        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+        <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 20, background: 'var(--color-surface-sidebar)', color: '#64748b' }}>{count}</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--color-surface-border2)' }} />
       </div>
     )
   }
@@ -903,7 +903,7 @@ export default function SafrasPage() {
         )}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#e2e8f0', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em' }}>Safras</h1>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--color-text)', fontSize: 24, fontWeight: 600, letterSpacing: '-0.025em' }}>Safras</h1>
             <p className="text-sm mt-0.5" style={{ color: '#94a3b8', fontSize: 14, lineHeight: 1.625 }}>
               {activeSeasons.length} ativa{activeSeasons.length !== 1 ? 's' : ''} · {inactiveSeasons.length} arquivada{inactiveSeasons.length !== 1 ? 's' : ''}
             </p>
@@ -911,7 +911,7 @@ export default function SafrasPage() {
           <button
             onClick={() => { setEditingSeason(null); setModalOpen(true) }}
             disabled={farms.length === 0}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? '#0d1520' : '#0093D0', border: 'none', color: farms.length === 0 ? '#778899' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(0 147 208 / 0.25)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', minHeight: 44, borderRadius: 10, fontSize: 14, fontWeight: 600, background: farms.length === 0 ? 'var(--color-surface-sidebar)' : '#0093D0', border: 'none', color: farms.length === 0 ? 'var(--color-text-secondary)' : '#fff', cursor: farms.length === 0 ? 'not-allowed' : 'pointer', boxShadow: farms.length === 0 ? 'none' : '0 2px 8px rgb(0 147 208 / 0.25)' }}
           >
             <Plus size={16} /> Nova Safra
           </button>
@@ -922,16 +922,16 @@ export default function SafrasPage() {
             <PivotSpinner size={56} label="Carregando safras…" />
           </div>
         ) : farms.length === 0 ? (
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
             <Sprout size={28} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>Cadastre uma fazenda primeiro</h3>
-            <p style={{ fontSize: 14, color: '#778899' }}>Acesse <strong style={{ color: '#8899aa' }}>Configuração → Fazendas</strong> para começar.</p>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)', marginBottom: 8 }}>Cadastre uma fazenda primeiro</h3>
+            <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Acesse <strong style={{ color: 'var(--color-text-secondary)' }}>Configuração → Fazendas</strong> para começar.</p>
           </div>
         ) : seasons.length === 0 ? (
-          <div style={{ background: '#0f1923', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 16, padding: '48px 24px', textAlign: 'center' }}>
             <Sprout size={28} style={{ color: '#0093D0', margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 8 }}>Nenhuma safra cadastrada</h3>
-            <p style={{ fontSize: 14, color: '#778899', marginBottom: 24 }}>Configure a primeira safra para iniciar o manejo hídrico.</p>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)', marginBottom: 8 }}>Nenhuma safra cadastrada</h3>
+            <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginBottom: 24 }}>Configure a primeira safra para iniciar o manejo hídrico.</p>
             <button onClick={() => { setEditingSeason(null); setModalOpen(true) }}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, background: '#0093D0', border: 'none', color: '#fff', cursor: 'pointer' }}>
               <Plus size={16} /> Criar Safra

@@ -91,7 +91,7 @@ function Divider({ label }: { label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-      <span style={{ fontSize: 12, color: '#778899', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500 }}>{label}</span>
       <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
     </div>
   )
@@ -106,7 +106,7 @@ function FeaturePill({ icon: Icon, label, color }: { icon: typeof Droplets; labe
       background: `${color}10`, border: `1px solid ${color}20`,
     }}>
       <Icon size={13} style={{ color, flexShrink: 0 }} />
-      <span style={{ fontSize: 12, color: '#8899aa', whiteSpace: 'nowrap' }}>{label}</span>
+      <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{label}</span>
     </div>
   )
 }
@@ -176,7 +176,7 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#080e14',
+      minHeight: '100vh', background: 'var(--color-surface-bg)',
       display: 'flex', overflow: 'hidden', position: 'relative',
     }}>
       {/* ── Background blobs ── */}
@@ -214,14 +214,14 @@ export default function LoginPage() {
           {/* Headline */}
           <div style={{ textAlign: 'center', maxWidth: 440 }}>
             <h1 style={{
-              fontSize: 36, fontWeight: 700, color: '#e2e8f0',
+              fontSize: 36, fontWeight: 700, color: 'var(--color-text)',
               letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 16,
             }}>
               Manejo hídrico<br />
               <span style={{ color: '#0093D0' }}>preciso</span> e{' '}
               <span style={{ color: '#22c55e' }}>eficiente</span>
             </h1>
-            <p style={{ fontSize: 15, color: '#778899', lineHeight: 1.7 }}>
+            <p style={{ fontSize: 15, color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
               Software agrícola para manejo hídrico inteligente.<br />
               Controle seus pivôs, safras e irrigação em um só lugar.
             </p>
@@ -237,7 +237,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-          <span style={{ fontSize: 12, color: '#778899' }}>IrrigaAgro</span>
+          <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>IrrigaAgro</span>
         </div>
       </div>
 
@@ -250,7 +250,7 @@ export default function LoginPage() {
           width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column',
           justifyContent: 'center',
           borderLeft: '1px solid rgba(255,255,255,0.05)',
-          background: 'rgba(8,14,20,0.6)',
+          background: 'var(--color-surface-bg)',
           backdropFilter: 'blur(20px)',
           position: 'relative', zIndex: 1,
         }}>
@@ -262,7 +262,7 @@ export default function LoginPage() {
 
         {/* Mode toggle */}
         <div style={{
-          display: 'flex', background: '#0d1520', borderRadius: 14,
+          display: 'flex', background: 'var(--color-surface-sidebar)', borderRadius: 14,
           padding: 4, marginBottom: 32,
           border: '1px solid rgba(255,255,255,0.06)',
         }}>
@@ -273,8 +273,8 @@ export default function LoginPage() {
               style={{
                 flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
                 fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.18s',
-                background: mode === m ? '#0f1923' : 'transparent',
-                color: mode === m ? '#e2e8f0' : '#778899',
+                background: mode === m ? 'var(--color-surface-card)' : 'transparent',
+                color: mode === m ? 'var(--color-text)' : 'var(--color-text-secondary)',
                 boxShadow: mode === m ? '0 1px 4px rgba(0,0,0,0.4)' : 'none',
               }}
             >
@@ -285,10 +285,10 @@ export default function LoginPage() {
 
         {/* Heading */}
         <div style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 26, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-0.03em', marginBottom: 8 }}>
+          <h2 style={{ fontSize: 26, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.03em', marginBottom: 8 }}>
             {mode === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta'}
           </h2>
-          <p style={{ fontSize: 13, color: '#778899', lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
             {mode === 'login'
               ? 'Acesse o painel de manejo hídrico da sua operação.'
               : 'Configure seus pivôs e comece a irrigar com precisão.'}
@@ -324,12 +324,12 @@ export default function LoginPage() {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
               padding: '12px 20px', borderRadius: 12, cursor: 'pointer',
-              background: '#0d1520', border: '1px solid rgba(255,255,255,0.1)',
-              color: '#e2e8f0', fontSize: 14, fontWeight: 500,
+              background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.1)',
+              color: 'var(--color-text)', fontSize: 14, fontWeight: 500,
               opacity: oauthLoading ? 0.6 : 1, transition: 'all 0.15s',
             }}
-            onMouseEnter={e => { if (!oauthLoading) (e.currentTarget as HTMLElement).style.background = '#152233' }}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#0d1520'}
+            onMouseEnter={e => { if (!oauthLoading) (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)' }}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-sidebar)'}
           >
             {oauthLoading === 'google' ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <GoogleIcon />}
             {mode === 'login' ? 'Entrar' : 'Cadastrar'} com Google
@@ -345,11 +345,11 @@ export default function LoginPage() {
           {/* Name — signup only */}
           {mode === 'signup' && (
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Nome completo
               </label>
               <div style={{ position: 'relative' }}>
-                <User size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
+                <User size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)', pointerEvents: 'none' }} />
                 <input
                   type="text"
                   value={name}
@@ -358,8 +358,8 @@ export default function LoginPage() {
                   required={mode === 'signup'}
                   style={{
                     width: '100%', padding: '12px 14px 12px 42px', borderRadius: 12, fontSize: 14,
-                    background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
-                    color: '#e2e8f0', outline: 'none',
+                    background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.08)',
+                    color: 'var(--color-text)', outline: 'none',
                   }}
                   onFocus={e => e.target.style.borderColor = 'rgba(0,147,208,0.4)'}
                   onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
@@ -370,11 +370,11 @@ export default function LoginPage() {
 
           {/* Email */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               E-mail
             </label>
             <div style={{ position: 'relative' }}>
-              <Mail size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
+              <Mail size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)', pointerEvents: 'none' }} />
               <input
                 type="email"
                 value={email}
@@ -383,8 +383,8 @@ export default function LoginPage() {
                 required
                 style={{
                   width: '100%', padding: '12px 14px 12px 42px', borderRadius: 12, fontSize: 14,
-                  background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#e2e8f0', outline: 'none',
+                  background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'var(--color-text)', outline: 'none',
                 }}
                 onFocus={e => e.target.style.borderColor = 'rgba(0,147,208,0.4)'}
                 onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
@@ -394,11 +394,11 @@ export default function LoginPage() {
 
           {/* Password */}
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#8899aa', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 7, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               Senha
             </label>
             <div style={{ position: 'relative' }}>
-              <LockKeyhole size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#778899', pointerEvents: 'none' }} />
+              <LockKeyhole size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)', pointerEvents: 'none' }} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -408,8 +408,8 @@ export default function LoginPage() {
                 minLength={mode === 'signup' ? 8 : undefined}
                 style={{
                   width: '100%', padding: '12px 44px 12px 42px', borderRadius: 12, fontSize: 14,
-                  background: '#0d1520', border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#e2e8f0', outline: 'none',
+                  background: 'var(--color-surface-sidebar)', border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'var(--color-text)', outline: 'none',
                 }}
                 onFocus={e => e.target.style.borderColor = 'rgba(0,147,208,0.4)'}
                 onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
@@ -420,7 +420,7 @@ export default function LoginPage() {
                 aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                 style={{
                   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                  padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: '#778899',
+                  padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)',
                 }}
               >
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -456,7 +456,7 @@ export default function LoginPage() {
         </form>
 
         {/* Footer */}
-        <div style={{ marginTop: 32, textAlign: 'center', fontSize: 12, color: '#778899' }}>
+        <div style={{ marginTop: 32, textAlign: 'center', fontSize: 12, color: 'var(--color-text-secondary)' }}>
           Ao continuar, você concorda com os termos de uso do IrrigaAgro.
         </div>
       </div>
@@ -474,8 +474,8 @@ export default function LoginPage() {
         input:-webkit-autofill,
         input:-webkit-autofill:hover,
         input:-webkit-autofill:focus {
-          -webkit-box-shadow: 0 0 0px 1000px #0d1520 inset !important;
-          -webkit-text-fill-color: #e2e8f0 !important;
+          -webkit-box-shadow: 0 0 0px 1000px var(--color-surface-sidebar) inset !important;
+          -webkit-text-fill-color: var(--color-text) !important;
           transition: background-color 5000s ease-in-out 0s;
         }
       `}</style>
