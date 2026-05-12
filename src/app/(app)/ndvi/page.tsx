@@ -41,6 +41,41 @@ const TalhaoMapDrawDynamic = dynamic(
   { ssr: false, loading: () => <div style={{ height: 360, background: '#0d1520', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#556677', fontSize: 13 }}>Carregando mapa…</div> }
 )
 
+// ─── Cálculo de área GeoJSON ──────────────────────────────────────────────────
+function calcRingAreaHa(coords: number[][]): number {
+  // Fórmula de Shoelace em coordenadas geográficas → m² → ha
+  // Usa aproximação esférica (raio médio terrestre 6371000 m)
+  if (coords.length < 3) return 0
+  const R = 6371000
+  let area = 0
+  const n = coords.length
+  for (let i = 0; i < n - 1; i++) {
+    const [lon1, lat1] = coords[i]
+    const [lon2, lat2] = coords[i + 1]
+    const lat1r = (lat1 * Math.PI) / 180
+    const lat2r = (lat2 * Math.PI) / 180
+    const dlon = ((lon2 - lon1) * Math.PI) / 180
+    area += dlon * (2 + Math.sin(lat1r) + Math.sin(lat2r))
+  }
+  area = Math.abs((area * R * R) / 2)
+  return area / 10000 // m² → ha
+}
+
+function calcGeojsonAreaHa(geojson: Record<string, unknown> | null): number {
+  if (!geojson) return 0
+  if (geojson.type === 'Polygon') {
+    const coords = (geojson.coordinates as number[][][])[0]
+    return calcRingAreaHa(coords)
+  }
+  if (geojson.type === 'MultiPolygon') {
+    return (geojson.coordinates as number[][][][]).reduce(
+      (sum, poly) => sum + calcRingAreaHa(poly[0]),
+      0
+    )
+  }
+  return 0
+}
+
 // ─── Cores ────────────────────────────────────────────────────────────────────
 const C = {
   bg: '#0b1320', card: '#0f1923', border: 'rgba(255,255,255,0.06)',
@@ -454,22 +489,42 @@ function NdviDetalhe({
 
 // ─── Modal de criação/edição de talhão ────────────────────────────────────────
 function TalhaoModal({
-  talhao, farms, companyId, onClose, onSaved,
+  talhao, farms, pivots, companyId, onClose, onSaved,
 }: {
   talhao?: Talhao | null
   farms: Array<{ id: string; name: string }>
+  pivots: Pivot[]
   companyId: string
   onClose: () => void
   onSaved: () => void
 }) {
+  const [isMobileModal, setIsMobileModal] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    setIsMobileModal(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobileModal(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
   const [name, setName] = useState(talhao?.name ?? '')
   const [farmId, setFarmId] = useState(talhao?.farm_id ?? '')
   const [areaHa, setAreaHa] = useState(talhao?.area_ha?.toString() ?? '')
   const [color, setColor] = useState(talhao?.color ?? '#22c55e')
+
+  // Auto-calcular área quando polígono muda (a menos que usuário editou manualmente)
+  function handlePolygonChange(geo: Record<string, unknown> | null) {
+    setPolygon(geo)
+    if (!areaManual) {
+      const ha = calcGeojsonAreaHa(geo)
+      setAreaHa(ha > 0 ? ha.toFixed(2) : '')
+    }
+  }
   const [notes, setNotes] = useState(talhao?.notes ?? '')
   const [polygon, setPolygon] = useState<Record<string, unknown> | null>(talhao?.polygon_geojson ?? null)
+  const [drawing, setDrawing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [areaManual, setAreaManual] = useState(false)
 
   async function handleSave() {
     if (!name.trim()) { setError('Nome obrigatório.'); return }
@@ -498,13 +553,28 @@ function TalhaoModal({
     }
   }
 
-  // Farm center for map
-  const farmLat = -22.88
-  const farmLng = -50.36
+  // Map center: centroid of first pivot polygon of selected farm, or fallback
+  const mapCenter = useMemo(() => {
+    const farmPivot = pivots.find(p => p.farm_id === farmId && p.polygon_geojson)
+    if (farmPivot?.polygon_geojson) {
+      try {
+        const geo = farmPivot.polygon_geojson as { type: string; coordinates: number[][][] }
+        const coords = geo.type === 'Polygon' ? geo.coordinates[0] : null
+        if (coords && coords.length > 0) {
+          const avgLng = coords.reduce((s, c) => s + c[0], 0) / coords.length
+          const avgLat = coords.reduce((s, c) => s + c[1], 0) / coords.length
+          return { lat: avgLat, lng: avgLng }
+        }
+      } catch { /* ignore */ }
+    }
+    return { lat: -22.88, lng: -50.36 }
+  }, [farmId, pivots])
+  const farmLat = mapCenter.lat
+  const farmLng = mapCenter.lng
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, width: '100%', maxWidth: 680, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, width: '100%', maxWidth: 720, maxHeight: '95vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${C.border}` }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{talhao ? 'Editar Talhão' : 'Novo Talhão'}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.sec, display: 'flex', minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
@@ -519,8 +589,22 @@ function TalhaoModal({
               <input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Talhão Norte" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Área (ha)</label>
-              <input value={areaHa} onChange={e => setAreaHa(e.target.value)} type="number" placeholder="Ex: 45.5" style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                Área (ha)
+                {areaHa && !areaManual && (
+                  <span style={{ marginLeft: 6, fontSize: 10, color: C.green, fontWeight: 400 }}>⬤ calculado do mapa</span>
+                )}
+                {areaManual && (
+                  <button onClick={() => { setAreaManual(false); const ha = calcGeojsonAreaHa(polygon); setAreaHa(ha > 0 ? ha.toFixed(2) : '') }} style={{ marginLeft: 8, fontSize: 10, color: C.brand, fontWeight: 400, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>↺ recalcular do mapa</button>
+                )}
+              </label>
+              <input
+                value={areaHa}
+                onChange={e => { setAreaManual(true); setAreaHa(e.target.value) }}
+                type="number"
+                placeholder="Ex: 45.5"
+                style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: `1px solid ${areaManual ? 'rgba(245,158,11,0.4)' : C.border}`, background: '#0d1520', color: C.text, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+              />
             </div>
             <div>
               <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>Fazenda</label>
@@ -547,13 +631,20 @@ function TalhaoModal({
 
           {/* Mapa de desenho */}
           <div>
-            <label style={{ fontSize: 12, color: C.sec, fontWeight: 600, display: 'block', marginBottom: 6 }}>
-              Polígono {polygon ? <span style={{ color: C.green }}>✓ desenhado</span> : <span style={{ color: C.amber }}>(obrigatório para NDVI)</span>}
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <label style={{ fontSize: 12, color: C.sec, fontWeight: 600 }}>
+                Polígono{' '}
+                {polygon
+                  ? <span style={{ color: C.green }}>✓ {polygon.type === 'MultiPolygon' ? `${(polygon.coordinates as unknown[]).length} áreas` : '1 área'}</span>
+                  : <span style={{ color: C.amber }}>(obrigatório para NDVI)</span>}
+              </label>
+              <span style={{ fontSize: 11, color: C.muted }}>Pode desenhar várias áreas separadas</span>
+            </div>
             <TalhaoMapDrawDynamic
               existingPolygon={polygon}
-              onPolygonChange={setPolygon}
-              height={320}
+              onPolygonChange={handlePolygonChange}
+              onDrawingChange={setDrawing}
+              height={isMobileModal ? 280 : 460}
               centerLat={farmLat}
               centerLng={farmLng}
             />
@@ -561,7 +652,12 @@ function TalhaoModal({
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.sec, cursor: 'pointer', fontSize: 13 }}>Cancelar</button>
-            <button onClick={handleSave} disabled={saving} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: C.brand, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, opacity: saving ? 0.6 : 1 }}>
+            {drawing && (
+              <span style={{ fontSize: 12, color: C.amber, alignSelf: 'center' }}>
+                ⚠️ Feche o polígono antes de salvar
+              </span>
+            )}
+            <button onClick={handleSave} disabled={saving || drawing} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: C.brand, color: '#fff', cursor: saving || drawing ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, opacity: saving || drawing ? 0.5 : 1 }}>
               <Save size={14} />{saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
@@ -581,6 +677,14 @@ export default function NdviPage() {
   const [talhoes, setTalhoes] = useState<Talhao[]>([])
   const [loading, setLoading] = useState(true)
   const [aba, setAba] = useState<Aba>('pivotos')
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   // Pivô selecionado
   const [pivotSel, setPivotSel] = useState<string | null>(null)
@@ -734,7 +838,7 @@ export default function NdviPage() {
             <div style={{ fontSize: 15, fontWeight: 600, color: C.text }}>Nenhum pivô cadastrado</div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px,1fr) minmax(0,2fr)', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(180px,1fr) minmax(0,2fr)', gap: 16 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Menor → Maior NDVI</div>
               {rankingPivots.map(({ id, nome, ndvi, data, tendencia, variacaoPct }) => (
@@ -779,7 +883,7 @@ export default function NdviPage() {
               <div style={{ fontSize: 12, color: C.muted }}>Crie talhões para monitorar qualquer área por satélite — sequeiro, pastagem, APP, etc.</div>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px,1fr) minmax(0,2fr)', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(180px,1fr) minmax(0,2fr)', gap: 16 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Menor → Maior NDVI</div>
                 {rankingTalhoes.map(({ id, nome, ndvi, data, tendencia, variacaoPct, color }) => (
@@ -857,6 +961,7 @@ export default function NdviPage() {
         <TalhaoModal
           talhao={modalTalhao === 'new' ? null : modalTalhao}
           farms={farms}
+          pivots={pivots}
           companyId={company?.id ?? ''}
           onClose={() => setModalTalhao(null)}
           onSaved={loadData}

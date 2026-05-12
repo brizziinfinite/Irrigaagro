@@ -4,14 +4,17 @@ import { useState, useEffect } from 'react'
 
 const DISMISSED_KEY = 'irrigaagro_install_banner_dismissed'
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 export function InstallBanner() {
   const [show, setShow] = useState(false)
+  const [isIOS, setIsIOS] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
-    // Só iOS Safari
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
-    const isSafari = /safari/i.test(navigator.userAgent) && !/chrome|crios|fxios/i.test(navigator.userAgent)
-
     // Já instalado como PWA
     const isStandalone =
       ('standalone' in navigator && (navigator as Navigator & { standalone: boolean }).standalone === true) ||
@@ -20,16 +23,47 @@ export function InstallBanner() {
     // Já dispensou antes
     const dismissed = localStorage.getItem(DISMISSED_KEY)
 
-    if (isIOS && isSafari && !isStandalone && !dismissed) {
-      // Pequeno delay para não aparecer imediatamente no load
+    if (isStandalone || dismissed) return
+
+    // Android/Chrome: captura beforeinstallprompt
+    const handler = (e: Event) => {
+      e.preventDefault()
+      setDeferredPrompt(e as BeforeInstallPromptEvent)
+      setIsIOS(false)
       const t = setTimeout(() => setShow(true), 2500)
       return () => clearTimeout(t)
     }
+    window.addEventListener('beforeinstallprompt', handler)
+
+    // iOS Safari
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent)
+    const safari = /safari/i.test(navigator.userAgent) && !/chrome|crios|fxios/i.test(navigator.userAgent)
+    if (ios && safari) {
+      setIsIOS(true)
+      const t = setTimeout(() => setShow(true), 2500)
+      return () => {
+        clearTimeout(t)
+        window.removeEventListener('beforeinstallprompt', handler)
+      }
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
   function dismiss() {
     localStorage.setItem(DISMISSED_KEY, '1')
     setShow(false)
+  }
+
+  async function handleInstall() {
+    if (!deferredPrompt) return
+    await deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') {
+      localStorage.setItem(DISMISSED_KEY, '1')
+    }
+    setShow(false)
+    setDeferredPrompt(null)
   }
 
   if (!show) return null
@@ -53,7 +87,7 @@ export function InstallBanner() {
         animation: 'fadeInUp 0.35s ease-out both',
       }}
     >
-      {/* Ícone do app */}
+      {/* Ícone */}
       <img
         src="/icons/apple-touch-icon.png"
         alt="IrrigaAgro"
@@ -66,22 +100,45 @@ export function InstallBanner() {
           Adicione à Tela de Início
         </p>
         <p style={{ fontSize: 12, color: '#8899aa', margin: '4px 0 0', lineHeight: 1.4 }}>
-          Toque em{' '}
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: '#0093D0', fontWeight: 600 }}>
-            {/* Share icon inline */}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-              <polyline points="16 6 12 2 8 6"/>
-              <line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>
-            Compartilhar
-          </span>
-          {' '}e depois{' '}
-          <span style={{ color: '#0093D0', fontWeight: 600 }}>
-            &ldquo;Adicionar à Tela de Início&rdquo;
-          </span>
-          {' '}para acesso rápido no campo.
+          {isIOS ? (
+            <>
+              Toque em{' '}
+              <span style={{ color: '#0093D0', fontWeight: 600 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 2 }}>
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                  <polyline points="16 6 12 2 8 6"/>
+                  <line x1="12" y1="2" x2="12" y2="15"/>
+                </svg>
+                Compartilhar
+              </span>
+              {' '}e depois{' '}
+              <span style={{ color: '#0093D0', fontWeight: 600 }}>&ldquo;Adicionar à Tela de Início&rdquo;</span>
+              {' '}para acesso rápido no campo.
+            </>
+          ) : (
+            <>Instale o app para acesso rápido no campo, mesmo com sinal fraco.</>
+          )}
         </p>
+
+        {/* Botão instalar Android */}
+        {!isIOS && (
+          <button
+            onClick={handleInstall}
+            style={{
+              marginTop: 10,
+              padding: '7px 16px',
+              borderRadius: 8,
+              border: 'none',
+              background: '#0093D0',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Instalar app
+          </button>
+        )}
       </div>
 
       {/* Fechar */}
@@ -91,6 +148,7 @@ export function InstallBanner() {
           background: 'none', border: 'none', cursor: 'pointer',
           color: '#556677', padding: 4, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          minWidth: 36, minHeight: 36,
         }}
         aria-label="Fechar"
       >
