@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface Props {
   existingPolygon?: Record<string, unknown> | null
   onPolygonChange: (geojson: Record<string, unknown> | null) => void
+  onDrawingChange?: (drawing: boolean) => void
   height?: number
   centerLat?: number
   centerLng?: number
@@ -13,13 +14,41 @@ interface Props {
 export function TalhaoMapDraw({
   existingPolygon,
   onPolygonChange,
-  height = 360,
+  onDrawingChange,
+  height = 460,
   centerLat = -22.88,
   centerLng = -50.36,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<unknown>(null)
-  const drawnLayerRef = useRef<unknown>(null)
+  const drawnLayersRef = useRef<unknown[]>([])
+  const [polyCount, setPolyCount] = useState(0)
+  const [isDrawing, setIsDrawing] = useState(false)
+
+  // Helper: build GeoJSON from all drawn layers
+  function buildGeoJSON(layers: unknown[]): Record<string, unknown> | null {
+    if (layers.length === 0) return null
+
+    const polys: unknown[][] = []
+    for (const layer of layers) {
+      try {
+        const lWithToGeoJSON = layer as { toGeoJSON?: () => { geometry: { type: string; coordinates: unknown[][] } } }
+        if (lWithToGeoJSON.toGeoJSON) {
+          const geo = lWithToGeoJSON.toGeoJSON().geometry
+          if (geo.type === 'Polygon') {
+            polys.push(geo.coordinates as unknown[])
+          } else if (geo.type === 'MultiPolygon') {
+            // Rectangle from geoman comes as Polygon, but handle MultiPolygon too
+            for (const coords of geo.coordinates) polys.push(coords as unknown[])
+          }
+        }
+      } catch { /* ignore */ }
+    }
+
+    if (polys.length === 0) return null
+    if (polys.length === 1) return { type: 'Polygon', coordinates: polys[0] }
+    return { type: 'MultiPolygon', coordinates: polys }
+  }
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -36,7 +65,6 @@ export function TalhaoMapDraw({
 
       if (cancelled || !containerRef.current) return
 
-      // Fix default icon
       delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -50,13 +78,12 @@ export function TalhaoMapDraw({
       )
       mapRef.current = map
 
-      // Satellite tiles
       L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         { attribution: 'Esri', maxZoom: 19 }
       ).addTo(map)
 
-      // Geoman controls — só polígono
+      // Geoman controls
       ;(map as unknown as { pm: { addControls: (opts: Record<string, unknown>) => void } }).pm.addControls({
         position: 'topleft',
         drawMarker: false,
@@ -73,55 +100,75 @@ export function TalhaoMapDraw({
         rotateMode: false,
       })
 
-      // Load existing polygon
+      // Load existing polygon/multipolygon
       if (existingPolygon) {
         try {
-          const layer = L.geoJSON(existingPolygon as unknown as Parameters<typeof L.geoJSON>[0])
-          layer.addTo(map)
-          drawnLayerRef.current = layer
-          map.fitBounds(layer.getBounds(), { padding: [20, 20] })
+          const geo = existingPolygon as { type: string }
+          if (geo.type === 'MultiPolygon') {
+            // Load each polygon as separate layer
+            const featureCollection = {
+              type: 'FeatureCollection',
+              features: (existingPolygon as { coordinates: unknown[][] }).coordinates.map(coords => ({
+                type: 'Feature',
+                geometry: { type: 'Polygon', coordinates: coords },
+                properties: {},
+              }))
+            }
+            const layerGroup = L.geoJSON(featureCollection as unknown as Parameters<typeof L.geoJSON>[0])
+            layerGroup.addTo(map)
+            layerGroup.eachLayer((l) => {
+              drawnLayersRef.current.push(l)
+            })
+            setPolyCount(drawnLayersRef.current.length)
+            map.fitBounds(layerGroup.getBounds(), { padding: [20, 20] })
+          } else {
+            const layer = L.geoJSON(existingPolygon as unknown as Parameters<typeof L.geoJSON>[0])
+            layer.addTo(map)
+            layer.eachLayer((l) => {
+              drawnLayersRef.current.push(l)
+            })
+            setPolyCount(drawnLayersRef.current.length)
+            map.fitBounds(layer.getBounds(), { padding: [20, 20] })
+          }
         } catch (e) {
           console.error('Error loading existing polygon:', e)
         }
       }
 
-      // Helper to extract GeoJSON from layer
-      function extractGeoJSON(layer: unknown): Record<string, unknown> | null {
-        try {
-          const lWithToGeoJSON = layer as { toGeoJSON?: () => { geometry: Record<string, unknown> } }
-          if (lWithToGeoJSON.toGeoJSON) {
-            return lWithToGeoJSON.toGeoJSON().geometry as Record<string, unknown>
-          }
-        } catch { /* ignore */ }
-        return null
-      }
-
-      // Events
       const mapWithPm = map as unknown as {
         on: (event: string, cb: (e: { layer: unknown }) => void) => void
       }
 
+      // Track drawing state
+      ;(map as unknown as { on: (e: string, cb: () => void) => void }).on('pm:drawstart', () => {
+        setIsDrawing(true)
+        onDrawingChange?.(true)
+      })
+      ;(map as unknown as { on: (e: string, cb: () => void) => void }).on('pm:drawend', () => {
+        setIsDrawing(false)
+        onDrawingChange?.(false)
+      })
+
+      // Accumulate layers — DON'T remove previous
       mapWithPm.on('pm:create', (e) => {
-        // Remove previous drawn layer
-        if (drawnLayerRef.current) {
-          ;(map as unknown as { removeLayer: (l: unknown) => void }).removeLayer(drawnLayerRef.current)
-        }
-        drawnLayerRef.current = e.layer
-        const geo = extractGeoJSON(e.layer)
+        drawnLayersRef.current = [...drawnLayersRef.current, e.layer]
+        const count = drawnLayersRef.current.length
+        setPolyCount(count)
+        const geo = buildGeoJSON(drawnLayersRef.current)
         onPolygonChange(geo)
       })
 
-      mapWithPm.on('pm:remove', () => {
-        drawnLayerRef.current = null
-        onPolygonChange(null)
+      mapWithPm.on('pm:remove', (e) => {
+        drawnLayersRef.current = drawnLayersRef.current.filter(l => l !== e.layer)
+        const count = drawnLayersRef.current.length
+        setPolyCount(count)
+        const geo = buildGeoJSON(drawnLayersRef.current)
+        onPolygonChange(geo)
       })
 
-      // Edit finish
       ;(map as unknown as { on: (e: string, cb: () => void) => void }).on('pm:edit', () => {
-        if (drawnLayerRef.current) {
-          const geo = extractGeoJSON(drawnLayerRef.current)
-          onPolygonChange(geo)
-        }
+        const geo = buildGeoJSON(drawnLayersRef.current)
+        onPolygonChange(geo)
       })
     }
 
@@ -132,7 +179,7 @@ export function TalhaoMapDraw({
       if (mapRef.current) {
         ;(mapRef.current as { remove: () => void }).remove()
         mapRef.current = null
-        drawnLayerRef.current = null
+        drawnLayersRef.current = []
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -141,12 +188,33 @@ export function TalhaoMapDraw({
   return (
     <div style={{ position: 'relative' }}>
       <div ref={containerRef} style={{ height, borderRadius: 12, overflow: 'hidden' }} />
+
+      {/* Status overlay */}
       <div style={{
-        position: 'absolute', bottom: 8, right: 8, zIndex: 1000,
-        background: 'rgba(13,21,32,0.85)', borderRadius: 8, padding: '5px 10px',
-        fontSize: 10, color: '#8899aa', pointerEvents: 'none',
+        position: 'absolute', bottom: 8, left: 8, right: 8, zIndex: 1000,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        pointerEvents: 'none',
       }}>
-        Clique no ícone de polígono para desenhar · clique duplo para fechar
+        {/* Instrução */}
+        <div style={{
+          background: 'rgba(13,21,32,0.88)', borderRadius: 8, padding: '5px 10px',
+          fontSize: 11, color: '#8899aa',
+        }}>
+          {isDrawing
+            ? '📍 Clique para adicionar pontos · duplo-clique para fechar'
+            : 'Clique em 📐 para desenhar · pode adicionar múltiplas áreas'}
+        </div>
+
+        {/* Contador de polígonos */}
+        {polyCount > 0 && (
+          <div style={{
+            background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
+            borderRadius: 8, padding: '5px 10px', fontSize: 11,
+            color: '#4ade80', fontWeight: 600,
+          }}>
+            {polyCount} área{polyCount !== 1 ? 's' : ''} desenhada{polyCount !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
     </div>
   )

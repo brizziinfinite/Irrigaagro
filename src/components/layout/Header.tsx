@@ -3,9 +3,10 @@
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { useAuth } from '@/hooks/useAuth'
-import { Bell, Menu, ChevronDown, MapPin } from 'lucide-react'
+import { Menu, ChevronDown, MapPin, Sun, Moon } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { PushNotificationToggle } from '@/components/PushNotificationToggle'
+import { useTheme } from '@/contexts/ThemeContext'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Central de Controle',
@@ -32,7 +33,11 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
   const pathname = usePathname()
   const { company, farm, farms, switchFarm } = useAuth()
   const pageTitle = PAGE_TITLES[pathname] ?? 'IrrigaAgro'
+  const { theme, toggleTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [farmMenuOpen, setFarmMenuOpen] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
   const farmMenuRef = useRef<HTMLDivElement>(null)
 
   // Fecha dropdown ao clicar fora
@@ -145,10 +150,10 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
                 style={{
                   position: 'absolute', top: 'calc(100% + 6px)', right: 0,
                   minWidth: 200, zIndex: 100,
-                  background: '#0f1923',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'var(--color-surface-card)',
+                  border: '1px solid var(--color-surface-border)',
                   borderRadius: 12,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
                   overflow: 'hidden',
                 }}
               >
@@ -161,7 +166,7 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
                     color: !farm ? '#0093D0' : 'var(--color-text-secondary)',
                     background: !farm ? 'rgba(0,147,208,0.08)' : 'transparent',
                     border: 'none', cursor: 'pointer',
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    borderBottom: '1px solid var(--color-surface-border2)',
                     fontWeight: !farm ? 600 : 400,
                   }}
                 >
@@ -179,7 +184,7 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
                       border: 'none', cursor: 'pointer',
                       fontWeight: farm?.id === f.id ? 600 : 400,
                     }}
-                    onMouseEnter={e => { if (farm?.id !== f.id) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}
+                    onMouseEnter={e => { if (farm?.id !== f.id) (e.currentTarget as HTMLElement).style.background = 'var(--color-surface-elevated)' }}
                     onMouseLeave={e => { if (farm?.id !== f.id) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >
                     {f.name}
@@ -188,6 +193,28 @@ export function Header({ user: _, onMenuClick }: HeaderProps) {
               </div>
             )}
           </div>
+        )}
+
+        {/* Toggle tema dark/light — só renderiza no client para evitar hydration mismatch */}
+        {mounted && (
+          <button
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+            style={{
+              width: 36, height: 36, minWidth: 36,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: 10,
+              border: '1px solid var(--color-surface-border)',
+              background: 'var(--color-surface-elevated)',
+              color: 'var(--color-text-secondary)',
+              cursor: 'pointer',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--color-text)'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--color-text-secondary)'}
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
         )}
 
         {/* Toggle notificações push */}
