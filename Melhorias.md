@@ -373,6 +373,33 @@ Página safras mostrava 79% (D-1 do banco) enquanto dashboard mostrava valor pro
 
 ---
 
+## 📐 NDVI — Cálculo automático de área dos talhões
+**Status:** ✅ Implementado em 2026-05-12
+
+- Fórmula de Shoelace com aproximação esférica (raio 6371000m) → hectares
+- Preenche campo "Área (ha)" automaticamente ao fechar o polígono no mapa
+- Badge "calculado do mapa" vs edição manual (borda âmbar + botão recalcular)
+- MultiPolygon: soma de todas as áreas
+
+---
+
+## 📱 PWA — Suporte Android/Chrome (beforeinstallprompt)
+**Status:** ✅ Implementado em 2026-05-12
+
+- `InstallBanner.tsx` reescrito: captura `beforeinstallprompt`, exibe botão "Instalar app"
+- iOS Safari mantém fluxo manual
+- [ ] Testar em dispositivo físico Android + iOS
+
+---
+
+## 🎨 Migração CSS vars — todas as páginas
+**Status:** ✅ Implementado em 2026-05-12
+
+~3300 cores hardcoded → CSS custom properties em 45 arquivos.
+Facilita manutenção e qualquer futura mudança de tema.
+
+---
+
 ## 🛰️ NDVI Satélite — Monitoramento por Sentinel-2
 **Status:** ✅ Implementado em 2026-05-06 · branch `feat/ndvi`
 
@@ -442,3 +469,100 @@ Página `/ndvi` com monitoramento de NDVI via Sentinel-2 (Planet Labs Insights P
 
 Integrar histórico de adubação ao balanço hídrico para correlação com rendimento.
 Requer novo módulo e tabelas.
+
+---
+
+## PRÓXIMAS MELHORIAS (backlog priorizado — 2026-05-12)
+
+### 🔴 Alta prioridade
+
+#### 🛰️ NDVI Copernicus — ativar credenciais OAuth
+**Status:** ⏳ Pendente
+
+Credenciais criadas em `shapps.dataspace.copernicus.eu` mas retornam `unauthorized_client`.
+
+```bash
+# Testar token:
+curl -s -X POST "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id=sh-4423891e-58ad-48c4-969e-cdffb2dfd73e&client_secret=UfILnzcJil3TmenT9rIiYPPICLkSODHD"
+```
+
+Se ainda der erro: recriar OAuth client no painel → Account Settings → OAuth clients → + Create.
+Após token funcionar: clicar "Atualizar via Satélite" nos dois pivôs e verificar PNG no Storage `campo-ndvi`.
+
+---
+
+#### 📧 Email Resend — domínio próprio
+**Status:** ⏳ Pendente
+
+E-mails de ativação e novo cadastro não enviam porque `gotejo.com.br` não está configurado no painel Resend.
+- Entrar em resend.com → Domains → Add Domain → `gotejo.com.br`
+- Adicionar registros DNS no Cloudflare (TXT + MX)
+- Atualizar `from:` nas funções de envio para `noreply@gotejo.com.br`
+
+---
+
+#### 🌾 Fazenda Krebbs — parâmetros de solo
+**Status:** ⏳ Pendente
+
+Pivô Krebbs tem CC, PM, Ds = null. Preencher em `/pivos` → editar → Parâmetros de Solo.
+Valores de referência (Latossolo Vermelho argiloso):
+- CC ≈ 28-32%, PM ≈ 14-16%, Ds ≈ 1.2-1.3 g/cm³
+
+---
+
+### 🟡 Média prioridade
+
+#### 📱 Testes PWA em dispositivo físico
+**Status:** ⏳ Pendente — requer dispositivo
+
+- Chrome Android: verificar `beforeinstallprompt` + banner + ícone na tela inicial
+- Safari iOS: verificar fluxo manual (Compartilhar → Adicionar à tela)
+- Ambos: testar modo offline (service worker cache)
+
+---
+
+#### 💬 WhatsApp — testar alertas automáticos em produção
+**Status:** ⏳ Pendente
+
+- `afternoon-alert` (17h BRT): pivôs com FC% abaixo do threshold
+- `weekly-report` (segunda-feira 10h): resumo semanal por empresa
+- Verificar formato da mensagem, dados corretos, link de resposta
+
+---
+
+#### 🎨 Visual premium Dribbble — dashboard
+**Status:** ⏳ Planejado
+
+Aplicar padrões do skill `/dribbble` nos componentes do dashboard:
+- `KpiCards`: gradiente nos ícones, glow no hover, número 32px monospace
+- `DecisionCard`: glow radial decorativo no canto, border animado por status
+- `WaterBalanceChart`: tooltip custom dark bg, grid lines quase invisíveis, barras com gradiente
+- `PivotMap`: marcadores com glow proporcional ao status
+
+---
+
+#### 🔔 Push notifications — testar e validar
+**Status:** ⏳ Pendente
+
+Cron `send-push-alerts` (17h UTC) está em produção mas nunca foi testado end-to-end.
+- Ativar notificações no header → verificar registro em `push_subscriptions`
+- Esperar ou forçar via `/api/cron/send-push-alerts` com `CRON_SECRET`
+- Confirmar push chega no dispositivo
+
+---
+
+### 🟢 Baixa prioridade / Futuro
+
+#### 🗓️ Calendário de manejo — visão mensal
+Visão calendário em `/lancamentos` mostrando irrigações planejadas vs realizadas por pivô.
+
+#### 📊 Relatório PDF exportável
+Gerar PDF com balanço hídrico do período, gráficos e recomendações — para enviar ao produtor.
+
+#### 🌐 Integração Valley AgSense API
+Buscar automaticamente horas de funcionamento dos pivôs Valley para calcular lâmina real aplicada.
+
+#### 📡 Integração Ecowitt WS2910
+Estação meteorológica Ecowitt — importar dados via API local ou Ecowitt cloud.
