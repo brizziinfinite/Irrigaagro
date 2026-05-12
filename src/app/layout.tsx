@@ -46,12 +46,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://services.arcgisonline.com" />
         <link rel="dns-prefetch" href="https://server.arcgisonline.com" />
         <meta name="color-scheme" content="dark" />
-        {/* Theme: set data-theme before paint to avoid flash */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('irrigaagro_theme');if(!t)t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})()`,
-          }}
-        />
         {/* Service Worker registration */}
         <script
           dangerouslySetInnerHTML={{

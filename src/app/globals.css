@@ -49,32 +49,6 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* ====== LIGHT MODE ====== */
-/* :root:where([data-theme="light"]) tem especificidade (0,2,0) > :root (0,1,0) */
-:root:where([data-theme="light"]) {
-  --color-surface-bg:       #f0f4f8;
-  --color-surface-sidebar:  #e2eaf2;
-  --color-surface-card:     #ffffff;
-  --color-surface-card2:    #f5f8fc;
-  --color-surface-elevated: #eaf0f7;
-  --color-surface-border:   rgba(0,0,0,0.08);
-  --color-surface-border2:  rgba(0,0,0,0.06);
-
-  --color-text:           #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted:     #64748b;
-  --color-text-faint:     #94a3b8;
-
-  --color-brand:     #0093D0;
-  --color-brand-2:   #16a34a;
-  --color-cyan:      #0891b2;
-
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 0 0 1px rgb(0 0 0 / 0.04);
-
-  color-scheme: light;
-  background-color: #f0f4f8;
-  color: #0f172a;
-}
 
 /* ====== RESET ====== */
 *, *::before, *::after {
