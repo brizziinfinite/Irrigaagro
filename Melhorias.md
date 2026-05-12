@@ -532,17 +532,6 @@ Valores de referência (Latossolo Vermelho argiloso):
 
 ---
 
-#### 🎨 Visual premium Dribbble — dashboard
-**Status:** ⏳ Planejado
-
-Aplicar padrões do skill `/dribbble` nos componentes do dashboard:
-- `KpiCards`: gradiente nos ícones, glow no hover, número 32px monospace
-- `DecisionCard`: glow radial decorativo no canto, border animado por status
-- `WaterBalanceChart`: tooltip custom dark bg, grid lines quase invisíveis, barras com gradiente
-- `PivotMap`: marcadores com glow proporcional ao status
-
----
-
 #### 🔔 Push notifications — testar e validar
 **Status:** ⏳ Pendente
 
