@@ -48,7 +48,7 @@ export function classificarNdvi(ndvi: number | null) {
 }
 
 // ── NDVI de múltiplos pivôs (leitura direta no banco) ─────────────────────
-export function useNdviMultiplos(pivotIds: string[]) {
+export function useNdviMultiplos(pivotIds: string[], refreshKey = 0) {
   const [data, setData] = useState<NdviRegistro[]>([])
   const pivotKey = pivotIds.join(',')
 
@@ -63,18 +63,18 @@ export function useNdviMultiplos(pivotIds: string[]) {
       .then(({ data: rows }) => {
         const porPivot = new Map<string, NdviRegistro>()
         for (const r of rows ?? []) {
-          if (!porPivot.has(r.pivot_id)) porPivot.set(r.pivot_id, r as NdviRegistro)
+          if (!porPivot.has(r.pivot_id) && r.ndvi_medio != null) porPivot.set(r.pivot_id, r as NdviRegistro)
         }
         setData(Array.from(porPivot.values()))
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pivotKey])
+  }, [pivotKey, refreshKey])
 
   return data
 }
 
 // ── Comparativo: 2 últimas leituras por pivô ──────────────────────────────
-export function useNdviComparativo(pivotIds: string[]) {
+export function useNdviComparativo(pivotIds: string[], refreshKey = 0) {
   const [data, setData] = useState<NdviComparativoItem[]>([])
   const pivotKey = pivotIds.join(',')
 
@@ -89,6 +89,7 @@ export function useNdviComparativo(pivotIds: string[]) {
       .then(({ data: rows }) => {
         const porPivot = new Map<string, NdviRegistro[]>()
         for (const r of rows ?? []) {
+          if (r.ndvi_medio == null) continue
           const lista = porPivot.get(r.pivot_id) ?? []
           if (lista.length < 2) {
             lista.push(r as NdviRegistro)
@@ -113,7 +114,7 @@ export function useNdviComparativo(pivotIds: string[]) {
         setData(result)
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pivotKey])
+  }, [pivotKey, refreshKey])
 
   return data
 }

@@ -595,6 +595,7 @@ export default function NdviPage() {
   // Modal talhão
   const [modalTalhao, setModalTalhao] = useState<Talhao | null | 'new'>(null)
 
+  const [ndviRefreshKey, setNdviRefreshKey] = useState(0)
   const { mutate: refreshNdvi, pending: refreshing, error: refreshErrorPivot } = useRefreshNdvi()
   const { mutate: refreshNdviTalhao, pending: refreshingTalhao, error: refreshErrorTalhao } = useRefreshNdvi()
 
@@ -622,10 +623,10 @@ export default function NdviPage() {
   const talhaoIds = useMemo(() => talhoes.map(t => t.id), [talhoes])
   const allIds = useMemo(() => [...pivotIds, ...talhaoIds], [pivotIds, talhaoIds])
 
-  const ndviMultiplosPivots = useNdviMultiplos(pivotIds)
-  const ndviMultiplosTalhoes = useNdviMultiplos(talhaoIds)
-  const ndviComparativoPivots = useNdviComparativo(pivotIds)
-  const ndviComparativoTalhoes = useNdviComparativo(talhaoIds)
+  const ndviMultiplosPivots = useNdviMultiplos(pivotIds, ndviRefreshKey)
+  const ndviMultiplosTalhoes = useNdviMultiplos(talhaoIds, ndviRefreshKey)
+  const ndviComparativoPivots = useNdviComparativo(pivotIds, ndviRefreshKey)
+  const ndviComparativoTalhoes = useNdviComparativo(talhaoIds, ndviRefreshKey)
 
   // Carrega detalhe pivô
   const loadPivotDetalhe = useCallback(async (pid: string) => {
@@ -748,7 +749,7 @@ export default function NdviPage() {
                   loadingDetalhe={loadingPivotDetalhe}
                   hasPolygon={!!pivots.find(p => p.id === pivotSel)?.polygon_geojson}
                   compSel={ndviComparativoPivots.find(c => c.pivot_id === pivotSel) ?? null}
-                  onRefresh={() => refreshNdvi({ pivot_id: pivotSel! }, (res) => { setPivotDetalhe(res) })}
+                  onRefresh={() => refreshNdvi({ pivot_id: pivotSel! }, (res) => { setPivotDetalhe(res); setNdviRefreshKey(k => k + 1) })}
                   refreshing={refreshing}
                   refreshError={refreshErrorPivot}
                 />
@@ -804,7 +805,7 @@ export default function NdviPage() {
                     loadingDetalhe={loadingTalhaoDetalhe}
                     hasPolygon={!!talhoes.find(t => t.id === talhaoSel)?.polygon_geojson}
                     compSel={ndviComparativoTalhoes.find(c => c.pivot_id === talhaoSel) ?? null}
-                    onRefresh={() => refreshNdviTalhao({ talhao_id: talhaoSel! }, (res) => { setTalhaoDetalhe(res) })}
+                    onRefresh={() => refreshNdviTalhao({ talhao_id: talhaoSel! }, (res) => { setTalhaoDetalhe(res); setNdviRefreshKey(k => k + 1) })}
                     refreshing={refreshingTalhao}
                     refreshError={refreshErrorTalhao}
                   />
