@@ -259,6 +259,32 @@ export async function getDashboardDataForUser(
     })
   }
 
+  // Sanity check: FC% projetado não deve divergir muito do último registro salvo.
+  // Divergência > 15pp indica bug no gap projection (ex: chuvas ignoradas, ETc errada).
+  // Não bloqueia — apenas loga para Vercel Functions logs e /admin poder auditar.
+  for (const [seasonId, projectedPct] of Object.entries(currentFieldCapacityBySeasonId)) {
+    const lastRecord = lastManagementBySeason[seasonId]
+    if (lastRecord?.field_capacity_percent != null) {
+      const daysSinceRecord = Math.round(
+        (new Date(today + 'T12:00:00').getTime() - new Date(lastRecord.date + 'T12:00:00').getTime()) / 86400000
+      )
+      // Divergência só é suspeita se o registro for recente (≤3 dias)
+      // Após 3+ dias sem manejo a divergência pode ser real (seca ou chuva intensa)
+      if (daysSinceRecord <= 3) {
+        const diff = projectedPct - lastRecord.field_capacity_percent
+        // Flag se projetado for MUITO abaixo do salvo (indica chuva/irrigação ignorada)
+        // ou MUITO acima (indica ETc subestimada)
+        if (diff < -15 || diff > 20) {
+          console.error(
+            `[dashboard:sanity] FC% divergence — season=${seasonId} ` +
+            `projected=${projectedPct.toFixed(1)}% saved=${lastRecord.field_capacity_percent.toFixed(1)}% ` +
+            `diff=${diff.toFixed(1)}pp days_gap=${daysSinceRecord}`
+          )
+        }
+      }
+    }
+  }
+
   // 4ª rodada: energyBills + diagnostics em paralelo (dependem de pivots)
   pivots.sort((a, b) => a.name.localeCompare(b.name))
 
