@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Crop, CropInsert, CropUpdate } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
-const cropsTable = (client: TypedSupabaseClient) => (client as any).from('crops')
+const cropsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'crops')
 
 export async function listCropsByCompany(
   companyId: string,

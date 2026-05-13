@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Crop, Season, SeasonInsert, SeasonUpdate } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
 export interface SeasonWithRelations extends Season {
@@ -8,7 +9,7 @@ export interface SeasonWithRelations extends Season {
   farms: { name: string }
 }
 
-const seasonsTable = (client: TypedSupabaseClient) => (client as any).from('seasons')
+const seasonsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'seasons')
 
 export async function listSeasonsByFarmIds(
   farmIds: string[],

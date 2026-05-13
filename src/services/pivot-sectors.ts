@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/client'
 import type { PivotSector, PivotSectorInsert, PivotSectorUpdate } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
-const sectorsTable = (client: TypedSupabaseClient) => (client as any).from('pivot_sectors')
+const sectorsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'pivot_sectors')
 
 function sectorError(action: string, error: { message: string }) {
   return new Error(`Falha ao ${action} setor: ${error.message}`)

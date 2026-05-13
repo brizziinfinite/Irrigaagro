@@ -17,6 +17,7 @@ import {
 } from '@/services/management'
 import { createCronJobEvent, createCronJobRun, updateCronJobRun } from '@/services/cron-observability'
 import { getScheduledIrrigationForDate } from '@/services/irrigation-schedule'
+import { fromUntyped } from '@/services/base'
 import type { TypedSupabaseClient } from '@/services/base'
 import type { CronJobRunStatus, DailyManagementInsert, Json } from '@/types/database'
 
@@ -417,8 +418,7 @@ export async function GET(req: NextRequest) {
         // o agricultor cancela/edita o lançamento antes do próximo cron.
         if (scheduledIrrigationId && scheduledIrrigationStatus === 'planned') {
           try {
-            await (supabase as any)
-              .from('irrigation_schedule')
+            await fromUntyped(supabase, 'irrigation_schedule')
               .update({ status: 'done', updated_at: new Date().toISOString() })
               .eq('id', scheduledIrrigationId)
           } catch {

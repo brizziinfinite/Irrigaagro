@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 const DISMISSED_KEY = 'irrigaagro_install_banner_dismissed'
 
@@ -88,10 +89,12 @@ export function InstallBanner() {
       }}
     >
       {/* Ícone */}
-      <img
+      <Image
         src="/icons/apple-touch-icon.png"
         alt="IrrigaAgro"
-        style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }}
+        width={44}
+        height={44}
+        style={{ borderRadius: 10, flexShrink: 0 }}
       />
 
       {/* Texto */}

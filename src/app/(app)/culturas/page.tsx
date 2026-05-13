@@ -632,7 +632,7 @@ export default function CulturasPage() {
                     ))}
                   </div>
                 ) : (
-                  <p style={{ fontSize: 13, color: '#445566', padding: '8px 0' }}>Nenhuma cultura personalizada encontrada para "{search}".</p>
+                  <p style={{ fontSize: 13, color: '#445566', padding: '8px 0' }}>Nenhuma cultura personalizada encontrada para &quot;{search}&quot;.</p>
                 )}
               </div>
             )}
@@ -649,7 +649,7 @@ export default function CulturasPage() {
                   ))}
                 </div>
               ) : q ? (
-                <p style={{ fontSize: 13, color: '#445566', padding: '8px 0' }}>Nenhuma cultura padrão encontrada para "{search}".</p>
+                <p style={{ fontSize: 13, color: '#445566', padding: '8px 0' }}>Nenhuma cultura padrão encontrada para &quot;{search}&quot;.</p>
               ) : null}
             </div>
 

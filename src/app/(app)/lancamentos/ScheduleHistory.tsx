@@ -343,7 +343,7 @@ function WhatsAppModal({
               <button key={c.id} onClick={() => {
                 setSelectedIds(prev => {
                   const next = new Set(prev)
-                  sel ? next.delete(c.id) : next.add(c.id)
+                  if (sel) { next.delete(c.id) } else { next.add(c.id) }
                   return next
                 })
               }} style={{
@@ -1393,7 +1393,7 @@ export function ScheduleHistory({
                           key={b.batchId}
                           onClick={() => setPrintSelectedBatches(prev => {
                             const next = new Set(prev)
-                            selected ? next.delete(b.batchId) : next.add(b.batchId)
+                            if (selected) { next.delete(b.batchId) } else { next.add(b.batchId) }
                             return next
                           })}
                           style={{
@@ -1437,7 +1437,7 @@ export function ScheduleHistory({
                           key={p.id}
                           onClick={() => setPrintSelectedPivots(prev => {
                             const next = new Set(prev)
-                            selected ? next.delete(p.id) : next.add(p.id)
+                            if (selected) { next.delete(p.id) } else { next.add(p.id) }
                             return next
                           })}
                           style={{

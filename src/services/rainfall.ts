@@ -4,6 +4,7 @@ import type {
   RainfallRecordInsert,
   RainfallRecordUpdate,
 } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
 export async function validatePivotOwnership(
@@ -11,8 +12,7 @@ export async function validatePivotOwnership(
   companyId: string,
   client: TypedSupabaseClient = createClient() as TypedSupabaseClient
 ): Promise<boolean> {
-  const { data } = await (client as any)
-    .from('pivots')
+  const { data } = await fromUntyped(client, 'pivots')
     .select('id, farms!inner(company_id)')
     .eq('id', pivotId)
     .eq('farms.company_id', companyId)
@@ -20,7 +20,7 @@ export async function validatePivotOwnership(
   return data !== null
 }
 
-const rainfallTable = (client: TypedSupabaseClient) => (client as any).from('rainfall_records')
+const rainfallTable = (client: TypedSupabaseClient) => fromUntyped(client, 'rainfall_records')
 // unique index: (pivot_id, COALESCE(sector_id, '00000000-0000-0000-0000-000000000000'), date)
 // Supabase upsert with onConflict requires the full column list matching the unique index.
 // Since sector_id uses COALESCE (partial/expression index), we pass the raw columns and let

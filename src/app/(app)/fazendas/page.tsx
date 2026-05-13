@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { createFarm, deleteFarm, listFarmsByCompany, updateFarm } from '@/services/farms'
 import { listPivotsByFarmIds } from '@/services/pivots'
 import { createClient } from '@/lib/supabase/client'
+import { fromUntyped } from '@/services/base'
 import { MapPin, Plus, Pencil, Trash2, X, Loader2, Building2, Droplets } from 'lucide-react'
 
 // ─── Tipos auxiliares ────────────────────────────────────────
@@ -384,16 +385,14 @@ export default function FazendasPage() {
 
         const [pivots, lastIrrigationsRes, activeSeasonsRes] = await Promise.all([
           listPivotsByFarmIds(farmIds),
-          (supabase as any)
-            .from('daily_management')
+          fromUntyped(supabase, 'daily_management')
             .select('date, seasons!inner(farm_id)')
             .in('seasons.farm_id', farmIds)
             .not('actual_depth_mm', 'is', null)
             .gt('actual_depth_mm', 0)
             .order('date', { ascending: false })
             .limit(farmIds.length * 5),
-          (supabase as any)
-            .from('seasons')
+          fromUntyped(supabase, 'seasons')
             .select('farm_id')
             .in('farm_id', farmIds)
             .eq('is_active', true),
@@ -406,7 +405,7 @@ export default function FazendasPage() {
           meta[farm.id] = { pivotCount: farmPivots.length, areaHa, lastIrrigationDate: null, activeSeasons: 0 }
         }
 
-        const rows = (lastIrrigationsRes.data ?? []) as Array<{ date: string; seasons: { farm_id: string } }>
+        const rows = (lastIrrigationsRes.data ?? []) as unknown as Array<{ date: string; seasons: { farm_id: string } }>
         for (const row of rows) {
           const fid = row.seasons?.farm_id
           if (fid && meta[fid] && !meta[fid].lastIrrigationDate) {

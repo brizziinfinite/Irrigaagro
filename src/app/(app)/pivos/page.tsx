@@ -1036,7 +1036,7 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
           {weatherSource === 'google_sheets' && (
             <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 2, lineHeight: 1.625 }}>
-                Cole a URL da planilha. Ela precisa estar pública ("Qualquer pessoa com o link pode ver").
+                Cole a URL da planilha. Ela precisa estar pública (&quot;Qualquer pessoa com o link pode ver&quot;).
               </p>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 5 }}>URL da Planilha Google Sheets</label>

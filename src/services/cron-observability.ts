@@ -6,10 +6,11 @@ import type {
   CronJobRunInsert,
   CronJobRunUpdate,
 } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
-const cronJobRunsTable = (client: TypedSupabaseClient) => (client as any).from('cron_job_runs')
-const cronJobEventsTable = (client: TypedSupabaseClient) => (client as any).from('cron_job_events')
+const cronJobRunsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'cron_job_runs')
+const cronJobEventsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'cron_job_events')
 
 function cronObservabilityError(action: string, error: { message: string }) {
   return new Error(`Falha ao ${action} observabilidade do cron: ${error.message}`)

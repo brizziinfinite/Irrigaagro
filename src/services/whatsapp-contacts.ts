@@ -6,10 +6,11 @@ import type {
   WhatsAppPivotSubscription,
   WhatsAppPivotSubscriptionInsert,
 } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
-const contactsTable = (client: TypedSupabaseClient) => (client as any).from('whatsapp_contacts')
-const subsTable = (client: TypedSupabaseClient) => (client as any).from('whatsapp_pivot_subscriptions')
+const contactsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'whatsapp_contacts')
+const subsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'whatsapp_pivot_subscriptions')
 
 // ─── Contacts ────────────────────────────────────────────────
 

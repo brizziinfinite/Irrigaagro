@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Pivot, PivotInsert, PivotUpdate } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
 export interface PivotWithFarmName extends Pivot {
@@ -7,7 +8,7 @@ export interface PivotWithFarmName extends Pivot {
   sectorCount?: number
 }
 
-const pivotsTable = (client: TypedSupabaseClient) => (client as any).from('pivots')
+const pivotsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'pivots')
 
 export async function listPivotsByFarmIds(
   farmIds: string[],
@@ -32,8 +33,7 @@ export async function listPivotsByFarmIds(
   const ids = pivots.map(p => p.id)
   if (ids.length === 0) return pivots
 
-  const { data: sectorRows } = await (client as any)
-    .from('pivot_sectors')
+  const { data: sectorRows } = await fromUntyped(client, 'pivot_sectors')
     .select('pivot_id')
     .in('pivot_id', ids)
     .limit(500)

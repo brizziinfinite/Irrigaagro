@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
+import Image from 'next/image'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import type { Pivot } from '@/types/database'
@@ -629,10 +630,11 @@ export default function DiagnosticoHistoricoPage() {
                           background: 'transparent', cursor: 'pointer', padding: 0,
                         }}
                       >
-                        <img
+                        <Image
                           src={rec.photo_url}
                           alt="Solo"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          fill
+                          style={{ objectFit: 'cover' }}
                         />
                       </button>
                     )}
@@ -659,6 +661,7 @@ export default function DiagnosticoHistoricoPage() {
             zIndex: 1000, cursor: 'pointer',
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photoModal}
             alt="Foto do solo"

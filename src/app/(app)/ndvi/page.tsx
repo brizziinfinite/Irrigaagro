@@ -376,6 +376,7 @@ function NdviDetalhe({
             )}
           </div>
           <div style={{ position: 'relative' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={ultimoNdvi.imagem_url} alt="NDVI" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover' }} />
             {/* Badge NDVI sobreposto */}
             {ultimoNdvi.ndvi_medio != null && (() => {

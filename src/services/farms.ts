@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Farm, FarmInsert, FarmUpdate } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
-const farmsTable = (client: TypedSupabaseClient) => (client as any).from('farms')
+const farmsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'farms')
 
 export async function listFarmsByCompany(
   companyId: string,

@@ -5,9 +5,10 @@ import type {
   WeatherDataUpdate,
   WeatherStation,
 } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
-const weatherDataTable = (client: TypedSupabaseClient) => (client as any).from('weather_data')
+const weatherDataTable = (client: TypedSupabaseClient) => fromUntyped(client, 'weather_data')
 const WEATHER_DATA_UPSERT_CONFLICT = 'station_id,date'
 
 function weatherDataServiceError(action: string, error: { message: string }) {

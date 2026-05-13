@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', 'date-fns', 'recharts'],
   },
 
+  // Domínios permitidos para next/image (fotos de diagnóstico de solo, NDVI via Supabase Storage)
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);

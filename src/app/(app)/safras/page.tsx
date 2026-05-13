@@ -318,7 +318,7 @@ function SeasonModal({ season, farms, pivots, crops, onClose, onSaved }: SeasonM
             />
             {!isEdit && selectedPivotIds.length > 1 && (
               <p style={{ fontSize: 12, color: '#0093D0', marginTop: 4 }}>
-                Será criado: "{name} — Pivô A", "{name} — Pivô B"…
+                Será criado: &quot;{name} — Pivô A&quot;, &quot;{name} — Pivô B&quot;…
               </p>
             )}
           </div>

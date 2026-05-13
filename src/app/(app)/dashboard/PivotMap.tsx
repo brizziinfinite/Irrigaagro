@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Link from 'next/link'
 import 'leaflet/dist/leaflet.css'
 import type { DailyManagement } from '@/types/database'
 import { buildSectorPolygon } from '@/lib/map-utils'
@@ -262,9 +263,9 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
         padding: '20px 24px', color: '#778899', fontSize: 13, textAlign: 'center',
       }}>
         Nenhum pivô com coordenadas cadastradas.{' '}
-        <a href="/pivos" style={{ color: '#0093D0', textDecoration: 'none' }}>
+        <Link href="/pivos" style={{ color: '#0093D0', textDecoration: 'none' }}>
           Adicione latitude/longitude nos pivôs
-        </a>{' '}
+        </Link>{' '}
         para ver o mapa.
       </div>
     )

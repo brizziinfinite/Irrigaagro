@@ -794,6 +794,7 @@ export default function DiagnosticoSoloPage() {
             </button>
             {photoPreview && (
               <div style={{ position: 'relative', marginBottom: 12 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={photoPreview} alt="Preview" style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }} />
                 <button
                   onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}

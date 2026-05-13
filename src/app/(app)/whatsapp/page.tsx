@@ -415,7 +415,7 @@ export default function WhatsAppPage() {
         <div style={{ textAlign: 'center', padding: '48px 24px', background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, color: 'var(--color-text-secondary)' }}>
           <MessageSquare size={36} style={{ marginBottom: 12, color: '#334455' }} />
           <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-muted)' }}>Nenhum contato cadastrado</p>
-          <p style={{ margin: '4px 0 16px', fontSize: 12, color: '#445566' }}>Clique em "Novo contato" para configurar os alertas.</p>
+          <p style={{ margin: '4px 0 16px', fontSize: 12, color: '#445566' }}>Clique em &quot;Novo contato&quot; para configurar os alertas.</p>
           <button onClick={openCreate} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#0093D0', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             <Plus size={14} /> Novo contato
           </button>

@@ -21,6 +21,7 @@ import {
   getWeatherByPivotGeolocation,
   type GeolocationWeatherSnapshot,
 } from '@/services/weather-geolocation'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
 export type ManagementClimateSource =
@@ -45,9 +46,9 @@ export interface ManagementExternalData {
   climateSource: ManagementClimateSource
 }
 
-const dailyManagementTable = (client: TypedSupabaseClient) => (client as any).from('daily_management')
-const rainfallTable = (client: TypedSupabaseClient) => (client as any).from('rainfall_records')
-const seasonsTable = (client: TypedSupabaseClient) => (client as any).from('seasons')
+const dailyManagementTable = (client: TypedSupabaseClient) => fromUntyped(client, 'daily_management')
+const rainfallTable = (client: TypedSupabaseClient) => fromUntyped(client, 'rainfall_records')
+const seasonsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'seasons')
 
 function managementServiceError(action: string, error: { message: string }) {
   return new Error(`Falha ao ${action} manejo: ${error.message}`)

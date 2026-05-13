@@ -4,9 +4,10 @@ import type {
   WeatherStationInsert,
   WeatherStationUpdate,
 } from '@/types/database'
+import { fromUntyped } from './base'
 import type { TypedSupabaseClient } from './base'
 
-const weatherStationsTable = (client: TypedSupabaseClient) => (client as any).from('weather_stations')
+const weatherStationsTable = (client: TypedSupabaseClient) => fromUntyped(client, 'weather_stations')
 
 function weatherStationsServiceError(action: string, error: { message: string }) {
   return new Error(`Falha ao ${action} estação meteorológica: ${error.message}`)

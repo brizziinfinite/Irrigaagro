@@ -42,7 +42,6 @@ function CustomTooltip({ active, payload, label, lineSeg, lineCrit, cc, pm }: an
     else                                            { zoneLabel = 'Estresse Hídrico'; zoneColor = '#ef4444' }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const seen = new Set<string>()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const displayEntries = payload.filter((entry: any) => {
