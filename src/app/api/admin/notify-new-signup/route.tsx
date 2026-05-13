@@ -7,7 +7,12 @@ export async function POST(req: NextRequest) {
   const secret = process.env.WEBHOOK_SECRET
   const authHeader = req.headers.get('authorization')
 
-  if (secret && authHeader !== `Bearer ${secret}`) {
+  if (!secret) {
+    console.error('[notify-new-signup] WEBHOOK_SECRET não configurado — endpoint bloqueado')
+    return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
+  }
+
+  if (authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

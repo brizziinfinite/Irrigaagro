@@ -5,8 +5,7 @@
  */
 export function isSuperAdmin(email: string | undefined): boolean {
   if (!email) return false
-  // Suporte a ambos os nomes de variável para retrocompatibilidade durante a migração
-  const raw = process.env.SUPER_ADMIN_EMAILS ?? process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS ?? ''
+  const raw = process.env.SUPER_ADMIN_EMAILS ?? ''
   const emails = raw.split(',').map(e => e.trim()).filter(Boolean)
   return emails.includes(email)
 }

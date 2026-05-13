@@ -61,11 +61,8 @@ export async function proxy(request: NextRequest) {
 
   // Rota /admin — apenas super-admin
   if (pathname.startsWith('/admin')) {
-    const superAdminEmails = (
-      process.env.SUPER_ADMIN_EMAILS ??
-      process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS ??
-      ''
-    ).split(',').map((e: string) => e.trim()).filter(Boolean)
+    const superAdminEmails = (process.env.SUPER_ADMIN_EMAILS ?? '')
+      .split(',').map((e: string) => e.trim()).filter(Boolean)
 
     if (!superAdminEmails.includes(user.email ?? '')) {
       return NextResponse.redirect(new URL('/dashboard', request.url))

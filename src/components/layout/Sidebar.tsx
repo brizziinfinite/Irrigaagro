@@ -61,10 +61,11 @@ const CONFIGURACAO = [
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
+export function Sidebar(_props?: { user?: any; onNavigate?: () => void; isSuperAdmin?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut, company } = useAuth();
+  const isSuperAdmin = _props?.isSuperAdmin ?? false;
   const [activeSeasons, setActiveSeasons] = useState<{ name: string }[]>([]);
 
   useEffect(() => {
@@ -180,7 +181,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void }) {
           </ul>
 
           {/* ADMIN — apenas super-admin */}
-          {(process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).includes(user?.email ?? '') && (
+          {isSuperAdmin && (
             <>
               <p style={{
                 fontSize: 10, fontWeight: 700, textTransform: 'uppercase',

@@ -10,9 +10,10 @@ import { Menu, X } from 'lucide-react'
 interface AppShellProps {
   user: User
   children: React.ReactNode
+  isSuperAdmin?: boolean
 }
 
-export function AppShell({ user, children }: AppShellProps) {
+export function AppShell({ user, children, isSuperAdmin }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
@@ -20,7 +21,7 @@ export function AppShell({ user, children }: AppShellProps) {
 
       {/* Sidebar desktop */}
       <div className="hidden md:flex flex-shrink-0 h-full">
-        <Sidebar user={user} />
+        <Sidebar user={user} isSuperAdmin={isSuperAdmin} />
       </div>
 
       {/* Drawer mobile — overlay escuro + sidebar deslizando da esquerda */}
@@ -35,7 +36,7 @@ export function AppShell({ user, children }: AppShellProps) {
           />
           {/* Drawer — mesma largura que o sidebar desktop (260px) */}
           <div className="relative h-full w-[280px] shadow-2xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-            <Sidebar user={user} onNavigate={() => setMobileOpen(false)} />
+            <Sidebar user={user} isSuperAdmin={isSuperAdmin} onNavigate={() => setMobileOpen(false)} />
             <button
               className="absolute top-3 right-3 flex items-center justify-center rounded-xl"
               style={{

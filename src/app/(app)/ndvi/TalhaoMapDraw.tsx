@@ -57,10 +57,8 @@ export function TalhaoMapDraw({
 
     async function init() {
       const L = (await import('leaflet')).default
-      // @ts-expect-error CSS module import
       await import('leaflet/dist/leaflet.css')
       await import('@geoman-io/leaflet-geoman-free')
-      // @ts-expect-error CSS module import
       await import('@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css')
 
       if (cancelled || !containerRef.current) return
