@@ -496,12 +496,29 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
                     backdropFilter: 'blur(12px)',
                   }}>
                     <Link href={`/pivos/${rec.pivotId}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: '#c8d4e0', margin: 0, whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: '#c8d4e0', margin: 0, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 5 }}>
                         {rec.pivotName}
+                        {rec.conjugatedOrder !== null && (
+                          <span style={{
+                            fontSize: 9, fontWeight: 800, lineHeight: 1,
+                            padding: '2px 5px', borderRadius: 4,
+                            background: rec.conjugatedOrder === 1 ? 'rgba(239,68,68,0.18)' : 'rgba(100,116,139,0.18)',
+                            color: rec.conjugatedOrder === 1 ? '#ef4444' : '#94a3b8',
+                            border: `1px solid ${rec.conjugatedOrder === 1 ? 'rgba(239,68,68,0.35)' : 'rgba(100,116,139,0.25)'}`,
+                            flexShrink: 0,
+                          }}>
+                            {rec.conjugatedOrder}º
+                          </span>
+                        )}
                       </p>
                     </Link>
                     <p style={{ fontSize: 12, color: '#64748b', margin: 0, marginTop: 3, whiteSpace: 'nowrap' }}>
                       {rec.farmName}
+                      {rec.conjugatedPartnerName && (
+                        <span style={{ fontSize: 10, color: '#475569', marginLeft: 4 }}>
+                          ⇌ {rec.conjugatedPartnerName}
+                        </span>
+                      )}
                     </p>
                     {rec.lastUpdated && (
                       <p style={{ fontSize: 11, color: '#64748b', margin: 0, marginTop: 2 }}>

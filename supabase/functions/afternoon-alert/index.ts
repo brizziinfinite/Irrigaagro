@@ -65,7 +65,7 @@ serve(async (_req) => {
         id, phone, contact_name,
         whatsapp_pivot_subscriptions (
           pivot_id, notify_irrigation,
-          pivots ( id, name, alert_threshold_percent, latitude, longitude )
+          pivots ( id, name, alert_threshold_percent, latitude, longitude, paired_pivot_id, return_interval_days )
         )
       `)
       .eq('is_active', true)
@@ -125,7 +125,7 @@ serve(async (_req) => {
       if (sentToday && sentToday.length > 0) continue // já alertou hoje
 
       // Avaliar quais pivôs vão atingir threshold em até 2 dias
-      const alertPivots: Array<{ name: string; daysUntil: number }> = []
+      const alertPivots: Array<{ name: string; daysUntil: number; pivotId: string; pairedPivotId: string | null }> = []
 
       for (const sub of subs) {
         const seasonId = seasonByPivot[sub.pivot_id]
@@ -163,11 +163,45 @@ serve(async (_req) => {
 
         // Alerta quando vai atingir threshold em até 2 dias
         if (daysUntil <= 2) {
-          alertPivots.push({ name: sub.pivots?.name || 'Pivô', daysUntil })
+          alertPivots.push({
+            name: sub.pivots?.name || 'Pivô',
+            daysUntil,
+            pivotId: sub.pivot_id,
+            pairedPivotId: sub.pivots?.paired_pivot_id ?? null,
+          })
         }
       }
 
       if (!alertPivots.length) continue
+
+      // Ordenação conjugada: entre pares declarados, quem tem menor daysUntil vai primeiro.
+      // Empate: ordem alfabética. Resultado: badge "1º / 2º" na mensagem.
+      const conjugatedOrderMap = new Map<string, number>() // pivotId → order
+      const resolvedPairs = new Set<string>() // evitar duplicar pares
+      for (const p of alertPivots) {
+        if (!p.pairedPivotId) continue
+        const pairKey = [p.pivotId, p.pairedPivotId].sort().join(':')
+        if (resolvedPairs.has(pairKey)) continue
+        resolvedPairs.add(pairKey)
+
+        const partner = alertPivots.find(x => x.pivotId === p.pairedPivotId)
+        if (partner) {
+          // Ambos alertando — define ordem entre eles
+          const pFirst = p.daysUntil < partner.daysUntil ||
+            (p.daysUntil === partner.daysUntil && p.name <= partner.name)
+          conjugatedOrderMap.set(p.pivotId, pFirst ? 1 : 2)
+          conjugatedOrderMap.set(partner.pivotId, pFirst ? 2 : 1)
+        } else {
+          // Só este está alertando — mas informa que é conjugado
+          conjugatedOrderMap.set(p.pivotId, 1)
+        }
+      }
+
+      function pivotLabel(p: typeof alertPivots[0]): string {
+        const order = conjugatedOrderMap.get(p.pivotId)
+        const suffix = order != null ? ` (${order}º do par)` : ''
+        return `*${p.name}*${suffix}`
+      }
 
       // Monta mensagem diferenciada por urgência
       const hoje = alertPivots.filter(p => p.daysUntil === 1)
@@ -177,16 +211,16 @@ serve(async (_req) => {
 
       if (hoje.length > 0) {
         const lista = hoje.length === 1
-          ? `o *${hoje[0].name}*`
-          : hoje.map(p => `*${p.name}*`).join(' e ')
+          ? `o ${pivotLabel(hoje[0])}`
+          : hoje.map(p => pivotLabel(p)).join(' e ')
         message += `🔴 ${lista} atinge o nível crítico *amanhã*.\n`
         message += `👉 Programe a irrigação *hoje*.\n\n`
       }
 
       if (amanha.length > 0) {
         const lista = amanha.length === 1
-          ? `o *${amanha[0].name}*`
-          : amanha.map(p => `*${p.name}*`).join(' e ')
+          ? `o ${pivotLabel(amanha[0])}`
+          : amanha.map(p => pivotLabel(p)).join(' e ')
         message += `🟡 ${lista} atinge o nível crítico *em 2 dias*.\n`
         message += `👉 Planeje a irrigação para *amanhã*.\n\n`
       }
