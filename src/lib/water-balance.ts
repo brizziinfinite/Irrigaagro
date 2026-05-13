@@ -359,7 +359,7 @@ export function getIrrigationStatus(
   cad: number,
   isIrrigating = false,
   cta = 0,
-  alertThresholdPct: number | null = null
+  _alertThresholdPct: number | null = null
 ): IrrigationStatus {
   if (isIrrigating) return 'azul'
 
@@ -788,7 +788,7 @@ export function calcFullBalance(input: BalanceInput): WaterBalanceResult {
   const eto = calcETo(weather)
   const etc = calcEtc(eto, kc)
 
-  const { adc: adcNew, excessMm, peakReachedCta } = calcADcWithExcess(adcPrev, rainfall, irrigation, etc, cta, ctaPrev)
+  const { adc: adcNew, excessMm, peakReachedCta: _peakReachedCta } = calcADcWithExcess(adcPrev, rainfall, irrigation, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
   // FC% real ao final do dia (pós-ETc) — valor que o agricultor encontra no campo
   // peakReachedCta indica que passou por CC durante o dia, mas o valor exibido é o pós-ETc

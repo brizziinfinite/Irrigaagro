@@ -53,7 +53,6 @@ export function EnergyBlock({ energyBills }: EnergyBlockProps) {
   const gastoTotal = currentBills.reduce((sum, b) => sum + (b.cost_total_brl ?? 0), 0)
   const kwhTotal = currentBills.reduce((sum, b) => sum + (b.kwh_total ?? 0), 0)
   const kwhOffpeak = currentBills.reduce((sum, b) => sum + (b.kwh_offpeak ?? 0), 0)
-  const kwhPeak = kwhTotal - kwhOffpeak
   const horarioPercent = kwhTotal > 0 ? Math.round((kwhOffpeak / kwhTotal) * 100) : null
 
   const billsWithCost = currentBills.filter(b => b.cost_per_mm_ha != null)

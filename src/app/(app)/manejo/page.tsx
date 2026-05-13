@@ -65,14 +65,6 @@ const STATUS_CONFIG: Record<IrrigationStatus, { label: string; color: string; bg
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-function todayISO(): string {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 function yesterdayISO(): string {
   const now = new Date()
   now.setDate(now.getDate() - 1)
@@ -200,9 +192,9 @@ interface SoilDiagramProps {
 
 function SoilDiagram({
   status, fieldCapacityPercent, adcNew, cad, cta,
-  recommendedDepthMm, das, cropStage, eto, etc, kc, rootDepthCm,
-  etoSource, etoConfidence, alertThresholdPct,
-  cropName, farmName, pivotName, seasonName, date, pivotAreaHa,
+  recommendedDepthMm: _recommendedDepthMm, das, cropStage: _cropStage, eto: _eto, etc: _etc, kc: _kc, rootDepthCm,
+  etoSource: _etoSource, etoConfidence: _etoConfidence, alertThresholdPct,
+  cropName, farmName: _farmName, pivotName: _pivotName, seasonName: _seasonName, date: _date, pivotAreaHa: _pivotAreaHa,
 }: SoilDiagramProps) {
   const cfg = STATUS_CONFIG[status]
 
@@ -1148,8 +1140,6 @@ export default function ManejoPage() {
   const heroThreshold = selectedSeason?.pivots?.alert_threshold_percent ?? 70
   const heroMargin = heroPct !== null ? heroPct - heroThreshold : null
   const heroEtc = calcResult?.etc ?? null
-  const heroMaxDepth = rec?.maxDepthMm ?? null
-
   // Próxima irrigação via projeção
   const nextIrrigDay = projection.find(p => p.isIrrigationDay)
   let nextIrrigText = 'Seguro — >7 dias'
@@ -1778,7 +1768,6 @@ export default function ManejoPage() {
           }
         }
         const etcDiariaStr = calcResult.etc.toFixed(1)
-        const capMaxPivotStr = rec2.maxDepthMm != null ? rec2.maxDepthMm.toFixed(1) : '—'
         const capWarning = rec2.maxDepthMm != null && calcResult.etc > rec2.maxDepthMm
 
         const waterUsageData = history.slice(0, 7).reverse().map((h: DailyManagement) => ({

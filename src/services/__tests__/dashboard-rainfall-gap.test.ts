@@ -6,8 +6,7 @@
  * o último daily_management e hoje. "ISSO JAMAIS PODE ACONTECER NOVAMENTE."
  */
 import { describe, it, expect } from 'vitest'
-import { calcCTA, getStageInfoForDas, calcEtc } from '@/lib/water-balance'
-import { calcADcWithExcess } from '@/lib/water-balance'
+import { calcCTA, getStageInfoForDas } from '@/lib/water-balance'
 import { computeResolvedManagementBalance } from '@/lib/calculations/management-balance'
 import type { Crop, Season, Pivot, Farm, DailyManagement } from '@/types/database'
 

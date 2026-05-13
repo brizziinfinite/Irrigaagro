@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import 'leaflet/dist/leaflet.css'
 import type { DailyManagement } from '@/types/database'
-import { buildSectorPolygon, calcIrrigatedAreaHa } from '@/lib/map-utils'
+import { buildSectorPolygon } from '@/lib/map-utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -128,11 +128,6 @@ export function PivotMap({ pivots, onPivotClick }: PivotMapProps) {
             }).addTo(map)
           }
         }
-
-        // ── Area calculation for popup ──
-        const areaHa = pivot.length_m
-          ? calcIrrigatedAreaHa(pivot.length_m, pivot.sector_start_deg, pivot.sector_end_deg)
-          : null
 
         // Build popup HTML
         const barWidth = pct !== null ? Math.min(100, Math.max(0, pct)) : 0

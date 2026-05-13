@@ -222,16 +222,6 @@ function getStressInterpretation(kpis: SeasonKPIs): string {
   return `${kpis.stressDays} dia(s) em estresse severo (${fmtNum(kpis.stressIndex)}%) — impacto significativo na produtividade provável. Revisar frequência e lâmina.`
 }
 
-function getEfficiencyInterpretation(kpis: SeasonKPIs): string {
-  const totalWater = kpis.totalIrrigationMm + kpis.totalRainfallMm
-  if (totalWater === 0) return ''
-  const eff = (kpis.totalEtcMm / totalWater) * 100
-  const rainContrib = kpis.totalEtcMm > 0 ? (kpis.totalRainfallMm / kpis.totalEtcMm) * 100 : 0
-  if (eff >= 80) return `Alta eficiência: ${fmtNum(eff, 0)}% da água aplicada foi consumida pela cultura. Chuva contribuiu ${fmtNum(rainContrib, 0)}% do ETc.`
-  if (eff >= 60) return `Eficiência adequada (${fmtNum(eff, 0)}%): há margem para reduzir perdas. Chuva cobriu ${fmtNum(rainContrib, 0)}% do ETc.`
-  if (eff >= 40) return `Eficiência baixa (${fmtNum(eff, 0)}%): excesso de água aplicada ou perdas por percolação. Revise os turnos de rega.`
-  return `Eficiência muito baixa (${fmtNum(eff, 0)}%): possivelmente lâminas excessivas ou descompasso entre irrigação e demanda.`
-}
 
 function getSeasonRecommendation(kpis: SeasonKPIs): string {
   if (kpis.totalDays === 0) return ''
@@ -518,7 +508,7 @@ function WeeklySummaryTable({ records }: { records: DailyManagement[] }) {
             {/* Expansivo: dias */}
             {isExp && (
               <div style={{ padding: '0px 18px', background: 'var(--color-surface-bg)', borderBottom: '1px solid var(--color-surface-border2)' }}>
-                {w.records.map((e, idx) => (
+                {w.records.map((e) => (
                   <div key={e.date} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px', borderBottom: '1px solid var(--color-surface-border2)', fontSize: 11 }}>
                     <span style={{ color: 'var(--color-text-secondary)', flex: 1, minWidth: 60 }}>{fmtDate(e.date)}</span>
                     <div style={{ display: 'flex', gap: 16, flex: 3, justifyContent: 'flex-end', fontFamily: 'var(--font-mono)' }}>
@@ -550,9 +540,6 @@ function BalanceChartSVG({ records, season }: { records: DailyManagement[]; seas
 
   function xPos(i: number) { return PAD.left + (i / Math.max(sorted.length - 1, 1)) * innerW }
   function yRight(val: number) { return PAD.top + innerH - (Math.max(0, Math.min(125, val)) / 125) * innerH }
-
-  // CAD médio (50% para simplificar)
-  const cadPct = 50
 
   // Calcular CAD real por fase se possível
   const cadPercents = sorted.map(r => {

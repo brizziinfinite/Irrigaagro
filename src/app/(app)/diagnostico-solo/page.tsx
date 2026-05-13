@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { createClient } from '@/lib/supabase/client'
 import type { Pivot, Farm, Season } from '@/types/database'
@@ -16,9 +16,9 @@ import {
   type DiagnosisOutput,
 } from '@/lib/soil-diagnosis'
 import {
-  Loader2, ChevronDown, CheckCircle2, AlertTriangle, AlertCircle,
+  Loader2, ChevronDown, CheckCircle2,
   Droplets, Layers, Camera, ClipboardList, ArrowLeft, ArrowRight,
-  RotateCcw, Save, X, ChevronRight, History, Sprout, ExternalLink,
+  RotateCcw, Save, X, History, Sprout, ExternalLink,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -430,7 +430,7 @@ export default function DiagnosticoSoloPage() {
               setAiValidation(aiResult)
             }
           }
-        } catch (_) {
+        } catch {
           // Gemini falhou — continua sem validação de foto
         }
       }

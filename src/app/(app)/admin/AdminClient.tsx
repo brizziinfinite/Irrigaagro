@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Shield, CheckCircle, Clock, Ban, Users, Building2, RefreshCw } from 'lucide-react'
 
@@ -34,8 +34,6 @@ export function AdminClient({ companies: initial }: Props) {
   const [loading, setLoading] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const [filter, setFilter] = useState<'all' | 'pending' | 'active' | 'suspended'>('all')
-  const [, startTransition] = useTransition()
-
   const filtered = filter === 'all' ? companies : companies.filter(c => c.status === filter)
 
   const pendingCount = companies.filter(c => c.status === 'pending').length

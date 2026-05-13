@@ -511,13 +511,6 @@ function PrintLayout({
     pivotIds.map(pid => metas.find(m => m.pivot?.id === pid)?.farm?.name).filter(Boolean)
   )) as string[]
 
-  // Nome do setor dado um sector_id
-  function sectorLabel(pivotId: string, sectorId: string | null): string {
-    if (!sectorId) return ''
-    const sectors = sectorsMap?.[pivotId] ?? []
-    return sectors.find(s => s.id === sectorId)?.name ?? ''
-  }
-
   return (
     <div
       className={inline ? undefined : 'print-only'}
@@ -873,7 +866,7 @@ function RescheduleModal({
 // ─── Card de um lote de programação ───────────────────────────
 
 function BatchCard({
-  batchId, rows, metas, today, sectorsMap,
+  batchId: _batchId, rows, metas, today, sectorsMap: _sectorsMap,
   onCancelRow, onConfirmRow, onDeleteBatch,
   onEdit, onPrint, onWhatsApp, onReschedule,
 }: {
@@ -1192,14 +1185,6 @@ export function ScheduleHistory({
       .catch(() => setSchedules([]))
       .finally(() => setLoading(false))
   }, [companyId, today, expanded])
-
-  function refreshList() {
-    const from = addDays(today, -90)
-    const to   = addDays(today, 14)
-    listSchedulesByCompany(companyId, from, to)
-      .then(data => setSchedules(data))
-      .catch(() => {})
-  }
 
   const [toast, setToast] = useState<{ msg: string; type: 'error' | 'success' } | null>(null)
 

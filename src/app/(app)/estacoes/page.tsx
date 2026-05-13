@@ -60,12 +60,6 @@ interface WeatherFormData {
   rawData: string
 }
 
-const initialStationForm: StationFormData = {
-  farmId: '',
-  name: '',
-  deviceId: '',
-  apiProvider: 'manual',
-}
 
 const initialWeatherForm: WeatherFormData = {
   date: '',

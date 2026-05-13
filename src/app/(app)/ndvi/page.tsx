@@ -725,7 +725,6 @@ export default function NdviPage() {
   // IDs para hooks
   const pivotIds = useMemo(() => pivots.map(p => p.id), [pivots])
   const talhaoIds = useMemo(() => talhoes.map(t => t.id), [talhoes])
-  const allIds = useMemo(() => [...pivotIds, ...talhaoIds], [pivotIds, talhaoIds])
 
   const ndviMultiplosPivots = useNdviMultiplos(pivotIds, ndviRefreshKey)
   const ndviMultiplosTalhoes = useNdviMultiplos(talhaoIds, ndviRefreshKey)

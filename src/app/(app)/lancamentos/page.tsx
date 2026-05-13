@@ -22,7 +22,7 @@ import {
 } from '@/lib/water-balance'
 import type { DailyManagement } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
-import { ClipboardList, ChevronDown, ChevronUp, X, Copy, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { ChevronDown, ChevronUp, X, Copy, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { ScheduleHistory } from './ScheduleHistory'
 import type { BatchEditPayload, ReschedulePayload } from './ScheduleHistory'
 
@@ -81,15 +81,6 @@ function entryFromSpeed(table: PivotSpeedEntry[], speedPct: number): PivotSpeedE
   return table.reduce((best, cur) =>
     Math.abs(cur.speed_percent - speedPct) < Math.abs(best.speed_percent - speedPct) ? cur : best
   )
-}
-
-function calcEndTime(startTime: string, durationHours: number): string {
-  if (!startTime || !durationHours) return ''
-  const [hStr, mStr] = startTime.split(':')
-  const totalMin = parseInt(hStr) * 60 + parseInt(mStr) + Math.round(durationHours * 60)
-  const h = Math.floor(totalMin / 60) % 24
-  const m = totalMin % 60
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
 /** Fração do setor em relação a 360° (ex: 0→180 = 0.5). Sem ângulos = 1 (volta completa) */
@@ -309,41 +300,6 @@ function WaterBar({
     </div>
   )
 }
-
-// ─── Mini campo ───────────────────────────────────────────────
-
-function MiniField({
-  label, value, onChange, type = 'number', placeholder = '—',
-  color = 'var(--color-text-secondary)', bg = 'rgba(255,255,255,0.05)',
-  border = 'rgba(255,255,255,0.09)', readOnly = false, bold = false,
-}: {
-  label: string; value: string; onChange?: (v: string) => void
-  type?: string; placeholder?: string; color?: string
-  bg?: string; border?: string; readOnly?: boolean; bold?: boolean
-}) {
-  return (
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <p style={{ fontSize: 11, color: '#94a3b8', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, whiteSpace: 'nowrap' }}>
-        {label}
-      </p>
-      <input
-        type={type} placeholder={placeholder} value={value} readOnly={readOnly}
-        onChange={e => onChange?.(e.target.value)}
-        style={{
-          width: '100%', padding: '5px 6px', borderRadius: 5,
-          background: readOnly ? 'rgba(255,255,255,0.02)' : bg,
-          border: `1px solid ${readOnly ? 'rgba(255,255,255,0.05)' : border}`,
-          color: readOnly ? 'var(--color-text-secondary)' : color,
-          fontSize: 12, textAlign: 'center',
-          fontFamily: 'var(--font-mono)', fontWeight: bold ? 700 : 400,
-          boxSizing: 'border-box', cursor: readOnly ? 'default' : 'text',
-          outline: 'none',
-        }}
-      />
-    </div>
-  )
-}
-
 // ─── Confirmação diária batch ─────────────────────────────────
 
 interface ConfirmRow {
@@ -696,198 +652,6 @@ function CancelModal({
   )
 }
 
-// ─── Célula de dia para um setor ─────────────────────────────
-
-function DayCell({
-  date, today, entry, schedule, speedTable, threshold, meta, sectorGrid, sectorId, sector,
-  onUpdate, onCancel,
-}: {
-  date: string
-  today: string
-  entry: DayEntry
-  schedule: IrrigationSchedule | undefined
-  speedTable: PivotSpeedEntry[]
-  threshold: number
-  meta: PivotMeta
-  sectorGrid: PivotGrid
-  sectorId: string
-  sector: PivotSector | null
-  onUpdate: (date: string, field: keyof DayEntry, value: string | boolean) => void
-  onCancel: (schedule: IrrigationSchedule) => void
-}) {
-  const isToday    = date === today
-  const isPast     = date < today
-  const isCancelled = schedule?.status === 'cancelled'
-  const isPlanned   = schedule?.status === 'planned'
-  const dayPct  = pctForDate(meta, date, sectorGrid, today)
-  const projPct = projectedPct(meta, date, sectorGrid, today)
-  const hasEntry = entry.lamina !== '' || entry.rainfall !== ''
-  const projColor = pctColor(projPct, threshold)
-
-  // Fração do ângulo do setor: 180°/360° = 0.5, volta completa = 1
-  const fraction = sectorFraction(sector)
-
-  function sectorDuration(fullDurationHours: number): number {
-    return fullDurationHours * fraction
-  }
-
-  function handleLamina(v: string) {
-    onUpdate(date, 'lamina', v)
-    const mm = parseNum(v)
-    if (mm != null && mm > 0 && speedTable.length > 0) {
-      const te = entryFromTable(speedTable, mm)
-      if (te) {
-        onUpdate(date, 'speed', String(te.speed_percent))
-        onUpdate(date, 'speedAuto', true)
-        const startTime = entry.startTime
-        if (startTime) onUpdate(date, 'endTime', addHoursToTime(startTime, sectorDuration(te.duration_hours)))
-      }
-    } else if (v === '') {
-      onUpdate(date, 'speed', '')
-      onUpdate(date, 'speedAuto', true)
-      onUpdate(date, 'endTime', '')
-    }
-  }
-
-  function handleSpeed(v: string) {
-    onUpdate(date, 'speed', v)
-    const pct = parseNum(v)
-    if (pct != null && pct > 0 && speedTable.length > 0) {
-      const te = entryFromSpeed(speedTable, pct)
-      if (te) {
-        onUpdate(date, 'lamina', String(te.water_depth_mm))
-        onUpdate(date, 'speedAuto', true)
-        const startTime = entry.startTime
-        if (startTime) onUpdate(date, 'endTime', addHoursToTime(startTime, sectorDuration(te.duration_hours)))
-      }
-    } else {
-      onUpdate(date, 'speedAuto', false)
-    }
-  }
-
-  function handleStartTime(v: string) {
-    onUpdate(date, 'startTime', v)
-    if (!v) return
-    let fullDuration: number | null = null
-    const mm = parseNum(entry.lamina)
-    if (mm != null && mm > 0 && speedTable.length > 0) {
-      const te = entryFromTable(speedTable, mm)
-      fullDuration = te?.duration_hours ?? null
-    }
-    if (fullDuration == null) {
-      const pct = parseNum(entry.speed)
-      if (pct != null && pct > 0 && speedTable.length > 0) {
-        const te = entryFromSpeed(speedTable, pct)
-        fullDuration = te?.duration_hours ?? null
-      }
-    }
-    if (fullDuration != null) onUpdate(date, 'endTime', addHoursToTime(v, sectorDuration(fullDuration)))
-  }
-
-  return (
-    <div style={{
-      background: isCancelled
-        ? 'rgba(239,68,68,0.05)'
-        : isToday
-          ? 'rgba(0,147,208,0.08)'
-          : 'rgba(255,255,255,0.02)',
-      border: `1px solid ${isCancelled
-        ? 'rgba(239,68,68,0.2)'
-        : isToday
-          ? 'rgba(0,147,208,0.2)'
-          : 'rgba(255,255,255,0.06)'}`,
-      borderRadius: 10,
-      padding: '10px 8px',
-      display: 'flex', flexDirection: 'column', gap: 6,
-      opacity: isPast && !isToday ? 0.65 : 1,
-    }}>
-      {/* Dia header — só na primeira linha de setor (controlado externamente via prop) */}
-      <div style={{ textAlign: 'center', marginBottom: 2 }}>
-        <p style={{ fontSize: 9, fontWeight: 700, color: isToday ? '#0093D0' : 'var(--color-text-muted)', margin: 0, textTransform: 'uppercase' }}>
-          {isToday ? 'Hoje' : fmtWeekday(date)}
-        </p>
-        <p style={{ fontSize: 12, fontWeight: 700, color: isToday ? 'var(--color-text)' : 'var(--color-text-muted)', margin: 0, fontFamily: 'var(--font-mono)' }}>
-          {fmtShort(date)}
-        </p>
-      </div>
-
-      {/* Barra d'água + % */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
-        <WaterBar
-          pct={dayPct}
-          projPct={hasEntry ? projPct : null}
-          threshold={threshold}
-          height={52}
-          width={16}
-        />
-        <div style={{ textAlign: 'left' }}>
-          <p style={{ fontSize: 9, color: 'var(--color-text-muted)', margin: '0 0 1px', textTransform: 'uppercase', lineHeight: 1 }}>CC</p>
-          <span style={{ fontSize: 13, fontWeight: 800, color: pctColor(dayPct, threshold), fontFamily: 'var(--font-mono)', lineHeight: 1, display: 'block' }}>
-            {dayPct != null ? `${Math.round(dayPct)}%` : '—'}
-          </span>
-          {hasEntry && projPct != null && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: projColor, fontFamily: 'var(--font-mono)', display: 'block', marginTop: 1 }}>
-              →{Math.round(projPct)}%
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Campos */}
-      {isCancelled ? (
-        <div style={{ textAlign: 'center', padding: '8px 0' }}>
-          <p style={{ fontSize: 10, color: '#ef4444', margin: 0, fontWeight: 700 }}>Cancelado</p>
-          <p style={{ fontSize: 9, color: 'var(--color-text-secondary)', margin: '2px 0 0' }}>
-            {schedule?.cancelled_reason ?? ''}
-          </p>
-        </div>
-      ) : (
-        <>
-          <MiniField label="Chuva mm" value={entry.rainfall}
-            onChange={v => onUpdate(date, 'rainfall', v)}
-            color="rgba(255,255,255,0.7)" />
-          <MiniField label="Lâmina mm" value={entry.lamina}
-            onChange={handleLamina}
-            color="#0093D0" bg="rgba(0,147,208,0.10)" border="rgba(0,147,208,0.25)" bold />
-          <MiniField
-            label={entry.speedAuto && entry.speed ? 'Vel % ↺' : 'Vel %'}
-            value={entry.speed}
-            onChange={handleSpeed}
-            color={entry.speedAuto && entry.speed ? '#f59e0b' : 'var(--color-text-secondary)'}
-            bg={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.04)'}
-            border={entry.speedAuto && entry.speed ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.08)'}
-          />
-          {/* Aviso quando não há tabela de velocidade cadastrada */}
-          {speedTable.length === 0 && (
-            <p style={{ fontSize: 8, color: 'var(--color-text-secondary)', margin: '-2px 0 0', textAlign: 'center', lineHeight: 1.3 }}>
-              Cadastre tabela de vel. nos Pivôs
-            </p>
-          )}
-          <MiniField label="Início" type="time" value={entry.startTime}
-            onChange={handleStartTime}
-            color="var(--color-text)" bg="rgba(255,255,255,0.06)" border="rgba(255,255,255,0.12)" />
-          <MiniField label="Fim" type="time" value={entry.endTime}
-            readOnly color="#f59e0b" />
-
-          {/* Botão cancelar — só dias com schedule planned */}
-          {isPlanned && !isPast && (
-            <button
-              onClick={() => onCancel(schedule!)}
-              style={{
-                marginTop: 2, width: '100%', padding: '4px 0',
-                borderRadius: 5, border: '1px solid rgba(239,68,68,0.25)',
-                background: 'rgba(239,68,68,0.07)', color: '#ef4444',
-                fontSize: 10, fontWeight: 700, cursor: 'pointer',
-              }}>
-              Cancelar
-            </button>
-          )}
-        </>
-      )}
-    </div>
-  )
-}
-
 // ─── Card de um pivô ─────────────────────────────────────────
 
 function PivotCard({
@@ -906,7 +670,7 @@ function PivotCard({
   forceExpand?: boolean
   onForceExpandDone?: () => void
 }) {
-  const { context, ctaMm, sectors, speedTable } = meta
+  const { context, ctaMm: _ctaMm, sectors, speedTable } = meta
   const { pivot, farm, season, crop } = context
   const threshold = pivot?.alert_threshold_percent ?? 70
   const name = pivot?.name ?? season.name
@@ -1718,7 +1482,7 @@ function PivotCard({
 
 export default function LancamentosPage() {
   const { company } = useAuth()
-  const { isOnline, guardAction } = useOnlineGuard()
+  const { guardAction } = useOnlineGuard()
 
   const [today, setToday] = useState('')
   const [weekOffset, setWeekOffset] = useState(0) // 0 = semana atual, -1 = anterior, etc.

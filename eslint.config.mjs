@@ -22,6 +22,12 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_",
+      }],
       "@next/next/no-html-link-for-pages": "warn",
       "react/no-unescaped-entities": "warn",
       "react-hooks/error-boundaries": "warn",

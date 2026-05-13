@@ -28,7 +28,7 @@ interface HeaderProps {
   onMenuClick: () => void
 }
 
-export function Header({ user: _, onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick }: HeaderProps) {
   const pathname = usePathname()
   const { company, farm, farms, switchFarm } = useAuth()
   const pageTitle = PAGE_TITLES[pathname] ?? 'IrrigaAgro'

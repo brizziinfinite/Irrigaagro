@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Crop, Farm, Pivot, Season, SeasonInsert, SeasonUpdate } from '@/types/database'
+import type { Crop, Season, SeasonInsert, SeasonUpdate } from '@/types/database'
 import type { TypedSupabaseClient } from './base'
 
 export interface SeasonWithRelations extends Season {

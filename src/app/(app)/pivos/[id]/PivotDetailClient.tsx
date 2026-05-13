@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, ComposedChart, Bar, Line,
   XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine, ReferenceArea,
 } from 'recharts'
-import { Satellite, CloudRain } from 'lucide-react'
+import { Satellite } from 'lucide-react'
 import type { DailyManagement, Farm, Pivot } from '@/types/database'
 import type { ManagementSeasonContext } from '@/services/management'
 import { calcDAS } from '@/lib/calculations/management-balance'
@@ -68,8 +68,8 @@ interface SoilDiagramRichProps {
 
 function SoilDiagramRich({
   ctaMm, cadMm, adcMm, fieldCapacityPct, recommendedDepthMm,
-  eto, etc, kc, das, cropStage, rootDepthCm,
-  cropName, farmName, pivotName, date, areaHa, alertThresholdPct,
+  eto, etc, kc: _kc, das, cropStage, rootDepthCm,
+  cropName, farmName, pivotName, date, areaHa, alertThresholdPct: _alertThresholdPct,
 }: SoilDiagramRichProps) {
   const status = resolvePivotStatus(fieldCapacityPct)
   const cfg = PIVOT_STATUS_CONFIG[status]
@@ -85,8 +85,6 @@ function SoilDiagramRich({
   const cadLinePct    = cadMm * mmToPct
   const ctaTopPct     = USABLE
   const deficitMm     = Math.max(0, ctaMm - adcMm)
-  const deficitTopPct = ctaTopPct
-  const deficitBotPct = adcTopPct
   const fieldCapacityPercent = ctaMm > 0 ? (adcMm / ctaMm) * 100 : 0
   const H = 240
 
@@ -298,35 +296,6 @@ function SoilDiagramRich({
           <span style={{ fontSize: 10, color: 'var(--color-text-secondary)' }}>ETo via cálculo local · média</span>
         </div>
       </div>
-    </div>
-  )
-}
-
-// ─── Metric chip ──────────────────────────────────────────────
-
-function Chip({ label, value, sub, color = 'var(--color-text)' }: {
-  label: string
-  value: string
-  sub?: string
-  color?: string
-}) {
-  return (
-    <div style={{
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.07)',
-      borderRadius: 12,
-      padding: '14px 16px',
-      minWidth: 0,
-    }}>
-      <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
-        {label}
-      </p>
-      <p style={{ fontSize: 20, fontWeight: 800, margin: '5px 0 0', color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
-        {value}
-      </p>
-      {sub && (
-        <p style={{ fontSize: 10, color: 'var(--color-text-muted)', margin: '3px 0 0' }}>{sub}</p>
-      )}
     </div>
   )
 }

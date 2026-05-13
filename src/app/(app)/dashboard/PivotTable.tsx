@@ -16,7 +16,7 @@ const STATUS_CONFIG: Record<IrrigationStatus, { label: string; color: string; bg
   sem_safra: { label: 'Sem safra',   color: 'var(--color-text-muted)', bg: 'rgb(85 102 119 / 0.12)', border: 'rgb(85 102 119 / 0.25)', icon: Info          },
 }
 
-function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, _threshold = 70): IrrigationStatus {
+function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean): IrrigationStatus {
   if (!hasActiveSeason) return 'sem_safra'
   if (!lastM) return 'verde'
   const pct = lastM.field_capacity_percent ?? null
@@ -56,7 +56,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
   const pivotsWithStatus = pivots.map(pivot => {
     const m = lastManagementByPivot[pivot.id] ?? null
     const threshold = pivot.alert_threshold_percent ?? 70
-    const status = resolveStatus(m, activePivotIds.has(pivot.id), threshold)
+    const status = resolveStatus(m, activePivotIds.has(pivot.id))
     const proj = projectionByPivot[pivot.id] ?? []
 
     let nextIrrigation: string | null = null
@@ -150,7 +150,7 @@ export function PivotTable({ pivots, lastManagementByPivot, activePivotIds, proj
             <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>Nenhum pivô neste filtro.</span>
           </div>
         ) : (
-          filtered.map(({ pivot, m, status, threshold, nextIrrigation }, i) => {
+          filtered.map(({ pivot, m, status, threshold: _threshold, nextIrrigation }, i) => {
             const cfg = STATUS_CONFIG[status]
             const StatusIcon = cfg.icon
             const pct = m?.field_capacity_percent ?? null

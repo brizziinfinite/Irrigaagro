@@ -13,7 +13,6 @@ import {
   getStageInfoForDas,
   type IrrigationRecommendation,
   type WaterBalanceResult,
-  type WeatherInput,
 } from '@/lib/water-balance'
 import {
   resolveETo,
@@ -176,8 +175,8 @@ export async function projectAdcToDate(params: {
 export function computeResolvedManagementBalance(
   params: ComputeManagementBalanceParams
 ): ResolvedManagementBalance | null {
-  const { context, history, date, tmax, tmin, humidity, wind, radiation, rainfall, actualDepth, actualSpeed, externalData } = params
-  const { season, farm, pivot, crop } = context
+  const { context, history, date, tmax, tmin, humidity: _humidity, wind: _wind, radiation: _radiation, rainfall, actualDepth, actualSpeed, externalData } = params
+  const { season, farm: _farm, pivot, crop } = context
   if (!crop || !date) return null
 
   const das = season.planting_date ? calcDAS(season.planting_date, date) : 1
@@ -206,12 +205,6 @@ export function computeResolvedManagementBalance(
     : parseOptionalNumber(tmax)
   const tempMin = dbWeather?.temp_min != null ? Number(dbWeather.temp_min)
     : parseOptionalNumber(tmin)
-  const humidityValue = dbWeather?.humidity_percent != null ? Number(dbWeather.humidity_percent)
-    : parseOptionalNumber(humidity)
-  const windValue = dbWeather?.wind_speed_ms != null ? Number(dbWeather.wind_speed_ms)
-    : parseOptionalNumber(wind)
-  const radiationValue = dbWeather?.solar_radiation_wm2 != null ? Number(dbWeather.solar_radiation_wm2)
-    : parseOptionalNumber(radiation)
 
   if (tempMax == null || tempMin == null) return null
 
@@ -220,24 +213,6 @@ export function computeResolvedManagementBalance(
   if (tempMin < -30 || tempMin > 55) return null
   if (tempMax < tempMin) return null // sensor invertido
 
-  // Clamp valores secundários a ranges plausíveis
-  const humidityClamped = humidityValue != null && humidityValue >= 5 && humidityValue <= 100
-    ? humidityValue : 60
-  const windClamped = windValue != null && windValue >= 0 && windValue <= 25
-    ? windValue : 2
-  const radiationClamped = radiationValue != null && radiationValue >= 0 && radiationValue <= 500
-    ? radiationValue : 200
-
-  const weatherInput: WeatherInput = {
-    tempMax,
-    tempMin,
-    humidity: humidityClamped,
-    windSpeed: windClamped,
-    solarRadiation: radiationClamped,
-    altitude: farm.altitude ?? 650,
-    latitude: pivot?.latitude ?? undefined,
-    date,
-  }
 
   const correctionFactor = parseFloat(process.env.NEXT_PUBLIC_ETO_CORRECTION_FACTOR ?? '1')
 
@@ -275,7 +250,7 @@ export function computeResolvedManagementBalance(
   const irrigationMm = parseOptionalNumber(actualDepth) ?? 0
   const actualSpeedPercent = parseOptionalNumber(actualSpeed)
   const etc = calcEtc(etoResolution.etoMm, stageInfo.kc)
-  const { adc: adcNew, excessMm, peakReachedCta } = calcADcWithExcess(adcPrev, rainfallMm, irrigationMm, etc, cta, ctaPrev)
+  const { adc: adcNew, excessMm, peakReachedCta: _peakReachedCta } = calcADcWithExcess(adcPrev, rainfallMm, irrigationMm, etc, cta, ctaPrev)
   const ks = calcKs(adcNew, cad)
   // FC% real ao final do dia (pós-ETc) — valor que o agricultor encontra no campo
   // peakReachedCta fica salvo no registro histórico mas NÃO altera o % exibido

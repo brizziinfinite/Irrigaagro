@@ -32,7 +32,6 @@ export function DecisionCard({ pivotRecs, activePivots, handledToday }: Decision
 
   const needsIrrigationToday = urgentes.length > 0
   const needsIrrigationSoon  = !needsIrrigationToday && (amanha.length > 0 || em2dias.length > 0)
-  const allOk                = !needsIrrigationToday && !needsIrrigationSoon && !noPivots
 
   // Texto principal — acionável e sem ambiguidade
   const headlineText = noPivots

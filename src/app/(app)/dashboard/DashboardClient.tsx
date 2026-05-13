@@ -14,7 +14,7 @@ import { RecommendationsMatrix } from './RecommendationsMatrix'
 import { SoilGaugesBlock } from './SoilGaugesBlock'
 import { HistoryBlock } from './HistoryBlock'
 import {
-  Plus, ArrowRight,
+  ArrowRight,
   Droplets, AlertTriangle, AlertCircle, Info,
   CheckCircle2, X, CalendarClock
 } from 'lucide-react'
@@ -47,20 +47,10 @@ const PivotMap = dynamic(
 // ─── Status ──────────────────────────────────────────────────
 type IrrigationStatus = 'azul' | 'verde' | 'amarelo' | 'vermelho' | 'sem_safra'
 
-const STATUS_CONFIG: Record<IrrigationStatus, {
-  label: string; color: string; bg: string; border: string
-  icon: typeof CheckCircle2; desc: string
-}> = {
-  azul:      { label: 'Irrigando',   color: '#0093D0', bg: 'rgb(0 147 208 / 0.12)',  border: 'rgb(0 147 208 / 0.25)',  icon: Droplets,      desc: 'Pivô em movimento agora' },
-  verde:     { label: 'Confortável', color: '#22c55e', bg: 'rgb(34 197 94 / 0.12)',  border: 'rgb(34 197 94 / 0.25)',  icon: CheckCircle2,  desc: 'Solo bem abastecido — ≥75%' },
-  amarelo:   { label: 'Atenção',     color: '#f59e0b', bg: 'rgb(245 158 11 / 0.12)', border: 'rgb(245 158 11 / 0.25)', icon: AlertTriangle, desc: 'Irrigar nos próximos 2 dias — 60–75%' },
-  vermelho:  { label: 'Crítico',     color: '#ef4444', bg: 'rgb(239 68 68 / 0.12)',  border: 'rgb(239 68 68 / 0.25)',  icon: AlertCircle,   desc: 'Irrigar hoje — solo abaixo de 60%' },
-  sem_safra: { label: 'Sem safra',   color: 'var(--color-text-muted)', bg: 'rgb(85 102 119 / 0.12)', border: 'rgb(85 102 119 / 0.25)', icon: Info,          desc: 'Nenhuma safra ativa' },
-}
 
 // threshold: limiar configurado no pivô (padrão 70)
 // Zona amarela: threshold × 1,15 (alinhado ao getIrrigationStatus de water-balance.ts)
-function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean, _threshold = 70): IrrigationStatus {
+function resolveStatus(lastM: DailyManagement | null, hasActiveSeason: boolean): IrrigationStatus {
   if (!hasActiveSeason) return 'sem_safra'
   if (!lastM) return 'verde'
   const pct = lastM.field_capacity_percent ?? null
@@ -471,7 +461,7 @@ export function DashboardClient({
             farm_name:        p.farms?.name ?? '',
             latitude:         p.latitude,
             longitude:        p.longitude,
-            status:           resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id), p.alert_threshold_percent ?? 70),
+            status:           resolveStatus(lastManagementByPivot[p.id] ?? null, activePivotIds.has(p.id)),
             lastManagement:   lastManagementByPivot[p.id] ?? null,
             length_m:         p.length_m,
             sector_start_deg: p.sector_start_deg,

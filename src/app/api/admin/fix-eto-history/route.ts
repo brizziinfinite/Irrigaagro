@@ -86,7 +86,6 @@ export async function GET(req: NextRequest) {
   }
 
   // Busca coordenadas das estações via pivôs vinculados
-  const stationIds = [...new Set(rows.map(r => r.station_id).filter(Boolean))]
   const { data: pivotCoords } = await supabase
     .from('pivots')
     .select('latitude, longitude, farms!inner(weather_stations(id))')

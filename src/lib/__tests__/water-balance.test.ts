@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   calcCTA,
   calcCAD,
-  calcEtc,
   getStageInfoForDas,
   getConjugatedRecommendation,
   calcADc,

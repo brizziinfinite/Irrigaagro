@@ -5,7 +5,6 @@ import type {
   WhatsAppContactUpdate,
   WhatsAppPivotSubscription,
   WhatsAppPivotSubscriptionInsert,
-  WhatsAppPivotSubscriptionUpdate,
 } from '@/types/database'
 import type { TypedSupabaseClient } from './base'
 

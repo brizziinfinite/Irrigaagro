@@ -133,11 +133,6 @@ async function calibrateRsFactor(
 
     // Buscar metadados das estações (coordenadas via farm, fator atual)
     const stationIds = Object.keys(byStation)
-    const { data: stations } = await (supabase as any)
-      .from('weather_stations')
-      .select('id, name, rs_correction_factor, rs_factor_sample_days, farms(latitude_degrees, latitude_minutes, hemisphere, longitude_degrees)')
-      .in('id', stationIds)
-
     // Buscar coordenadas das fazendas via FK
     const { data: stationFarms } = await (supabase as any)
       .from('weather_stations')

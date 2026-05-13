@@ -3,7 +3,6 @@ import type {
   DailyManagement,
   Farm,
   Pivot,
-  RainfallRecord,
   Season,
   WeatherStation,
 } from '@/types/database'

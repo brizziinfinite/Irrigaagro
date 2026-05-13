@@ -5,16 +5,8 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import type { Crop } from '@/types/database'
 import { useAuth } from '@/hooks/useAuth'
 import { createCrop, deleteCrop, listCropsByCompany, updateCrop } from '@/services/crops'
-import { Wheat, Plus, Pencil, Trash2, X, Loader2, Lock, ChevronRight, Copy, BookOpen, Search, ArrowRight } from 'lucide-react'
+import { Wheat, Plus, Pencil, Trash2, X, Loader2, Lock, ChevronRight, BookOpen, Search, ArrowRight } from 'lucide-react'
 import { CROP_PRESETS, type CropPreset } from '@/lib/crop-presets'
-
-// ─── Fases FAO-56 ────────────────────────────────────────────
-const STAGES = [
-  { key: '1', label: 'Fase 1 — Inicial',       kcKey: 'kc_ini',   kcLabel: 'Kc ini',   hint: 'Kc constante (plano)' },
-  { key: '2', label: 'Fase 2 — Desenvolvimento', kcKey: null,       kcLabel: null,       hint: 'Kc interpolado ini→mid' },
-  { key: '3', label: 'Fase 3 — Médio',          kcKey: 'kc_mid',   kcLabel: 'Kc mid',   hint: 'Kc constante (plano)' },
-  { key: '4', label: 'Fase 4 — Final',          kcKey: 'kc_final', kcLabel: 'Kc final', hint: 'Kc interpolado mid→final' },
-] as const
 
 // ─── Input numérico helper ────────────────────────────────────
 function NumInput({ label, value, onChange, placeholder, unit, hint, small }: {
@@ -325,7 +317,7 @@ function CropModal({ crop, companyId, onClose, onSaved }: CropModalProps) {
 }
 
 // ─── Card cultura na lista ────────────────────────────────────
-function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate, deleting }: {
+function CropCard({ crop, isCustom, onEdit, onDelete, onDuplicate: _onDuplicate, deleting }: {
   crop: Crop; isCustom: boolean
   onEdit: () => void; onDelete: () => void; onDuplicate: () => void; deleting: boolean
 }) {

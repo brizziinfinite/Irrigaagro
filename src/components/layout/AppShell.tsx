@@ -5,7 +5,7 @@ import type { User } from '@supabase/supabase-js'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { InstallBanner } from '@/components/InstallBanner'
-import { Menu, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface AppShellProps {
   user: User

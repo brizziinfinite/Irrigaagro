@@ -5,11 +5,10 @@ import dynamic from 'next/dynamic'
 import { useAuth } from '@/hooks/useAuth'
 import { persistedFetch } from '@/lib/persistedFetch'
 import { useOnlineGuard } from '@/hooks/useOnlineGuard'
-import { UltimaAtualizacao } from '@/components/UltimaAtualizacao'
 import { listFarmsByCompany } from '@/services/farms'
 import { listPivotsByFarmIds } from '@/services/pivots'
 import { listSectorsByPivotId } from '@/services/pivot-sectors'
-import { deleteRainfallRecord, listRainfallByPivotIds, upsertRainfallRecord, upsertRainfallRecords } from '@/services/rainfall'
+import { deleteRainfallRecord, listRainfallByPivotIds, upsertRainfallRecords } from '@/services/rainfall'
 import type { PivotSector, RainfallRecord } from '@/types/database'
 import {
   ChevronLeft, ChevronRight, CloudRain, Upload, X,
@@ -771,7 +770,7 @@ function ImportModal({ pivotId, allPivots, onClose, onImported }: ImportModalPro
     return m ? m[1] : null
   }
 
-  async function fetchTabs(sid: string) {
+  async function fetchTabs(_sid: string) {
     // fetchTabs só funciona para planilhas não-publicadas (requer login Google)
     // Para planilhas publicadas na web, o auto-detect de abas não é possível
     setLoadingTabs(true)
@@ -1501,9 +1500,8 @@ function RainfallHistoryMatrix({ records, loading, pivotName }: HistoryMatrixPro
 
 export default function PrecipitacoesPage() {
   const { company, loading: authLoading } = useAuth()
-  const { isOnline } = useOnlineGuard()
+  const { isOnline: _isOnline } = useOnlineGuard()
   const today = useMemo(() => new Date(), [])
-  const [precipCacheInfo, setPrecipCacheInfo] = useState<{ fetchedAt: string | null; fromCache: boolean }>({ fetchedAt: null, fromCache: false })
 
   const [pivots, setPivots] = useState<PivotOption[]>([])
   const [pivotId, setPivotId] = useState<string>('')
@@ -1613,13 +1611,12 @@ export default function PrecipitacoesPage() {
     setLoadingRecords(true)
     setLoadError('')
     setActionError('')
-    const { data, fetchedAt, fromCache, error } = await persistedFetch(
+    const { data, error } = await persistedFetch(
       `precipitacoes:records:${pid}:${y}`,
       () => listRainfallByPivotIds([pid], undefined, `${y}-01-01`, `${y}-12-31`)
     )
     if (data) {
       setAllRecords(data)
-      setPrecipCacheInfo({ fetchedAt, fromCache })
     } else {
       setLoadError(error instanceof Error ? error.message : 'Falha ao carregar precipitações')
       setAllRecords([])
@@ -2008,7 +2005,7 @@ export default function PrecipitacoesPage() {
                    <button onClick={() => { if(compareMonth===11){setCompareMonth(0);setCompareYear(y=>y+1)}else setCompareMonth(m=>m+1) }} style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: 'var(--color-text-secondary)' }}><ChevronRight size={16} /></button>
                  </div>
                </div>
-               <MonthCalendar year={compareYear} month={compareMonth} records={compareMonthRecords} selectedDate={selectedDate} onSelectDate={(d) => { /* readonly */ }} />
+               <MonthCalendar year={compareYear} month={compareMonth} records={compareMonthRecords} selectedDate={selectedDate} onSelectDate={(_d) => { /* readonly */ }} />
              </div>
 
              <div style={{ background: 'var(--color-surface-sidebar)', border: '1px solid var(--color-surface-border2)', borderRadius: 12, padding: 16 }}>

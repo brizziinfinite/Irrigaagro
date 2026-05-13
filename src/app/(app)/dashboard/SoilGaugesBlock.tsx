@@ -9,7 +9,7 @@ interface SoilGaugesBlockProps {
 }
 
 // Paleta unificada: Verde ≥75% | Âmbar 60–75% | Vermelho <60%
-function gaugeColor(pct: number, _threshold: number): string {
+function gaugeColor(pct: number): string {
   if (pct >= 75) return '#22c55e'
   if (pct >= 60) return '#f59e0b'
   return '#ef4444'
@@ -92,8 +92,7 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
             {activePivots.map(pivot => {
               const m = lastManagementByPivot[pivot.id]
               const pct = m?.field_capacity_percent ?? null
-              const threshold = pivot.alert_threshold_percent ?? 70
-              const color = pct !== null ? gaugeColor(pct, threshold) : '#778899'
+              const color = pct !== null ? gaugeColor(pct) : '#778899'
 
               return (
                 <div key={pivot.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -119,10 +118,6 @@ export function SoilGaugesBlock({ pivots, lastManagementByPivot, activePivotIds 
 
           {/* Legend — based on pivot thresholds */}
           {(() => {
-            const thresholds = activePivots.map(p => p.alert_threshold_percent ?? 70)
-            const avgThreshold = thresholds.length > 0
-              ? Math.round(thresholds.reduce((a, b) => a + b, 0) / thresholds.length)
-              : 70
             return (
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                 {[

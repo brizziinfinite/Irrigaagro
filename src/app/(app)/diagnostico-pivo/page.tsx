@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   AlertCircle,
   AlertTriangle,
-  BellRing,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -499,11 +498,6 @@ export default function PivotDiagnosticsPage() {
     load()
     return () => { cancelled = true }
   }, [superAdmin, etoStationId])
-
-  const selectedSummary = useMemo(
-    () => summaries.find((s) => s.pivotId === selectedPivotId) ?? null,
-    [selectedPivotId, summaries]
-  )
 
   const statusTone = useMemo(
     () => diagnostic ? statusToneFromDiagnostic(diagnostic.status) : null,
