@@ -679,11 +679,16 @@ export function getConjugatedRecommendation(input: {
   etcMmPerDay: number
   returnIntervalDays: number
   pivot: Pivot | null
+  /** ETo forecast real por dia (D+1…D+N). Se fornecido, usa soma em vez de etcMmPerDay×dias. */
+  etcForecastMm?: number[]
 }): IrrigationRecommendation {
-  const { cta, cad, adcCurrent, etcMmPerDay, returnIntervalDays, pivot } = input
+  const { cta, cad, adcCurrent, etcMmPerDay, returnIntervalDays, pivot, etcForecastMm } = input
 
   const deficitCurrentMm = Math.max(0, cta - adcCurrent)
-  const etcForecast = etcMmPerDay * returnIntervalDays
+  // Usa forecast real (primeiros returnIntervalDays dias) se disponível; fallback: média × dias
+  const etcForecast = etcForecastMm && etcForecastMm.length > 0
+    ? etcForecastMm.slice(0, returnIntervalDays).reduce((a, b) => a + b, 0)
+    : etcMmPerDay * returnIntervalDays
   const deficitProjected = deficitCurrentMm + etcForecast
 
   // Calcular lâminas reais a partir das velocidades do pivô

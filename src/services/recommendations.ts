@@ -7,6 +7,7 @@ import { calcETo, calcProjection, type ProjectionDay } from '@/lib/water-balance
 import { calcDAS } from '@/lib/calculations/management-balance'
 import { calcCTA, getStageInfoForDas } from '@/lib/water-balance'
 import type { ManagementSeasonContext } from '@/services/management'
+import type { IrrigationStatus } from '@/types/database'
 
 export type WeatherIcon = 'sun' | 'rain' | 'cloud' | 'storm'
 
@@ -27,6 +28,15 @@ export interface PivotRecommendation {
   lastUpdated: string | null
   forecast: ForecastDay[]
   projection: ProjectionDay[]
+  /** Dias até atingir threshold (alert/critical). null = não atinge em 7 dias */
+  daysToThreshold: number | null
+  /**
+   * Ordem de irrigação dentro do par conjugado (1 = vai primeiro, 2 = vai depois).
+   * null = pivô não está em par conjugado.
+   */
+  conjugatedOrder: number | null
+  /** Nome do pivô parceiro no par conjugado. null se não conjugado. */
+  conjugatedPartnerName: string | null
 }
 
 // ─── Cache de módulo (TTL 10 min) ────────────────────────────
@@ -223,6 +233,11 @@ export async function buildPivotRecommendations(
         rainfallByDay,
       })
 
+      // Dias até atingir threshold (amarelo ou vermelho) na projeção
+      const URGENT_STATUSES: IrrigationStatus[] = ['amarelo', 'vermelho']
+      const thresholdIdx = projection.findIndex(d => URGENT_STATUSES.includes(d.status))
+      const daysToThreshold = thresholdIdx >= 0 ? thresholdIdx + 1 : null
+
       return {
         seasonId: season.id,
         pivotId: pivot.id,
@@ -231,11 +246,53 @@ export async function buildPivotRecommendations(
         lastUpdated: lastMgmt?.date ?? null,
         forecast,
         projection,
+        daysToThreshold,
+        conjugatedOrder: null,
+        conjugatedPartnerName: null,
       }
     })
   )
 
-  return results
+  const recs = results
     .filter((r): r is PromiseFulfilledResult<PivotRecommendation> => r.status === 'fulfilled')
     .map(r => r.value)
+
+  // ─── Passe de ordenação conjugada ────────────────────────────
+  // Itera pivôs que declaram paired_pivot_id e compara urgência.
+  // Par: A → B (A declara paired_pivot_id = B.id)
+  // Quem atinge threshold mais cedo vai primeiro.
+  // Empate: déficit atual maior vai primeiro.
+  for (const ctx of active) {
+    const { pivot } = ctx
+    if (!pivot?.paired_pivot_id) continue
+
+    const recA = recs.find(r => r.pivotId === pivot.id)
+    const recB = recs.find(r => r.pivotId === pivot.paired_pivot_id)
+    if (!recA || !recB) continue
+
+    // Já resolvido (pode haver dois declarantes no futuro)
+    if (recA.conjugatedOrder !== null) continue
+
+    // Urgência: menor daysToThreshold = mais urgente
+    // null (não atinge) = menos urgente que qualquer número
+    const urgencyA = recA.daysToThreshold ?? 999
+    const urgencyB = recB.daysToThreshold ?? 999
+
+    // Desempate: maior déficit atual (primeiro dia da projeção) vai primeiro
+    const deficitA = recA.projection[0]
+      ? recA.projection[0].cta - recA.projection[0].adcProjected
+      : 0
+    const deficitB = recB.projection[0]
+      ? recB.projection[0].cta - recB.projection[0].adcProjected
+      : 0
+
+    const aGoesFirst = urgencyA < urgencyB || (urgencyA === urgencyB && deficitA >= deficitB)
+
+    recA.conjugatedOrder = aGoesFirst ? 1 : 2
+    recA.conjugatedPartnerName = recB.pivotName
+    recB.conjugatedOrder = aGoesFirst ? 2 : 1
+    recB.conjugatedPartnerName = recA.pivotName
+  }
+
+  return recs
 }
