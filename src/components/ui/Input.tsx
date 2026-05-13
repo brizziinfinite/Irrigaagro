@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useId } from 'react';
 import { cn } from '@/lib/utils';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -18,7 +19,8 @@ export function Input({
   disabled,
   ...props
 }: InputProps) {
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || `input-${generatedId}`;
 
   const typeMap = {
     text: 'text',
@@ -79,7 +81,8 @@ export function Select({
   disabled,
   ...props
 }: SelectProps) {
-  const inputId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || `select-${generatedId}`;
 
   return (
     <div className="w-full">

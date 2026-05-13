@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo, useRef } from 'react'
+
 interface UltimaAtualizacaoProps {
   fetchedAt: string | null // ISO timestamp
   className?: string
@@ -21,7 +23,15 @@ function formatDateTime(iso: string): string {
 }
 
 export function UltimaAtualizacao({ fetchedAt, className }: UltimaAtualizacaoProps) {
-  if (!fetchedAt) {
+  // eslint-disable-next-line react-hooks/purity
+  const nowRef = useRef(Date.now())
+  const ageH = useMemo(() => {
+    if (!fetchedAt) return null
+    const ageMs = nowRef.current - new Date(fetchedAt).getTime()
+    return ageMs / 1000 / 3600
+  }, [fetchedAt])
+
+  if (!fetchedAt || ageH === null) {
     return (
       <span
         className={className}
@@ -39,9 +49,6 @@ export function UltimaAtualizacao({ fetchedAt, className }: UltimaAtualizacaoPro
       </span>
     )
   }
-
-  const ageMs = Date.now() - new Date(fetchedAt).getTime()
-  const ageH = ageMs / 1000 / 3600
 
   // Até 6h: badge sutil
   if (ageH <= 6) {

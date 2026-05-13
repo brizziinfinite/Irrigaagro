@@ -60,6 +60,49 @@ const CONFIGURACAO = [
   { icon: Stethoscope,    label: 'Diagnóstico',      path: '/diagnostico-pivo'  },
 ];
 
+function NavItem({ icon: Icon, label, path, pathname, onNavigate }: {
+  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> | typeof PivotIcon;
+  label: string;
+  path: string;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const active = pathname === path;
+  return (
+    <li>
+      <Link
+        href={path}
+        onClick={onNavigate}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '12px 14px',
+          borderRadius: 9,
+          textDecoration: 'none',
+          fontSize: 14.5,
+          fontWeight: active ? 600 : 400,
+          color: active ? 'var(--color-text)' : 'var(--color-text-secondary)',
+          background: active ? 'rgba(0,147,208,0.12)' : 'transparent',
+          borderLeft: active ? '2px solid #0093D0' : '2px solid transparent',
+          transition: 'all 0.15s',
+          position: 'relative',
+        }}
+        onMouseEnter={e => {
+          if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'
+        }}
+        onMouseLeave={e => {
+          if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'
+        }}
+      >
+        <Icon size={18} style={{ color: active ? '#0093D0' : 'var(--color-text-muted)', flexShrink: 0 }} />
+        <span style={{ flex: 1 }}>{label}</span>
+        {active && <ChevronRight size={13} style={{ color: '#0093D0' }} />}
+      </Link>
+    </li>
+  );
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function Sidebar(_props?: { user?: any; onNavigate?: () => void; isSuperAdmin?: boolean }) {
   const pathname = usePathname();
@@ -86,46 +129,6 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void; isSuperA
     router.push('/login');
   };
 
-  const handleNavClick = () => {
-    _props?.onNavigate?.();
-  };
-
-  function NavItem({ icon: Icon, label, path }: { icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> | typeof PivotIcon; label: string; path: string }) {
-    const active = pathname === path;
-    return (
-      <li>
-        <Link
-          href={path}
-          onClick={handleNavClick}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '12px 14px',
-            borderRadius: 9,
-            textDecoration: 'none',
-            fontSize: 14.5,
-            fontWeight: active ? 600 : 400,
-            color: active ? 'var(--color-text)' : 'var(--color-text-secondary)',
-            background: active ? 'rgba(0,147,208,0.12)' : 'transparent',
-            borderLeft: active ? '2px solid #0093D0' : '2px solid transparent',
-            transition: 'all 0.15s',
-            position: 'relative',
-          }}
-          onMouseEnter={e => {
-            if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'
-          }}
-          onMouseLeave={e => {
-            if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'
-          }}
-        >
-          <Icon size={18} style={{ color: active ? '#0093D0' : 'var(--color-text-muted)', flexShrink: 0 }} />
-          <span style={{ flex: 1 }}>{label}</span>
-          {active && <ChevronRight size={13} style={{ color: '#0093D0' }} />}
-        </Link>
-      </li>
-    );
-  }
 
   return (
     <>
@@ -161,7 +164,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void; isSuperA
           </p>
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, marginBottom: 22 }}>
             {OPERACIONAL.map(item => (
-              <NavItem key={item.path} icon={item.icon} label={item.label} path={item.path} />
+              <NavItem key={item.path} icon={item.icon} label={item.label} path={item.path} pathname={pathname} onNavigate={_props?.onNavigate} />
             ))}
           </ul>
 
@@ -176,7 +179,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void; isSuperA
           </p>
           <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {CONFIGURACAO.map(item => (
-              <NavItem key={item.path} icon={item.icon} label={item.label} path={item.path} />
+              <NavItem key={item.path} icon={item.icon} label={item.label} path={item.path} pathname={pathname} onNavigate={_props?.onNavigate} />
             ))}
           </ul>
 
@@ -192,7 +195,7 @@ export function Sidebar(_props?: { user?: any; onNavigate?: () => void; isSuperA
                 Admin
               </p>
               <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                <NavItem icon={Shield} label="Clientes" path="/admin" />
+                <NavItem icon={Shield} label="Clientes" path="/admin" pathname={pathname} onNavigate={_props?.onNavigate} />
               </ul>
             </>
           )}

@@ -39,35 +39,42 @@ export default async function DashboardPage() {
     )
   }
 
-  try {
-    const dashboard = await getDashboardDataForUser(user.id, supabase, preferredCompanyId, preferredFarmId)
+  let dashboard: Awaited<ReturnType<typeof getDashboardDataForUser>> | null = null
+  let loadError: string | null = null
 
-    return (
-      <DashboardClient
-        pivots={dashboard.pivots}
-        activeSeasons={dashboard.activeSeasons}
-        contexts={dashboard.contexts}
-        hasPivots={dashboard.hasPivots}
-        lastManagementBySeason={dashboard.lastManagementBySeason}
-        historyBySeason={dashboard.historyBySeason}
-        currentFieldCapacityBySeasonId={dashboard.currentFieldCapacityBySeasonId}
-        currentAdcBySeasonId={dashboard.currentAdcBySeasonId}
-        diagnosticsByPivot={dashboard.diagnosticsByPivot}
-        energyBills={dashboard.energyBills}
-        summary={dashboard.summary}
-      />
-    )
+  try {
+    dashboard = await getDashboardDataForUser(user.id, supabase, preferredCompanyId, preferredFarmId)
   } catch (error) {
     console.error('[dashboard] Failed to load data:', error)
+    loadError = error instanceof Error ? error.message : 'Tente recarregar a página.'
+  }
+
+  if (loadError || !dashboard) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <p style={{ color: '#ef4444', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
           Erro ao carregar o dashboard
         </p>
         <p style={{ color: 'var(--color-text-secondary)', fontSize: 13 }}>
-          {error instanceof Error ? error.message : 'Tente recarregar a página.'}
+          {loadError ?? 'Tente recarregar a página.'}
         </p>
       </div>
     )
   }
+
+  return (
+    <DashboardClient
+      pivots={dashboard.pivots}
+      activeSeasons={dashboard.activeSeasons}
+      contexts={dashboard.contexts}
+      hasPivots={dashboard.hasPivots}
+      lastManagementBySeason={dashboard.lastManagementBySeason}
+      historyBySeason={dashboard.historyBySeason}
+      currentFieldCapacityBySeasonId={dashboard.currentFieldCapacityBySeasonId}
+      currentAdcBySeasonId={dashboard.currentAdcBySeasonId}
+      diagnosticsByPivot={dashboard.diagnosticsByPivot}
+      energyBills={dashboard.energyBills}
+      summary={dashboard.summary}
+    />
+  )
 }
