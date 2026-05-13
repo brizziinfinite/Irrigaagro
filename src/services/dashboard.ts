@@ -11,7 +11,7 @@ import { listPivotsByFarmIds } from '@/services/pivots'
 import { listEnergyBillsByFarmIds } from '@/services/energy-bills'
 import { getWeatherDataByStationRange, getWeatherDataByFarmRange } from '@/services/weather-data'
 import type { TypedSupabaseClient } from '@/services/base'
-import type { DailyManagement, EnergyBill, Pivot, Season, WeatherData } from '@/types/database'
+import type { DailyManagement, EnergyBill, Pivot, Season, WeatherData, RainfallRecord } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { calcDAS, computeResolvedManagementBalance } from '@/lib/calculations/management-balance'
 
@@ -119,6 +119,27 @@ export async function getDashboardDataForUser(
   )
   const weatherRangeMap = new Map(weatherRangeBySeason.map(r => [r.seasonId, r.weatherMap]))
 
+  // Pré-busca precipitações do período de gap em paralelo
+  // Sem isso, o dashboard ignora chuvas e subestima a umidade do solo
+  const rainfallRangeBySeason = await Promise.all(
+    activeContexts.map(async ({ season, pivot }, idx) => {
+      const history = allHistories[idx]
+      const lastDate = history[0]?.date ?? null
+      if (!pivot || !lastDate || lastDate === today) return { seasonId: season.id, rainfallMap: new Map<string, number>() }
+
+      const { data } = await client
+        .from('rainfall_records')
+        .select('date, rainfall_mm')
+        .eq('pivot_id', pivot.id)
+        .gte('date', lastDate)
+        .lte('date', today)
+
+      const rainfallMap = new Map<string, number>((data ?? []).map((r: Pick<RainfallRecord, 'date' | 'rainfall_mm'>) => [r.date, r.rainfall_mm]))
+      return { seasonId: season.id, rainfallMap }
+    })
+  )
+  const rainfallRangeMap = new Map(rainfallRangeBySeason.map(r => [r.seasonId, r.rainfallMap]))
+
   for (let i = 0; i < activeContexts.length; i++) {
     const { season, crop, pivot } = activeContexts[i]
     const history = allHistories[i]
@@ -168,6 +189,7 @@ export async function getDashboardDataForUser(
       let runningAdc = lastManagement.ctda
       let runningHistory = [...history]
       const weatherMap = weatherRangeMap.get(season.id) ?? new Map<string, WeatherData>()
+      const rainfallMap = rainfallRangeMap.get(season.id) ?? new Map<string, number>()
 
       for (let d = 1; d <= daysToProcess; d++) {
         const gapDate = new Date(lastDate + 'T12:00:00')
@@ -175,6 +197,7 @@ export async function getDashboardDataForUser(
         const gapDateStr = gapDate.toISOString().split('T')[0]
 
         const climateSnapshot = weatherMap.get(gapDateStr) ?? null
+        const gapRainfallMm = rainfallMap.get(gapDateStr) ?? 0
 
         if (climateSnapshot) {
           const result = computeResolvedManagementBalance({
@@ -186,7 +209,7 @@ export async function getDashboardDataForUser(
             humidity: climateSnapshot.humidity_percent != null ? String(climateSnapshot.humidity_percent) : '',
             wind: climateSnapshot.wind_speed_ms != null ? String(climateSnapshot.wind_speed_ms) : '',
             radiation: climateSnapshot.solar_radiation_wm2 != null ? String(climateSnapshot.solar_radiation_wm2) : '',
-            rainfall: '',
+            rainfall: gapRainfallMm > 0 ? String(gapRainfallMm) : '',
             actualDepth: '',
             actualSpeed: '',
             externalData: { station: null, weather: climateSnapshot, geolocationWeather: null, rainfall: null, climateSource: 'farm_station' },
@@ -201,7 +224,7 @@ export async function getDashboardDataForUser(
           }
         }
 
-        // Fallback determinístico: apenas ETc (sem irrigação)
+        // Fallback determinístico: ETc + chuva do dia
         const stageInfo = getStageInfoForDas(crop, calcDAS(season.planting_date, gapDateStr))
         const cta = calcCTA(
           Number(pivot?.field_capacity ?? season.field_capacity ?? 32),
@@ -209,7 +232,7 @@ export async function getDashboardDataForUser(
           Number(pivot?.bulk_density ?? season.bulk_density ?? 1.4),
           stageInfo.rootDepthCm
         )
-        runningAdc = Math.max(0, Math.min(runningAdc - avgEtc, cta))
+        runningAdc = Math.max(0, Math.min(runningAdc - avgEtc + gapRainfallMm, cta))
       }
 
       currentAdc = runningAdc
