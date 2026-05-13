@@ -62,7 +62,7 @@ export function AppShell({ user, children, isSuperAdmin }: AppShellProps) {
         />
         <main
           className="flex-1 overflow-auto"
-          style={{ background: 'var(--color-surface-bg)', padding: '24px 28px' }}
+          style={{ background: 'var(--color-surface-bg)', padding: 'clamp(16px, 4vw, 24px) clamp(12px, 4vw, 28px)' }}
         >
           {children}
         </main>

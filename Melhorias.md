@@ -472,7 +472,36 @@ Requer novo módulo e tabelas.
 
 ---
 
-## PRÓXIMAS MELHORIAS (backlog priorizado — 2026-05-12)
+## 🔒 Auditoria de Segurança e Qualidade — 2026-05-13
+**Status:** ✅ Concluído
+
+### Fase 0 — Segurança
+- [x] Webhook `notify-new-signup` fail-closed: retorna 503 se `WEBHOOK_SECRET` ausente (era fail-open)
+- [x] `NEXT_PUBLIC_SUPER_ADMIN_EMAILS` removido — `isSuperAdmin` calculado server-side em `layout.tsx` e passado como prop
+- [x] SW cache: removido cache de HTML autenticado; SW só faz fallback para `/offline.html` em erro de rede; bumped `irrigaagro-v4`
+- [x] Next.js atualizado para 16.2.6
+
+### Fase 1 — Qualidade
+- [x] ESLint: 191 → 42 warnings (restantes são `no-explicit-any` em scripts de infra — deixados intencionalmente)
+- [x] `argsIgnorePattern: '^_'` no `eslint.config.mjs`
+- [x] `fromUntyped(client, table)` helper em `services/base.ts`
+- [x] `ScheduleHistory.tsx`: ternário como statement → `if/else`
+- [x] `PivotMap.tsx`: `<a>` → `<Link>`
+- [x] `next.config.ts`: `remotePatterns` para Supabase Storage
+- [x] `TalhaoMapDraw.tsx`: `@ts-expect-error` obsoletos removidos
+- [x] Bug React: `NavItem` definido dentro de `Sidebar` → movido para fora (componente criado em render = re-mount em cada render)
+- [x] Bug React: `Math.random()` em `Input.tsx` → `useId()` (Input + Select)
+- [x] Bug React: `Date.now()` em `UltimaAtualizacao.tsx` → `useRef(Date.now())`
+- [x] Bug React: JSX dentro de try/catch em `dashboard/page.tsx` → refatorado com variável de erro
+
+### Fase 2 — Mobile
+- [x] `RecommendationsMatrix.tsx`: `overflow: 'hidden'` → `overflow: 'clip'` — libera `overflowX: auto` interno para scroll horizontal em 390px
+- [x] AppShell main padding: `clamp(16px, 4vw, 24px) clamp(12px, 4vw, 28px)`
+- [x] Auditadas: manejo, lancamentos, relatorios — sem overflow real (minWidth em tabelas é intencional)
+
+---
+
+## PRÓXIMAS MELHORIAS (backlog priorizado — 2026-05-13)
 
 ### 🔴 Alta prioridade
 
@@ -494,12 +523,7 @@ Após token funcionar: clicar "Atualizar via Satélite" nos dois pivôs e verifi
 ---
 
 #### 📧 Email Resend — domínio próprio
-**Status:** ⏳ Pendente
-
-E-mails de ativação e novo cadastro não enviam porque `gotejo.com.br` não está configurado no painel Resend.
-- Entrar em resend.com → Domains → Add Domain → `gotejo.com.br`
-- Adicionar registros DNS no Cloudflare (TXT + MX)
-- Atualizar `from:` nas funções de envio para `noreply@gotejo.com.br`
+**Status:** ✅ Configurado e funcionando (2026-05-13)
 
 ---
 
@@ -515,20 +539,12 @@ Valores de referência (Latossolo Vermelho argiloso):
 ### 🟡 Média prioridade
 
 #### 📱 Testes PWA em dispositivo físico
-**Status:** ⏳ Pendente — requer dispositivo
-
-- Chrome Android: verificar `beforeinstallprompt` + banner + ícone na tela inicial
-- Safari iOS: verificar fluxo manual (Compartilhar → Adicionar à tela)
-- Ambos: testar modo offline (service worker cache)
+**Status:** ✅ Testado e funcionando (2026-05-13)
 
 ---
 
-#### 💬 WhatsApp — testar alertas automáticos em produção
-**Status:** ⏳ Pendente
-
-- `afternoon-alert` (17h BRT): pivôs com FC% abaixo do threshold
-- `weekly-report` (segunda-feira 10h): resumo semanal por empresa
-- Verificar formato da mensagem, dados corretos, link de resposta
+#### 💬 WhatsApp — alertas automáticos
+**Status:** ✅ Testado e funcionando em produção (2026-05-13)
 
 ---
 

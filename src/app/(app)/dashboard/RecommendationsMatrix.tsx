@@ -190,7 +190,7 @@ export function RecommendationsMatrix({ contexts, lastMgmtBySeasonId, currentAdc
     boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
     backdropFilter: 'blur(12px)',
     padding: 0,
-    overflow: 'hidden',
+    overflow: 'clip',
     minWidth: 0,
   }
 
