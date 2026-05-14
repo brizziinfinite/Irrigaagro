@@ -561,7 +561,9 @@ Cron `send-push-alerts` (17h UTC) está em produção mas nunca foi testado end-
 ### 🟢 Baixa prioridade / Futuro
 
 #### 🗓️ Calendário de manejo — visão mensal
-Visão calendário em `/lancamentos` mostrando irrigações planejadas vs realizadas por pivô.
+**Status:** ✅ Implementado em 2026-05-14
+
+Toggle Semana|Mês no header de `/lancamentos`. Grade mensal com chips coloridos por status (planejado/realizado/cancelado), navegação por mês, clique no dia troca para visão semanal. Responsivo: chips no desktop, pontinhos no mobile.
 
 #### 📊 Relatório PDF exportável
 Gerar PDF com balanço hídrico do período, gráficos e recomendações — para enviar ao produtor.

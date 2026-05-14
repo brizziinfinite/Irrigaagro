@@ -598,14 +598,14 @@ function PivotModal({ pivot, farms, allPivots, onClose, onSaved }: PivotModalPro
             onClick={() => setShowAdvanced(v => !v)}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              width: '100%', padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-              background: showAdvanced ? 'rgba(0,147,208,0.06)' : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${showAdvanced ? 'rgba(0,147,208,0.18)' : 'var(--color-surface-border2)'}`,
-              color: showAdvanced ? '#0093D0' : 'var(--color-text-secondary)', transition: 'all 0.2s',
+              width: '100%', padding: '13px 16px', borderRadius: 10, cursor: 'pointer',
+              background: showAdvanced ? 'rgba(0,147,208,0.08)' : 'rgba(0,147,208,0.04)',
+              border: `1px solid ${showAdvanced ? 'rgba(0,147,208,0.35)' : 'rgba(0,147,208,0.22)'}`,
+              color: '#0093D0', transition: 'all 0.2s',
             }}
           >
-            <span style={{ fontSize: 12, fontWeight: 600 }}>Localização, setores, alertas e parâmetros avançados</span>
-            <ChevronRight size={14} style={{ transform: showAdvanced ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+            <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.01em' }}>Localização, setores, alertas e parâmetros avançados</span>
+            <ChevronRight size={16} style={{ transform: showAdvanced ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
           </button>
 
           {showAdvanced && (
