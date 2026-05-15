@@ -506,19 +506,14 @@ Requer novo módulo e tabelas.
 ### 🔴 Alta prioridade
 
 #### 🛰️ NDVI Copernicus — ativar credenciais OAuth
-**Status:** ⏳ Pendente (verificado 2026-05-15 — ainda retorna `unauthorized_client`)
+**Status:** ✅ Resolvido em 2026-05-15
 
-Credenciais criadas em `shapps.dataspace.copernicus.eu` mas retornam `unauthorized_client`.
+Client antigo `sh-4423891e...` invalidado. Novo client criado e testado com sucesso.
+- `SENTINEL_CLIENT_ID=sh-823f6b85-25bd-41e3-8f13-ba695ad68306`
+- Secrets atualizados no Supabase + `ndvi-fetch` redeployada
+- Token retorna `access_token` válido (expires_in: 1800s)
 
-```bash
-# Testar token:
-curl -s -X POST "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials&client_id=sh-4423891e-58ad-48c4-969e-cdffb2dfd73e&client_secret=UfILnzcJil3TmenT9rIiYPPICLkSODHD"
-```
-
-**Próximo passo:** recriar OAuth client no painel → `shapps.dataspace.copernicus.eu` → Account Settings → OAuth clients → + Create.
-Após token funcionar: clicar "Atualizar via Satélite" nos dois pivôs e verificar PNG no Storage `campo-ndvi`.
+**Próximo:** clicar "Atualizar via Satélite" nos dois pivôs em `/ndvi` para verificar PNG no Storage `campo-ndvi`.
 
 ---
 
