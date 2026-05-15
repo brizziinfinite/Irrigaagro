@@ -505,38 +505,10 @@ Requer novo módulo e tabelas.
 
 ### 🔴 Alta prioridade
 
-#### 🛰️ NDVI Copernicus — ativar credenciais OAuth
-**Status:** ✅ Resolvido em 2026-05-15
+#### 🔔 Push notifications — validar push real no dispositivo
+**Status:** ⏳ Parcialmente testado
 
-Client antigo `sh-4423891e...` invalidado. Novo client criado e testado com sucesso.
-- `SENTINEL_CLIENT_ID=sh-823f6b85-25bd-41e3-8f13-ba695ad68306`
-- Secrets atualizados no Supabase + `ndvi-fetch` redeployada
-- Token retorna `access_token` válido (expires_in: 1800s)
-
-**Próximo:** clicar "Atualizar via Satélite" nos dois pivôs em `/ndvi` para verificar PNG no Storage `campo-ndvi`.
-
----
-
-#### 🌾 Fazenda Krebbs — parâmetros de solo
-**Status:** ⏳ Pendente
-
-Pivô Krebbs tem CC, PM, Ds = null. Preencher em `/pivos` → editar → Parâmetros de Solo.
-Valores de referência (Latossolo Vermelho argiloso):
-- CC ≈ 28-32%, PM ≈ 14-16%, Ds ≈ 1.2-1.3 g/cm³
-
----
-
-#### 🔔 Push notifications — testar e validar
-**Status:** ✅ Testado em 2026-05-15 — cron funciona, retorna `sent:0` corretamente quando FC% > threshold
-
-Verificado: 2 subscriptions no DB, cron roda, avalia `needs_irrigation`, não envia quando FC%=88-90% (acima do threshold 70%). Fluxo completo OK. Só não foi possível testar push real pois pivôs não estão urgentes — validar quando FC% cair abaixo do threshold.
-
----
-
-#### 🗓️ Calendário de manejo — merge para main
-**Status:** ✅ Mergeado no `main` em 2026-05-15
-
-Toggle Semana|Mês em `/lancamentos`, CalendarView.tsx, chips planejado/realizado/cancelado, navegação por mês, clique navega para semana correta. Responsivo (chips desktop, dots mobile).
+Cron funciona (testado 2026-05-15: `sent:0` correto). Falta: validar push chegando no dispositivo quando FC% cai abaixo do threshold (70%).
 
 ---
 
@@ -550,6 +522,18 @@ Toggle Semana|Mês em `/lancamentos`, CalendarView.tsx, chips planejado/realizad
 
 #### 💬 WhatsApp — alertas automáticos
 **Status:** ✅ Testado e funcionando em produção (2026-05-13)
+
+#### 🛰️ NDVI Copernicus OAuth
+**Status:** ✅ Resolvido em 2026-05-15 — novo client `sh-823f6b85`, `ndvi-fetch` redeployada, alerta e-mail no cron semanal
+
+#### 🌾 Fazenda Krebbs — parâmetros de solo
+**Status:** ✅ Já preenchido no banco (CC=30.49, PM=16.1, Ds=1.2) — verificado 2026-05-15
+
+#### 🗓️ Calendário de manejo — visão mensal
+**Status:** ✅ Mergeado no `main` em 2026-05-15
+
+#### 📊 NDVI no relatório semanal WhatsApp
+**Status:** ✅ Implementado em 2026-05-15 — variação % + classificação por pivô em `weekly-report`
 
 #### 📊 Relatório PDF exportável
 Gerar PDF com balanço hídrico do período, gráficos e recomendações — para enviar ao produtor.
