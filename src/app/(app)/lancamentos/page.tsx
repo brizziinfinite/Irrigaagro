@@ -22,9 +22,11 @@ import {
 } from '@/lib/water-balance'
 import type { DailyManagement } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
-import { ChevronDown, ChevronUp, X, Copy, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { ChevronDown, ChevronUp, X, Copy, ChevronLeft, ChevronRight, CalendarDays, LayoutGrid, Table2 } from 'lucide-react'
 import { ScheduleHistory } from './ScheduleHistory'
 import type { BatchEditPayload, ReschedulePayload } from './ScheduleHistory'
+import { CalendarView } from './CalendarView'
+import type { PivotMeta } from './types'
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -128,16 +130,7 @@ type PivotGrid = Record<string, DayEntry> // date → entry
 // sectorId '' (string vazia) representa o pivô completo (sem setores)
 type SectorGrid = Record<string, PivotGrid> // sectorId → PivotGrid
 
-interface PivotMeta {
-  context: ManagementSeasonContext
-  speedTable: PivotSpeedEntry[]
-  sectors: PivotSector[]       // setores do pivô (vazio = pivô sem setores)
-  history: DailyManagement[]
-  currentPct: number | null    // % hoje (projetado com dados climáticos reais)
-  currentAdcMm: number         // ADc mm hoje (projetado, usado como ponto de partida do grid)
-  ctaMm: number
-  cadMm: number
-}
+// PivotMeta importado de ./types
 
 // ─── Cálculo de % para um dia (acumulando grid dos dias anteriores) ──────────
 
@@ -1484,8 +1477,11 @@ export default function LancamentosPage() {
   const { company } = useAuth()
   const { guardAction } = useOnlineGuard()
 
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week')
   const [today, setToday] = useState('')
   const [weekOffset, setWeekOffset] = useState(0) // 0 = semana atual, -1 = anterior, etc.
+  // schedules do mês inteiro (para CalendarView)
+  const [monthSchedulesByPivot, setMonthSchedulesByPivot] = useState<Record<string, IrrigationSchedule[]>>({})
   const [historyKey, setHistoryKey] = useState(0)  // forçar rerender do ScheduleHistory
   const [expandPivotId, setExpandPivotId] = useState<string | null>(null) // abre grid do pivô ao reprogramar
   const [metas, setMetas] = useState<PivotMeta[]>([])
@@ -1515,6 +1511,25 @@ export default function LancamentosPage() {
   // weekStart = primeiro dia da semana exibida
   const weekStart = today ? getWeekStart(today, weekOffset) : ''
   const isPastWeek = weekOffset < 0
+
+  // Busca schedules do mês inteiro para o CalendarView
+  const loadMonthSchedules = useCallback(async (year: number, month: number) => {
+    if (!company) return
+    const from = `${year}-${String(month + 1).padStart(2, '0')}-01`
+    const lastDay = new Date(year, month + 1, 0).getDate()
+    const to = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    try {
+      const all = await listSchedulesByCompany(company.id, from, to)
+      const byPivot: Record<string, IrrigationSchedule[]> = {}
+      for (const s of all) {
+        if (!byPivot[s.pivot_id]) byPivot[s.pivot_id] = []
+        byPivot[s.pivot_id].push(s)
+      }
+      setMonthSchedulesByPivot(byPivot)
+    } catch {
+      // silencioso — CalendarView fica com dados vazios
+    }
+  }, [company])
 
   const load = useCallback(async () => {
     if (!company || !today) return
@@ -1741,7 +1756,7 @@ export default function LancamentosPage() {
                 Planeje, ajuste e acompanhe a programação de irrigação.
               </p>
             </div>
-            {isPastWeek && (
+            {isPastWeek && viewMode === 'week' && (
               <span style={{
                 fontSize: 10, fontWeight: 700, color: '#f59e0b',
                 background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.25)',
@@ -1750,8 +1765,41 @@ export default function LancamentosPage() {
             )}
           </div>
 
-          {/* Navegação de semana */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* Toggle visão + Navegação de semana */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {/* Toggle Semana / Mês */}
+            <div style={{
+              display: 'flex', alignItems: 'center',
+              background: 'var(--color-surface-border2)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 9, padding: 3, gap: 2,
+            }}>
+              {(['week', 'month'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setViewMode(mode)
+                    if (mode === 'month' && today) {
+                      const d = new Date(today + 'T12:00:00')
+                      loadMonthSchedules(d.getFullYear(), d.getMonth())
+                    }
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                    border: 'none', cursor: 'pointer',
+                    background: viewMode === mode ? 'rgba(0,147,208,0.18)' : 'transparent',
+                    color: viewMode === mode ? '#0093D0' : 'var(--color-text-muted)',
+                    transition: 'all 0.15s',
+                  }}>
+                  {mode === 'week' ? <Table2 size={12} /> : <LayoutGrid size={12} />}
+                  <span className="hidden sm:inline">{mode === 'week' ? 'Semana' : 'Mês'}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Navegação de semana (somente visão semanal) */}
+            {viewMode === 'week' && <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <button
               onClick={() => setWeekOffset(o => o - 1)}
               style={{
@@ -1807,12 +1855,15 @@ export default function LancamentosPage() {
                 Hoje
               </button>
             )}
+            </div>}
           </div>
         </div>
         <p style={{ fontSize: 14, color: '#94a3b8', margin: '6px 0 0', lineHeight: 1.625 }}>
-          {isPastWeek
-            ? 'Visualizando semana anterior — inputs desabilitados'
-            : 'Clique em um pivô para programar irrigação'}
+          {viewMode === 'month'
+            ? 'Visão mensal — clique num dia para abrir na visão semanal'
+            : isPastWeek
+              ? 'Visualizando semana anterior — inputs desabilitados'
+              : 'Clique em um pivô para programar irrigação'}
         </p>
       </div>
 
@@ -1833,13 +1884,28 @@ export default function LancamentosPage() {
         </div>
       )}
 
-      {/* Cards */}
+      {/* Cards ou Calendário */}
       {loading ? (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 13 }}>Carregando pivôs…</div>
       ) : metas.length === 0 ? (
         <div style={{ background: 'var(--color-surface-card)', border: '1px solid var(--color-surface-border2)', borderRadius: 14, padding: 40, textAlign: 'center' }}>
           <p style={{ color: 'var(--color-text-muted)', fontSize: 14 }}>Nenhuma safra ativa encontrada.</p>
         </div>
+      ) : viewMode === 'month' ? (
+        <CalendarView
+          metas={metas}
+          schedulesByPivot={monthSchedulesByPivot}
+          today={today}
+          onDayClick={(ymd) => {
+            const todayDate = new Date(today + 'T12:00:00')
+            const clickedDate = new Date(ymd + 'T12:00:00')
+            const diffDays = Math.round((clickedDate.getTime() - todayDate.getTime()) / 86400000)
+            const offset = Math.min(0, Math.floor(diffDays / 7))
+            setWeekOffset(offset)
+            setViewMode('week')
+          }}
+          onMonthChange={(y, m) => loadMonthSchedules(y, m)}
+        />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           {metas.map(meta => {

@@ -501,12 +501,12 @@ Requer novo módulo e tabelas.
 
 ---
 
-## PRÓXIMAS MELHORIAS (backlog priorizado — 2026-05-13)
+## PRÓXIMAS MELHORIAS (backlog priorizado — 2026-05-15)
 
 ### 🔴 Alta prioridade
 
 #### 🛰️ NDVI Copernicus — ativar credenciais OAuth
-**Status:** ⏳ Pendente
+**Status:** ⏳ Pendente (verificado 2026-05-15 — ainda retorna `unauthorized_client`)
 
 Credenciais criadas em `shapps.dataspace.copernicus.eu` mas retornam `unauthorized_client`.
 
@@ -517,13 +517,8 @@ curl -s -X POST "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/proto
   -d "grant_type=client_credentials&client_id=sh-4423891e-58ad-48c4-969e-cdffb2dfd73e&client_secret=UfILnzcJil3TmenT9rIiYPPICLkSODHD"
 ```
 
-Se ainda der erro: recriar OAuth client no painel → Account Settings → OAuth clients → + Create.
+**Próximo passo:** recriar OAuth client no painel → `shapps.dataspace.copernicus.eu` → Account Settings → OAuth clients → + Create.
 Após token funcionar: clicar "Atualizar via Satélite" nos dois pivôs e verificar PNG no Storage `campo-ndvi`.
-
----
-
-#### 📧 Email Resend — domínio próprio
-**Status:** ✅ Configurado e funcionando (2026-05-13)
 
 ---
 
@@ -536,32 +531,33 @@ Valores de referência (Latossolo Vermelho argiloso):
 
 ---
 
-### 🟡 Média prioridade
-
-#### 📱 Testes PWA em dispositivo físico
-**Status:** ✅ Testado e funcionando (2026-05-13)
-
----
-
-#### 💬 WhatsApp — alertas automáticos
-**Status:** ✅ Testado e funcionando em produção (2026-05-13)
-
----
-
 #### 🔔 Push notifications — testar e validar
 **Status:** ⏳ Pendente
 
 Cron `send-push-alerts` (17h UTC) está em produção mas nunca foi testado end-to-end.
 - Ativar notificações no header → verificar registro em `push_subscriptions`
-- Esperar ou forçar via `/api/cron/send-push-alerts` com `CRON_SECRET`
+- Forçar via `curl -H "Authorization: Bearer $CRON_SECRET" https://irrigaagro.com.br/api/cron/send-push-alerts`
 - Confirmar push chega no dispositivo
+
+---
+
+#### 🗓️ Calendário de manejo — merge para main
+**Status:** ⏳ Branch `feat/calendar-view` implementada (2026-05-14), não mergeada no `main`
+
+Toggle Semana|Mês implementado, CalendarView.tsx criado, bugs corrigidos. Falta: testar visualmente e mergear.
 
 ---
 
 ### 🟢 Baixa prioridade / Futuro
 
-#### 🗓️ Calendário de manejo — visão mensal
-Visão calendário em `/lancamentos` mostrando irrigações planejadas vs realizadas por pivô.
+#### 📧 Email Resend — domínio próprio
+**Status:** ✅ Configurado e funcionando (2026-05-13)
+
+#### 📱 Testes PWA em dispositivo físico
+**Status:** ✅ Testado e funcionando (2026-05-13)
+
+#### 💬 WhatsApp — alertas automáticos
+**Status:** ✅ Testado e funcionando em produção (2026-05-13)
 
 #### 📊 Relatório PDF exportável
 Gerar PDF com balanço hídrico do período, gráficos e recomendações — para enviar ao produtor.

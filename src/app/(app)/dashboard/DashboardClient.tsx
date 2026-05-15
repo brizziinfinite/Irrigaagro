@@ -12,7 +12,17 @@ import { EnergyBlock } from './EnergyBlock'
 import { CriticalPivots } from './CriticalPivots'
 import { RecommendationsMatrix } from './RecommendationsMatrix'
 import { SoilGaugesBlock } from './SoilGaugesBlock'
-import { HistoryBlock } from './HistoryBlock'
+const HistoryBlock = dynamic(
+  () => import('./HistoryBlock').then(m => m.HistoryBlock),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ height: 220, borderRadius: 10, background: 'var(--color-surface-border2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: 12 }}>
+        Carregando histórico…
+      </div>
+    ),
+  }
+)
 import {
   ArrowRight,
   Droplets, AlertTriangle, AlertCircle, Info,
