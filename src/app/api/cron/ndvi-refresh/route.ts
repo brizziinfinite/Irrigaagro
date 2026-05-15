@@ -220,6 +220,28 @@ export async function GET(req: NextRequest) {
 
     console.log(`[ndvi-refresh] ${results.length} entidades, ${erros} erros, ${elapsed}ms`)
 
+    // Alertar via e-mail se houver erros (mesmo padrão do daily-balance)
+    if (erros > 0 || results.length === 0) {
+      const adminEmail = process.env.ADMIN_NOTIFY_EMAIL
+      const resendKey = process.env.RESEND_API_KEY
+      if (adminEmail && resendKey) {
+        const erroDetalhes = results
+          .filter(r => r.status === 'error')
+          .map(r => `• ${r.entity} (${r.tipo}): ${r.erro}`)
+          .join('\n')
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'IrrigaAgro <sistema@irrigaagro.com.br>',
+            to: [adminEmail],
+            subject: `⚠️ NDVI Refresh — ${erros} erro(s) em ${results.length} entidades`,
+            text: `Cron ndvi-refresh executado com erros.\n\nData: ${new Date().toISOString()}\nTotal: ${results.length}\nErros: ${erros}\n\n${erroDetalhes}\n\nVerifique os secrets SENTINEL_CLIENT_ID e SENTINEL_CLIENT_SECRET no Supabase.`,
+          }),
+        }).catch(e => console.error('[ndvi-refresh] Falha ao enviar e-mail:', e))
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       total: results.length,
@@ -229,6 +251,23 @@ export async function GET(req: NextRequest) {
     })
   } catch (err) {
     console.error('[ndvi-refresh] Fatal error:', err)
+
+    // Alertar falha total
+    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL
+    const resendKey = process.env.RESEND_API_KEY
+    if (adminEmail && resendKey) {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'IrrigaAgro <sistema@irrigaagro.com.br>',
+          to: [adminEmail],
+          subject: '🚨 NDVI Refresh — Falha crítica (token Copernicus inválido?)',
+          text: `Cron ndvi-refresh falhou completamente.\n\nData: ${new Date().toISOString()}\nErro: ${String(err instanceof Error ? err.message : err)}\n\nVerifique:\n1. SENTINEL_CLIENT_ID e SENTINEL_CLIENT_SECRET no Supabase Secrets\n2. OAuth client em shapps.dataspace.copernicus.eu → Account Settings → OAuth clients`,
+        }),
+      }).catch(() => {})
+    }
+
     return NextResponse.json(
       { error: String(err instanceof Error ? err.message : err) },
       { status: 500 },
