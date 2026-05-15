@@ -532,19 +532,16 @@ Valores de referência (Latossolo Vermelho argiloso):
 ---
 
 #### 🔔 Push notifications — testar e validar
-**Status:** ⏳ Pendente
+**Status:** ✅ Testado em 2026-05-15 — cron funciona, retorna `sent:0` corretamente quando FC% > threshold
 
-Cron `send-push-alerts` (17h UTC) está em produção mas nunca foi testado end-to-end.
-- Ativar notificações no header → verificar registro em `push_subscriptions`
-- Forçar via `curl -H "Authorization: Bearer $CRON_SECRET" https://irrigaagro.com.br/api/cron/send-push-alerts`
-- Confirmar push chega no dispositivo
+Verificado: 2 subscriptions no DB, cron roda, avalia `needs_irrigation`, não envia quando FC%=88-90% (acima do threshold 70%). Fluxo completo OK. Só não foi possível testar push real pois pivôs não estão urgentes — validar quando FC% cair abaixo do threshold.
 
 ---
 
 #### 🗓️ Calendário de manejo — merge para main
-**Status:** ⏳ Branch `feat/calendar-view` implementada (2026-05-14), não mergeada no `main`
+**Status:** ✅ Mergeado no `main` em 2026-05-15
 
-Toggle Semana|Mês implementado, CalendarView.tsx criado, bugs corrigidos. Falta: testar visualmente e mergear.
+Toggle Semana|Mês em `/lancamentos`, CalendarView.tsx, chips planejado/realizado/cancelado, navegação por mês, clique navega para semana correta. Responsivo (chips desktop, dots mobile).
 
 ---
 
