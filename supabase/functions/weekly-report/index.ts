@@ -154,6 +154,21 @@ serve(async (_req) => {
         if (lat && lon) { forecast7 = await fetchForecast7(lat, lon); break }
       }
 
+      // NDVI: 2 últimos registros por pivô para calcular variação
+      const { data: ndviRows } = await supabase
+        .from('ndvi_cache')
+        .select('pivot_id, data_imagem, ndvi_medio')
+        .in('pivot_id', pivotIds)
+        .not('ndvi_medio', 'is', null)
+        .order('data_imagem', { ascending: false })
+        .limit(pivotIds.length * 3)
+
+      const ndviByPivot: Record<string, any[]> = {}
+      for (const row of ndviRows ?? []) {
+        if (!ndviByPivot[row.pivot_id]) ndviByPivot[row.pivot_id] = []
+        if (ndviByPivot[row.pivot_id].length < 2) ndviByPivot[row.pivot_id].push(row)
+      }
+
       const fazendaName = subs[0]?.pivots?.farms?.name || 'Fazenda'
       const divider = '━━━━━━━━━━━━━━━━━━━'
 
@@ -206,6 +221,34 @@ serve(async (_req) => {
             latest.etc_mm ?? 0, forecast7, today
           )
           msg += `📅 Próxima irrigação: *${proj}*\n`
+        }
+
+        // NDVI — variação semana a semana
+        const ndviHistory = ndviByPivot[sub.pivot_id] ?? []
+        if (ndviHistory.length >= 2) {
+          const atual = ndviHistory[0].ndvi_medio as number
+          const anterior = ndviHistory[1].ndvi_medio as number
+          const variacao = ((atual - anterior) / anterior) * 100
+          const variacaoAbs = Math.abs(variacao)
+          const seta = variacao >= 0 ? '📈' : '📉'
+          const sentido = variacao >= 0 ? 'subiu' : 'caiu'
+
+          // Classificação: 0-0.3 baixo, 0.3-0.5 médio, 0.5-0.7 bom, >0.7 ótimo
+          let qualidade: string
+          if (atual >= 0.7) qualidade = 'ótimo 🟢'
+          else if (atual >= 0.5) qualidade = 'bom 🟡'
+          else if (atual >= 0.3) qualidade = 'médio 🟠'
+          else qualidade = 'baixo 🔴'
+
+          msg += `🛰️ NDVI: ${sentido} ${variacaoAbs.toFixed(1)}% ${seta} — ainda ${qualidade}\n`
+        } else if (ndviHistory.length === 1) {
+          const atual = ndviHistory[0].ndvi_medio as number
+          let qualidade: string
+          if (atual >= 0.7) qualidade = 'ótimo 🟢'
+          else if (atual >= 0.5) qualidade = 'bom 🟡'
+          else if (atual >= 0.3) qualidade = 'médio 🟠'
+          else qualidade = 'baixo 🔴'
+          msg += `🛰️ NDVI: ${atual.toFixed(3)} — ${qualidade}\n`
         }
       }
 
